@@ -1,0 +1,3 @@
+FPGA_PART = xcku085-flva1517-1-c
+
+# vim: set filetype=make:

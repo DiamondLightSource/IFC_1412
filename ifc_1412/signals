@@ -53,7 +53,7 @@ pad_SHARED_PAYLOAD_{SCL,SDA}    inout
 
 # Connected to MMC GPIO U202 IO1_6, unknown function, not in original .xdc,
 # pulled up by default
-pad_PERSTN0                     inout
+pad_PERSTN0                     in
 
 # Connected to MMC GPIO U202 I01_5, unknwon function, pulled up by default
 # Probably intended to be used as system reset under MMC control?
@@ -113,19 +113,19 @@ pad_AMC_RX_1_0_{P,N}[0..1]      in
 pad_AMC_TX_1_0_{P,N}[0..1]      out
 
 # AMC PCIe first fat pipe
-pad_AMC_RX_7_4_{P,N}[4..7]      in
-pad_AMC_TX_7_4_{P,N}[4..7]      out
+pad_AMC_RX_7_4_{P,N}[7..4]      in
+pad_AMC_TX_7_4_{P,N}[7..4]      out
 # AMC PCIe second fat pipe
-pad_AMC_RX_11_8_{P,N}[8..11]    in
-pad_AMC_TX_11_8_{P,N}[8..11]    out
+pad_AMC_RX_11_8_{P,N}[11..8]    in
+pad_AMC_TX_11_8_{P,N}[11..8]    out
 
 # AMC ports 12-15 (point to point LVDS links)
-pad_AMC_TX_{P,N}[12..15]        out
-pad_AMC_RX_{P,N}[12..15]        in
+pad_AMC_TX_{P,N}[15..12]        out
+pad_AMC_RX_{P,N}[15..12]        in
 
 # AMC M-LVDS interface
-pad_AMC_{RX,TX}_DATA[17..20]    inout
-pad_AMC_{RX,TX}_WEN[17..20]     out
+pad_AMC_{RX,TX}_DATA[20..17]    inout
+pad_AMC_{RX,TX}_WEN[20..17]     out
 
 
 # RTM  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

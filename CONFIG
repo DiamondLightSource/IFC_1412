@@ -2,7 +2,8 @@
 
 BUILD_DIR = /scratch/$(USER)/tmp/IFC_1412
 
-FPGA_PART = xcku085-flva1517-1-c
+# Architecture of board
+BOARD_DIR = $(PROJECT_TOP)/ifc_1412
 
 # Place the FPGA build in /scratch
 FPGA_BUILD_DIR = $(BUILD_DIR)/fpga
