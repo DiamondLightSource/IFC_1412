@@ -159,14 +159,14 @@ pad_FMC2_LA_P[26]               C36
 pad_FMC2_LA_N[26]               B36
 pad_FMC2_LA_P[27]               A38
 pad_FMC2_LA_N[27]               A37
-pad_FMC2_LA_P[28]               H34
-pad_FMC2_LA_N[28]               G34
+pad_FMC2_LA_P[28]               G34
+pad_FMC2_LA_N[28]               H34
 pad_FMC2_LA_P[29]               D35
 pad_FMC2_LA_N[29]               E35
 pad_FMC2_LA_P[30]               J36
 pad_FMC2_LA_N[30]               K36
-pad_FMC2_LA_P[31]               J34
-pad_FMC2_LA_N[31]               J35
+pad_FMC2_LA_P[31]               J35
+pad_FMC2_LA_N[31]               J34
 pad_FMC2_LA_P[32]               K37
 pad_FMC2_LA_N[32]               L37
 pad_FMC2_LA_P[33]               K35
@@ -403,7 +403,7 @@ pad_FP_LED2B_K                  AG15    LVCMOS25
 pad_SHARED_PAYLOAD_SCL          AF12    LVCMOS25        PULLUP
 pad_SHARED_PAYLOAD_SDA          AD14    LVCMOS25        PULLUP
 
-pad_PERSTN0                     AM15    LVCMOS25
+pad_PERST_n                     AM15    LVCMOS25
 
 pad_SYSRESET_L                  AD13    LVCMOS25        PULLUP
 
