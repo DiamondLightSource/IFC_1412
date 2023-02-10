@@ -17,6 +17,9 @@ architecture arch of top is
     -- ordering for this display.
     subtype FMC1_BITS is natural range COUNTER_WIDTH-9 downto COUNTER_WIDTH-16;
     subtype FMC2_BITS is natural range COUNTER_WIDTH-1 downto COUNTER_WIDTH-8;
+    -- Make the status LEDs track the middle FMC1 bits
+    constant LED2A_BIT : natural := FMC1_BITS'RIGHT + 4;
+    constant LED2B_BIT : natural := FMC1_BITS'RIGHT + 5;
 
     signal counter : unsigned(COUNTER_WIDTH-1 downto 0) := (others => '0');
 
@@ -40,4 +43,6 @@ begin
 
     pad_FMC1_LED <= std_ulogic_vector(counter(FMC1_BITS));
     pad_FMC2_LED <= std_ulogic_vector(counter(FMC2_BITS));
+    pad_FP_LED2A_K <= counter(LED2A_BIT);
+    pad_FP_LED2B_K <= counter(LED2B_BIT);
 end;

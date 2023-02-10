@@ -12,6 +12,10 @@ architecture arch of top is
     signal reset_counter : unsigned(10 downto 0) := (others => '1');
     signal reset_active : std_ulogic := '1';
 
+    signal led_counter : unsigned(25 downto 0) := (others => '0');
+    signal led_a : std_ulogic := '1';   -- Green if low
+    signal led_b : std_ulogic := '1';   -- Red if low
+
 begin
     interconnect : entity work.interconnect_wrapper port map (
         -- Clocking and reset
@@ -44,8 +48,17 @@ begin
                     reset_counter <= reset_counter - 1;
                 else
                     reset_active <= '0';
+                    led_a <= '0';
                 end if;
+            end if;
+
+            led_counter <= led_counter + 1;
+            if led_counter = 0 then
+                led_b <= not led_b;
             end if;
         end if;
     end process;
+
+    pad_FP_LED2A_K <= led_a;
+    pad_FP_LED2B_K <= led_b;
 end;

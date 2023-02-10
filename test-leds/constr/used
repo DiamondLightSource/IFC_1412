@@ -3,3 +3,7 @@ pad_SYSCLK100_{P,N}             in
 
 # 16 LEDs to play with
 pad_FMC{1,2}_LED[1..8]          out
+
+# Status LEDs
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out

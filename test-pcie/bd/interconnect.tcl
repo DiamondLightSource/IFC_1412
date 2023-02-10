@@ -272,7 +272,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_lite_interconnect/ARESETN] [get_bd_pins axi_lite_interconnect/M00_ARESETN] [get_bd_pins axi_lite_interconnect/S00_ARESETN] [get_bd_pins axi_pcie3_bridge/axi_aresetn]
   connect_bd_net -net fclka_buf_IBUF_DS_ODIV2 [get_bd_pins axi_pcie3_bridge/refclk] [get_bd_pins fclka_buf/IBUF_DS_ODIV2]
   connect_bd_net -net fclka_buf_IBUF_OUT [get_bd_pins axi_pcie3_bridge/sys_clk_gt] [get_bd_pins fclka_buf/IBUF_OUT]
-  connect_bd_net -net sys_rst_n_0_1 [get_bd_ports nCOLDRST] [get_bd_pins axi_pcie3_bridge/sys_rst_n]
+  connect_bd_net -net nCOLDRST_1 [get_bd_ports nCOLDRST] [get_bd_pins axi_pcie3_bridge/sys_rst_n]
 
   # Create address segments
   assign_bd_address -offset 0x00022000 -range 0x00001000 -target_address_space [get_bd_addr_spaces axi_pcie3_bridge/M_AXI] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
