@@ -20,7 +20,7 @@ set script_folder [_tcl::get_script_folder]
 ################################################################
 # Check if script is running in correct Vivado version.
 ################################################################
-set scripts_vivado_version 2021.1
+set scripts_vivado_version 2022.2
 set current_vivado_version [version -short]
 
 if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
@@ -198,67 +198,64 @@ proc create_root_design { parentCell } {
 
   # Create instance: axi_bram_ctrl_0, and set properties
   set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
-  set_property -dict [ list \
-   CONFIG.ECC_TYPE {0} \
-   CONFIG.PROTOCOL {AXI4LITE} \
-   CONFIG.SINGLE_PORT_BRAM {1} \
- ] $axi_bram_ctrl_0
+  set_property -dict [list \
+    CONFIG.PROTOCOL {AXI4LITE} \
+    CONFIG.SINGLE_PORT_BRAM {1} \
+  ] $axi_bram_ctrl_0
+
 
   # Create instance: axi_lite_interconnect, and set properties
   set axi_lite_interconnect [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_lite_interconnect ]
-  set_property -dict [ list \
-   CONFIG.NUM_MI {1} \
- ] $axi_lite_interconnect
+  set_property CONFIG.NUM_MI {1} $axi_lite_interconnect
+
 
   # Create instance: axi_pcie3_bridge, and set properties
   set axi_pcie3_bridge [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_pcie3:3.0 axi_pcie3_bridge ]
-  set_property -dict [ list \
-   CONFIG.axi_addr_width {48} \
-   CONFIG.axi_data_width {256_bit} \
-   CONFIG.axisten_freq {125} \
-   CONFIG.coreclk_freq {250} \
-   CONFIG.dedicate_perst {false} \
-   CONFIG.en_axi_slave_if {false} \
-   CONFIG.mode_selection {Advanced} \
-   CONFIG.pciebar2axibar_0 {0x0000000000010000} \
-   CONFIG.pciebar2axibar_2 {0x0000000000020000} \
-   CONFIG.pf0_Use_Class_Code_Lookup_Assistant {false} \
-   CONFIG.pf0_bar0_64bit {true} \
-   CONFIG.pf0_bar0_size {64} \
-   CONFIG.pf0_bar2_64bit {true} \
-   CONFIG.pf0_bar2_enabled {true} \
-   CONFIG.pf0_bar2_size {64} \
-   CONFIG.pf0_base_class_menu {Processors} \
-   CONFIG.pf0_class_code {118000} \
-   CONFIG.pf0_class_code_base {11} \
-   CONFIG.pf0_class_code_sub {80} \
-   CONFIG.pf0_device_id {7038} \
-   CONFIG.pf0_interrupt_pin {NONE} \
-   CONFIG.pf0_msix_cap_pba_bir {BAR_1:0} \
-   CONFIG.pf0_msix_cap_table_bir {BAR_1:0} \
-   CONFIG.pf0_sub_class_interface_menu {386} \
-   CONFIG.pl_link_cap_max_link_speed {8.0_GT/s} \
-   CONFIG.pl_link_cap_max_link_width {X4} \
-   CONFIG.plltype {QPLL1} \
-   CONFIG.select_quad {GTH_Quad_225} \
-   CONFIG.sys_reset_polarity {ACTIVE_LOW} \
- ] $axi_pcie3_bridge
+  set_property -dict [list \
+    CONFIG.axi_addr_width {48} \
+    CONFIG.axi_data_width {256_bit} \
+    CONFIG.axisten_freq {125} \
+    CONFIG.dedicate_perst {false} \
+    CONFIG.disable_gt_loc {true} \
+    CONFIG.en_axi_slave_if {false} \
+    CONFIG.en_gt_selection {true} \
+    CONFIG.ins_loss_profile {Chip-to-Chip} \
+    CONFIG.mode_selection {Advanced} \
+    CONFIG.pciebar2axibar_0 {0x0000000000010000} \
+    CONFIG.pciebar2axibar_2 {0x0000000000020000} \
+    CONFIG.pf0_Use_Class_Code_Lookup_Assistant {false} \
+    CONFIG.pf0_bar0_64bit {true} \
+    CONFIG.pf0_bar0_size {64} \
+    CONFIG.pf0_bar2_64bit {true} \
+    CONFIG.pf0_bar2_enabled {true} \
+    CONFIG.pf0_bar2_size {64} \
+    CONFIG.pf0_base_class_menu {Processors} \
+    CONFIG.pf0_class_code_base {11} \
+    CONFIG.pf0_class_code_sub {80} \
+    CONFIG.pf0_device_id {7038} \
+    CONFIG.pf0_interrupt_pin {NONE} \
+    CONFIG.pf0_sub_class_interface_menu {386} \
+    CONFIG.pl_link_cap_max_link_speed {8.0_GT/s} \
+    CONFIG.pl_link_cap_max_link_width {X4} \
+    CONFIG.select_quad {GTH_Quad_224} \
+    CONFIG.sys_reset_polarity {ACTIVE_LOW} \
+  ] $axi_pcie3_bridge
+
 
   # Create instance: blk_mem_gen_0, and set properties
   set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
-  set_property -dict [ list \
-   CONFIG.Coe_File {../../../built/metadata.coe} \
-   CONFIG.Load_Init_File {true} \
-   CONFIG.Memory_Type {Single_Port_ROM} \
-   CONFIG.Port_A_Write_Rate {0} \
-   CONFIG.Use_Byte_Write_Enable {false} \
- ] $blk_mem_gen_0
+  set_property -dict [list \
+    CONFIG.Coe_File {/scratch/mga83/tmp/IFC_1412/test-pcie/built/metadata.coe} \
+    CONFIG.Load_Init_File {true} \
+    CONFIG.Memory_Type {Single_Port_ROM} \
+    CONFIG.Port_A_Write_Rate {0} \
+  ] $blk_mem_gen_0
+
 
   # Create instance: fclka_buf, and set properties
   set fclka_buf [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 fclka_buf ]
-  set_property -dict [ list \
-   CONFIG.C_BUF_TYPE {IBUFDSGTE} \
- ] $fclka_buf
+  set_property CONFIG.C_BUF_TYPE {IBUFDSGTE} $fclka_buf
+
 
   # Create interface connections
   connect_bd_intf_net -intf_net CLK_IN_D_0_1 [get_bd_intf_ports FCLKA] [get_bd_intf_pins fclka_buf/CLK_IN_D]
