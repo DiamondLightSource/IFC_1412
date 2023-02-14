@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+import os
+import fcntl
+import mmap
+import numpy
+
+def AMC_IOCTL(n):
+    return (1 << 30) | (ord('L') << 8) | n
+
+AMC_MAP_SIZE = AMC_IOCTL(0)
+
+DEVICE_NAME = '/dev/ifc_1412-test.0.reg'
+
+# Register names
+SRR = 0X10
+SPICR = 0X18
+SPISR = 0X19
+SPI_DTR = 0X1A
+SPI_DRR = 0X1B
+SPISSR = 0X1C
+SPI_TX_FIFO = 0X1D
+SPI_RX_FIFO = 0X1E
+
+
+reg_file = os.open(DEVICE_NAME, os.O_RDWR | os.O_SYNC)
+reg_size = fcntl.ioctl(reg_file, AMC_MAP_SIZE)
+reg_map = mmap.mmap(reg_file, reg_size)
+regs = numpy.frombuffer(reg_map, dtype = numpy.uint32)
+
+print('Control:', hex(regs[SPICR]))
+print('Status:', hex(regs[SPISR]))
+print('Slave select:', hex(regs[SPISSR]))

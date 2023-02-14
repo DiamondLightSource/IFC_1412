@@ -222,7 +222,7 @@ proc create_root_design { parentCell } {
     CONFIG.disable_gt_loc {true} \
     CONFIG.en_axi_slave_if {false} \
     CONFIG.en_gt_selection {true} \
-    CONFIG.ins_loss_profile {Chip-to-Chip} \
+    CONFIG.ins_loss_profile {Backplane} \
     CONFIG.mode_selection {Advanced} \
     CONFIG.pciebar2axibar_0 {0x0000000000010000} \
     CONFIG.pciebar2axibar_2 {0x0000000000020000} \
