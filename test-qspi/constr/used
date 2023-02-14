@@ -1,0 +1,17 @@
+pad_SYSCLK100_{P,N}             in
+
+# to AMC[4..7]
+pad_MGT224_REFCLK_{P,N}         in
+
+# AMC PCIe first fat pipe
+pad_AMC_RX_7_4_{P,N}[7..4]      in
+pad_AMC_TX_7_4_{P,N}[7..4]      out
+
+# Status LEDs
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out
+
+# SPI interface to SPI flash U105 (512Mbit) for custom state.
+pad_USER_SPI_CS_L               out
+pad_USER_SPI_SCK                out
+pad_USER_SPI_D[0..3]            inout
