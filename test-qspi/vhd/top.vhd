@@ -28,6 +28,7 @@ begin
         pcie_7x_mgt_0_txn => pad_AMC_TX_7_4_N,
         pcie_7x_mgt_0_txp => pad_AMC_TX_7_4_P,
         -- USER QSPI flash interface
+        EXT_SPI_CLK => clk,
         USER_SPI_io0_io => pad_USER_SPI_D(0),
         USER_SPI_io1_io => pad_USER_SPI_D(1),
         USER_SPI_io2_io => pad_USER_SPI_D(2),
