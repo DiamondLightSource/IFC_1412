@@ -249,6 +249,7 @@ proc create_root_design { parentCell } {
   # Create instance: axi_quad_spi_0, and set properties
   set axi_quad_spi_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 axi_quad_spi_0 ]
   set_property -dict [list \
+    CONFIG.C_FIFO_DEPTH {256} \
     CONFIG.C_SPI_MEMORY {3} \
     CONFIG.C_SPI_MODE {2} \
   ] $axi_quad_spi_0
@@ -279,12 +280,12 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net axi_quad_spi_0_SPI_0 [get_bd_intf_ports USER_SPI] [get_bd_intf_pins axi_quad_spi_0/SPI_0]
 
   # Create port connections
-  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_lite_interconnect/ACLK] [get_bd_pins axi_lite_interconnect/M00_ACLK] [get_bd_pins axi_lite_interconnect/M01_ACLK] [get_bd_pins axi_lite_interconnect/S00_ACLK] [get_bd_pins axi_pcie3_bridge/axi_aclk] [get_bd_pins axi_quad_spi_0/s_axi_aclk]
-  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_lite_interconnect/ARESETN] [get_bd_pins axi_lite_interconnect/M00_ARESETN] [get_bd_pins axi_lite_interconnect/M01_ARESETN] [get_bd_pins axi_lite_interconnect/S00_ARESETN] [get_bd_pins axi_pcie3_bridge/axi_aresetn] [get_bd_pins axi_quad_spi_0/s_axi_aresetn]
-  connect_bd_net -net ext_spi_clk_0_1 [get_bd_ports EXT_SPI_CLK] [get_bd_pins axi_quad_spi_0/ext_spi_clk]
+  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_lite_interconnect/ACLK] [get_bd_pins axi_lite_interconnect/M00_ACLK] [get_bd_pins axi_lite_interconnect/S00_ACLK] [get_bd_pins axi_pcie3_bridge/axi_aclk]
+  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_lite_interconnect/ARESETN] [get_bd_pins axi_lite_interconnect/M00_ARESETN] [get_bd_pins axi_lite_interconnect/S00_ARESETN] [get_bd_pins axi_pcie3_bridge/axi_aresetn]
+  connect_bd_net -net ext_spi_clk_0_1 [get_bd_ports EXT_SPI_CLK] [get_bd_pins axi_lite_interconnect/M01_ACLK] [get_bd_pins axi_quad_spi_0/ext_spi_clk] [get_bd_pins axi_quad_spi_0/s_axi_aclk]
   connect_bd_net -net fclka_buf_IBUF_DS_ODIV2 [get_bd_pins axi_pcie3_bridge/refclk] [get_bd_pins fclka_buf/IBUF_DS_ODIV2]
   connect_bd_net -net fclka_buf_IBUF_OUT [get_bd_pins axi_pcie3_bridge/sys_clk_gt] [get_bd_pins fclka_buf/IBUF_OUT]
-  connect_bd_net -net nCOLDRST_1 [get_bd_ports nCOLDRST] [get_bd_pins axi_pcie3_bridge/sys_rst_n]
+  connect_bd_net -net nCOLDRST_1 [get_bd_ports nCOLDRST] [get_bd_pins axi_lite_interconnect/M01_ARESETN] [get_bd_pins axi_pcie3_bridge/sys_rst_n] [get_bd_pins axi_quad_spi_0/s_axi_aresetn]
 
   # Create address segments
   assign_bd_address -offset 0x00022000 -range 0x00001000 -target_address_space [get_bd_addr_spaces axi_pcie3_bridge/M_AXI] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
