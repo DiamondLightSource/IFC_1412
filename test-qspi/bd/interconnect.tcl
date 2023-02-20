@@ -217,7 +217,7 @@ proc create_root_design { parentCell } {
   set axi_pcie3_bridge [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_pcie3:3.0 axi_pcie3_bridge ]
   set_property -dict [list \
     CONFIG.axi_addr_width {48} \
-    CONFIG.axi_data_width {64_bit} \
+    CONFIG.axi_data_width {256_bit} \
     CONFIG.axisten_freq {125} \
     CONFIG.dedicate_perst {false} \
     CONFIG.disable_gt_loc {true} \
@@ -239,7 +239,7 @@ proc create_root_design { parentCell } {
     CONFIG.pf0_device_id {7038} \
     CONFIG.pf0_interrupt_pin {NONE} \
     CONFIG.pf0_sub_class_interface_menu {386} \
-    CONFIG.pl_link_cap_max_link_speed {2.5_GT/s} \
+    CONFIG.pl_link_cap_max_link_speed {8.0_GT/s} \
     CONFIG.pl_link_cap_max_link_width {X4} \
     CONFIG.select_quad {GTH_Quad_224} \
     CONFIG.sys_reset_polarity {ACTIVE_LOW} \
