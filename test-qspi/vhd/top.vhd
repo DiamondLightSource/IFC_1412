@@ -11,6 +11,10 @@ architecture arch of top is
 
     signal reset_counter : unsigned(10 downto 0) := (others => '1');
     signal reset_active : std_ulogic := '1';
+    -- We need a separate PCIe Reset signal which is marked as asynchronous
+    signal perst : std_ulogic := '1';
+    attribute KEEP : string;
+    attribute KEEP of perst : signal is "true";
 
     signal led_counter : unsigned(25 downto 0) := (others => '0');
     signal led_a : std_ulogic := '1';   -- Green if low
@@ -20,6 +24,7 @@ begin
     interconnect : entity work.interconnect_wrapper port map (
         -- Clocking and reset
         nCOLDRST => not reset_active,
+        PERSTN => not perst,
         -- PCIe MGT interface
         FCLKA_clk_p(0) => pad_MGT224_REFCLK_P,
         FCLKA_clk_n(0) => pad_MGT224_REFCLK_N,
@@ -56,6 +61,7 @@ begin
                     reset_counter <= reset_counter - 1;
                 else
                     reset_active <= '0';
+                    perst <= '0';
                     led_a <= '0';
                 end if;
             end if;
