@@ -3,6 +3,6 @@
 PROJECT_TOP := $(CURDIR)
 
 include $(PROJECT_TOP)/CONFIG
-include $(FPGA_COMMON)/Makefile.delegate
+include $(FPGA_COMMON)/makefiles/Makefile.delegate
 
 # vim: set filetype=make:
