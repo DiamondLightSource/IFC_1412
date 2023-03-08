@@ -219,7 +219,7 @@ proc create_root_design { parentCell } {
     CONFIG.disable_gt_loc {true} \
     CONFIG.en_axi_slave_if {false} \
     CONFIG.en_gt_selection {true} \
-    CONFIG.ins_loss_profile {Chip-to-Chip} \
+    CONFIG.ins_loss_profile {Backplane} \
     CONFIG.mode_selection {Advanced} \
     CONFIG.pciebar2axibar_0 {0x0000000000010000} \
     CONFIG.pciebar2axibar_2 {0x0000000000020000} \
@@ -245,7 +245,7 @@ proc create_root_design { parentCell } {
   # Create instance: blk_mem_gen_0, and set properties
   set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
   set_property -dict [list \
-    CONFIG.Coe_File {/scratch/mga83/tmp/IFC_1412/test-pcie/built/metadata.coe} \
+    CONFIG.Coe_File {../../../built/metadata.coe} \
     CONFIG.Load_Init_File {true} \
     CONFIG.Memory_Type {Single_Port_ROM} \
     CONFIG.Port_A_Write_Rate {0} \
