@@ -1,0 +1,15 @@
+pad_SYSCLK100_{P,N}             in
+
+# to AMC[4..7]
+pad_MGT224_REFCLK_{P,N}         in
+
+# AMC PCIe first fat pipe
+pad_AMC_RX_7_4_{P,N}[7..4]      in
+pad_AMC_TX_7_4_{P,N}[7..4]      out
+
+# Status LEDs
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out
+
+# 16 general purpose front panel LEDs
+pad_FMC{1,2}_LED[1..8]          out

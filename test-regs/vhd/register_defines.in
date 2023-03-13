@@ -1,0 +1,12 @@
+# Register definitions for test
+!TOP
+    GIT_VERSION     R
+        .SHA        28
+        -           3
+        .DIRTY
+
+    LEDS            RW
+        .FMC1       8
+        .FMC2       8
+        .LED2A
+        .LED2B
