@@ -10,7 +10,7 @@ def AMC_IOCTL(n):
 
 AMC_MAP_SIZE = AMC_IOCTL(0)
 
-DEVICE_NAME = '/dev/ifc_1412-test.0.reg'
+DEVICE_NAME = '/dev/ifc_1412-test.1.reg'
 
 # Register names
 SRR = 0X10

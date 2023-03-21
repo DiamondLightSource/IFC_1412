@@ -3,7 +3,7 @@
 BUILD_TOP = /scratch/$(USER)/tmp/IFC_1412
 
 # Architecture of board
-BOARD_DEFS = IFC_1412
+BOARD = IFC_1412
 
 
 # Definitions needed for FPGA build
@@ -19,7 +19,5 @@ LM_LICENSE_FILE += 1717@diamcslicserv01.dc.diamond.ac.uk
 
 # Common tools
 FPGA_COMMON = /home/mga83/targetOS/fpga-common
-
-TARGET ?= test-regs
 
 # vim: set filetype=make:
