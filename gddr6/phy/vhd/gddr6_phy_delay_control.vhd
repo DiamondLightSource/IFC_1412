@@ -60,6 +60,8 @@ begin
                         enable_vtc_out(delay_select) <= '0';
                         wait_counter <= 9;
                         state <= WAIT_START;
+                    else
+                        enable_vtc_out <= (others => '1');
                     end if;
                 when WAIT_START => -- Wait for counter to expire
                     if wait_counter > 0 then

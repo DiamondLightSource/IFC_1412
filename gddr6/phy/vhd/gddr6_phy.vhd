@@ -67,9 +67,9 @@ entity gddr6_phy is
         delay_rx_tx_n_i : in std_ulogic;            -- Select RX or TX*
         delay_write_i : in std_ulogic;              -- Select Write delay
         delay_i : in unsigned(8 downto 0);          -- Delay to write
+        delay_o : out unsigned(8 downto 0);         -- Delay read on completion
         delay_strobe_i : in std_ulogic;             -- Start access
         delay_ack_o : out std_ulogic;               -- Strobed on completion
-        delay_o : out unsigned(8 downto 0);         -- Delay read on completion
 
         -- --------------------------------------------------------------------
         -- GDDR pins

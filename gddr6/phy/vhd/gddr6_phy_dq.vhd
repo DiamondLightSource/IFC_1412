@@ -114,48 +114,6 @@ architecture arch of gddr6_phy_dq is
     subtype DELAY_EDC_RANGE is natural range 72 to 79;
     subtype DELAY_TRI_RANGE is natural range 80 to 95;
 
-
-    -- Concatentate  pin configurations for the two IO banks by remapping all
-    -- the byte numbers in the second bank by adding 4.  This allows both IO
-    -- banks to be generated in one step.
-    function concat_configs(
-        config1 : pin_config_array_t; config2 : pin_config_array_t)
-        return pin_config_array_t
-    is
-        constant count : natural := config1'LENGTH;
-        variable result : pin_config_array_t(0 to 2*count-1);
-    begin
-        result(0 to count-1) := config1;
-        result(count to 2*count-1) := config2;
-        for i in 0 to count-1 loop
-            result(count + i).byte := config2(i).byte + 4;
-        end loop;
-        return result;
-    end;
-
-    -- Concatenate pin configurations for both IO banks.
-    constant CONFIG_BANK_DQ : pin_config_array_t
-        := concat_configs(CONFIG_BANK1_DQ, CONFIG_BANK2_DQ);
-    constant CONFIG_BANK_DBI : pin_config_array_t
-        := concat_configs(CONFIG_BANK1_DBI, CONFIG_BANK2_DBI);
-    constant CONFIG_BANK_EDC : pin_config_array_t
-        := concat_configs(CONFIG_BANK1_EDC, CONFIG_BANK2_EDC);
-
-    -- Computes which slices are wanted from the given configuration for the
-    -- specified byte
-    function bitslice_wanted(byte : natural; config : pin_config_array_t)
-        return std_ulogic_vector
-    is
-        variable result : std_ulogic_vector(0 to 11) := (others => '0');
-    begin
-        for i in config'RANGE loop
-            if config(i).byte = byte then
-                result(config(i).slice) := '1';
-            end if;
-        end loop;
-        return result;
-    end;
-
 begin
     -- Generate 4 IO bytes in each of the two IO banks
     gen_bytes : for i in 0 to 7 generate
@@ -164,10 +122,7 @@ begin
     begin
         byte : entity work.gddr6_phy_byte generic map (
             REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-            BITSLICE_WANTED =>
-                bitslice_wanted(i, CONFIG_BANK_DQ) or
-                bitslice_wanted(i, CONFIG_BANK_DBI) or
-                bitslice_wanted(i, CONFIG_BANK_EDC),
+            BITSLICE_WANTED => bitslice_wanted(i),
             CLK_FROM_PIN => MAP_CLK_FROM_PIN(i mod 4),
             CLK_TO_NORTH => MAP_CLK_TO_NORTH(i mod 4),
             CLK_TO_SOUTH => MAP_CLK_TO_SOUTH(i mod 4)
