@@ -72,8 +72,6 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
-    signal test_array : std_ulogic_vector(0 to 7);
-
 begin
     phy : entity work.gddr6_phy port map (
         sg_resets_i => sg_resets_in,
@@ -163,5 +161,4 @@ begin
     pad_SG1_EDC_B <= (others => '1');
     pad_SG2_EDC_A <= (others => '1');
     pad_SG2_EDC_B <= (others => '1');
-
 end;

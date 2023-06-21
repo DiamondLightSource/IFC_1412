@@ -80,7 +80,7 @@ package body gddr6_phy_defs is
     end;
 
     constant CONFIG_BANK_ALL : pin_config_array_t :=
-        CONFIG_BANK_DQ & CONFIG_BANK_DBI & CONFIG_BANK_EDC;
+        CONFIG_BANK_DQ & CONFIG_BANK_DBI & CONFIG_BANK_EDC & CONFIG_BANK_WCK;
 
     function bitslice_wanted(byte : natural) return std_ulogic_vector
     is

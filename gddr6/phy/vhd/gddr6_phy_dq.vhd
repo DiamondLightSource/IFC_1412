@@ -62,7 +62,7 @@ architecture arch of gddr6_phy_dq is
     -- and is distributed vertically 1 => 2 => 3 (CLK_TO_NORTH) and 1 => 0
     -- (CLK_TO_SOUTH).  These constants guide the plumbing of individual bytes.
     constant MAP_CLK_FROM_PIN : boolean_array := (false, true, false, false);
-    constant MAP_CLK_TO_NORTH : boolean_array := (false, true, true, false);
+    constant MAP_CLK_TO_NORTH : boolean_array := (false, true, true,  false);
     constant MAP_CLK_TO_SOUTH : boolean_array := (false, true, false, false);
 
     -- RX clocking distribution network
@@ -87,17 +87,8 @@ architecture arch of gddr6_phy_dq is
     signal pad_out_out : vector_array(0 to 7)(0 to 11);
     signal pad_t_out_out : vector_array(0 to 7)(0 to 11);
 
-    -- Map for delays
-    signal delay_dq_out : vector_array(0 to 63)(8 downto 0); -- DQ (32)
-    signal delay_dq_vtc_in : std_ulogic_vector(0 to 63);
-    signal delay_dq_load_in : std_ulogic_vector(0 to 63);
-    signal delay_dbi_out : vector_array(0 to 7)(8 downto 0); -- DBI (4)
-    signal delay_dbi_vtc_in : std_ulogic_vector(0 to 7);
-    signal delay_dbi_load_in : std_ulogic_vector(0 to 7);
-    signal delay_edc_out : vector_array(0 to 7)(8 downto 0); -- EDC (4)
-    signal delay_edc_vtc_in : std_ulogic_vector(0 to 7);
-    signal delay_edc_load_in : std_ulogic_vector(0 to 7);
-    signal delay_tri_out : vector_array(0 to 15)(8 downto 0); -- TRI (8)
+    -- Map for tri delays (2 per byte)
+    signal delay_tri_out : vector_array(0 to 15)(8 downto 0);
     signal delay_tri_vtc_in : std_ulogic_vector(0 to 15);
     signal delay_tri_load_in : std_ulogic_vector(0 to 15);
 
@@ -108,7 +99,7 @@ architecture arch of gddr6_phy_dq is
     signal bank_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal bank_edc_in : vector_array(7 downto 0)(7 downto 0);
 
-    -- Decode ranges for delay groups above
+    -- Decode ranges for delay control groups
     subtype DELAY_DQ_RANGE is natural range 0 to 63;
     subtype DELAY_DBI_RANGE is natural range 64 to 71;
     subtype DELAY_EDC_RANGE is natural range 72 to 79;
@@ -180,98 +171,61 @@ begin
         7 => clk_to_north(6)
     );
 
-    -- Assign WCK to its appropriate inputs: slice 0 of byte 1 in each IO bank
-    pad_in_in(1)(0) <= wck_i(0);
-    pad_in_in(5)(0) <= wck_i(1);
 
-    -- Gather statuses needed for resets
-    dly_ready_o <= vector_and(dly_ready);
-    vtc_ready_o <= vector_and(vtc_ready);
-    fifo_empty_o <= vector_or(fifo_empty);
+    -- Map between byte and slices and all the various signals of interest
+    map_slices : entity work.gddr6_phy_dq_remap port map (
+        -- Clocks
+        wck_i => wck_i,
 
+        -- Bitslice mapped resources
+        enable_bitslice_vtc_o => enable_bitslice_vtc,
+        rx_load_o => rx_load_in,
+        rx_delay_i => rx_delay_out,
+        tx_load_o => tx_load_in,
+        tx_delay_i => tx_delay_out,
+        data_i => data_out,
+        data_o => data_in,
+        pad_in_o => pad_in_in,
+        pad_out_i => pad_out_out,
+        pad_t_out_i => pad_t_out_out,
 
-    -- Use the DQ, DBI, and EDC configurations to bind to the appropriate slices
-    -- On the face of it, this intricate but very repetitive mapping process is
-    -- a good candidate for abstracting into a procedure.  Alas, this doesn't
-    -- come out particularly well and is just as long winded.
+        -- Remapped data stream organised by tick
+        bank_data_o => bank_data_in,
+        bank_data_i => bank_data_out,
+        bank_dbi_n_o => bank_dbi_n_in,
+        bank_dbi_n_i => bank_dbi_n_out,
+        bank_edc_o => bank_edc_in,
 
-    -- DQ
-    gen_dq : for i in 0 to 63 generate
-        constant byte : natural := CONFIG_BANK_DQ(i).byte;
-        constant slice : natural := CONFIG_BANK_DQ(i).slice;
-    begin
-        -- IO pad binding
-        pad_in_in(byte)(slice) <= io_dq_i(i);
-        io_dq_t_o(i) <= pad_t_out_out(byte)(slice);
-        io_dq_o(i) <= pad_out_out(byte)(slice);
-        -- Data flow
-        data_in(byte)(slice) <= bank_data_out(i);
-        bank_data_in(i) <= data_out(byte)(slice);
-        -- Delay control
-        delay_dq_out(i) <=
-            rx_delay_out(byte)(slice) when delay_rx_tx_n_i else
-            tx_delay_out(byte)(slice);
-        enable_bitslice_vtc(byte)(slice) <= delay_dq_vtc_in(i);
-        rx_load_in(byte)(slice) <= delay_dq_load_in(i) and delay_rx_tx_n_i;
-        tx_load_in(byte)(slice) <= delay_dq_load_in(i) and not delay_rx_tx_n_i;
-    end generate;
+        -- Map delay controls to appropriate address ranges
+        delay_rx_tx_n_i => delay_rx_tx_n_i,
+        delay_dq_o => delay_o(DELAY_DQ_RANGE),
+        delay_dq_vtc_i => enable_vtc_i(DELAY_DQ_RANGE),
+        delay_dq_load_i => load_delay_i(DELAY_DQ_RANGE),
+        delay_dbi_o => delay_o(DELAY_DBI_RANGE),
+        delay_dbi_vtc_i => enable_vtc_i(DELAY_DBI_RANGE),
+        delay_dbi_load_i => load_delay_i(DELAY_DBI_RANGE),
+        delay_edc_o => delay_o(DELAY_EDC_RANGE),
+        delay_edc_vtc_i => enable_vtc_i(DELAY_EDC_RANGE),
+        delay_edc_load_i => load_delay_i(DELAY_EDC_RANGE),
 
-    -- Similarly for DBI
-    gen_dbi : for i in 0 to 7 generate
-        constant byte : natural := CONFIG_BANK_DBI(i).byte;
-        constant slice : natural := CONFIG_BANK_DBI(i).slice;
-    begin
-        -- IO pad binding
-        pad_in_in(byte)(slice) <= io_dbi_n_i(i);
-        io_dbi_n_t_o(i) <= pad_t_out_out(byte)(slice);
-        io_dbi_n_o(i) <= pad_out_out(byte)(slice);
-        -- Data flow
-        data_in(byte)(slice) <= bank_dbi_n_out(i);
-        bank_dbi_n_in(i) <= data_out(byte)(slice);
-        -- Delay control
-        delay_dbi_out(i) <=
-            rx_delay_out(byte)(slice) when delay_rx_tx_n_i else
-            tx_delay_out(byte)(slice);
-        enable_bitslice_vtc(byte)(slice) <= delay_dbi_vtc_in(i);
-        rx_load_in(byte)(slice) <= delay_dbi_load_in(i) and delay_rx_tx_n_i;
-        tx_load_in(byte)(slice) <= delay_dbi_load_in(i) and not delay_rx_tx_n_i;
-    end generate;
-
-    -- And finally for EDC (this is input only, so slightly simpler)
-    gen_edc : for i in 0 to 7 generate
-        constant byte : natural := CONFIG_BANK_EDC(i).byte;
-        constant slice : natural := CONFIG_BANK_EDC(i).slice;
-    begin
-        -- IO pad binding
-        pad_in_in(byte)(slice) <= io_edc_i(i);
-        -- Data flow
-        data_in(byte)(slice) <= X"00";
-        bank_edc_in(i) <= data_out(byte)(slice);
-        -- Delay control
-        delay_edc_out(i) <= rx_delay_out(byte)(slice);
-        enable_bitslice_vtc(byte)(slice) <= delay_edc_vtc_in(i);
-        rx_load_in(byte)(slice) <= delay_edc_load_in(i) and delay_rx_tx_n_i;
-        tx_load_in(byte)(slice) <= '0';
-    end generate;
-
-    -- Map delay controls onto inputs and outputs
-    delay_dq_vtc_in  <= enable_vtc_i(DELAY_DQ_RANGE);
-    delay_dbi_vtc_in <= enable_vtc_i(DELAY_DBI_RANGE);
-    delay_edc_vtc_in <= enable_vtc_i(DELAY_EDC_RANGE);
-    delay_tri_vtc_in <= enable_vtc_i(DELAY_TRI_RANGE);
-    delay_dq_load_in  <= load_delay_i(DELAY_DQ_RANGE);
-    delay_dbi_load_in <= load_delay_i(DELAY_DBI_RANGE);
-    delay_edc_load_in <= load_delay_i(DELAY_EDC_RANGE);
-    delay_tri_load_in <= load_delay_i(DELAY_TRI_RANGE);
-    delay_o <= (
-        DELAY_DQ_RANGE => delay_dq_out,
-        DELAY_DBI_RANGE => delay_dbi_out,
-        DELAY_EDC_RANGE => delay_edc_out,
-        DELAY_TRI_RANGE => delay_tri_out
+        -- IO pins
+        io_dq_o => io_dq_o,
+        io_dq_i => io_dq_i,
+        io_dq_t_o => io_dq_t_o,
+        io_dbi_n_o => io_dbi_n_o,
+        io_dbi_n_i => io_dbi_n_i,
+        io_dbi_n_t_o => io_dbi_n_t_o,
+        io_edc_i => io_edc_i
     );
 
+    -- Map tri delay controls onto inputs and outputs
+    delay_tri_vtc_in <= enable_vtc_i(DELAY_TRI_RANGE);
+    delay_tri_load_in <= load_delay_i(DELAY_TRI_RANGE);
+    delay_o(DELAY_TRI_RANGE) <= delay_tri_out;
 
-    -- Finally flatten the data across 8 ticks
+
+    -- Finally flatten the data across 8 ticks.  At this point we also apply
+    -- DBI if appropriate
     map_data : entity work.gddr6_phy_map_data port map (
         clk_i => reg_clk_i,
 
@@ -287,4 +241,10 @@ begin
         data_o => data_o,
         edc_o => edc_o
     );
+
+
+    -- Gather statuses needed for resets
+    dly_ready_o <= vector_and(dly_ready);
+    vtc_ready_o <= vector_and(vtc_ready);
+    fifo_empty_o <= vector_or(fifo_empty);
 end;

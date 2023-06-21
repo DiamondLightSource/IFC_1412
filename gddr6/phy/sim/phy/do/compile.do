@@ -19,6 +19,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/gddr6_phy_nibble.vhd \
     $vhd_dir/gddr6_phy_byte.vhd \
     $vhd_dir/gddr6_phy_map_data.vhd \
+    $vhd_dir/gddr6_phy_dq_remap.vhd \
     $vhd_dir/gddr6_phy_dq.vhd \
     $vhd_dir/gddr6_phy_delay_control.vhd \
     $vhd_dir/gddr6_phy.vhd
