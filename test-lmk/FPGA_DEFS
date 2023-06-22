@@ -1,0 +1,7 @@
+BUILT += metadata.coe
+BUILT += register_defines.vhd
+BUILT += version.vhd
+
+BLOCK_DESIGNS += interconnect
+
+# vim: set filetype=make:

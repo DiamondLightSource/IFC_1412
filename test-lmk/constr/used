@@ -1,0 +1,27 @@
+pad_SYSCLK100_{P,N}             in
+
+# to AMC[4..7]
+pad_MGT224_REFCLK_{P,N}         in
+
+# AMC PCIe first fat pipe
+pad_AMC_RX_7_4_{P,N}[7..4]      in
+pad_AMC_TX_7_4_{P,N}[7..4]      out
+
+# Status LEDs
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out
+
+# 16 general purpose front panel LEDs
+pad_FMC{1,2}_LED[1..8]          out
+
+# Interface to system and acquisition LMK04616 clock distribution devices
+# Set LMK_CTL_SEL = 0 to select sys LMK U169 and = 1 to select acq LMK U173
+pad_LMK_CTL_SEL                 out
+# SPI interface
+pad_LMK_SCL                     out
+pad_LMK_SCS_L                   out
+pad_LMK_SDIO                    inout
+# Reset, sync, and status readbacks
+pad_LMK_RESET_L                 out
+pad_LMK_SYNC                    inout
+pad_LMK_STATUS[0..1]            inout
