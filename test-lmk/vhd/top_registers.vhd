@@ -66,11 +66,11 @@ begin
     read_data_o(TOP_STATUS_REG_R) <= status_bits;
     read_ack_o(TOP_STATUS_REG_R) <= '1';
 
-    lmk_write_strobe_o <= write_strobe_i(TOP_STATUS_REG_R);
+    lmk_write_strobe_o <= write_strobe_i(TOP_LMK04616_REG);
     write_ack_o(TOP_LMK04616_REG) <= lmk_write_ack_i;
     lmk_write_bits <= write_data_i(TOP_LMK04616_REG);
 
-    lmk_read_strobe_o <= read_strobe_i(TOP_STATUS_REG_R);
+    lmk_read_strobe_o <= read_strobe_i(TOP_LMK04616_REG);
     read_ack_o(TOP_LMK04616_REG) <= lmk_read_ack_i;
     read_data_o(TOP_LMK04616_REG) <= lmk_read_bits;
 
