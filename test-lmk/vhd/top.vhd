@@ -2,6 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library unisim;
+use unisim.vcomponents.all;
+
+use work.support.all;
+
 use work.register_defs.all;
 use work.register_defines.all;
 
@@ -11,6 +16,10 @@ architecture arch of top is
     signal reset_n : std_ulogic;
     -- We need a separate PCIe Reset signal which is marked as asynchronous
     signal perst_n : std_ulogic;
+
+    -- Test clocks
+    signal test_clocks : std_ulogic_vector(0 to 3);
+    signal test_clock_counts : unsigned_array(0 to 3)(31 downto 0);
 
     -- Wiring from AXI-Lite master to register slave
     signal DSP_REGS_araddr : std_ulogic_vector(16 downto 0);     -- AR
@@ -63,6 +72,7 @@ architecture arch of top is
     signal lmk_command_select : std_ulogic;
     signal lmk_status : std_ulogic_vector(1 downto 0);
     signal lmk_reset : std_ulogic;
+    signal lmk_sync : std_ulogic;
 
     -- SPI interface to LMK
     signal lmk_write_strobe : std_ulogic;
@@ -84,6 +94,28 @@ begin
         reset_n_o => reset_n,
         perst_n_o => perst_n
     );
+
+    -- Four clock inputs
+    i_sg12_ck : IBUFDS port map (
+        I => pad_SG12_CK_P,
+        IB => pad_SG12_CK_N,
+        O => test_clocks(0)
+    );
+
+    i_sg1_wck : IBUFDS port map (
+        I => pad_SG1_WCK_P,
+        IB => pad_SG1_WCK_N,
+        O => test_clocks(1)
+    );
+
+    i_sg2_wck : IBUFDS port map (
+        I => pad_SG2_WCK_P,
+        IB => pad_SG2_WCK_N,
+        O => test_clocks(2)
+    );
+
+    -- Cannot readily pick up any other clock input.
+    test_clocks(3) <= '0';
 
 
     -- -------------------------------------------------------------------------
@@ -214,6 +246,7 @@ begin
         lmk_command_select_o => lmk_command_select,
         lmk_status_i => lmk_status,
         lmk_reset_o => lmk_reset,
+        lmk_sync_o => lmk_sync,
 
         lmk_write_strobe_o => lmk_write_strobe,
         lmk_write_ack_i => lmk_write_ack,
@@ -223,7 +256,9 @@ begin
         lmk_write_select_o => lmk_write_select,
         lmk_read_strobe_o => lmk_read_strobe,
         lmk_read_ack_i => lmk_read_ack,
-        lmk_data_i => lmk_data_in
+        lmk_data_i => lmk_data_in,
+
+        clock_counts_i => test_clock_counts
     );
 
 
@@ -234,7 +269,7 @@ begin
         select_valid_o => open,
         status_o => lmk_status,
         reset_i => lmk_reset,
-        sync_i => '1',
+        sync_i => lmk_sync,
 
         write_strobe_i => lmk_write_strobe,
         write_ack_o => lmk_write_ack,
@@ -254,6 +289,16 @@ begin
         pad_LMK_RESET_L_o => pad_LMK_RESET_L,
         pad_LMK_SYNC_io => pad_LMK_SYNC,
         pad_LMK_STATUS_io => pad_LMK_STATUS
+    );
+
+
+    -- Frequency counters for a handful of clocks
+    counters : entity work.frequency_counters generic map (
+        COUNT => 4
+    ) port map (
+        clk_i => clk,
+        clk_in_i => test_clocks,
+        counts_o => test_clock_counts
     );
 
 

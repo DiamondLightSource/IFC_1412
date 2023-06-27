@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import os
+import time
+import argparse
+
+from fpga_lib.driver import driver
+
+
+def to_int(s):
+    return int(s, 0)
+
+parser = argparse.ArgumentParser(description = 'Read/write LMK registers')
+parser.add_argument(
+    '-a', dest = 'addr', default = 1,
+    help = 'Set physical address of card.  If not specified then card 0')
+parser.add_argument(
+    '-s', dest = 'sel', default = 0, type = int, choices = (0, 1),
+    help = 'Select which LMK (0 => SYS, 1 => ACQ)')
+parser.add_argument(
+    '-r', dest = 'reset', default = False, action = 'store_true',
+    help = 'Trigger LMK reset before action')
+parser.add_argument(
+    'reg', type = to_int,
+    help = 'Register to read or write')
+parser.add_argument(
+    'value', type = to_int, nargs = '?',
+    help = 'Value to write to register if specifed')
+args = parser.parse_args()
+
+
+here = os.path.dirname(__file__)
+register_defines = os.path.join(here, '../vhd', 'register_defines.in')
+
+raw_regs = driver.RawRegisters('ifc_1412-regs', args.addr)
+regs = driver.Registers(raw_regs, register_defines)
+top = regs.TOP
+
+
+def write_lmk(sel, reg, value):
+    top.LMK04616._write_fields_wo(
+        ADDRESS = reg, R_WN = 0, SELECT = sel, DATA = value)
+
+def read_lmk(sel, reg):
+    top.LMK04616._write_fields_wo(ADDRESS = reg, R_WN = 1, SELECT = sel)
+    return top.LMK04616.DATA
+
+if args.reset:
+    top.CONFIG._write_fields_rw(LMK_SELECT = args.sel, LMK_RESET = 1)
+    time.sleep(0.1)
+    top.CONFIG._write_fields_rw(LMK_SELECT = args.sel, LMK_RESET = 0)
+
+
+if args.value is None:
+    value = read_lmk(args.sel, args.reg)
+    print('[%03X] => %02X' % (args.reg, value))
+else:
+    write_lmk(args.sel, args.reg, args.value)

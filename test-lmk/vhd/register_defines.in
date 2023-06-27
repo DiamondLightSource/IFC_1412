@@ -12,6 +12,7 @@
         CONFIG      W
             .LMK_SELECT
             .LMK_RESET
+            .LMK_SYNC
 
     LMK04616        RW
         # Data to write, returns data returned as part of last SPI transaction
@@ -21,3 +22,5 @@
         .R_WN
         # Selects which LMK to address
         .SELECT
+
+    CLOCK_FREQ      R   4

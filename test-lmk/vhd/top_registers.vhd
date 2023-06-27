@@ -26,6 +26,7 @@ entity top_registers is
         lmk_command_select_o : out std_ulogic;
         lmk_status_i : in std_ulogic_vector(1 downto 0);
         lmk_reset_o : out std_ulogic;
+        lmk_sync_o : out std_ulogic;
 
         -- SPI interface to LMK
         lmk_write_strobe_o : out std_ulogic;
@@ -36,7 +37,9 @@ entity top_registers is
         lmk_write_select_o : out std_ulogic;
         lmk_read_strobe_o : out std_ulogic;
         lmk_read_ack_i : in std_ulogic;
-        lmk_data_i : in std_ulogic_vector(7 downto 0)
+        lmk_data_i : in std_ulogic_vector(7 downto 0);
+
+        clock_counts_i : in unsigned_array(0 to 3)(31 downto 0)
     );
 end;
 
@@ -74,9 +77,14 @@ begin
     read_ack_o(TOP_LMK04616_REG) <= lmk_read_ack_i;
     read_data_o(TOP_LMK04616_REG) <= lmk_read_bits;
 
+    read_ack_o(TOP_CLOCK_FREQ_REGS) <= (others => '1');
+    write_ack_o(TOP_CLOCK_FREQ_REGS) <= (others => '1');
+    read_data_o(TOP_CLOCK_FREQ_REGS) <= reg_data_array_t(clock_counts_i);
+
 
     lmk_command_select_o <= config_bits(TOP_CONFIG_LMK_SELECT_BIT);
     lmk_reset_o <= config_bits(TOP_CONFIG_LMK_RESET_BIT);
+    lmk_sync_o <= config_bits(TOP_CONFIG_LMK_SYNC_BIT);
 
     status_bits <= (
         TOP_STATUS_LMK_STATUS_BITS => lmk_status_i,

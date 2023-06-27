@@ -56,7 +56,7 @@ begin
     ref_pll : PLLE3_BASE generic map (
         CLKIN_PERIOD => 10.0,       -- 10 ns period for 100 MHz input clock
         CLKFBOUT_MULT => 10,        -- Run PLL at 1000 MHz
-        CLKOUT0_DIVIDE => 4         -- Fallback clock at 250 MHz
+        CLKOUT0_DIVIDE => 4         -- Output clock at 250 MHz
     ) port map (
         -- Inputs
         CLKIN => sysclk_in,

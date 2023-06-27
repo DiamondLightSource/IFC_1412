@@ -25,3 +25,11 @@ pad_LMK_SDIO                    inout
 pad_LMK_RESET_L                 out
 pad_LMK_SYNC                    inout
 pad_LMK_STATUS[0..1]            inout
+
+# Some miscellaneous clocks to count
+# SG12_CK from CLKOUT9
+pad_SG12_CK_{P,N}               in
+# SG1_WCK from CLKOUT11, SG2_WCK from CLKOUT14
+pad_SG{1,2}_WCK_{P,N}           in
+# MGT232 from CLKOUT6
+pad_MGT232_REFCLK_{P,N}         in

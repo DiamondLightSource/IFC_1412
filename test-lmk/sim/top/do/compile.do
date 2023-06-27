@@ -20,6 +20,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fixed_delay.vhd \
     $common_vhd/util/dlyreg.vhd \
     $common_vhd/util/stretch_pulse.vhd \
+    $common_vhd/util/cross_clocks_handshake.vhd \
     $common_vhd/register/register_defs.vhd \
     $common_vhd/register/register_buffer.vhd \
     $common_vhd/register/register_mux_strobe.vhd \
@@ -37,6 +38,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
     $vhd_dir/lmk04616.vhd \
+    $vhd_dir/frequency_counters.vhd \
     $vhd_dir/top.vhd
 
 vcom -64 -2008 -work xil_defaultlib \

@@ -26,6 +26,14 @@ architecture arch of testbench is
     signal pad_LMK_RESET_L : std_ulogic;
     signal pad_LMK_SYNC : std_logic;
     signal pad_LMK_STATUS : std_logic_vector(0 to 1);
+    signal pad_SG12_CK_P : std_ulogic;
+    signal pad_SG12_CK_N : std_ulogic;
+    signal pad_SG1_WCK_P : std_ulogic;
+    signal pad_SG1_WCK_N : std_ulogic;
+    signal pad_SG2_WCK_P : std_ulogic;
+    signal pad_SG2_WCK_N : std_ulogic;
+    signal pad_MGT232_REFCLK_P : std_ulogic;
+    signal pad_MGT232_REFCLK_N : std_ulogic;
 
 begin
     pad_SYSCLK100_P <= not pad_SYSCLK100_P after 5 ns;
@@ -52,7 +60,15 @@ begin
         pad_LMK_SDIO => pad_LMK_SDIO,
         pad_LMK_RESET_L => pad_LMK_RESET_L,
         pad_LMK_SYNC => pad_LMK_SYNC,
-        pad_LMK_STATUS => pad_LMK_STATUS
+        pad_LMK_STATUS => pad_LMK_STATUS,
+        pad_SG12_CK_P => pad_SG12_CK_P,
+        pad_SG12_CK_N => pad_SG12_CK_N,
+        pad_SG1_WCK_P => pad_SG1_WCK_P,
+        pad_SG1_WCK_N => pad_SG1_WCK_N,
+        pad_SG2_WCK_P => pad_SG2_WCK_P,
+        pad_SG2_WCK_N => pad_SG2_WCK_N,
+        pad_MGT232_REFCLK_P => pad_MGT232_REFCLK_P,
+        pad_MGT232_REFCLK_N => pad_MGT232_REFCLK_N
     );
 
     pad_LMK_SDIO <= 'Z';
