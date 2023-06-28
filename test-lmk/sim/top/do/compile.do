@@ -20,7 +20,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fixed_delay.vhd \
     $common_vhd/util/dlyreg.vhd \
     $common_vhd/util/stretch_pulse.vhd \
-    $common_vhd/util/cross_clocks_handshake.vhd \
+    $common_vhd/util/cross_clocks.vhd \
+    $common_vhd/util/cross_clocks_read.vhd \
     $common_vhd/register/register_defs.vhd \
     $common_vhd/register/register_buffer.vhd \
     $common_vhd/register/register_mux_strobe.vhd \

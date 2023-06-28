@@ -25,15 +25,6 @@ architecture arch of frequency_counters is
     signal read_request : std_ulogic := '0';
     signal read_ready : std_ulogic_vector(0 to COUNT-1);
     signal counters : unsigned_array(0 to COUNT-1)(31 downto 0);
-    signal counts_out : unsigned_array(0 to COUNT-1)(31 downto 0);
-
-    -- The path from counters to counts_out crosses clock domains, but this is
-    -- safe ... so long as it doesn't take an excessive time!
-    attribute KEEP : string;
-    attribute KEEP of counters : signal is "TRUE";
-    attribute max_delay_from : string;
-    attribute max_delay_from of counters : signal is "TRUE";
-
 
 begin
     process (clk_i) begin
@@ -48,38 +39,38 @@ begin
 
             for i in 0 to COUNT-1 loop
                 if read_ready(i) then
-                    counts_out(i) <= counters(i);
+                    counts_o(i) <= counters(i);
                 end if;
             end loop;
         end if;
     end process;
-    counts_o <= counts_out;
 
 
     gen_counters : for i in 0 to COUNT-1 generate
         signal clock_counter : unsigned(31 downto 0) := (others => '0');
         signal capture_clock : std_ulogic;
-        signal capture_ack : std_ulogic := '0';
 
     begin
-        sync_read : entity work.cross_clocks_handshake port map (
+        sync_read : entity work.cross_clocks_read generic map (
+            WIDTH => 32
+        ) port map (
             clk_in_i => clk_i,
-            strobe_in_i => read_request,
-            ack_in_o => read_ready(i),
+            strobe_i => read_request,
+            ack_o => read_ready(i),
+            unsigned(data_o) => counters(i),
             clk_out_i => clk_in_i(i),
-            strobe_out_o => capture_clock,
-            ack_out_i => capture_ack
+            strobe_o => capture_clock,
+            data_i => std_ulogic_vector(clock_counter),
+            ack_i => capture_clock
         );
 
         process (clk_in_i(i)) begin
             if rising_edge(clk_in_i(i)) then
                 if capture_clock then
-                    counters(i) <= clock_counter;
                     clock_counter <= (others => '0');
                 else
                     clock_counter <= clock_counter + 1;
                 end if;
-                capture_ack <= capture_clock;
             end if;
         end process;
     end generate;
