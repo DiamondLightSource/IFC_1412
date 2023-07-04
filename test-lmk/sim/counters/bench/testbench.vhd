@@ -17,6 +17,7 @@ architecture arch of testbench is
 
     signal clk_in : std_ulogic_vector(0 to COUNT-1) := (others => '0');
     signal counts : unsigned_array(0 to COUNT-1)(31 downto 0);
+    signal update : std_ulogic;
 
     type time_array is array(natural range <>) of time;
     signal tick_time : time_array(0 to COUNT-1)
@@ -34,6 +35,7 @@ begin
     ) port map (
         clk_i => clk,
         clk_in_i => clk_in,
-        counts_o => counts
+        counts_o => counts,
+        update_o => update
     );
 end;

@@ -14,7 +14,8 @@ vcom -64 -2008 -work xil_defaultlib \
     built_dir/version.vhd \
     $common_vhd/misc/spi_master.vhd \
     $common_vhd/register/register_defs.vhd \
-    $common_vhd/register/register_file.vhd \
+    $common_vhd/register/register_events.vhd \
+    $common_vhd/register/register_file_rw.vhd \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
     $vhd_dir/lmk04616.vhd \

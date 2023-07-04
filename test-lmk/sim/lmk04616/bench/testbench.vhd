@@ -117,7 +117,10 @@ begin
         lmk_write_select_o => lmk_write_select,
         lmk_read_strobe_o => lmk_read_strobe,
         lmk_read_ack_i => lmk_read_ack,
-        lmk_data_i => lmk_data_in
+        lmk_data_i => lmk_data_in,
+
+        clock_counts_i => (others => (others => '0')),
+        clock_update_i => '0'
     );
 
 

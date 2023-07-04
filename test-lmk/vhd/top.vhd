@@ -20,6 +20,7 @@ architecture arch of top is
     -- Test clocks
     signal test_clocks : std_ulogic_vector(0 to 3);
     signal test_clock_counts : unsigned_array(0 to 3)(31 downto 0);
+    signal test_clock_update : std_ulogic;
 
     -- Wiring from AXI-Lite master to register slave
     signal DSP_REGS_araddr : std_ulogic_vector(16 downto 0);     -- AR
@@ -258,7 +259,8 @@ begin
         lmk_read_ack_i => lmk_read_ack,
         lmk_data_i => lmk_data_in,
 
-        clock_counts_i => test_clock_counts
+        clock_counts_i => test_clock_counts,
+        clock_update_i => test_clock_update
     );
 
 
@@ -298,7 +300,8 @@ begin
     ) port map (
         clk_i => clk,
         clk_in_i => test_clocks,
-        counts_o => test_clock_counts
+        counts_o => test_clock_counts,
+        update_o => test_clock_update
     );
 
 
