@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+# Load complete register state from LMK
+
+import argparse
+import re
+
+
+
+parser = argparse.ArgumentParser(description = 'Read and save LMK state')
+parser.add_argument(
+    '-l', dest = 'load', default = None,
+    help = 'Specify file to load state from')
+parser.add_argument(
+    '-f', dest = 'format', default = 'names',
+    choices = ('names', 'raw', 'ti'),
+    help = 'Select output format: names or raw registers')
+args = parser.parse_args()
+
+
+def load_lmk():
+    if args.load is None:
+        from bind_lmk import lmk
+    else:
+        from fpga_lib.devices import LMK04616
+        lmk = LMK04616()
+
+        for line in open(args.load).readlines():
+            address, value = [
+                int(g, 16)
+                for g in re.match(r'PLL\[(...)] => (..)', line).groups()]
+            lmk._write_register(address, value)
+    return lmk
+
+
+def output_names(lmk):
+    for field in lmk._get_fields():
+        print(field, '=', '%X' % getattr(lmk, field))
+
+
+# Returns list of writeable registers
+def get_registers(lmk):
+    registers = set()
+    for field in lmk._get_fields():
+        for m in lmk._get_field_meta(field):
+            if not m.read_only:
+                registers.add(m.register)
+    return sorted(registers)
+
+
+def output_raw(lmk):
+    for reg in get_registers(lmk):
+        value = lmk._read_register(reg)
+        print('PLL[%03X] => %02X' % (reg, value))
+
+
+def output_ti(lmk):
+    for reg in get_registers(lmk):
+        value = lmk._read_register(reg)
+        print('R%d 0x%04X%02X' % (reg, reg, value))
+
+
+output_options = {
+    'names': output_names,
+    'raw':   output_raw,
+    'ti':    output_ti,
+}
+
+def main():
+    lmk = load_lmk()
+    output_options[args.format](lmk)
+
+main()

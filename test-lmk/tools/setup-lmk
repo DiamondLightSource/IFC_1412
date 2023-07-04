@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import os
+import numpy
+import time
+
+from fpga_lib.driver import driver
+
+from setup_lmk import setup_sys_lmk
+
+# driver.VERBOSE = True
+
+
+here = os.path.dirname(__file__)
+register_defines = os.path.join(here, '../vhd', 'register_defines.in')
+raw_regs = driver.RawRegisters('ifc_1412-regs', 1)
+regs = driver.Registers(raw_regs, register_defines)
+top = regs.TOP
+
+lmk = setup_sys_lmk(regs.TOP)
+
+# Give the system time to lock
+time.sleep(0.01)
+print('Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
+print(top.STATUS)

@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import time
+import sys
+
+from fpga_lib.driver import driver
+
+from bind_lmk import top
+
+def print_freqs():
+    while not top.EVENTS.COUNT_UPDATE:
+        time.sleep(0.01)
+    for i in range(3):
+        print(top.CLOCK_FREQ[i]._value, end = '  ')
+    print()
+
+count = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+try:
+    if count > 0:
+        for n in range(count):
+            print_freqs()
+    else:
+        while True:
+            print_freqs()
+except KeyboardInterrupt:
+    pass

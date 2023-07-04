@@ -13,7 +13,7 @@ def to_int(s):
 parser = argparse.ArgumentParser(description = 'Read/write LMK registers')
 parser.add_argument(
     '-a', dest = 'addr', default = 1,
-    help = 'Set physical address of card.  If not specified then card 0')
+    help = 'Set physical address of card.  If not specified then card 1')
 parser.add_argument(
     '-s', dest = 'sel', default = 0, type = int, choices = (0, 1),
     help = 'Select which LMK (0 => SYS, 1 => ACQ)')
@@ -53,6 +53,6 @@ if args.reset:
 
 if args.value is None:
     value = read_lmk(args.sel, args.reg)
-    print('[%03X] => %02X' % (args.reg, value))
+    print('[%03X] => %02X (%d)' % (args.reg, value, value))
 else:
     write_lmk(args.sel, args.reg, args.value)
