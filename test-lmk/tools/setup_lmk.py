@@ -137,26 +137,20 @@ def set_sync_enable(lmk, n, enable):
     m = n + 1
     ch = 'CH%d_%d' % (n, m)
     setattr(lmk, 'SYNC_EN_' + ch, enable)
-#     setattr(lmk, 'SYSREF_EN_' + ch, 0)
 
-def setup_sync(lmk):
-#     lmk.EN_SYNC_PIN_FUNC = 0        # Disable SYNC from input pin
-#     lmk.SYNC_PIN_FUNC = 0           # Use pin to enable SYNC
-#     lmk.SYNC_ENB_INSTAGE = 0        # Must be 0 to enable SYNC input
-#     lmk.GLOBAL_SYNC = 0             # Set to enable SYNC
+def setup_sync(lmk, enable_sync_pin):
     lmk.PLL2_EN_BUF_SYNC_TOP = 1    # Use SYNC on outputs 8 to 15
     lmk.PLL2_EN_BUF_SYNC_BOTTOM = 0 #  but not 0 to 7
 
-#     lmk.SYNC_OUTPUT_HIZ = 1         # Enable SYNC as input
-#     lmk.SYNC_ANALOGDLY_EN = 0       # Don't need SYNC analogue delay
-#     lmk.SYNC_INV = 0                # Start SYNC on rising edge
-
-
-#     lmk.GLOBAL_SYNC = 1
-
-#     lmk.GLOBAL_SYSREF = 1
-#     lmk.GLOBAL_CONT_SYSREF = 1
-#     lmk.OUTCH_SYSREF_PLSCNT = 0     # Continuous SYSREF when selected
+    lmk.GLOBAL_SYNC = 0
+    if enable_sync_pin:
+        lmk.EN_SYNC_PIN_FUNC = 1        # Enable SYNC from input pin
+        lmk.SYNC_PIN_FUNC = 0           # Use pin to enable SYNC
+        lmk.SYNC_ENB_INSTAGE = 0        # Must be 0 to enable SYNC input
+        lmk.SYNC_OUTPUT_HIZ = 1         # Enable SYNC as input
+        lmk.SYNC_EN_ML_INSTAGE = 0      # Set this to enable extended SYNC
+    else:
+        lmk.EN_SYNC_PIN_FUNC = 0        # Disable SYNC from input pin
 
     set_sync_enable(lmk, 0,  0)
     set_sync_enable(lmk, 2,  0)
@@ -168,7 +162,7 @@ def setup_sync(lmk):
     set_sync_enable(lmk, 14, 1)     # Want to disable in real application
 
 
-def setup_sys_lmk(top, use_fclk = True):
+def setup_sys_lmk(top, use_fclk = True, enable_sync_pin = True):
     def write_lmk(reg, value):
         top.LMK04616._write_fields_wo(
             ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
@@ -190,7 +184,7 @@ def setup_sys_lmk(top, use_fclk = True):
     # Create the wrapper register, configure and write
     lmk = LMK04616(writer = write_lmk, reader = read_lmk)
     configure_sys_lmk(lmk, use_fclk)
-    setup_sync(lmk)
+    setup_sync(lmk, enable_sync_pin)
     lmk.write_config()
 
     return lmk

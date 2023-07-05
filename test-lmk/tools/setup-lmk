@@ -8,8 +8,6 @@ from fpga_lib.driver import driver
 
 from setup_lmk import setup_sys_lmk
 
-# driver.VERBOSE = True
-
 
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd', 'register_defines.in')
@@ -21,5 +19,6 @@ lmk = setup_sys_lmk(regs.TOP)
 
 # Give the system time to lock
 time.sleep(0.01)
-print('Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
-print(top.STATUS)
+print(
+    'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
+    ', Status =', top.STATUS.LMK_STATUS)

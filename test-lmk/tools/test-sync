@@ -10,38 +10,39 @@ from bind_lmk import top, lmk
 import setup_lmk
 
 
+use_global_sync = False
+# driver.VERBOSE = True
+
+
 # Clock frequencies in order:
 #   CK on CLKOUT14
 #   WCK on CLKOUT8
 #   WCK on CLKOUT10
 def print_freqs():
+    verbose = driver.VERBOSE
+    driver.VERBOSE = False
     while not top.EVENTS.COUNT_UPDATE:
         time.sleep(0.01)
     for i in range(3):
         print(top.CLOCK_FREQ[i]._value, end = '  ')
     print()
+    driver.VERBOSE = verbose
 
 
 print_freqs()
 
-setup_lmk.setup_sync(lmk)
+if use_global_sync:
+    lmk.GLOBAL_SYNC = 1
+else:
+    top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_SYNC = 1)
 
 print_freqs()
-
-lmk.GLOBAL_SYNC = 1
-
 print_freqs()
 
-# top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_SYNC = 1)
-
-# print_freqs()
-# print_freqs()
-
-# top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_SYNC = 0)
-
-print_freqs()
-
-lmk.GLOBAL_SYNC = 0
+if use_global_sync:
+    lmk.GLOBAL_SYNC = 0
+else:
+    top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_SYNC = 0)
 
 print_freqs()
 print_freqs()
