@@ -32,7 +32,10 @@ entity gddr6_phy is
     port (
         -- --------------------------------------------------------------------
         -- Clocks reset and control
+        --
 
+        -- Directly driven resets to the two GDDR6 devices.  Should be held high
+        -- until ca_i has been properly set for configuration options.
         sg_resets_i : in std_ulogic_vector(0 to 1);
 
 
@@ -45,6 +48,10 @@ entity gddr6_phy is
         -- Clock enable, held low during normal operation
         cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
+        -- Configuration driven onto edc pins at startup.  Otherwise edc_t_i
+        -- be driven high so that edc_o can be read from the device.
+        edc_i : in std_ulogic_vector(7 downto 0);
+        edc_t_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- DQ
@@ -97,10 +104,10 @@ entity gddr6_phy is
         pad_SG1_DBI_N_B_io : inout std_logic_vector(1 downto 0);
         pad_SG2_DBI_N_A_io : inout std_logic_vector(1 downto 0);
         pad_SG2_DBI_N_B_io : inout std_logic_vector(1 downto 0);
-        pad_SG1_EDC_A_i : in std_logic_vector(1 downto 0);
-        pad_SG1_EDC_B_i : in std_logic_vector(1 downto 0);
-        pad_SG2_EDC_A_i : in std_logic_vector(1 downto 0);
-        pad_SG2_EDC_B_i : in std_logic_vector(1 downto 0)
+        pad_SG1_EDC_A_io : inout std_logic_vector(1 downto 0);
+        pad_SG1_EDC_B_io : inout std_logic_vector(1 downto 0);
+        pad_SG2_EDC_A_io : inout std_logic_vector(1 downto 0);
+        pad_SG2_EDC_B_io : inout std_logic_vector(1 downto 0)
     );
 end;
 
@@ -178,10 +185,10 @@ begin
         pad_SG1_DBI_N_B_io => pad_SG1_DBI_N_B_io,
         pad_SG2_DBI_N_A_io => pad_SG2_DBI_N_A_io,
         pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B_io,
-        pad_SG1_EDC_A_i => pad_SG1_EDC_A_i,
-        pad_SG1_EDC_B_i => pad_SG1_EDC_B_i,
-        pad_SG2_EDC_A_i => pad_SG2_EDC_A_i,
-        pad_SG2_EDC_B_i => pad_SG2_EDC_B_i,
+        pad_SG1_EDC_A_io => pad_SG1_EDC_A_io,
+        pad_SG1_EDC_B_io => pad_SG1_EDC_B_io,
+        pad_SG2_EDC_A_io => pad_SG2_EDC_A_io,
+        pad_SG2_EDC_B_io => pad_SG2_EDC_B_io,
 
         io_ck_o => io_ck_in,
         io_wck_o => io_wck_in,
@@ -198,7 +205,11 @@ begin
         io_dbi_n_i => io_dbi_n_out,
         io_dbi_n_o => io_dbi_n_in,
         io_dbi_n_t_i => io_dbi_n_t_out,
-        io_edc_o => io_edc_in
+        io_edc_o => io_edc_in,
+        -- Note that the EDC output drive bypasses all the bitslice control, as
+        -- this is only designed to be configured during reset configuration
+        io_edc_i => edc_i,
+        io_edc_t_i => (others => edc_t_i)
     );
 
 

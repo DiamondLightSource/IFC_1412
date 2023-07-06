@@ -29,6 +29,8 @@ architecture arch of testbench is
     signal ca_in : vector_array(0 to 1)(9 downto 0);
     signal ca3_in : std_ulogic_vector(0 to 3);
     signal cke_n_in : std_ulogic;
+    signal edc_in : std_ulogic_vector(7 downto 0);
+    signal edc_t_in : std_ulogic;
 
     signal data_in : std_ulogic_vector(511 downto 0);
     signal data_out : std_ulogic_vector(511 downto 0);
@@ -80,6 +82,8 @@ begin
         ca_i => ca_in,
         ca3_i => ca3_in,
         cke_n_i => cke_n_in,
+        edc_i => edc_in,
+        edc_t_i => edc_t_in,
 
         enable_dbi_i => enable_dbi_in,
         data_i => data_in,
@@ -119,10 +123,10 @@ begin
         pad_SG1_DBI_N_B_io => pad_SG1_DBI_N_B,
         pad_SG2_DBI_N_A_io => pad_SG2_DBI_N_A,
         pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B,
-        pad_SG1_EDC_A_i => pad_SG1_EDC_A,
-        pad_SG1_EDC_B_i => pad_SG1_EDC_B,
-        pad_SG2_EDC_A_i => pad_SG2_EDC_A,
-        pad_SG2_EDC_B_i => pad_SG2_EDC_B
+        pad_SG1_EDC_A_io => pad_SG1_EDC_A,
+        pad_SG1_EDC_B_io => pad_SG1_EDC_B,
+        pad_SG2_EDC_A_io => pad_SG2_EDC_A,
+        pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
 
     sg_resets_in <= "00";

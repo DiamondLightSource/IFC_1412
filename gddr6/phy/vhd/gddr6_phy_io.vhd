@@ -40,10 +40,10 @@ entity gddr6_phy_io is
         pad_SG1_DBI_N_B_io : inout std_logic_vector(1 downto 0);
         pad_SG2_DBI_N_A_io : inout std_logic_vector(1 downto 0);
         pad_SG2_DBI_N_B_io : inout std_logic_vector(1 downto 0);
-        pad_SG1_EDC_A_i : in std_logic_vector(1 downto 0);
-        pad_SG1_EDC_B_i : in std_logic_vector(1 downto 0);
-        pad_SG2_EDC_A_i : in std_logic_vector(1 downto 0);
-        pad_SG2_EDC_B_i : in std_logic_vector(1 downto 0);
+        pad_SG1_EDC_A_io : inout std_logic_vector(1 downto 0);
+        pad_SG1_EDC_B_io : inout std_logic_vector(1 downto 0);
+        pad_SG2_EDC_A_io : inout std_logic_vector(1 downto 0);
+        pad_SG2_EDC_B_io : inout std_logic_vector(1 downto 0);
 
         -- --------------------------------------------------------------------
         -- Clocks and reset
@@ -69,8 +69,10 @@ entity gddr6_phy_io is
         io_dbi_n_i : in std_ulogic_vector(7 downto 0);
         io_dbi_n_o : out std_ulogic_vector(7 downto 0);
         io_dbi_n_t_i : in std_ulogic_vector(7 downto 0);
-        -- Error detection code, association as for dbi
-        io_edc_o : out std_ulogic_vector(7 downto 0)
+        -- Error detection code, association as for dbi, and startup config
+        io_edc_i : in std_ulogic_vector(7 downto 0);
+        io_edc_o : out std_ulogic_vector(7 downto 0);
+        io_edc_t_i : in std_ulogic_vector(7 downto 0)
     );
 end;
 
@@ -161,13 +163,15 @@ begin
         io_io(7 downto 6) => pad_SG2_DBI_N_B_io
     );
 
-    i_edc : entity work.ibuf_array generic map (
+    i_edc : entity work.iobuf_array generic map (
         COUNT => 8
     ) port map (
-        i_i(1 downto 0) => pad_SG1_EDC_A_i,
-        i_i(3 downto 2) => pad_SG1_EDC_B_i,
-        i_i(5 downto 4) => pad_SG2_EDC_A_i,
-        i_i(7 downto 6) => pad_SG2_EDC_B_i,
-        o_o => io_edc_o
+        i_i => io_edc_i,
+        t_i => io_edc_t_i,
+        o_o => io_edc_o,
+        io_io(1 downto 0) => pad_SG1_EDC_A_io,
+        io_io(3 downto 2) => pad_SG1_EDC_B_io,
+        io_io(5 downto 4) => pad_SG2_EDC_A_io,
+        io_io(7 downto 6) => pad_SG2_EDC_B_io
     );
 end;
