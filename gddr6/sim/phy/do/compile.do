@@ -13,16 +13,18 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/iodefs/ibuf_array.vhd \
     $common_vhd/iodefs/obuf_array.vhd \
     $common_vhd/iodefs/iobuf_array.vhd \
-    $vhd_dir/gddr6_phy_defs.vhd \
-    $vhd_dir/gddr6_phy_io.vhd \
-    $vhd_dir/gddr6_phy_ca.vhd \
-    $vhd_dir/gddr6_phy_nibble.vhd \
-    $vhd_dir/gddr6_phy_byte.vhd \
-    $vhd_dir/gddr6_phy_map_data.vhd \
-    $vhd_dir/gddr6_phy_dq_remap.vhd \
-    $vhd_dir/gddr6_phy_dq.vhd \
-    $vhd_dir/gddr6_phy_delay_control.vhd \
-    $vhd_dir/gddr6_phy.vhd
+    $common_vhd/util/sync_bit.vhd \
+    $vhd_dir/phy/gddr6_phy_defs.vhd \
+    $vhd_dir/phy/gddr6_phy_io.vhd \
+    $vhd_dir/phy/gddr6_phy_clocking.vhd \
+    $vhd_dir/phy/gddr6_phy_ca.vhd \
+    $vhd_dir/phy/gddr6_phy_nibble.vhd \
+    $vhd_dir/phy/gddr6_phy_byte.vhd \
+    $vhd_dir/phy/gddr6_phy_map_data.vhd \
+    $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
+    $vhd_dir/phy/gddr6_phy_dq.vhd \
+    $vhd_dir/phy/gddr6_phy_delay_control.vhd \
+    $vhd_dir/phy/gddr6_phy.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/testbench.vhd
@@ -32,13 +34,14 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 view wave
 
 add wave -group "IO" /phy/io/*
+add wave -group "Clocking" /phy/clocking/*
 add wave -group "CA" /phy/ca/*
 add wave -group "DQ" /phy/dq/*
-add wave -group "Control" /phy/delay_control/*
+add wave -group "Delay" /phy/delay_control/*
 add wave -group "Phy" /phy/*
 add wave -group "Bench" sim:*
 
 
-run 1 us
+run 2 us
 
 # vim: set filetype=tcl:

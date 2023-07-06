@@ -32,12 +32,21 @@ entity gddr6_phy is
     port (
         -- --------------------------------------------------------------------
         -- Clocks reset and control
-        --
+
+        -- Clock from CK input
+        ck_clk_o : out std_ulogic;
+        -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
+        -- are held in reset until CK is good.
+        ck_reset_i : in std_ulogic;
+        -- This is asserted on completion of reset
+        ck_ok_o : out std_ulogic;
+        -- This indicates that FIFO reset has been successful, and will go low
+        -- if FIFO underflow or overflow is detected.
+        fifo_ok_o : out std_ulogic;
 
         -- Directly driven resets to the two GDDR6 devices.  Should be held high
         -- until ca_i has been properly set for configuration options.
         sg_resets_i : in std_ulogic_vector(0 to 1);
-
 
         -- --------------------------------------------------------------------
         -- CA
@@ -138,7 +147,6 @@ architecture arch of gddr6_phy is
     signal pll_clk : std_ulogic_vector(0 to 1);
     signal clk : std_ulogic;
     signal reset : std_ulogic;
-    signal sg_reset : std_ulogic_vector(0 to 1);
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal fifo_empty : std_ulogic;
@@ -213,10 +221,24 @@ begin
     );
 
 
+    -- Clocks and resets
+    clocking : entity work.gddr6_phy_clocking port map (
+        ck_clk_o => clk,
+        ck_reset_i => ck_reset_i,
+        ck_ok_o => ck_ok_o,
 
---     clocking : entity work.gddr6_phy_clocking port map (
+        io_ck_i => io_ck_in,
+        pll_clk_o => pll_clk,
+
+        reset_o => reset,
+        dly_ready_i => dly_ready,
+        vtc_ready_i => vtc_ready,
+        enable_control_vtc_o => enable_control_vtc
+    );
+    ck_clk_o <= clk;
 
 
+    -- CA generation
     ca : entity work.gddr6_phy_ca generic map (
         REFCLK_FREQUENCY => REFCLK_FREQUENCY,
         CA_ODELAY_PS => CA_ODELAY_PS
@@ -244,16 +266,16 @@ begin
     );
 
 
+    -- Data receive and transmit
     dq : entity work.gddr6_phy_dq port map (
         pll_clk_i => pll_clk,
-        reg_clk_i => clk,
+        clk_i => clk,
         wck_i => io_wck_in,
 
         reset_i => reset,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
-        fifo_empty_o => fifo_empty,
-        fifo_enable_i => fifo_enable,
+        fifo_ok_o => fifo_ok_o,
         enable_control_vtc_i => enable_control_vtc,
 
         data_i => data_i,
@@ -278,6 +300,7 @@ begin
     );
 
 
+    -- Register interface to individual pin delays
     delay_control : entity work.gddr6_phy_delay_control port map (
         clk_i => clk,
 

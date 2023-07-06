@@ -149,7 +149,7 @@ begin
     -- Register SG reset signal
     gen_resets : for i in 0 to 1 generate
         i_reset : ODDRE1 generic map (
-            SRVAL => '1'
+            SRVAL => '0'
         ) port map (
             SR => reset_i,
             C => clk_i,

@@ -22,6 +22,10 @@ architecture arch of testbench is
         writeline(output, linebuffer);
     end;
 
+    signal ck_clk_out : std_ulogic;
+    signal ck_reset_in : std_ulogic;
+    signal ck_ok_out : std_ulogic;
+    signal fifo_ok_out : std_ulogic;
     signal sg_resets_in : std_ulogic_vector(0 to 1);
     signal enable_cabi_in : std_ulogic;
     signal enable_dbi_in : std_ulogic;
@@ -76,6 +80,10 @@ architecture arch of testbench is
 
 begin
     phy : entity work.gddr6_phy port map (
+        ck_clk_o => ck_clk_out,
+        ck_reset_i => ck_reset_in,
+        ck_ok_o => ck_ok_out,
+        fifo_ok_o => fifo_ok_out,
         sg_resets_i => sg_resets_in,
 
         enable_cabi_i => enable_cabi_in,
@@ -129,13 +137,15 @@ begin
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
 
-    sg_resets_in <= "00";
+    sg_resets_in <= "11";
     enable_cabi_in <= '0';
     enable_dbi_in <= '0';
 
     ca_in <= (others => (others => '0'));
     ca3_in <= (others => '0');
     cke_n_in <= '0';
+    edc_in <= (others => '1');
+    edc_t_in <= '0';
 
     data_in <= (others => '0');
     dq_t_in <= '0';
@@ -165,4 +175,11 @@ begin
     pad_SG1_EDC_B <= (others => '1');
     pad_SG2_EDC_A <= (others => '1');
     pad_SG2_EDC_B <= (others => '1');
+
+    process begin
+        ck_reset_in <= '1';
+        wait for 50 ns;
+        ck_reset_in <= '0';
+        wait;
+    end process;
 end;

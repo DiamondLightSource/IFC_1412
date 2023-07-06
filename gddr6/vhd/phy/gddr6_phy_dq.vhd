@@ -11,17 +11,16 @@ use work.gddr6_phy_defs.all;
 entity gddr6_phy_dq is
     port (
         -- Clocks
-        pll_clk_i : in std_ulogic_vector(0 to 1);
-        reg_clk_i : in std_ulogic;
-        wck_i : in std_ulogic_vector(0 to 1);
+        pll_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
+        clk_i : in std_ulogic;                      -- General register clock
+        wck_i : in std_ulogic_vector(0 to 1);       -- RX data clocks
 
         -- Resets and control
-        reset_i : in std_ulogic;
-        dly_ready_o : out std_ulogic;
-        vtc_ready_o : out std_ulogic;
-        fifo_empty_o : out std_ulogic;
-        fifo_enable_i : in std_ulogic;
+        reset_i : in std_ulogic;                -- Bitslice reset
+        dly_ready_o : out std_ulogic;           -- Delay ready (async)
+        vtc_ready_o : out std_ulogic;           -- Calibration done (async)
         enable_control_vtc_i : in std_ulogic;
+        fifo_ok_o : out std_ulogic;
 
         -- Data interface, all values for a single CA tick
         data_o : out std_ulogic_vector(511 downto 0);
@@ -74,6 +73,7 @@ architecture arch of gddr6_phy_dq is
     signal fifo_empty : std_ulogic_vector(0 to 7);
     signal dly_ready : std_ulogic_vector(0 to 7);
     signal vtc_ready : std_ulogic_vector(0 to 7);
+    signal fifo_enable : std_ulogic := '0';
 
     -- Arrays of bitslice resources ready for mapping
     signal enable_bitslice_vtc : vector_array(0 to 7)(0 to 11);
@@ -119,11 +119,11 @@ begin
             CLK_TO_SOUTH => MAP_CLK_TO_SOUTH(i mod 4)
         ) port map (
             pll_clk_i => pll_clk_i(i / 4),
-            fifo_rd_clk_i => reg_clk_i,
-            reg_clk_i => reg_clk_i,
+            fifo_rd_clk_i => clk_i,
+            reg_clk_i => clk_i,
 
             fifo_empty_o => fifo_empty(i),
-            fifo_enable_i => fifo_enable_i,
+            fifo_enable_i => fifo_enable,
 
             reset_i => reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
@@ -227,7 +227,7 @@ begin
     -- Finally flatten the data across 8 ticks.  At this point we also apply
     -- DBI if appropriate
     map_data : entity work.gddr6_phy_map_data port map (
-        clk_i => reg_clk_i,
+        clk_i => clk_i,
 
         enable_dbi_i => enable_dbi_i,
 
@@ -243,8 +243,16 @@ begin
     );
 
 
+    -- Enable FIFO when following UG571 v1.14 p213
+    process (clk_i) begin
+        if rising_edge(clk_i) then
+            fifo_enable <= not vector_or(fifo_empty);
+            fifo_ok_o <= fifo_enable;
+        end if;
+    end process;
+
+
     -- Gather statuses needed for resets
     dly_ready_o <= vector_and(dly_ready);
     vtc_ready_o <= vector_and(vtc_ready);
-    fifo_empty_o <= vector_or(fifo_empty);
 end;
