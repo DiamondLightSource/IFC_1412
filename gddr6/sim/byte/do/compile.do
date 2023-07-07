@@ -9,8 +9,8 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
-    $vhd_dir/gddr6_phy_nibble.vhd \
-    $vhd_dir/gddr6_phy_byte.vhd
+    $vhd_dir/phy/gddr6_phy_nibble.vhd \
+    $vhd_dir/phy/gddr6_phy_byte.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/testbench.vhd

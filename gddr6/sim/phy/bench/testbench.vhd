@@ -51,9 +51,9 @@ architecture arch of testbench is
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
-    signal pad_SG1_WCK_P : std_ulogic;
+    signal pad_SG1_WCK_P : std_ulogic := '0';
     signal pad_SG1_WCK_N : std_ulogic;
-    signal pad_SG2_WCK_P : std_ulogic;
+    signal pad_SG2_WCK_P : std_ulogic := '0';
     signal pad_SG2_WCK_N : std_ulogic;
     signal pad_SG1_RESET_N : std_ulogic;
     signal pad_SG2_RESET_N : std_ulogic;
@@ -159,10 +159,11 @@ begin
     pad_SG12_CK_P <= not pad_SG12_CK_P after 2 ns;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
-    pad_SG1_WCK_P <= '0';
-    pad_SG1_WCK_N <= '1';
-    pad_SG2_WCK_P <= '0';
-    pad_SG2_WCK_N <= '1';
+    pad_SG1_WCK_P <= not pad_SG1_WCK_P after 0.5 ns when ck_ok_out;
+    pad_SG1_WCK_N <= not pad_SG1_WCK_P;
+    pad_SG2_WCK_P <= not pad_SG1_WCK_P after 0.5 ns when ck_ok_out;
+    pad_SG2_WCK_N <= not pad_SG2_WCK_P;
+
     pad_SG1_DQ_A <= (others => 'Z');
     pad_SG1_DQ_B <= (others => 'Z');
     pad_SG2_DQ_A <= (others => 'Z');
@@ -171,10 +172,10 @@ begin
     pad_SG1_DBI_N_B <= (others => 'Z');
     pad_SG2_DBI_N_A <= (others => 'Z');
     pad_SG2_DBI_N_B <= (others => 'Z');
-    pad_SG1_EDC_A <= (others => '1');
-    pad_SG1_EDC_B <= (others => '1');
-    pad_SG2_EDC_A <= (others => '1');
-    pad_SG2_EDC_B <= (others => '1');
+    pad_SG1_EDC_A <= (others => 'Z');
+    pad_SG1_EDC_B <= (others => 'Z');
+    pad_SG2_EDC_A <= (others => 'Z');
+    pad_SG2_EDC_B <= (others => 'Z');
 
     process begin
         ck_reset_in <= '1';
