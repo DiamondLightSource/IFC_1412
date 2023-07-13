@@ -6,9 +6,12 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-use work.gddr6_phy_defs.all;
+use work.gddr6_config_defs.all;
 
 entity gddr6_phy_dq is
+    generic (
+        REFCLK_FREQUENCY : real
+    );
     port (
         -- Clocks
         pll_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
@@ -28,6 +31,8 @@ entity gddr6_phy_dq is
         edc_o : out std_ulogic_vector(63 downto 0);
         dq_t_i : in std_ulogic;
         enable_dbi_i : in std_ulogic;
+        edc_in_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- Delay Control
         -- The entries are multiplexed into 64+8+8+16 = 96 bits with the
@@ -98,6 +103,8 @@ architecture arch of gddr6_phy_dq is
     signal bank_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal bank_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal bank_edc_in : vector_array(7 downto 0)(7 downto 0);
+    -- Registered dq_t_i to track registered bank_data_out
+    signal dq_t_in : std_ulogic := '1';
 
     -- Decode ranges for delay control groups
     subtype DELAY_DQ_RANGE is natural range 0 to 63;
@@ -145,7 +152,7 @@ begin
 
             data_o => data_out(i),
             data_i => data_in(i),
-            tbyte_i => (others => dq_t_i),
+            tbyte_i => (others => dq_t_in),
 
             pad_in_i => pad_in_in(i),
             pad_out_o => pad_out_out(i),
@@ -235,19 +242,34 @@ begin
         bank_data_o => bank_data_out,
         bank_dbi_n_i => bank_dbi_n_in,
         bank_dbi_n_o => bank_dbi_n_out,
-        bank_edc_i => bank_edc_in,
 
         data_i => data_i,
-        data_o => data_o,
-        edc_o => edc_o
+        data_o => data_o
     );
 
 
-    -- Enable FIFO when following UG571 v1.14 p213
+    -- Compute CRC on data passing over the wire
+    crc : entity work.gddr6_phy_crc port map (
+        clk_i => clk_i,
+
+        dq_t_i => dq_t_in,
+        bank_data_in_i => bank_data_in,
+        bank_dbi_n_in_i => bank_dbi_n_in,
+        bank_data_out_i => bank_data_out,
+        bank_dbi_n_out_i => bank_dbi_n_out,
+
+        edc_out_o => edc_out_o
+    );
+    edc_in_o <= bank_edc_in;
+
+
     process (clk_i) begin
         if rising_edge(clk_i) then
+            -- Enable FIFO following UG571 v1.14 p213
             fifo_enable <= not vector_or(fifo_empty);
             fifo_ok_o <= fifo_enable;
+            -- Align dq_t with data out
+            dq_t_in <= dq_t_i;
         end if;
     end process;
 

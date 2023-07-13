@@ -10,11 +10,15 @@ use unisim.vcomponents.all;
 use work.support.all;
 
 entity gddr6_phy_clocking is
+    generic (
+        CK_FREQUENCY : real
+    );
     port (
         -- Main clock and reset control.  Hold in reset until CK valid
         ck_clk_o : out std_ulogic;
         ck_reset_i : in std_ulogic;
         ck_ok_o : out std_ulogic;
+        ck_unlock_o : out std_ulogic;
 
         -- Clock in from SG12_CK and TX clock out to bitslices
         io_ck_i : in std_ulogic;
@@ -32,6 +36,7 @@ architecture arch of gddr6_phy_clocking is
     signal io_ck_in : std_ulogic;
     signal clock_out : std_ulogic_vector(0 to 1);
     signal pll_locked : std_ulogic_vector(0 to 1);
+    signal unlock_detect : std_ulogic;
     signal clk : std_ulogic;
 
     signal reset_sync : std_ulogic;
@@ -53,13 +58,13 @@ begin
     gen_plls : for i in 0 to 1 generate
         signal clkfb : std_ulogic;
     begin
-        -- Input clock is 250 MHz, the PLL runs at 1 GHz
+        -- Input clock is 250 or 300 MHz, the PLL runs at 1 or 1.2 GHz
         pll : PLLE3_BASE generic map (
             CLKFBOUT_MULT => 4,
             CLKFBOUT_PHASE => 0.0,
-            CLKIN_PERIOD => 4.0,
+            CLKIN_PERIOD => 1000.0 / CK_FREQUENCY,
             CLKOUT0_DIVIDE => 4,
-            CLKOUTPHY_MODE => "VCO_2X" -- 2GHz on CLKOUTPHY
+            CLKOUTPHY_MODE => "VCO_2X" -- 2 or 2.4 GHz on CLKOUTPHY
         ) port map (
             CLKIN => io_ck_in,
             CLKOUTPHY => pll_clk_o(i),
@@ -149,6 +154,16 @@ begin
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs
             end case;
+        end if;
+    end process;
+
+    -- Detect PLL unlock and generate single pulse on resumption of lock
+    process (clk, pll_locked) begin
+        if not vector_and(pll_locked) then
+            unlock_detect <= '1';
+        elsif rising_edge(clk) then
+            unlock_detect <= '0';
+            ck_unlock_o <= unlock_detect;
         end if;
     end process;
 end;

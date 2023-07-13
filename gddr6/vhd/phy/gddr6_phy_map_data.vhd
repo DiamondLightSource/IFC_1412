@@ -1,4 +1,4 @@
--- Perform data remapping
+-- Perform data remapping and DBI correction if required
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -18,59 +18,69 @@ entity gddr6_phy_map_data is
         bank_data_o : out vector_array(63 downto 0)(7 downto 0);
         bank_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         bank_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        bank_edc_i : in vector_array(7 downto 0)(7 downto 0);
 
-        -- Processed signals leaving PHY layer
+        -- Flattened and DBI processed signals leaving PHY layer
         data_o : out std_ulogic_vector(511 downto 0);
-        data_i : in std_ulogic_vector(511 downto 0);
-        edc_o : out std_ulogic_vector(63 downto 0)
+        data_i : in std_ulogic_vector(511 downto 0)
     );
 end;
 
 architecture arch of gddr6_phy_map_data is
-    signal data_out : std_ulogic_vector(511 downto 0);
-    signal edc_out : std_ulogic_vector(63 downto 0);
+    -- Data path from DRAM: bank_data_i -> data_in => data_o
+    signal data_in : std_ulogic_vector(511 downto 0);
+    -- Data path to DRAM: data_i -> bank_data_out => bank_data_o
+    signal bank_data_out : vector_array(63 downto 0)(7 downto 0);
+
+    -- Gathered from bank_dbi_n_i and masked
+    signal invert_bits_in : vector_array(7 downto 0)(7 downto 0);
+    -- Computed from outgoing data
+    signal invert_bits_out : vector_array(7 downto 0)(7 downto 0);
 
 begin
-    gen_ticks : for tick in 0 to 7 generate
-        gen_bytes : for byte in 0 to 7 generate
-            -- Offset into tick selection of this byte
-            constant BANK_OFFSET : natural := 8 * byte;
-            -- Offset into processed word of this byte
-            constant WORD_OFFSET : natural := 64 * tick + BANK_OFFSET;
-            subtype WORD_BYTE_RANGE is natural
-                range WORD_OFFSET + 7 downto WORD_OFFSET;
+    -- Gather the DBI control bits.  For outgoing data we need to inspect the
+    -- data (after reshaping) to determine if DBI is wanted.
+    gen_dbi : for lanes in 0 to 7 generate
+        -- For incoming data we just obey the incoming bits for each group of
+        -- lanes
+        invert_bits_in(lanes) <= enable_dbi_i and not bank_dbi_n_i(lanes);
 
-            signal invert_bits_in : std_ulogic;
-            signal invert_bits_out : std_ulogic;
-
+        -- For outgoing data we need to inspect our dataset for each tick to
+        -- determine whether to enable DBI inversion
+        gen_ticks : for tick in 0 to 7 generate
+            -- Getting the byte for DBI output is surprisingly tricky as input
+            -- bytes are laid out in consecutive ticks.  Each lane group indexed
+            -- by lanes represents a group of 8 bytes.
+            impure function invert_bits return std_ulogic is
+                variable byte : std_ulogic_vector(7 downto 0);
+            begin
+                for i in 0 to 7 loop
+                    -- Select outgoing bits for the same tick in the selected
+                    -- byte group
+                    byte(i) := data_i(lanes * 64 + 8 * i + tick);
+                end loop;
+                return compute_bus_inversion(byte);
+            end;
         begin
-            -- Incoming data from edge, use DBI from memory
-            invert_bits_in <= enable_dbi_i and not bank_dbi_n_i(byte)(tick);
-            -- Outgoing data, compute DBI for each byte
-            invert_bits_out <= enable_dbi_i and
-                compute_bus_inversion(data_i(WORD_BYTE_RANGE));
-
-            -- We can't slice inner dimensions, so have to extract bit by bit
-            gen_bits : for bit in 0 to 7 generate
-                data_out(WORD_OFFSET + bit) <=
-                    invert_bits_in xor bank_data_i(BANK_OFFSET + bit)(tick);
-                bank_data_o(BANK_OFFSET + bit)(tick) <=
-                    invert_bits_out xor data_i(WORD_OFFSET + bit);
-            end generate;
-
-            bank_dbi_n_o(byte)(tick) <= not invert_bits_out;
-            edc_out(8*tick + byte) <= bank_edc_i(byte)(tick);
+            invert_bits_out(lanes)(tick) <= invert_bits;
+            bank_dbi_n_o(lanes)(tick) <= not invert_bits;
         end generate;
     end generate;
 
+
+    -- Gather bytes across banks, each lane contains data for one byte.
+    gen_bytes : for lane in 0 to 63 generate
+        subtype BYTE_RANGE is natural range 8 * lane + 7 downto 8 * lane;
+    begin
+        data_in(BYTE_RANGE) <= invert_bits_in(lane/8)  xor bank_data_i(lane);
+        bank_data_out(lane) <= invert_bits_out(lane/8) xor data_i(BYTE_RANGE);
+    end generate;
+
+
+    -- Register incoming and outgoing data
     process (clk_i) begin
         if rising_edge(clk_i) then
-            data_o <= data_out;
-            edc_o <= edc_out;
-
-            -- We may want to register bank_data as well depending on timing and
-            -- placement pressure.
+            data_o <= data_in;
+            bank_data_o <= bank_data_out;
         end if;
     end process;
 end;

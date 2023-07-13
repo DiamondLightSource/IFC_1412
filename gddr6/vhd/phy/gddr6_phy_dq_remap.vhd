@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-use work.gddr6_phy_defs.all;
+use work.gddr6_config_defs.all;
 
 entity gddr6_phy_dq_remap is
     port (

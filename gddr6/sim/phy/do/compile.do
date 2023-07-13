@@ -14,6 +14,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/iodefs/obuf_array.vhd \
     $common_vhd/iodefs/iobuf_array.vhd \
     $common_vhd/util/sync_bit.vhd \
+    $vhd_dir/gddr6_config_defs.vhd \
     $vhd_dir/phy/gddr6_phy_defs.vhd \
     $vhd_dir/phy/gddr6_phy_io.vhd \
     $vhd_dir/phy/gddr6_phy_clocking.vhd \
@@ -22,6 +23,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_byte.vhd \
     $vhd_dir/phy/gddr6_phy_map_data.vhd \
     $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
+    $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
     $vhd_dir/phy/gddr6_phy_delay_control.vhd \
     $vhd_dir/phy/gddr6_phy.vhd
@@ -36,6 +38,8 @@ view wave
 add wave -group "IO" /phy/io/*
 add wave -group "Clocking" /phy/clocking/*
 add wave -group "CA" /phy/ca/*
+add wave -group "Map Data" /phy/dq/map_data/*
+add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
 add wave -group "Delay" /phy/delay_control/*
 add wave -group "Phy" /phy/*

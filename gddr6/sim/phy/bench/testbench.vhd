@@ -14,6 +14,11 @@ end testbench;
 
 
 architecture arch of testbench is
+    -- Base frequency in MHz, either 250 or 300 MHz
+    constant CK_FREQUENCY : real := 300.0;
+
+    constant CK_PERIOD : time := 1 us / CK_FREQUENCY;
+    constant WCK_PERIOD : time := CK_PERIOD / 4;
 
     procedure write(message : string) is
         variable linebuffer : line;
@@ -25,6 +30,7 @@ architecture arch of testbench is
     signal ck_clk_out : std_ulogic;
     signal ck_reset_in : std_ulogic;
     signal ck_ok_out : std_ulogic;
+    signal ck_unlock_out : std_ulogic;
     signal fifo_ok_out : std_ulogic;
     signal sg_resets_in : std_ulogic_vector(0 to 1);
     signal enable_cabi_in : std_ulogic;
@@ -33,8 +39,10 @@ architecture arch of testbench is
     signal ca_in : vector_array(0 to 1)(9 downto 0);
     signal ca3_in : std_ulogic_vector(0 to 3);
     signal cke_n_in : std_ulogic;
-    signal edc_in : std_ulogic_vector(7 downto 0);
+    signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
+    signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_t_in : std_ulogic;
+    signal edc_in : std_ulogic_vector(7 downto 0);
 
     signal data_in : std_ulogic_vector(511 downto 0);
     signal data_out : std_ulogic_vector(511 downto 0);
@@ -78,11 +86,16 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
+    signal ck_valid : std_ulogic;
+
 begin
-    phy : entity work.gddr6_phy port map (
+    phy : entity work.gddr6_phy generic map (
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
         ck_clk_o => ck_clk_out,
         ck_reset_i => ck_reset_in,
         ck_ok_o => ck_ok_out,
+        ck_unlock_o => ck_unlock_out,
         fifo_ok_o => fifo_ok_out,
         sg_resets_i => sg_resets_in,
 
@@ -93,11 +106,12 @@ begin
         edc_i => edc_in,
         edc_t_i => edc_t_in,
 
-        enable_dbi_i => enable_dbi_in,
         data_i => data_in,
         data_o => data_out,
-        edc_o => edc_out,
         dq_t_i => dq_t_in,
+        enable_dbi_i => enable_dbi_in,
+        edc_in_o => edc_in_out,
+        edc_out_o => edc_out_out,
 
         delay_select_i => delay_select_in,
         delay_rx_tx_n_i => delay_rx_tx_n_in,
@@ -156,12 +170,12 @@ begin
     delay_in <= (others => '0');
     delay_strobe_in <= '0';
 
-    pad_SG12_CK_P <= not pad_SG12_CK_P after 2 ns;
+    pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
-    pad_SG1_WCK_P <= not pad_SG1_WCK_P after 0.5 ns when ck_ok_out;
+    pad_SG1_WCK_P <= not pad_SG1_WCK_P after WCK_PERIOD / 2 when ck_ok_out;
     pad_SG1_WCK_N <= not pad_SG1_WCK_P;
-    pad_SG2_WCK_P <= not pad_SG1_WCK_P after 0.5 ns when ck_ok_out;
+    pad_SG2_WCK_P <= not pad_SG1_WCK_P after WCK_PERIOD / 2 when ck_ok_out;
     pad_SG2_WCK_N <= not pad_SG2_WCK_P;
 
     pad_SG1_DQ_A <= (others => 'Z');
@@ -178,9 +192,16 @@ begin
     pad_SG2_EDC_B <= (others => 'Z');
 
     process begin
+        ck_valid <= '1';
         ck_reset_in <= '1';
         wait for 50 ns;
         ck_reset_in <= '0';
+
+        wait for 1.5 us;
+        ck_valid <= '0';
+        wait for 5 ns;
+        ck_valid <= '1';
+
         wait;
     end process;
 end;

@@ -9,7 +9,9 @@
 --          obuf_array                  instantiated
 --          iobuf_array
 --      gddr6_phy_clocking          Top level clocking and control
---          (not yet implemented)
+--          BUFG
+--          PLLE3_BASE
+--          sync_bit
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
 --          ODELAYE3
@@ -19,7 +21,9 @@
 --                  BITSLICE_CONTROL
 --                  TX_BITSLICE_TRI
 --                  RXTX_BITSLICE
+--          gddr6_phy_dq_remap          Maps signals to bitslices
 --          gddr6_phy_map_data          Data remapping and DBI correction
+--          gddr6_phy_crc               CRC calculation on data on the wire
 --      gddr6_phy_delay_control     Register control of delays
 
 library ieee;
@@ -29,6 +33,9 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 entity gddr6_phy is
+    generic (
+        CK_FREQUENCY : real         -- 250.0 or 300.0 MHz
+    );
     port (
         -- --------------------------------------------------------------------
         -- Clocks reset and control
@@ -36,10 +43,15 @@ entity gddr6_phy is
         -- Clock from CK input
         ck_clk_o : out std_ulogic;
         -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
-        -- are held in reset until CK is good.
+        -- are held in reset until CK is good.  This signal is asynchronous, all
+        -- other signals (apart from pins) are synchronous to ck_clk_o.
         ck_reset_i : in std_ulogic;
-        -- This is asserted on completion of reset
+        -- This is asserted on completion of reset synchronously with ck_clk_o
+        -- but is driven low directly in response to ck_reset_i.
         ck_ok_o : out std_ulogic;
+        -- This is asserted for one tick immediately after relocking if the CK
+        -- PLL unlocks.
+        ck_unlock_o : out std_ulogic;
         -- This indicates that FIFO reset has been successful, and will go low
         -- if FIFO underflow or overflow is detected.
         fifo_ok_o : out std_ulogic;
@@ -68,9 +80,15 @@ entity gddr6_phy is
         -- organised here as an array of 64 bytes, or 512 bits.
         data_i : in std_ulogic_vector(511 downto 0);
         data_o : out std_ulogic_vector(511 downto 0);
-        edc_o : out std_ulogic_vector(63 downto 0);
         dq_t_i : in std_ulogic;
         enable_dbi_i : in std_ulogic;
+        -- Two calculations are presented on the EDC pins here.  edc_in_o is the
+        -- value received from the memory, each 8-bit value is the CRC for one
+        -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
+        -- calculated value, either for incoming data or for outgoing data, as
+        -- selected by dq_t_i.
+        edc_in_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
         -- Register Interface to Delays
@@ -121,7 +139,9 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
-    constant REFCLK_FREQUENCY : real := 2000.0;
+    constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
+    -- This is a somewhat arbitrary initial value used for time calibration.
+    -- Not altogether sure how to use this value!
     constant CA_ODELAY_PS : natural := 100;    -- Max is 1250
 
     -- Pads with IO buffers
@@ -222,10 +242,13 @@ begin
 
 
     -- Clocks and resets
-    clocking : entity work.gddr6_phy_clocking port map (
+    clocking : entity work.gddr6_phy_clocking generic map (
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
         ck_clk_o => clk,
         ck_reset_i => ck_reset_i,
         ck_ok_o => ck_ok_o,
+        ck_unlock_o => ck_unlock_o,
 
         io_ck_i => io_ck_in,
         pll_clk_o => pll_clk,
@@ -267,7 +290,9 @@ begin
 
 
     -- Data receive and transmit
-    dq : entity work.gddr6_phy_dq port map (
+    dq : entity work.gddr6_phy_dq generic map (
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+    ) port map (
         pll_clk_i => pll_clk,
         clk_i => clk,
         wck_i => io_wck_in,
@@ -280,9 +305,10 @@ begin
 
         data_i => data_i,
         data_o => data_o,
-        edc_o => edc_o,
         dq_t_i => dq_t_i,
         enable_dbi_i => enable_dbi_i,
+        edc_in_o => edc_in_o,
+        edc_out_o => edc_out_o,
 
         delay_i => std_ulogic_vector(delay_i),
         delay_rx_tx_n_i => delay_rx_tx_n_i,
