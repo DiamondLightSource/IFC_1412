@@ -1,0 +1,93 @@
+# Register definitions for test
+
+PHY_MAGIC_NUMBER = 0x12345678
+
+# This bank of registers run on the CK clock
+!PHY
+    # Magic number for sanity check
+    IDENT           R
+
+    EVENTS          R
+        # Set if CK has become unlocked
+        .CK_UNLOCK
+        # Set if FIFO unlocks
+        .FIFO_DROPOUT
+
+    STATUS          R
+        # Current status of BITSLICE RX FIFO
+        .FIFO_OK
+
+    CONFIG          RW
+        # Resets for the two DRAM devices, held in reset by default
+        .SG_RESET_N     2
+        # Bus Inversion enables
+        .ENABLE_CABI
+        .ENABLE_DBI
+        # EDC input enable
+        .EDC_T
+        # DQ input enable
+        .DQ_T
+
+    # Write to CA register
+    CA              W
+        # Command on rising and falling edge
+        .RISING     10
+        .FALLING    10
+        # Special overrides for CA3, normally set to 0
+        .CA3        4
+        # Command enable, held low during reset
+        .CKE_N
+        # If set the value written to CA is held, otherwise CA is set to NOP on
+        # completion of this command
+        .HOLD
+
+    # Array of registers mapped onto DQ array
+    DQ              RW  16
+
+    # Array of registers mapped to EDC IN
+    EDC_IN          R   2
+    # Array of registers mapped to EDC OUT
+    EDC_OUT         R   2
+
+    # Read or write IO delay.  Reading this register returns the result of the
+    # previous write.
+    DELAY           RW
+        # Delay to read or write
+        .DELAY      9
+        # Select which delay to read or write
+        .SELECT     7
+        # Set for read delays, clear for write delays
+        .RX_TX_N
+        # Set to write new value to delay, otherwise current delay is read and
+        # available for readback.
+        .WRITE
+
+
+!SYS
+    GIT_VERSION     R
+        .SHA        28
+        -           3
+        .DIRTY
+
+    EVENTS          R
+
+    STATUS          R
+        .LMK_STATUS     2
+        # Set if CK is locked and out of reset
+        .CK_LOCKED
+
+    CONFIG          RW
+        .LMK_SELECT
+        .LMK_RESET
+        .LMK_SYNC
+        # CK region reset, held in reset by default
+        .CK_RESET_N
+
+    LMK04616        RW
+        # Data to write, returns data returned as part of last SPI transaction
+        # when read
+        .DATA       8
+        .ADDRESS    15
+        .R_WN
+        # Selects which LMK to address
+        .SELECT
