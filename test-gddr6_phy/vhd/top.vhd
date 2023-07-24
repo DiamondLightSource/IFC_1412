@@ -8,7 +8,7 @@ use work.register_defs.all;
 use work.register_defines.all;
 
 architecture arch of top is
-    constant CK_FREQUENCY : real := 300.0;
+    constant CK_FREQUENCY : real := 250.0;
 
     -- Clocks and resets
     signal clk : std_ulogic;
@@ -90,6 +90,7 @@ architecture arch of top is
     -- SG clocking and reset control
     signal ck_clk : std_ulogic;
     signal ck_reset : std_ulogic;
+    signal raw_ck_clk_ok : std_ulogic;      -- Unsynchronised
     signal ck_clk_ok : std_ulogic;
     signal ck_unlock : std_ulogic;
     signal fifo_ok : std_ulogic;
@@ -276,12 +277,13 @@ begin
         lmk_read_ack_i => lmk_read_ack,
         lmk_data_i => lmk_data_in,
 
+        ck_reset_o => ck_reset,
         ck_locked_i => ck_clk_ok
     );
 
 
     gddr6_registers : entity work.gddr6_registers port map (
-        clk_i => clk,
+        clk_i => ck_clk,
 
         write_strobe_i => phy_write_strobe,
         write_data_i => phy_write_data,
@@ -323,7 +325,7 @@ begin
 
 
     lmk04616 : entity work.lmk04616 port map (
-        clk_i => ck_clk,
+        clk_i => clk,
 
         command_select_i => lmk_command_select,
         select_valid_o => open,
@@ -357,7 +359,7 @@ begin
     ) port map (
         ck_clk_o => ck_clk,
         ck_reset_i => ck_reset,
-        ck_ok_o => ck_clk_ok,
+        ck_ok_o => raw_ck_clk_ok,
         ck_unlock_o => ck_unlock,
         fifo_ok_o => fifo_ok,
 
@@ -415,6 +417,12 @@ begin
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
     edc_cfg <= X"FF";
+
+    sync_ck_ok : entity work.sync_bit port map (
+        clk_i => clk,
+        bit_i => raw_ck_clk_ok,
+        bit_o => ck_clk_ok
+    );
 
 
     -- Unconnected LEDs for the moment

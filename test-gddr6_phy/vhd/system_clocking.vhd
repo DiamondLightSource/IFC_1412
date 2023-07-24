@@ -40,6 +40,8 @@ architecture arch of system_clocking is
     -- We need a separate PCIe Reset signal which is marked as asynchronous in
     -- constraints file.  Must ensure it keeps its name!
     signal perst_n_out : std_ulogic := '0';
+    attribute false_path_from : string;
+    attribute false_path_from of perst_n_out : signal is "TRUE";
     attribute KEEP : string;
     attribute KEEP of perst_n_out : signal is "true";
 

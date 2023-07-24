@@ -1,5 +1,6 @@
-# Register definitions for test
+## Register definitions for test
 
+# Used for sanity check of PHY register access
 PHY_MAGIC_NUMBER = 0x12345678
 
 # This bank of registers run on the CK clock

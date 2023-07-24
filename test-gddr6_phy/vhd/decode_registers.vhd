@@ -88,14 +88,10 @@ begin
             when '0' =>
                 sys_write_strobe <= write_strobe_i;
                 phy_write_strobe <= '0';
-                sys_write_address <= write_address_i(SYS_ADDRESS_RANGE);
-                sys_write_data <= write_data_i;
                 write_ack_o <= sys_write_ack;
             when '1' =>
                 sys_write_strobe <= '0';
                 phy_write_strobe <= write_strobe_i;
-                phy_write_address <= write_address_i(PHY_ADDRESS_RANGE);
-                phy_write_data <= write_data_i;
                 write_ack_o <= phy_write_ack;
             when others =>
         end case;
@@ -103,18 +99,22 @@ begin
             when '0' =>
                 sys_read_strobe <= read_strobe_i;
                 phy_read_strobe <= '0';
-                sys_read_address <= read_address_i(SYS_ADDRESS_RANGE);
                 read_data_o <= sys_read_data;
                 read_ack_o <= sys_read_ack;
             when '1' =>
                 sys_read_strobe <= '0';
                 phy_read_strobe <= read_strobe_i;
-                phy_read_address <= read_address_i(PHY_ADDRESS_RANGE);
                 read_data_o <= phy_read_data;
                 read_ack_o <= phy_read_ack;
             when others =>
         end case;
     end process;
+    sys_write_address <= write_address_i(SYS_ADDRESS_RANGE);
+    sys_write_data <= write_data_i;
+    phy_write_address <= write_address_i(PHY_ADDRESS_RANGE);
+    phy_write_data <= write_data_i;
+    sys_read_address <= read_address_i(SYS_ADDRESS_RANGE);
+    phy_read_address <= read_address_i(PHY_ADDRESS_RANGE);
 
 
     -- SYS addresses to strobe array

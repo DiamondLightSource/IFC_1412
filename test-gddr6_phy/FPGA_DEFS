@@ -1,0 +1,9 @@
+BUILT += metadata.coe
+BUILT += register_defines.vhd
+BUILT += version.vhd
+
+BLOCK_DESIGNS += interconnect
+
+VHD_DIRS += $(PROJECT_TOP)/../gddr6/vhd
+
+# vim: set filetype=make:
