@@ -123,8 +123,7 @@ begin
             odelay : ODELAYE3 generic map (
                 DELAY_FORMAT => "TIME",
                 DELAY_TYPE => "VAR_LOAD",
-                DELAY_VALUE => CA_ODELAY_PS,
-                REFCLK_FREQUENCY => REFCLK_FREQUENCY
+                DELAY_VALUE => CA_ODELAY_PS
             ) port map (
                 RST => reset_i,
                 ODATAIN => oddr_out,

@@ -30,6 +30,7 @@ architecture arch of gddr6_phy_map_data is
     signal data_in : std_ulogic_vector(511 downto 0);
     -- Data path to DRAM: data_i -> bank_data_out => bank_data_o
     signal bank_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal bank_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
 
     -- Gathered from bank_dbi_n_i and masked
     signal invert_bits_in : vector_array(7 downto 0)(7 downto 0);
@@ -62,7 +63,7 @@ begin
             end;
         begin
             invert_bits_out(lanes)(tick) <= invert_bits;
-            bank_dbi_n_o(lanes)(tick) <= not invert_bits;
+            bank_dbi_n_out(lanes)(tick) <= not invert_bits;
         end generate;
     end generate;
 
@@ -81,6 +82,7 @@ begin
         if rising_edge(clk_i) then
             data_o <= data_in;
             bank_data_o <= bank_data_out;
+            bank_dbi_n_o <= bank_dbi_n_out;
         end if;
     end process;
 end;

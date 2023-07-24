@@ -37,6 +37,9 @@ architecture arch of gddr6_phy_clocking is
     signal clock_out : std_ulogic_vector(0 to 1);
     signal pll_locked : std_ulogic_vector(0 to 1);
     signal unlock_detect : std_ulogic;
+
+    signal clk_enable : std_ulogic;
+    signal raw_clk : std_ulogic;
     signal clk : std_ulogic;
 
     signal reset_sync : std_ulogic;
@@ -78,11 +81,32 @@ begin
         );
     end generate;
 
+
+    -- Controlling the master BUFG is a little tricky: we want to enable the
+    -- clock when we're not in reset and the PLL is locked, but this
+    -- asynchronous control signal needs to be somehow synchronised with the
+    -- output clock.
+    --    It looks like the safest way to do this is to take an unguarded copy
+    -- of the clock and use this through a synchroniser.
+    raw_bufg : BUFG port map (
+        I => clock_out(0),
+        O => raw_clk
+    );
+
+    sync_clk_enable : entity work.sync_bit generic map (
+        INITIAL => '0'
+    ) port map (
+        clk_i => raw_clk,
+        reset_i => ck_reset_i,
+        bit_i => vector_and(pll_locked),
+        bit_o => clk_enable
+    );
+
     -- Enable the global clock once we're out of reset and the PLL is locked
     bufg_out : BUFGCE port map (
         I => clock_out(0),
         O => clk,
-        CE => vector_and(pll_locked) and not ck_reset_i
+        CE => clk_enable
     );
     ck_clk_o <= clk;
 

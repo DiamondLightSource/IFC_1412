@@ -85,6 +85,11 @@ begin
         constant LOWER_NIBBLE : boolean := i = 0;
         signal clk_from_ext : std_ulogic;
 
+        signal tbyte_in : std_ulogic_vector(3 downto 0);
+        -- Try to stop tbyte_in being optimised
+        attribute KEEP : string;
+        attribute KEEP of tbyte_in : signal is "TRUE";
+
     begin
         if_clk : if i = 0 and not CLK_FROM_PIN generate
             -- Only route clk_from_ext_i to the lower nibble when the clock is
@@ -129,7 +134,7 @@ begin
 
             data_o => data_o(BITSLICE_RANGE),
             data_i => data_i(BITSLICE_RANGE),
-            tbyte_i => tbyte_i,
+            tbyte_i => tbyte_in,
 
             pad_in_i => pad_in_i(BITSLICE_RANGE),
             pad_out_o => pad_out_o(BITSLICE_RANGE),
@@ -143,6 +148,13 @@ begin
             pclk_nibble_o => pclk_nibble_out(i),
             nclk_nibble_o => nclk_nibble_out(i)
         );
+
+        -- Register tbyte_i to help with timing pressure
+        process (reg_clk_i) begin
+            if rising_edge(reg_clk_i) then
+                tbyte_in <= tbyte_i;
+            end if;
+        end process;
     end generate;
 
     -- Inter-nibble plumbing

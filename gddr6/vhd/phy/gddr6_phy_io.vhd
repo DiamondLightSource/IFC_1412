@@ -82,7 +82,8 @@ architecture arch of gddr6_phy_io is
 begin
     -- Clock inputs
     i_clocks : entity work.ibufds_array generic map (
-        COUNT => 3
+        COUNT => 3,
+        DIFF_TERM => false
     ) port map (
         p_i(0) => pad_SG12_CK_P_i,        -- CK
         p_i(1) => pad_SG1_WCK_P_i,        -- WCK 1

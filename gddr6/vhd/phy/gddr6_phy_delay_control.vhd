@@ -43,6 +43,7 @@ architecture arch of gddr6_phy_delay_control is
     signal wait_counter : natural range 0 to 9;
     signal delay_ack_out : std_ulogic := '0';
 
+    signal read_delay_in : read_delay_i'SUBTYPE;
     signal delay_select : natural;
     signal enable_vtc_out : enable_vtc_o'SUBTYPE := (others => '1');
     signal load_delay_out : load_delay_o'SUBTYPE := (others => '0');
@@ -84,8 +85,11 @@ begin
                     end if;
             end case;
 
+            -- Register all incoming delays before multiplexing to reduce
+            -- routing congestion
+            read_delay_in <= read_delay_i;
             if state /= IDLE then
-                delay_o <= unsigned(read_delay_i(delay_select));
+                delay_o <= unsigned(read_delay_in(delay_select));
             end if;
         end if;
     end process;

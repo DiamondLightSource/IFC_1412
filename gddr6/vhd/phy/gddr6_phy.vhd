@@ -70,7 +70,7 @@ entity gddr6_phy is
         cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
         -- Configuration driven onto edc pins at startup.  Otherwise edc_t_i
-        -- be driven high so that edc_o can be read from the device.
+        -- be driven high so that edc_in_o can be read from the device.
         edc_i : in std_ulogic_vector(7 downto 0);
         edc_t_i : in std_ulogic;
 

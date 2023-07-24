@@ -28,7 +28,6 @@ entity gddr6_phy_dq is
         -- Data interface, all values for a single CA tick
         data_o : out std_ulogic_vector(511 downto 0);
         data_i : in std_ulogic_vector(511 downto 0);
-        edc_o : out std_ulogic_vector(63 downto 0);
         dq_t_i : in std_ulogic;
         enable_dbi_i : in std_ulogic;
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);

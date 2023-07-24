@@ -205,15 +205,9 @@ begin
     gen_bits : for i in 0 to 5 generate
         function rx_data_type return string is
         begin
-            if i = 0 and LOWER_NIBBLE then
-                if CLK_FROM_PIN then
-                    -- Enable incoming clock on bitslice 0
-                    return "CLOCK";
-                else
-                    -- In all other lower nibbles we need to instantiate this
-                    -- bitslice even if not used.
-                    return "DATA";
-                end if;
+            if i = 0 and LOWER_NIBBLE and CLK_FROM_PIN then
+                -- Enable incoming clock on bitslice 0
+                return "DATA_AND_CLOCK";
             elsif BITSLICE_WANTED(i) then
                 return "DATA";
             else
