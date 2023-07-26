@@ -102,8 +102,6 @@ architecture arch of top is
     signal ca3 : std_ulogic_vector(0 to 3);
     signal cke_n : std_ulogic;
     signal enable_cabi : std_ulogic;
-    signal edc_cfg : std_ulogic_vector(7 downto 0);
-    signal edc_t : std_ulogic;
 
     -- SG DQ signals
     signal dq_data_in : std_ulogic_vector(511 downto 0);
@@ -298,7 +296,6 @@ begin
         sg_resets_o => sg_resets,
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
-        edc_t_o => edc_t,
         dq_t_o => dq_t,
 
         ca_o => ca,
@@ -369,8 +366,6 @@ begin
         ca3_i => ca3,
         cke_n_i => cke_n,
         enable_cabi_i => enable_cabi,
-        edc_i => edc_cfg,
-        edc_t_i => edc_t,
 
         data_i => dq_data_out,
         data_o => dq_data_in,
@@ -415,7 +410,6 @@ begin
         pad_SG2_EDC_A_io => pad_SG2_EDC_A,
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
-    edc_cfg <= X"FF";
 
     sync_ck_ok : entity work.sync_bit port map (
         clk_i => clk,

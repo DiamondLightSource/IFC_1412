@@ -24,8 +24,6 @@ PHY_MAGIC_NUMBER = 0x12345678
         # Bus Inversion enables
         .ENABLE_CABI
         .ENABLE_DBI
-        # EDC input enable
-        .EDC_T
         # DQ input enable
         .DQ_T
 
