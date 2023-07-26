@@ -18,7 +18,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-entity gddr6_phy_delay_control is
+entity gddr6_phy_riu_control is
     port (
         clk_i : std_ulogic;
 
@@ -41,7 +41,7 @@ entity gddr6_phy_delay_control is
     );
 end;
 
-architecture arch of gddr6_phy_delay_control is
+architecture arch of gddr6_phy_riu_control is
     type state_t is (IDLE, BUSY);
     signal state : state_t := IDLE;
 

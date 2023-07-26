@@ -25,7 +25,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
-    $vhd_dir/phy/gddr6_phy_delay_control.vhd \
+    $vhd_dir/phy/gddr6_phy_riu_control.vhd \
     $vhd_dir/phy/gddr6_phy.vhd
 
 vcom -64 -2008 -work xil_defaultlib \

@@ -24,7 +24,7 @@
 --          gddr6_phy_dq_remap          Maps signals to bitslices
 --          gddr6_phy_map_data          Data remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
---      gddr6_phy_delay_control     Register control of delays
+--      gddr6_phy_riu_control       Register control of RIU interface
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -325,7 +325,7 @@ begin
 
 
     -- Register interface to individual pin delays
-    riu_control : entity work.gddr6_phy_delay_control port map (
+    riu_control : entity work.gddr6_phy_riu_control port map (
         clk_i => riu_clk,
 
         riu_addr_i => riu_addr_i,
