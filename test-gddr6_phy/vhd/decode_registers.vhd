@@ -12,8 +12,8 @@ use work.register_defines.all;
 entity decode_registers is
     port (
         clk_i : in std_ulogic;
-        ck_clk_ok_i : in std_ulogic;
-        ck_clk_i : in std_ulogic;
+        riu_clk_ok_i : in std_ulogic;
+        riu_clk_i : in std_ulogic;
 
         -- Top level register interface
         write_strobe_i : in std_ulogic;
@@ -33,7 +33,7 @@ entity decode_registers is
         sys_read_strobe_o : out std_ulogic_vector(SYS_REGS_RANGE);
         sys_read_ack_i : in std_ulogic_vector(SYS_REGS_RANGE);
 
-        -- PHY registers on ck_clk_i
+        -- PHY registers on riu_clk_i
         phy_write_strobe_o : out std_ulogic_vector(PHY_REGS_RANGE);
         phy_write_data_o : out reg_data_array_t(PHY_REGS_RANGE);
         phy_write_ack_i : in std_ulogic_vector(PHY_REGS_RANGE);
@@ -144,8 +144,8 @@ begin
     -- Bring the PHY register interface over to CK clock
     bank_cc : entity work.register_bank_cc port map (
         clk_in_i => clk_i,
-        clk_out_i => ck_clk_i,
-        clk_out_ok_i => ck_clk_ok_i,
+        clk_out_i => riu_clk_i,
+        clk_out_ok_i => riu_clk_ok_i,
 
         write_address_i => phy_write_address,
         write_data_i => phy_write_data,
@@ -171,7 +171,7 @@ begin
     phy_register_mux : entity work.register_mux generic map (
         BUFFER_DEPTH => 1
     ) port map (
-        clk_i => ck_clk_i,
+        clk_i => riu_clk_i,
 
         write_strobe_i => cc_phy_write_strobe,
         write_address_i => cc_phy_write_address,

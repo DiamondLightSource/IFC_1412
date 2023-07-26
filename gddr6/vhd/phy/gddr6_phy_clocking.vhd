@@ -14,8 +14,12 @@ entity gddr6_phy_clocking is
         CK_FREQUENCY : real
     );
     port (
-        -- Main clock and reset control.  Hold in reset until CK valid
+        -- Main clock and reset control.  Hold in reset until CK input valid
         ck_clk_o : out std_ulogic;
+        -- Register interface clock at half CK clock
+        riu_clk_o : out std_ulogic;
+
+        -- Resets and clock status
         ck_reset_i : in std_ulogic;
         ck_ok_o : out std_ulogic;
         ck_unlock_o : out std_ulogic;
@@ -25,7 +29,7 @@ entity gddr6_phy_clocking is
         pll_clk_o : out std_ulogic_vector(0 to 1);
 
         -- Reset control and management
-        reset_o : out std_ulogic;                -- Bitslice reset
+        reset_o : out std_ulogic;              -- Bitslice reset
         dly_ready_i : in std_ulogic;           -- Delay ready (async)
         vtc_ready_i : in std_ulogic;           -- Calibration done (async)
         enable_control_vtc_o : out std_ulogic
@@ -35,12 +39,14 @@ end;
 architecture arch of gddr6_phy_clocking is
     signal io_ck_in : std_ulogic;
     signal clock_out : std_ulogic_vector(0 to 1);
+    signal riu_clock_out : std_ulogic_vector(0 to 1);
     signal pll_locked : std_ulogic_vector(0 to 1);
     signal unlock_detect : std_ulogic;
 
     signal clk_enable : std_ulogic;
     signal raw_clk : std_ulogic;
-    signal clk : std_ulogic;
+    signal ck_clk : std_ulogic;
+    signal riu_clk : std_ulogic;
 
     signal reset_sync : std_ulogic;
     signal dly_ready_in : std_ulogic;
@@ -67,11 +73,13 @@ begin
             CLKFBOUT_PHASE => 0.0,
             CLKIN_PERIOD => 1000.0 / CK_FREQUENCY,
             CLKOUT0_DIVIDE => 4,
+            CLKOUT1_DIVIDE => 8,
             CLKOUTPHY_MODE => "VCO_2X" -- 2 or 2.4 GHz on CLKOUTPHY
         ) port map (
             CLKIN => io_ck_in,
             CLKOUTPHY => pll_clk_o(i),
             CLKOUT0 => clock_out(i),
+            CLKOUT1 => riu_clock_out(i),
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
             LOCKED => pll_locked(i),
@@ -89,7 +97,7 @@ begin
     --    It looks like the safest way to do this is to take an unguarded copy
     -- of the clock and use this through a synchroniser.
     raw_bufg : BUFG port map (
-        I => clock_out(0),
+        I => riu_clock_out(0),
         O => raw_clk
     );
 
@@ -102,33 +110,40 @@ begin
         bit_o => clk_enable
     );
 
-    -- Enable the global clock once we're out of reset and the PLL is locked
-    bufg_out : BUFGCE port map (
+    -- Enable the global clocks once we're out of reset and the PLL is locked
+    ck_bufg : BUFGCE port map (
         I => clock_out(0),
-        O => clk,
+        O => ck_clk,
         CE => clk_enable
     );
-    ck_clk_o <= clk;
+    ck_clk_o <= ck_clk;
+
+    riu_bufg : BUFGCE port map (
+        I => riu_clock_out(0),
+        O => riu_clk,
+        CE => clk_enable
+    );
+    riu_clk_o <= riu_clk;
 
 
     -- Synchronise reset with clock for the remaining processing
     sync_reset : entity work.sync_bit generic map (
         INITIAL => '1'
     ) port map (
-        clk_i => clk,
+        clk_i => riu_clk,
         reset_i => ck_reset_i,
         bit_i => '0',
         bit_o => reset_sync
     );
 
     sync_dly_ready : entity work.sync_bit port map (
-        clk_i => clk,
+        clk_i => riu_clk,
         bit_i => dly_ready_i,
         bit_o => dly_ready_in
     );
 
     sync_vtc_ready : entity work.sync_bit port map (
-        clk_i => clk,
+        clk_i => riu_clk,
         bit_i => vtc_ready_i,
         bit_o => vtc_ready_in
     );
@@ -139,14 +154,14 @@ begin
     --
     -- ... still need to sort out pull ups of TBYTE_IN ... don't
     -- actually understand this ...
-    process (clk, reset_sync) begin
+    process (riu_clk, reset_sync) begin
         if reset_sync then
             reset_state <= RESET_START;
             enable_control_vtc_o <= '0';
             reset_o <= '1';
             enable_pll_clk <= '0';
             ck_ok_o <= '0';
-        elsif rising_edge(clk) then
+        elsif rising_edge(riu_clk) then
             case reset_state is
                 when RESET_START =>
                     -- Just wait one tick before we do anything
@@ -182,10 +197,10 @@ begin
     end process;
 
     -- Detect PLL unlock and generate single pulse on resumption of lock
-    process (clk, pll_locked) begin
+    process (riu_clk, pll_locked) begin
         if not vector_and(pll_locked) then
             unlock_detect <= '1';
-        elsif rising_edge(clk) then
+        elsif rising_edge(riu_clk) then
             unlock_detect <= '0';
             ck_unlock_o <= unlock_detect;
         end if;

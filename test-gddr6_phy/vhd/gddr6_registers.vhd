@@ -39,13 +39,12 @@ entity gddr6_registers is
         edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         edc_out_i : in vector_array(7 downto 0)(7 downto 0);
 
-        delay_select_o : out unsigned(6 downto 0);
-        delay_rx_tx_n_o : out std_ulogic;
-        delay_write_o : out std_ulogic;
-        delay_o : out unsigned(8 downto 0);
-        delay_i : in unsigned(8 downto 0);
-        delay_strobe_o : out std_ulogic;
-        delay_ack_i : in std_ulogic
+        riu_addr_o : out unsigned(9 downto 0);
+        riu_wr_data_o : out std_ulogic_vector(15 downto 0);
+        riu_rd_data_i : in std_ulogic_vector(15 downto 0);
+        riu_wr_en_o : out std_ulogic;
+        riu_strobe_o : out std_ulogic;
+        riu_ack_i : in std_ulogic
     );
 end;
 
@@ -57,8 +56,8 @@ architecture arch of gddr6_registers is
     signal edc_out_bits : reg_data_array_t(0 to 1);
     signal data_in_bits : reg_data_array_t(0 to 15);
     signal data_out_bits : reg_data_array_t(0 to 15);
-    signal delay_bits_in : reg_data_t;
-    signal delay_bits_out : reg_data_t;
+    signal riu_bits_in : reg_data_t;
+    signal riu_bits_out : reg_data_t;
 
 begin
     -- IDENT
@@ -127,12 +126,12 @@ begin
     read_ack_o(PHY_EDC_OUT_REGS) <= (others => '1');
     write_ack_o(PHY_EDC_OUT_REGS) <= (others => '1');
 
-    -- DELAY
-    delay_bits_out <= write_data_i(PHY_DELAY_REG);
-    delay_strobe_o <= write_strobe_i(PHY_DELAY_REG);
-    write_ack_o(PHY_DELAY_REG) <= delay_ack_i;
-    read_data_o(PHY_DELAY_REG) <= delay_bits_in;
-    read_ack_o(PHY_DELAY_REG) <= '1';
+    -- RIU
+    riu_bits_out <= write_data_i(PHY_RIU_REG);
+    riu_strobe_o <= write_strobe_i(PHY_RIU_REG);
+    write_ack_o(PHY_RIU_REG) <= riu_ack_i;
+    read_data_o(PHY_RIU_REG) <= riu_bits_in;
+    read_ack_o(PHY_RIU_REG) <= '1';
 
 
     -- -------------------------------------------------------------------------
@@ -175,16 +174,15 @@ begin
         dq_data_o(WORD_RANGE) <= data_out_bits(i);
     end generate;
 
-    -- DELAY
-    delay_o <= unsigned(delay_bits_out(PHY_DELAY_DELAY_BITS));
-    delay_select_o <= unsigned(delay_bits_out(PHY_DELAY_SELECT_BITS));
-    delay_rx_tx_n_o <= delay_bits_out(PHY_DELAY_RX_TX_N_BIT);
-    delay_write_o <= delay_bits_out(PHY_DELAY_WRITE_BIT);
+    -- RIU
+    riu_addr_o <= unsigned(riu_bits_out(PHY_RIU_ADDRESS_BITS));
+    riu_wr_data_o <= riu_bits_out(PHY_RIU_DATA_BITS);
+    riu_wr_en_o <= riu_bits_out(PHY_RIU_WRITE_BIT);
     process (clk_i) begin
         if rising_edge(clk_i) then
-            if delay_ack_i then
-                delay_bits_in <= (
-                    PHY_DELAY_DELAY_BITS => std_ulogic_vector(delay_i),
+            if riu_ack_i then
+                riu_bits_in <= (
+                    PHY_RIU_DATA_BITS => std_ulogic_vector(riu_rd_data_i),
                     others => '0'
                 );
             end if;

@@ -31,19 +31,6 @@ entity gddr6_phy_ca is
         cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
 
-        -- Delay control
-        -- The pins are mapped according to the table below:
-        --      0:2     CA 2:0
-        --      3       (unused)
-        --      4:9     CA 9:4
-        --      10      CABIn
-        --      11:14   CA3
-        --      15      CKE
-        enable_vtc_i : in std_ulogic_vector(0 to 15);
-        load_delay_i : in std_ulogic_vector(0 to 15);
-        delay_i : in std_ulogic_vector(8 downto 0);
-        delay_o : out vector_array(0 to 15)(8 downto 0);
-
         -- Pins driven out
         io_reset_n_o : out std_ulogic_vector(0 to 1);
         io_ca_o : out std_ulogic_vector(9 downto 0);   -- Pin 3 is ignored
@@ -104,12 +91,10 @@ begin
     io_cke_n_o <= ca_out(15);
 
 
-    -- Generate ODDR and ODELAY for all CA outputs
+    -- Generate ODDR for all CA outputs
     gen_out : for i in 0 to 15 generate
         -- Need to skip entry #3
         if_ca3 : if i /= 3 generate
-            signal oddr_out : std_ulogic;
-        begin
             oddr : ODDRE1 generic map (
                 SRVAL => '1'
             ) port map (
@@ -117,30 +102,8 @@ begin
                 C => clk_i,
                 D1 => ca_in(0)(i),
                 D2 => ca_in(1)(i),
-                Q => oddr_out
+                Q => ca_out(i)
             );
-
-            odelay : ODELAYE3 generic map (
-                DELAY_FORMAT => "TIME",
-                DELAY_TYPE => "VAR_LOAD",
-                DELAY_VALUE => CA_ODELAY_PS
-            ) port map (
-                RST => reset_i,
-                ODATAIN => oddr_out,
-                DATAOUT => ca_out(i),
-                EN_VTC => enable_vtc_i(i),
-                LOAD => load_delay_i(i),
-                CNTVALUEIN => delay_i,
-                CNTVALUEOUT => delay_o(i),
-                CE => '0',
-                CLK => '0',
-                INC => '0',
-                CASC_IN => '0',
-                CASC_RETURN => '0',
-                CASC_OUT => open
-            );
-        else generate
-            delay_o(i) <= (others => '-');
         end generate;
     end generate;
 

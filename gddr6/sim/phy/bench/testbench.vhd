@@ -28,6 +28,7 @@ architecture arch of testbench is
     end;
 
     signal ck_clk_out : std_ulogic;
+    signal riu_clk : std_ulogic;
     signal ck_reset_in : std_ulogic;
     signal ck_ok_out : std_ulogic;
     signal ck_unlock_out : std_ulogic;
@@ -49,13 +50,12 @@ architecture arch of testbench is
     signal edc_out : std_ulogic_vector(63 downto 0);
     signal dq_t_in : std_ulogic;
 
-    signal delay_select_in : unsigned(6 downto 0);
-    signal delay_rx_tx_n_in : std_ulogic;
-    signal delay_write_in : std_ulogic;
-    signal delay_in : unsigned(8 downto 0);
-    signal delay_strobe_in : std_ulogic;
-    signal delay_ack_out : std_ulogic;
-    signal delay_out : unsigned(8 downto 0);
+    signal riu_addr_in : unsigned(9 downto 0);
+    signal riu_wr_data_in : std_ulogic_vector(15 downto 0);
+    signal riu_rd_data_out : std_ulogic_vector(15 downto 0);
+    signal riu_wr_en_in : std_ulogic;
+    signal riu_strobe_in : std_ulogic;
+    signal riu_ack_out : std_ulogic;
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
@@ -93,6 +93,8 @@ begin
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
         ck_clk_o => ck_clk_out,
+        riu_clk_o => riu_clk,
+
         ck_reset_i => ck_reset_in,
         ck_ok_o => ck_ok_out,
         ck_unlock_o => ck_unlock_out,
@@ -113,13 +115,12 @@ begin
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
 
-        delay_select_i => delay_select_in,
-        delay_rx_tx_n_i => delay_rx_tx_n_in,
-        delay_write_i => delay_write_in,
-        delay_i => delay_in,
-        delay_strobe_i => delay_strobe_in,
-        delay_ack_o => delay_ack_out,
-        delay_o => delay_out,
+        riu_addr_i => riu_addr_in,
+        riu_wr_data_i => riu_wr_data_in,
+        riu_rd_data_o => riu_rd_data_out,
+        riu_wr_en_i => riu_wr_en_in,
+        riu_strobe_i => riu_strobe_in,
+        riu_ack_o => riu_ack_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -164,12 +165,6 @@ begin
     data_in <= (others => '0');
     dq_t_in <= '0';
 
-    delay_select_in <= (others => '0');
-    delay_rx_tx_n_in <= '0';
-    delay_write_in <= '0';
-    delay_in <= (others => '0');
-    delay_strobe_in <= '0';
-
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
@@ -191,16 +186,43 @@ begin
     pad_SG2_EDC_A <= (others => 'Z');
     pad_SG2_EDC_B <= (others => 'Z');
 
-    process begin
+    process
+        procedure riu_wait is
+        begin
+            wait until rising_edge(riu_clk);
+        end;
+
+        procedure riu_access(
+            address : natural; write : std_ulogic := '0';
+            data : std_ulogic_vector(15 downto 0) := X"0000") is
+        begin
+            riu_wait;
+            riu_addr_in <= to_unsigned(address, 10);
+            riu_wr_data_in <= data;
+            riu_wr_en_in <= write;
+            riu_strobe_in <= '1';
+
+            riu_wait;
+            riu_strobe_in <= '0';
+
+            while not riu_ack_out loop
+                riu_wait;
+            end loop;
+        end;
+
+    begin
+        riu_strobe_in <= '0';
+
         ck_valid <= '1';
         ck_reset_in <= '1';
         wait for 50 ns;
         ck_reset_in <= '0';
 
-        wait for 1.5 us;
-        ck_valid <= '0';
-        wait for 5 ns;
-        ck_valid <= '1';
+        wait until ck_ok_out;
+
+        for a in 0 to 63 loop
+            riu_access(a);
+        end loop;
 
         wait;
     end process;

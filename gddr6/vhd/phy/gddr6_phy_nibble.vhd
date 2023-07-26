@@ -31,7 +31,6 @@ entity gddr6_phy_nibble is
         -- Clocks
         pll_clk_i : in std_ulogic;      -- Backbone clock from PLL
         fifo_rd_clk_i : in std_ulogic;  -- Clock for reading RX FIFO
-        reg_clk_i : in std_ulogic;      -- Control clock
 
         -- FIFO control (maybe want to handle inside, or as part of reset)
         fifo_empty_o : out std_ulogic_vector(0 to 5);
@@ -45,16 +44,14 @@ entity gddr6_phy_nibble is
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
 
-        -- Delay control interface
-        rx_load_i : in std_ulogic_vector(0 to 5);
-        rx_delay_i : in std_ulogic_vector(8 downto 0);
-        rx_delay_o : out vector_array(0 to 5)(8 downto 0);
-        tx_load_i : in std_ulogic_vector(0 to 5);
-        tx_delay_i : in std_ulogic_vector(8 downto 0);
-        tx_delay_o : out vector_array(0 to 5)(8 downto 0);
-        tri_load_i : in std_ulogic;
-        tri_delay_i : in std_ulogic_vector(8 downto 0);
-        tri_delay_o : out std_ulogic_vector(8 downto 0);
+        -- RIU interface
+        riu_clk_i : in std_ulogic;      -- Control clock
+        riu_addr_i : in unsigned(5 downto 0);
+        riu_wr_data_i : in std_ulogic_vector(15 downto 0);
+        riu_rd_data_o : out std_ulogic_vector(15 downto 0);
+        riu_valid_o : out std_ulogic;
+        riu_wr_en_i : in std_ulogic;
+        riu_nibble_sel_i : in std_ulogic;
 
         -- Data interface
         data_o : out vector_array(0 to 5)(7 downto 0);
@@ -119,15 +116,14 @@ begin
         RST => reset_i,
         TBYTE_IN => tbyte_i,
 
-        -- Register interface unit, not connected, but clock needed for
-        -- internal state machine
-        RIU_CLK => reg_clk_i,
-        RIU_ADDR => 6X"00",
-        RIU_VALID => open,
-        RIU_RD_DATA => open,
-        RIU_WR_DATA => X"0000",
-        RIU_WR_EN => '0',
-        RIU_NIBBLE_SEL => '0',
+        -- Register interface unit
+        RIU_CLK => riu_clk_i,
+        RIU_ADDR => std_ulogic_vector(riu_addr_i),
+        RIU_VALID => riu_valid_o,
+        RIU_RD_DATA => riu_rd_data_o,
+        RIU_WR_DATA => riu_wr_data_i,
+        RIU_WR_EN => riu_wr_en_i,
+        RIU_NIBBLE_SEL => riu_nibble_sel_i,
 
         -- RX clock distribution
         CLK_TO_EXT_NORTH => clk_to_north_o,
@@ -192,13 +188,13 @@ begin
         -- Control interface
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
-        -- Delay line control
-        CLK => reg_clk_i,
+        -- Delay
+        CLK => riu_clk_i,
         CE => '0',
         INC => '0',
-        LOAD => tri_load_i,
-        CNTVALUEIN => tri_delay_i,
-        CNTVALUEOUT => tri_delay_o
+        LOAD => '0',
+        CNTVALUEIN => 9X"000",
+        CNTVALUEOUT => open
     );
 
 
@@ -223,8 +219,8 @@ begin
                 TX_DATA_WIDTH => 8,
                 RX_DELAY_FORMAT => "TIME",
                 TX_DELAY_FORMAT => "TIME",
-                RX_DELAY_TYPE => "VAR_LOAD",
-                TX_DELAY_TYPE => "VAR_LOAD",
+                RX_DELAY_TYPE => "FIXED",
+                TX_DELAY_TYPE => "FIXED",
                 RX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 TX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 ENABLE_PRE_EMPHASIS => "TRUE",
@@ -261,18 +257,18 @@ begin
                 TX_BIT_CTRL_IN => tx_bit_ctrl_out(i),
 
                 -- Delay management interface
-                RX_CLK => reg_clk_i,
+                RX_CLK => riu_clk_i,
                 RX_CE => '0',
                 RX_INC => '0',
-                RX_LOAD => rx_load_i(i),
-                RX_CNTVALUEIN => rx_delay_i,
-                RX_CNTVALUEOUT => rx_delay_o(i),
-                TX_CLK => reg_clk_i,
+                RX_LOAD => '0',
+                RX_CNTVALUEIN => 9X"000",
+                RX_CNTVALUEOUT => open,
+                TX_CLK => riu_clk_i,
                 TX_CE => '0',
                 TX_INC => '0',
-                TX_LOAD => tx_load_i(i),
-                TX_CNTVALUEIN => tx_delay_i,
-                TX_CNTVALUEOUT => tx_delay_o(i)
+                TX_LOAD => '0',
+                TX_CNTVALUEIN => 9X"000",
+                TX_CNTVALUEOUT => open
             );
 
         else generate
@@ -281,12 +277,10 @@ begin
             rx_bit_ctrl_in(i) <= (others => '0');
             tx_bit_ctrl_in(i) <= (others => '0');
             -- Simulation needs the following unused values to be assigned,
-            -- otherwise a storm of error messages is generate.
-            data_o(i) <= 8X"--";
-            pad_out_o(i) <= '-';
-            pad_t_out_o(i) <= '-';
-            rx_delay_o(i) <= (others => '-');
-            tx_delay_o(i) <= (others => '-');
+            -- otherwise a storm of error messages is generated.
+            data_o(i) <= 8X"00";
+            pad_out_o(i) <= '0';
+            pad_t_out_o(i) <= '0';
         end generate;
     end generate;
 end;

@@ -89,6 +89,7 @@ architecture arch of top is
 
     -- SG clocking and reset control
     signal ck_clk : std_ulogic;
+    signal riu_clk : std_ulogic;
     signal ck_reset : std_ulogic;
     signal raw_ck_clk_ok : std_ulogic;      -- Unsynchronised
     signal ck_clk_ok : std_ulogic;
@@ -112,14 +113,13 @@ architecture arch of top is
     signal edc_in : vector_array(7 downto 0)(7 downto 0);
     signal edc_out : vector_array(7 downto 0)(7 downto 0);
 
-    -- SG delay control
-    signal delay_select : unsigned(6 downto 0);
-    signal delay_rx_tx_n : std_ulogic;
-    signal delay_write : std_ulogic;
-    signal delay_in : unsigned(8 downto 0);
-    signal delay_out : unsigned(8 downto 0);
-    signal delay_strobe : std_ulogic;
-    signal delay_ack : std_ulogic;
+    -- SG RIU control
+    signal riu_addr : unsigned(9 downto 0);
+    signal riu_wr_data : std_ulogic_vector(15 downto 0);
+    signal riu_rd_data : std_ulogic_vector(15 downto 0);
+    signal riu_wr_en : std_ulogic;
+    signal riu_strobe : std_ulogic;
+    signal riu_ack : std_ulogic;
 
 begin
     -- Clocks and resets
@@ -220,8 +220,8 @@ begin
     -- Decode registers into system and GDDR6 registers
     decode_registers : entity work.decode_registers port map (
         clk_i => clk,
-        ck_clk_ok_i => ck_clk_ok,
-        ck_clk_i => ck_clk,
+        riu_clk_ok_i => ck_clk_ok,
+        riu_clk_i => riu_clk,
 
         -- Internal registers from AXI-lite
         write_strobe_i => regs_write_strobe,
@@ -241,7 +241,7 @@ begin
         sys_read_strobe_o => sys_read_strobe,
         sys_read_ack_i => sys_read_ack,
 
-        -- GDDR6 PHY registers on ck_clk domain
+        -- GDDR6 PHY registers on riu_clk domain
         phy_write_strobe_o => phy_write_strobe,
         phy_write_data_o => phy_write_data,
         phy_write_ack_i => phy_write_ack,
@@ -283,7 +283,7 @@ begin
 
 
     gddr6_registers : entity work.gddr6_registers port map (
-        clk_i => ck_clk,
+        clk_i => riu_clk,
 
         write_strobe_i => phy_write_strobe,
         write_data_i => phy_write_data,
@@ -310,13 +310,12 @@ begin
         edc_in_i => edc_in,
         edc_out_i => edc_out,
 
-        delay_select_o => delay_select,
-        delay_rx_tx_n_o => delay_rx_tx_n,
-        delay_write_o => delay_write,
-        delay_o => delay_out,
-        delay_i => delay_in,
-        delay_strobe_o => delay_strobe,
-        delay_ack_i => delay_ack
+        riu_addr_o => riu_addr,
+        riu_wr_data_o => riu_wr_data,
+        riu_rd_data_i => riu_rd_data,
+        riu_wr_en_o => riu_wr_en,
+        riu_strobe_o => riu_strobe,
+        riu_ack_i => riu_ack
     );
 
 
@@ -358,6 +357,7 @@ begin
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
         ck_clk_o => ck_clk,
+        riu_clk_o => riu_clk,
         ck_reset_i => ck_reset,
         ck_ok_o => raw_ck_clk_ok,
         ck_unlock_o => ck_unlock,
@@ -379,13 +379,12 @@ begin
         edc_in_o => edc_in,
         edc_out_o => edc_out,
 
-        delay_select_i => delay_select,
-        delay_rx_tx_n_i => delay_rx_tx_n,
-        delay_write_i => delay_write,
-        delay_i => delay_out,
-        delay_o => delay_in,
-        delay_strobe_i => delay_strobe,
-        delay_ack_o => delay_ack,
+        riu_addr_i => riu_addr,
+        riu_wr_data_i => riu_wr_data,
+        riu_rd_data_o => riu_rd_data,
+        riu_wr_en_i => riu_wr_en,
+        riu_strobe_i => riu_strobe,
+        riu_ack_o => riu_ack,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

@@ -50,19 +50,15 @@ PHY_MAGIC_NUMBER = 0x12345678
     # Array of registers mapped to EDC OUT
     EDC_OUT         R   2
 
-    # Read or write IO delay.  Reading this register returns the result of the
+    # Read or write RIU.  To read perform write with .WRITE=0 and then read.
     # previous write.
-    DELAY           RW
-        # Delay to read or write
-        .DELAY      9
-        # Select which delay to read or write
-        .SELECT     7
-        # Set for read delays, clear for write delays
-        .RX_TX_N
-        # Set to write new value to delay, otherwise current delay is read and
-        # available for readback.
+    RIU             RW
+        # Data to be written, data read on last transaction
+        .DATA       16
+        # Register to access
+        .ADDRESS    10
+        # Set to write data
         .WRITE
-
 
 !SYS
     GIT_VERSION     R
