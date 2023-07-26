@@ -55,6 +55,9 @@ architecture arch of testbench is
     signal riu_strobe_in : std_ulogic;
     signal riu_ack_out : std_ulogic;
 
+    signal rx_slip_in : unsigned_array(0 to 1)(2 downto 0);
+    signal tx_slip_in : unsigned_array(0 to 1)(2 downto 0);
+
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
     signal pad_SG1_WCK_P : std_ulogic := '0';
@@ -117,6 +120,8 @@ begin
         riu_wr_en_i => riu_wr_en_in,
         riu_strobe_i => riu_strobe_in,
         riu_ack_o => riu_ack_out,
+        rx_slip_i => rx_slip_in,
+        tx_slip_i => tx_slip_in,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -159,6 +164,9 @@ begin
     data_in <= (others => '0');
     dq_t_in <= '0';
 
+    rx_slip_in <= (others => (others => '0'));
+    tx_slip_in <= (others => (others => '0'));
+
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
@@ -175,10 +183,10 @@ begin
     pad_SG1_DBI_N_B <= (others => 'Z');
     pad_SG2_DBI_N_A <= (others => 'Z');
     pad_SG2_DBI_N_B <= (others => 'Z');
-    pad_SG1_EDC_A <= (others => 'Z');
-    pad_SG1_EDC_B <= (others => 'Z');
-    pad_SG2_EDC_A <= (others => 'Z');
-    pad_SG2_EDC_B <= (others => 'Z');
+    pad_SG1_EDC_A <= (others => 'H');
+    pad_SG1_EDC_B <= (others => 'H');
+    pad_SG2_EDC_A <= (others => 'H');
+    pad_SG2_EDC_B <= (others => 'H');
 
     process
         procedure riu_wait is

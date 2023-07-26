@@ -102,6 +102,9 @@ entity gddr6_phy is
         riu_wr_en_i : in std_ulogic;
         riu_strobe_i : in std_ulogic;
         riu_ack_o : out std_ulogic;
+        -- Bit phase control, 0 to 7 for top and bottom banks separately
+        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
+        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -307,6 +310,8 @@ begin
         riu_rd_data_o => riu_rd_data,
         riu_valid_o => riu_valid,
         riu_wr_en_i => riu_wr_en,
+        rx_slip_i => rx_slip_i,
+        tx_slip_i => tx_slip_i,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,

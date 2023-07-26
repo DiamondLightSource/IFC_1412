@@ -119,6 +119,10 @@ architecture arch of top is
     signal riu_strobe : std_ulogic;
     signal riu_ack : std_ulogic;
 
+    -- "Bitslip" control
+    signal rx_slip : unsigned_array(0 to 1)(2 downto 0);
+    signal tx_slip : unsigned_array(0 to 1)(2 downto 0);
+
 begin
     -- Clocks and resets
     clocking : entity work.system_clocking port map (
@@ -296,6 +300,8 @@ begin
         sg_resets_o => sg_resets,
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
+        rx_slip_o => rx_slip,
+        tx_slip_o => tx_slip,
         dq_t_o => dq_t,
 
         ca_o => ca,
@@ -380,6 +386,8 @@ begin
         riu_wr_en_i => riu_wr_en,
         riu_strobe_i => riu_strobe,
         riu_ack_o => riu_ack,
+        rx_slip_i => rx_slip,
+        tx_slip_i => tx_slip,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

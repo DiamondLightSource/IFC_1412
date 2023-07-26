@@ -27,6 +27,8 @@ entity gddr6_registers is
         sg_resets_o : out std_ulogic_vector(0 to 1);
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
+        rx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
+        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
         dq_t_o : out std_ulogic;
 
         ca_o : out vector_array(0 to 1)(9 downto 0);
@@ -152,6 +154,12 @@ begin
     sg_resets_o <= config_bits(PHY_CONFIG_SG_RESET_N_BITS);
     enable_cabi_o <= config_bits(PHY_CONFIG_ENABLE_CABI_BIT);
     enable_dbi_o <= config_bits(PHY_CONFIG_ENABLE_DBI_BIT);
+    rx_slip_o <= (
+        0 => unsigned(config_bits(PHY_CONFIG_RX_SLIP_LOW_BITS)),
+        1 => unsigned(config_bits(PHY_CONFIG_RX_SLIP_HIGH_BITS)));
+    tx_slip_o <= (
+        0 => unsigned(config_bits(PHY_CONFIG_TX_SLIP_LOW_BITS)),
+        1 => unsigned(config_bits(PHY_CONFIG_TX_SLIP_HIGH_BITS)));
     dq_t_o <= config_bits(PHY_CONFIG_DQ_T_BIT);
 
     -- EDC_IN, EDC_OUT

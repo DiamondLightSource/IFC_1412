@@ -41,6 +41,9 @@ entity gddr6_phy_dq is
         riu_rd_data_o : out std_ulogic_vector(15 downto 0);
         riu_valid_o : out std_ulogic;
         riu_wr_en_i : in std_ulogic;
+        -- Bit phase control, 0 to 7 for top and bottom banks separately
+        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
+        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
 
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);
@@ -89,6 +92,13 @@ architecture arch of gddr6_phy_dq is
     signal bank_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal bank_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal bank_edc_in : vector_array(7 downto 0)(7 downto 0);
+
+    -- Raw data after bitslip correction
+    signal bitslip_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal bitslip_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal bitslip_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
+    signal bitslip_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
+    signal bitslip_edc_in : vector_array(7 downto 0)(7 downto 0);
 
     -- RIU interface
     signal riu_byte : natural range 0 to 7;
@@ -191,15 +201,25 @@ begin
     );
 
 
-    -- Use top part of RIU address to select byte to act on
-    riu_byte <= to_integer(riu_addr_i(9 downto 7));
-    riu_rd_data_o <= riu_rd_data(riu_byte);
-    riu_valid_o <= riu_valid(riu_byte);
-    compute_strobe(riu_wr_en, riu_byte, riu_wr_en_i);
+    -- Apply bitslice correction to raw data
+    bitslip : entity work.gddr6_phy_bitslip port map (
+        clk_i => ck_clk_i,
 
-    -- For the moment we'll control all bitslice VTC signals together
-    enable_tri_vtc <= (others => (others => enable_bitslice_vtc_i));
-    enable_bitslice_vtc <= (others => (others => enable_bitslice_vtc_i));
+        rx_slip_i => rx_slip_i,
+        tx_slip_i => tx_slip_i,
+
+        slice_dq_i => bank_data_in,
+        slice_dq_o => bank_data_out,
+        slice_dbi_n_i => bank_dbi_n_in,
+        slice_dbi_n_o => bank_dbi_n_out,
+        slice_edc_i => bank_edc_in,
+
+        fixed_dq_o => bitslip_data_in,
+        fixed_dq_i => bitslip_data_out,
+        fixed_dbi_n_o => bitslip_dbi_n_in,
+        fixed_dbi_n_i => bitslip_dbi_n_out,
+        fixed_edc_o => bitslip_edc_in
+    );
 
 
     -- Finally flatten the data across 8 ticks.  At this point we also apply
@@ -209,10 +229,10 @@ begin
 
         enable_dbi_i => enable_dbi_i,
 
-        bank_data_i => bank_data_in,
-        bank_data_o => bank_data_out,
-        bank_dbi_n_i => bank_dbi_n_in,
-        bank_dbi_n_o => bank_dbi_n_out,
+        bank_data_i => bitslip_data_in,
+        bank_data_o => bitslip_data_out,
+        bank_dbi_n_i => bitslip_dbi_n_in,
+        bank_dbi_n_o => bitslip_dbi_n_out,
 
         data_i => data_i,
         data_o => data_o
@@ -223,14 +243,14 @@ begin
         clk_i => ck_clk_i,
 
         dq_t_i => dq_t_i,
-        bank_data_in_i => bank_data_in,
-        bank_dbi_n_in_i => bank_dbi_n_in,
-        bank_data_out_i => bank_data_out,
-        bank_dbi_n_out_i => bank_dbi_n_out,
+        bank_data_in_i => bitslip_data_in,
+        bank_dbi_n_in_i => bitslip_dbi_n_in,
+        bank_data_out_i => bitslip_data_out,
+        bank_dbi_n_out_i => bitslip_dbi_n_out,
 
         edc_out_o => edc_out_o
     );
-    edc_in_o <= bank_edc_in;
+    edc_in_o <= bitslip_edc_in;
 
 
     process (ck_clk_i) begin
@@ -240,6 +260,16 @@ begin
             fifo_ok_o <= fifo_enable;
         end if;
     end process;
+
+    -- Use top part of RIU address to select byte to act on
+    riu_byte <= to_integer(riu_addr_i(9 downto 7));
+    riu_rd_data_o <= riu_rd_data(riu_byte);
+    riu_valid_o <= riu_valid(riu_byte);
+    compute_strobe(riu_wr_en, riu_byte, riu_wr_en_i);
+
+    -- For the moment we'll control all bitslice VTC signals together
+    enable_tri_vtc <= (others => (others => enable_bitslice_vtc_i));
+    enable_bitslice_vtc <= (others => (others => enable_bitslice_vtc_i));
 
     -- Gather statuses needed for resets
     dly_ready_o <= vector_and(dly_ready);

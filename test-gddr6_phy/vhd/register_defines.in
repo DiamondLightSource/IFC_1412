@@ -26,6 +26,11 @@ PHY_MAGIC_NUMBER = 0x12345678
         .ENABLE_DBI
         # DQ input enable
         .DQ_T
+        # Bitslip control
+        .RX_SLIP_LOW    3
+        .RX_SLIP_HIGH   3
+        .TX_SLIP_LOW    3
+        .TX_SLIP_HIGH   3
 
     # Write to CA register
     CA              W

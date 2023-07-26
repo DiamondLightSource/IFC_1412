@@ -47,10 +47,11 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/phy/gddr6_phy_nibble.vhd \
     $gddr6_dir/phy/gddr6_phy_byte.vhd \
     $gddr6_dir/phy/gddr6_phy_map_data.vhd \
+    $gddr6_dir/phy/gddr6_phy_bitslip.vhd \
     $gddr6_dir/phy/gddr6_phy_dq_remap.vhd \
     $gddr6_dir/phy/gddr6_phy_crc.vhd \
     $gddr6_dir/phy/gddr6_phy_dq.vhd \
-    $gddr6_dir/phy/gddr6_phy_delay_control.vhd \
+    $gddr6_dir/phy/gddr6_phy_riu_control.vhd \
     $gddr6_dir/phy/gddr6_phy.vhd \
     $bench_dir/interconnect_wrapper.vhd \
     built_dir/top_entity.vhd \
