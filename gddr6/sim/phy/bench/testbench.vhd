@@ -42,8 +42,6 @@ architecture arch of testbench is
     signal cke_n_in : std_ulogic;
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
-    signal edc_t_in : std_ulogic;
-    signal edc_in : std_ulogic_vector(7 downto 0);
 
     signal data_in : std_ulogic_vector(511 downto 0);
     signal data_out : std_ulogic_vector(511 downto 0);
@@ -105,8 +103,6 @@ begin
         ca_i => ca_in,
         ca3_i => ca3_in,
         cke_n_i => cke_n_in,
-        edc_i => edc_in,
-        edc_t_i => edc_t_in,
 
         data_i => data_in,
         data_o => data_out,
@@ -159,8 +155,6 @@ begin
     ca_in <= (others => (others => '0'));
     ca3_in <= (others => '0');
     cke_n_in <= '0';
-    edc_in <= (others => '1');
-    edc_t_in <= '0';
 
     data_in <= (others => '0');
     dq_t_in <= '0';

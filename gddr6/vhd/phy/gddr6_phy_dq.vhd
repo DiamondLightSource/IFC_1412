@@ -49,7 +49,9 @@ entity gddr6_phy_dq is
         io_dbi_n_o : out std_ulogic_vector(7 downto 0);
         io_dbi_n_i : in std_ulogic_vector(7 downto 0);
         io_dbi_n_t_o : out std_ulogic_vector(7 downto 0);
-        io_edc_i : in std_ulogic_vector(7 downto 0)
+        io_edc_i : in std_ulogic_vector(7 downto 0);
+        -- Fixup required to locate patchup bitslice
+        bitslice_patch_i : in std_ulogic_vector
     );
 end;
 
@@ -174,6 +176,9 @@ begin
         bank_dbi_n_o => bank_dbi_n_in,
         bank_dbi_n_i => bank_dbi_n_out,
         bank_edc_o => bank_edc_in,
+
+        -- Patch inputs for locating bitslice 0 where required
+        bitslice_patch_i => bitslice_patch_i,
 
         -- IO pins
         io_dq_o => io_dq_o,

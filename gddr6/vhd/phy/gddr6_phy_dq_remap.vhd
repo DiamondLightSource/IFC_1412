@@ -34,7 +34,10 @@ entity gddr6_phy_dq_remap is
         io_dbi_n_o : out std_ulogic_vector(7 downto 0);
         io_dbi_n_i : in std_ulogic_vector(7 downto 0);
         io_dbi_n_t_o : out std_ulogic_vector(7 downto 0);
-        io_edc_i : in std_ulogic_vector(7 downto 0)
+        io_edc_i : in std_ulogic_vector(7 downto 0);
+
+        -- Patch inputs
+        bitslice_patch_i : in std_ulogic_vector
     );
 end;
 
@@ -92,6 +95,14 @@ begin
         data_o(byte)(slice) <= X"00";
     end generate;
 
+    -- PATCH: link component signal to patch bitslice
+    get_patch : for i in CONFIG_BANK_PATCH'RANGE generate
+        constant byte : natural := CONFIG_BANK_PATCH(i).byte;
+        constant slice : natural := CONFIG_BANK_PATCH(i).slice;
+    begin
+        pad_in_o(byte)(slice) <= bitslice_patch_i(i);
+        data_o(byte)(slice) <= X"00";
+    end generate;
 
     -- Finally fill in suitable empty markers for unused entries.  This is
     -- mostly needed to suppress simulation complaints.

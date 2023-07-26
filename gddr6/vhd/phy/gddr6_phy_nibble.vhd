@@ -201,12 +201,16 @@ begin
     gen_bits : for i in 0 to 5 generate
         function rx_data_type return string is
         begin
-            if i = 0 and LOWER_NIBBLE and CLK_FROM_PIN then
-                -- Enable incoming clock on bitslice 0
-                return "DATA_AND_CLOCK";
-            elsif BITSLICE_WANTED(i) then
-                return "DATA";
+            if BITSLICE_WANTED(i) then
+                if i = 0 and CLK_FROM_PIN then
+                    -- Incoming clock
+                    return "DATA_AND_CLOCK";
+                else
+                    -- Normal data slice
+                    return "DATA";
+                end if;
             else
+                -- Nothing in this position
                 return "UNUSED";
             end if;
         end;

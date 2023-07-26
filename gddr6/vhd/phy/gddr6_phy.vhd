@@ -161,6 +161,8 @@ architecture arch of gddr6_phy is
     signal io_dbi_n_t_out : std_ulogic_vector(7 downto 0);
     signal io_edc_in : std_ulogic_vector(7 downto 0);
 
+    signal bitslice_patch : std_ulogic_vector(0 to 0);
+
     -- Clocks and resets
     signal pll_clk : std_ulogic_vector(0 to 1);
     signal ck_clk : std_ulogic;
@@ -312,12 +314,18 @@ begin
         io_dbi_n_o => io_dbi_n_out,
         io_dbi_n_i => io_dbi_n_in,
         io_dbi_n_t_o => io_dbi_n_t_out,
-        io_edc_i => io_edc_in
+        io_edc_i => io_edc_in,
+
+        bitslice_patch_i => bitslice_patch
     );
+
+    -- Pin SG12_CK occupies the space for bitslice 2:0 which we have to
+    -- instantiate, this link helps to locate the bitslice.
+    bitslice_patch <= (0 => io_ck_in);
 
 
     -- Register interface to individual pin delays
-    delay_control : entity work.gddr6_phy_delay_control port map (
+    riu_control : entity work.gddr6_phy_delay_control port map (
         clk_i => riu_clk,
 
         riu_addr_i => riu_addr_i,

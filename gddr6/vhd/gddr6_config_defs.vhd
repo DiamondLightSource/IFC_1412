@@ -53,6 +53,12 @@ package gddr6_config_defs is
         (1,  0),                -- Bank 1
         (5,  0));               -- Bank 2
 
+    -- Patch input for slices which need to be instantiated following the
+    -- directions in UG571 (v1.14, p147): clock sink nibbles must instantiate
+    -- bitslice 0.  As it happens, only pad_SG12_CK_P meets this description.
+    constant CONFIG_BANK_PATCH : pin_config_array_t(0 to 0) := (
+        0 => (2,  0));          -- Connected to SG12_CK
+
     -- Returns bitmask of wanted slices matching the given byte
     function bitslice_wanted(byte : natural) return std_ulogic_vector;
 end;
@@ -71,7 +77,8 @@ package body gddr6_config_defs is
     end;
 
     constant CONFIG_BANK_ALL : pin_config_array_t :=
-        CONFIG_BANK_DQ & CONFIG_BANK_DBI & CONFIG_BANK_EDC & CONFIG_BANK_WCK;
+        CONFIG_BANK_DQ & CONFIG_BANK_DBI & CONFIG_BANK_EDC & CONFIG_BANK_WCK &
+        CONFIG_BANK_PATCH;
 
     function bitslice_wanted(byte : natural) return std_ulogic_vector
     is

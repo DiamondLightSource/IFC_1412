@@ -41,7 +41,7 @@ add wave -group "CA" /phy/ca/*
 add wave -group "Map Data" /phy/dq/map_data/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
-add wave -group "Delay" /phy/delay_control/*
+add wave -group "RIU" /phy/riu_control/*
 add wave -group "Phy" /phy/*
 add wave -group "Bench" sim:*
 
