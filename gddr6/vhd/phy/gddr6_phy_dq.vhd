@@ -10,7 +10,8 @@ use work.gddr6_config_defs.all;
 
 entity gddr6_phy_dq is
     generic (
-        REFCLK_FREQUENCY : real
+        REFCLK_FREQUENCY : real;
+        INITIAL_DELAY : natural
     );
     port (
         -- Clocks
@@ -109,11 +110,9 @@ architecture arch of gddr6_phy_dq is
 begin
     -- Generate 4 IO bytes in each of the two IO banks
     gen_bytes : for i in 0 to 7 generate
-        -- Selector for nibble specific outputs
-        subtype NIBBLE_SUBRANGE is natural range 2*i to 2*i+1;
-    begin
         byte : entity work.gddr6_phy_byte generic map (
             REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+            INITIAL_DELAY => INITIAL_DELAY,
             BITSLICE_WANTED => bitslice_wanted(i),
             CLK_FROM_PIN => MAP_CLK_FROM_PIN(i mod 4),
             CLK_TO_NORTH => MAP_CLK_TO_NORTH(i mod 4),
@@ -201,7 +200,7 @@ begin
     );
 
 
-    -- Apply bitslice correction to raw data
+    -- Apply bitslip correction to raw data
     bitslip : entity work.gddr6_phy_bitslip port map (
         clk_i => ck_clk_i,
 

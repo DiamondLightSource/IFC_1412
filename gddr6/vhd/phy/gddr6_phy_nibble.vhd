@@ -17,6 +17,8 @@ entity gddr6_phy_nibble is
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 5);
         REFCLK_FREQUENCY : real;
+        -- Initial delay, used for calibration
+        INITIAL_DELAY : natural;
 
         -- The upper nibble always receives clocks from the lower nibble
         LOWER_NIBBLE : boolean;
@@ -179,6 +181,7 @@ begin
         DATA_WIDTH => 8,
         DELAY_FORMAT => "TIME",
         DELAY_TYPE => "FIXED",
+        DELAY_VALUE => INITIAL_DELAY,
         REFCLK_FREQUENCY => REFCLK_FREQUENCY
     ) port map (
         TRI_OUT => tri_out_to_tbyte,
@@ -225,6 +228,8 @@ begin
                 TX_DELAY_FORMAT => "TIME",
                 RX_DELAY_TYPE => "FIXED",
                 TX_DELAY_TYPE => "FIXED",
+                RX_DELAY_VALUE => INITIAL_DELAY,
+                TX_DELAY_VALUE => INITIAL_DELAY,
                 RX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 TX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 ENABLE_PRE_EMPHASIS => "TRUE",
@@ -235,7 +240,7 @@ begin
                 FIFO_EMPTY => fifo_empty_o(i),  -- Read FIFO empty
                 FIFO_RD_CLK => fifo_rd_clk_i,   -- Clock to read fifo
                 FIFO_RD_EN => fifo_rd_en_i,     -- FIFO enable
-                Q => data_o(i),              -- Data in read
+                Q => data_o(i),                 -- Data in read
 
                 FIFO_WRCLK_OUT => open,
 
@@ -243,7 +248,7 @@ begin
                 D => data_i(i),
                 O => pad_out_o(i),
 
-                T_OUT => pad_t_out_o(i),        -- Tristate control out
+                T_OUT => pad_t_out_o(i),        -- Tristate control out to pad
                 T => '0',
                 TBYTE_IN => tri_out_to_tbyte,
 

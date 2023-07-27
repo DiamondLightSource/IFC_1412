@@ -11,10 +11,6 @@ use work.support.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_ca is
-    generic (
-        REFCLK_FREQUENCY : real;
-        CA_ODELAY_PS : natural
-    );
     port (
         clk_i : in std_ulogic;
         -- Internal resets for IO components

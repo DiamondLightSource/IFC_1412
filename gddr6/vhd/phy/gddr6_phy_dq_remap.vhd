@@ -43,8 +43,7 @@ end;
 
 architecture arch of gddr6_phy_dq_remap is
 begin
-    -- Use the DQ, DBI, EDC, WCK configurations to bind to the appropriate
-    -- slices
+    -- Use the CONFIG_BANK configurations to bind to the appropriate slices
 
     -- DQ
     gen_dq : for i in 0 to 63 generate
@@ -60,7 +59,7 @@ begin
         bank_data_o(i) <= data_i(byte)(slice);
     end generate;
 
-    -- Similarly for DBI
+    -- DBI
     gen_dbi : for i in 0 to 7 generate
         constant byte : natural := CONFIG_BANK_DBI(i).byte;
         constant slice : natural := CONFIG_BANK_DBI(i).slice;

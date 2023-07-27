@@ -14,7 +14,6 @@
 --          sync_bit
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
---          ODELAYE3
 --      gddr6_phy_dq                DQ bus generation
 --          gddr6_phy_byte              Generates a pair of nibbles
 --              gddr6_phy_nibble            Generates complete IO nibble
@@ -22,9 +21,10 @@
 --                  TX_BITSLICE_TRI
 --                  RXTX_BITSLICE
 --          gddr6_phy_dq_remap          Maps signals to bitslices
+--          gddr6_phy_bitslip           WCK data phase correction
 --          gddr6_phy_map_data          Data remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
---      gddr6_phy_riu_control       Register control of RIU interface
+--      gddr6_phy_riu_control       Control of RIU interface
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -90,6 +90,10 @@ entity gddr6_phy is
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
+        -- Bit phase control, 0 to 7 for top and bottom banks separately
+        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
+        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
+
         -- --------------------------------------------------------------------
         -- Register Interface to bitslice
         -- Read or write the selected register, addressed as follows by
@@ -102,9 +106,6 @@ entity gddr6_phy is
         riu_wr_en_i : in std_ulogic;
         riu_strobe_i : in std_ulogic;
         riu_ack_o : out std_ulogic;
-        -- Bit phase control, 0 to 7 for top and bottom banks separately
-        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -142,8 +143,7 @@ end;
 architecture arch of gddr6_phy is
     constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
     -- This is a somewhat arbitrary initial value used for time calibration.
-    -- Not altogether sure how to use this value!
-    constant CA_ODELAY_PS : natural := 100;    -- Max is 1250
+    constant INITIAL_DELAY : natural := 1000;    -- Max is 1250
 
     -- Pads with IO buffers
     -- Clocks and reset
@@ -166,7 +166,7 @@ architecture arch of gddr6_phy is
 
     signal bitslice_patch : std_ulogic_vector(0 to 0);
 
-    -- Clocks and resets
+    -- Clocks resets and controls
     signal pll_clk : std_ulogic_vector(0 to 1);
     signal ck_clk : std_ulogic;
     signal riu_clk : std_ulogic;
@@ -260,10 +260,7 @@ begin
 
 
     -- CA generation
-    ca : entity work.gddr6_phy_ca generic map (
-        REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-        CA_ODELAY_PS => CA_ODELAY_PS
-    ) port map (
+    ca : entity work.gddr6_phy_ca port map (
         clk_i => ck_clk,
         reset_i => reset,
         sg_resets_i => sg_resets_i,
@@ -284,7 +281,8 @@ begin
 
     -- Data receive and transmit
     dq : entity work.gddr6_phy_dq generic map (
-        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+        INITIAL_DELAY => INITIAL_DELAY
     ) port map (
         pll_clk_i => pll_clk,
         wck_i => io_wck_in,

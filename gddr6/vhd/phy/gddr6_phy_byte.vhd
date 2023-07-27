@@ -14,6 +14,7 @@ entity gddr6_phy_byte is
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 11);
         REFCLK_FREQUENCY : real;
+        INITIAL_DELAY : natural;
 
         -- For the lower nibble, the clock either comes from bitslice 0 or from
         -- another byte, and clocks are distributed to adjacent bytes
@@ -105,6 +106,7 @@ begin
         nibble : entity work.gddr6_phy_nibble generic map (
             BITSLICE_WANTED => BITSLICE_WANTED(BITSLICE_RANGE),
             REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+            INITIAL_DELAY => INITIAL_DELAY,
 
             LOWER_NIBBLE => LOWER_NIBBLE,
             CLK_FROM_PIN => LOWER_NIBBLE and CLK_FROM_PIN,
