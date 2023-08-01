@@ -1,12 +1,18 @@
+# The maximum sensible CK frequency seems to be around 250 MHz
+set ck_frequency 250.0
+
 # Reference clock
 create_clock -period 10.0 -name SYSCLK100 [get_ports pad_SYSCLK100_P]
 # FCLKA on MGT, a copy of SYSCLK100 above, but unknown phase
 create_clock -period 10.0 -name FCLKA [get_ports pad_MGT224_REFCLK_P]
 
-# Define clocks for the three SG clocks, CK running at 250 MHz and WCK at 1 GHz
-create_clock -period 4.0 -name SG12_CK [get_ports pad_SG12_CK_P]
-create_clock -period 1.0 -name SG1_WCK [get_ports pad_SG1_WCK_P]
-create_clock -period 1.0 -name SG2_WCK [get_ports pad_SG2_WCK_P]
+# Define clocks for the three SG clocks, CK and WCK at 4 * CK frequency
+create_clock -period [expr 1e3 / $ck_frequency] \
+    -name SG12_CK [get_ports pad_SG12_CK_P]
+create_clock -period [expr 1e3 / $ck_frequency / 4] \
+    -name SG1_WCK [get_ports pad_SG1_WCK_P]
+create_clock -period [expr 1e3 / $ck_frequency / 4] \
+    -name SG2_WCK [get_ports pad_SG2_WCK_P]
 
 # Let the incoming CK BUFG use the vertical backbone
 set_property CLOCK_DEDICATED_ROUTE SAME_CMT_COLUMN \

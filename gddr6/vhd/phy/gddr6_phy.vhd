@@ -106,6 +106,10 @@ entity gddr6_phy is
         riu_wr_en_i : in std_ulogic;
         riu_strobe_i : in std_ulogic;
         riu_ack_o : out std_ulogic;
+        -- If the RIU stops responding this bit will be set on ack
+        riu_error_o : out std_ulogic;
+        -- If this is set a complete VTC handshake is performed
+        riu_vtc_handshake_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -337,6 +341,8 @@ begin
         riu_wr_en_i => riu_wr_en_i,
         riu_strobe_i => riu_strobe_i,
         riu_ack_o => riu_ack_o,
+        riu_error_o => riu_error_o,
+        riu_vtc_handshake_i => riu_vtc_handshake_i,
 
         riu_addr_o => riu_addr,
         riu_wr_data_o => riu_wr_data,

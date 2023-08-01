@@ -45,7 +45,9 @@ entity gddr6_registers is
         riu_rd_data_i : in std_ulogic_vector(15 downto 0);
         riu_wr_en_o : out std_ulogic;
         riu_strobe_o : out std_ulogic;
-        riu_ack_i : in std_ulogic
+        riu_ack_i : in std_ulogic;
+        riu_error_i : in std_ulogic;
+        riu_vtc_handshake_o : out std_ulogic
     );
 end;
 
@@ -184,11 +186,13 @@ begin
     riu_addr_o <= unsigned(riu_bits_out(PHY_RIU_ADDRESS_BITS));
     riu_wr_data_o <= riu_bits_out(PHY_RIU_DATA_BITS);
     riu_wr_en_o <= riu_bits_out(PHY_RIU_WRITE_BIT);
+    riu_vtc_handshake_o <= riu_bits_out(PHY_RIU_VTC_BIT);
     process (clk_i) begin
         if rising_edge(clk_i) then
             if riu_ack_i then
                 riu_bits_in <= (
                     PHY_RIU_DATA_BITS => std_ulogic_vector(riu_rd_data_i),
+                    PHY_RIU_TIMEOUT_BIT => riu_error_i,
                     others => '0'
                 );
             end if;

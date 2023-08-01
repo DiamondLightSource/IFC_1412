@@ -39,8 +39,8 @@ entity gddr6_phy_bitslip is
 end;
 
 architecture arch of gddr6_phy_bitslip is
-    signal rx_slip_in : unsigned_array(0 to 1)(2 downto 0);
-    signal tx_slip_in : unsigned_array(0 to 1)(2 downto 0);
+    signal rx_slip_in : unsigned_array(0 to 1)(2 downto 0) := (others => "000");
+    signal tx_slip_in : unsigned_array(0 to 1)(2 downto 0) := (others => "000");
 
     signal slice_dq_in : vector_array(63 downto 0)(7 downto 0);
     signal slice_dbi_n_in : vector_array(7 downto 0)(7 downto 0);

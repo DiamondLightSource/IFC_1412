@@ -54,6 +54,8 @@ architecture arch of testbench is
     signal riu_wr_en_in : std_ulogic;
     signal riu_strobe_in : std_ulogic;
     signal riu_ack_out : std_ulogic;
+    signal riu_error_out : std_ulogic;
+    signal riu_vtc_handshake_in : std_ulogic;
 
     signal rx_slip_in : unsigned_array(0 to 1)(2 downto 0);
     signal tx_slip_in : unsigned_array(0 to 1)(2 downto 0);
@@ -120,6 +122,9 @@ begin
         riu_wr_en_i => riu_wr_en_in,
         riu_strobe_i => riu_strobe_in,
         riu_ack_o => riu_ack_out,
+        riu_error_o => riu_error_out,
+        riu_vtc_handshake_i => riu_vtc_handshake_in,
+
         rx_slip_i => rx_slip_in,
         tx_slip_i => tx_slip_in,
 
@@ -196,12 +201,14 @@ begin
 
         procedure riu_access(
             address : natural; write : std_ulogic := '0';
-            data : std_ulogic_vector(15 downto 0) := X"0000") is
+            data : std_ulogic_vector(15 downto 0) := X"0000";
+            vtc : std_ulogic := '0') is
         begin
             riu_wait;
             riu_addr_in <= to_unsigned(address, 10);
             riu_wr_data_in <= data;
             riu_wr_en_in <= write;
+            riu_vtc_handshake_in <= vtc;
             riu_strobe_in <= '1';
 
             riu_wait;
@@ -221,6 +228,10 @@ begin
         ck_reset_in <= '0';
 
         wait until ck_ok_out;
+
+        riu_access(16#30#, '1', X"FFFF", '0');
+        riu_access(16#30#, '1', X"5555", '0');
+        riu_access(16#30#, '1', X"0000", '0');
 
         for a in 0 to 63 loop
             riu_access(a);

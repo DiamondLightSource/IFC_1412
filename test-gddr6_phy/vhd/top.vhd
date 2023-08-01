@@ -118,6 +118,8 @@ architecture arch of top is
     signal riu_wr_en : std_ulogic;
     signal riu_strobe : std_ulogic;
     signal riu_ack : std_ulogic;
+    signal riu_error : std_ulogic;
+    signal riu_vtc_handshake : std_ulogic;
 
     -- "Bitslip" control
     signal rx_slip : unsigned_array(0 to 1)(2 downto 0);
@@ -318,7 +320,9 @@ begin
         riu_rd_data_i => riu_rd_data,
         riu_wr_en_o => riu_wr_en,
         riu_strobe_o => riu_strobe,
-        riu_ack_i => riu_ack
+        riu_ack_i => riu_ack,
+        riu_error_i => riu_error,
+        riu_vtc_handshake_o => riu_vtc_handshake
     );
 
 
@@ -386,6 +390,8 @@ begin
         riu_wr_en_i => riu_wr_en,
         riu_strobe_i => riu_strobe,
         riu_ack_o => riu_ack,
+        riu_error_o => riu_error,
+        riu_vtc_handshake_i => riu_vtc_handshake,
         rx_slip_i => rx_slip,
         tx_slip_i => tx_slip,
 
