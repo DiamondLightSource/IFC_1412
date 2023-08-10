@@ -63,6 +63,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
     $vhd_dir/lmk04616.vhd \
+    $vhd_dir/test_gddr6_phy.vhd \
     $vhd_dir/top.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
