@@ -4,9 +4,6 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-use work.register_defs.all;
-use work.register_defines.all;
-
 architecture arch of top is
     constant CK_FREQUENCY : real := 250.0;
 

@@ -44,6 +44,7 @@ architecture arch of gddr6_phy_riu_control is
     signal state : state_t := IDLE;
     signal wait_counter : natural range 0 to 9;
 
+    signal riu_addr_out : riu_addr_o'SUBTYPE := (others => '0');
     signal riu_wr_en_out : std_ulogic := '0';
     signal riu_ack_out : std_ulogic := '0';
     signal enable_vtc_out : std_ulogic := '1';
@@ -69,7 +70,7 @@ begin
                     if riu_strobe_i then
                         -- Drive selected data and address.  Read data and the
                         -- valid signal will become valid on the next tick.
-                        riu_addr_o <= riu_addr_i;
+                        riu_addr_out <= riu_addr_i;
                         riu_wr_data_o <= riu_wr_data_i;
                         if riu_vtc_handshake_i then
                             -- If VTC handshake selected need to enter VTC wait
@@ -121,6 +122,7 @@ begin
         end if;
     end process;
 
+    riu_addr_o <= riu_addr_out;
     riu_wr_en_o <= riu_wr_en_out;
     riu_ack_o <= riu_ack_out;
     enable_vtc_o <= enable_vtc_out;
