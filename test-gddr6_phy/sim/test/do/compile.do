@@ -34,6 +34,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_events.vhd \
     $common_vhd/register/register_command.vhd \
     $common_vhd/register/register_bank_cc.vhd \
+    $common_vhd/register/register_cc.vhd \
     $common_vhd/misc/spi_master.vhd \
     $common_vhd/iodefs/ibufds_array.vhd \
     $common_vhd/iodefs/ibuf_array.vhd \
@@ -60,6 +61,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
     $vhd_dir/lmk04616.vhd \
+    $vhd_dir/riu_control.vhd \
     $vhd_dir/test_gddr6_phy.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
@@ -80,6 +82,6 @@ add wave -group "Test" test_gddr6_phy/*
 add wave -group "Bench" sim:*
 
 
-run 500 ns
+run 2.5 us
 
 # vim: set filetype=tcl:

@@ -38,16 +38,7 @@ entity gddr6_registers is
         dq_data_i : in std_ulogic_vector(511 downto 0);
         dq_data_o : out std_ulogic_vector(511 downto 0);
         edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        edc_out_i : in vector_array(7 downto 0)(7 downto 0);
-
-        riu_addr_o : out unsigned(9 downto 0);
-        riu_wr_data_o : out std_ulogic_vector(15 downto 0);
-        riu_rd_data_i : in std_ulogic_vector(15 downto 0);
-        riu_wr_en_o : out std_ulogic;
-        riu_strobe_o : out std_ulogic;
-        riu_ack_i : in std_ulogic;
-        riu_error_i : in std_ulogic;
-        riu_vtc_handshake_o : out std_ulogic
+        edc_out_i : in vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
@@ -59,8 +50,6 @@ architecture arch of gddr6_registers is
     signal edc_out_bits : reg_data_array_t(0 to 1);
     signal data_in_bits : reg_data_array_t(0 to 15);
     signal data_out_bits : reg_data_array_t(0 to 15);
-    signal riu_bits_in : reg_data_t;
-    signal riu_bits_out : reg_data_t;
 
 begin
     -- IDENT
@@ -129,13 +118,6 @@ begin
     read_ack_o(PHY_EDC_OUT_REGS) <= (others => '1');
     write_ack_o(PHY_EDC_OUT_REGS) <= (others => '1');
 
-    -- RIU
-    riu_bits_out <= write_data_i(PHY_RIU_REG);
-    riu_strobe_o <= write_strobe_i(PHY_RIU_REG);
-    write_ack_o(PHY_RIU_REG) <= riu_ack_i;
-    read_data_o(PHY_RIU_REG) <= riu_bits_in;
-    read_ack_o(PHY_RIU_REG) <= '1';
-
 
     -- -------------------------------------------------------------------------
 
@@ -181,21 +163,4 @@ begin
         data_in_bits(i) <= dq_data_i(WORD_RANGE);
         dq_data_o(WORD_RANGE) <= data_out_bits(i);
     end generate;
-
-    -- RIU
-    riu_addr_o <= unsigned(riu_bits_out(PHY_RIU_ADDRESS_BITS));
-    riu_wr_data_o <= riu_bits_out(PHY_RIU_DATA_BITS);
-    riu_wr_en_o <= riu_bits_out(PHY_RIU_WRITE_BIT);
-    riu_vtc_handshake_o <= riu_bits_out(PHY_RIU_VTC_BIT);
-    process (clk_i) begin
-        if rising_edge(clk_i) then
-            if riu_ack_i then
-                riu_bits_in <= (
-                    PHY_RIU_DATA_BITS => std_ulogic_vector(riu_rd_data_i),
-                    PHY_RIU_TIMEOUT_BIT => riu_error_i,
-                    others => '0'
-                );
-            end if;
-        end if;
-    end process;
 end;

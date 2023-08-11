@@ -4,6 +4,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.register_defs.all;
+
 entity lmk04616 is
     port (
         clk_i : in std_ulogic;
@@ -15,19 +17,13 @@ entity lmk04616 is
         reset_i : in std_ulogic;
         sync_i : in std_ulogic;
 
-        -- Writing
+        -- Register interface
         write_strobe_i : in std_ulogic;
+        write_data_i : in reg_data_t;
         write_ack_o : out std_ulogic;
-        read_write_n_i : in std_ulogic;
-        address_i : in std_ulogic_vector(14 downto 0);
-        data_i : in std_ulogic_vector(7 downto 0);
-        -- Determines which LMK is targeted by this write
-        write_select_i : in std_ulogic;
-
-        -- Reading (returns result of previous write)
         read_strobe_i : in std_ulogic;
+        read_data_o : out reg_data_t;
         read_ack_o : out std_ulogic;
-        data_o : out std_ulogic_vector(7 downto 0);
 
         -- IO pins
         pad_LMK_CTL_SEL_o : out std_ulogic;
@@ -51,6 +47,10 @@ architecture arch of lmk04616 is
     signal status : std_ulogic_vector(1 downto 0);
 
     signal spi_start : std_ulogic;
+    signal spi_read_write_n : std_ulogic;
+    signal spi_address : std_ulogic_vector(14 downto 0);
+    signal spi_data_mosi : std_ulogic_vector(7 downto 0);
+    signal spi_data_miso : std_ulogic_vector(7 downto 0);
     signal spi_busy : std_ulogic;
 
 begin
@@ -92,11 +92,11 @@ begin
         miso_i => lmk_miso,
 
         start_i => spi_start,
-        r_wn_i => read_write_n_i,
-        command_i => address_i,
-        data_i => data_i,
+        r_wn_i => spi_read_write_n,
+        command_i => spi_address,
+        data_i => spi_data_mosi,
         busy_o => spi_busy,
-        response_o => data_o
+        response_o => spi_data_miso
     );
 
 
@@ -109,13 +109,18 @@ begin
         status_o => status_o,
 
         write_strobe_i => write_strobe_i,
+        write_data_i => write_data_i,
         write_ack_o => write_ack_o,
-        write_select_i => write_select_i,
         read_strobe_i => read_strobe_i,
+        read_data_o => read_data_o,
         read_ack_o => read_ack_o,
 
         lmk_ctl_sel_o => lmk_ctl_sel,
+        spi_read_write_n_o => spi_read_write_n,
+        spi_address_o => spi_address,
         spi_start_o => spi_start,
-        spi_busy_i => spi_busy
+        spi_busy_i => spi_busy,
+        spi_data_i => spi_data_miso,
+        spi_data_o => spi_data_mosi
     );
 end;

@@ -122,7 +122,7 @@ begin
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
 
-    pad_LMK_SDIO <= 'Z';
+    pad_LMK_SDIO <= 'H';
     pad_LMK_STATUS <= "LL";
 
     -- Run CK at 300 MHz (we should be so lucky on real hardware)
@@ -193,6 +193,26 @@ begin
         write_reg(SYS_BASE + SYS_CONFIG_REG, (
             SYS_CONFIG_CK_RESET_N_BIT => '1',
             others => '0'));
+
+        -- Try an LMK transaction
+        write_reg(SYS_BASE + SYS_LMK04616_REG, (
+            SYS_LMK04616_ADDRESS_BITS => 15X"0123",
+            SYS_LMK04616_R_WN_BIT => '1',
+            SYS_LMK04616_SELECT_BIT => '1',
+            others => '0'));
+        read_reg(SYS_BASE + SYS_LMK04616_REG);
+
+        -- Wait for locked status
+        loop
+            read_reg_result(SYS_BASE + SYS_STATUS_REG, read_result);
+            exit when read_result(SYS_STATUS_CK_LOCKED_BIT);
+        end loop;
+
+        -- Now try reading PHY IDENT again
+        read_reg_result(PHY_BASE + PHY_IDENT_REG, read_result);
+        assert to_integer(unsigned(read_result)) = PHY_MAGIC_NUMBER
+            report "Unexpected IDENT " & to_hstring(read_result)
+            severity failure;
 
         wait;
     end process;

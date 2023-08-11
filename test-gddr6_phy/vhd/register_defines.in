@@ -53,6 +53,36 @@ PHY_MAGIC_NUMBER = 0x12345678
     # Array of registers mapped to EDC OUT
     EDC_OUT         R   2
 
+!SYS
+    !!CONTROL
+        GIT_VERSION     R
+            .SHA        28
+            -           3
+            .DIRTY
+
+        EVENTS          R
+
+        STATUS          R
+            .LMK_STATUS     2
+            # Set if CK is locked and out of reset
+            .CK_LOCKED
+
+        CONFIG          RW
+            .LMK_SELECT
+            .LMK_RESET
+            .LMK_SYNC
+            # CK region reset, held in reset by default
+            .CK_RESET_N
+
+    LMK04616        RW
+        # Data to write, returns data returned as part of last SPI transaction
+        # when read
+        .DATA       8
+        .ADDRESS    15
+        .R_WN
+        # Selects which LMK to address
+        .SELECT
+
     # Read or write RIU.  To read perform write with .WRITE=0 and then read.
     # previous write.
     RIU             RW
@@ -66,32 +96,3 @@ PHY_MAGIC_NUMBER = 0x12345678
         .VTC
         # Read only bit, is set if RIU register timeout detected
         .TIMEOUT
-
-!SYS
-    GIT_VERSION     R
-        .SHA        28
-        -           3
-        .DIRTY
-
-    EVENTS          R
-
-    STATUS          R
-        .LMK_STATUS     2
-        # Set if CK is locked and out of reset
-        .CK_LOCKED
-
-    CONFIG          RW
-        .LMK_SELECT
-        .LMK_RESET
-        .LMK_SYNC
-        # CK region reset, held in reset by default
-        .CK_RESET_N
-
-    LMK04616        RW
-        # Data to write, returns data returned as part of last SPI transaction
-        # when read
-        .DATA       8
-        .ADDRESS    15
-        .R_WN
-        # Selects which LMK to address
-        .SELECT

@@ -6,26 +6,35 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.register_defs.all;
+use work.register_defines.all;
+
 entity lmk04616_control is
     port (
         clk_i : in std_ulogic;
 
+        -- Static configuration
         command_select_i : in std_ulogic;
         select_valid_o : out std_ulogic;
         status_i : in std_ulogic_vector(1 downto 0);
         status_o : out std_ulogic_vector(1 downto 0);
 
+        -- Register interface
         write_strobe_i : in std_ulogic;
-        write_ack_o : out std_ulogic := '0';
-        write_select_i : in std_ulogic;
-
+        write_data_i : in reg_data_t;
+        write_ack_o : out std_ulogic;
         read_strobe_i : in std_ulogic;
-        read_ack_o : out std_ulogic := '0';
+        read_data_o : out reg_data_t;
+        read_ack_o : out std_ulogic;
 
-        -- Control interface
+        -- Control interface to SPI
         lmk_ctl_sel_o : out std_ulogic;
+        spi_read_write_n_o : out std_ulogic;
+        spi_address_o : out std_ulogic_vector(14 downto 0);
         spi_start_o : out std_ulogic := '0';
-        spi_busy_i : in std_ulogic
+        spi_busy_i : in std_ulogic;
+        spi_data_i : in std_ulogic_vector(7 downto 0);
+        spi_data_o : out std_ulogic_vector(7 downto 0)
     );
 end;
 
@@ -34,18 +43,31 @@ architecture arch of lmk04616_control is
     signal write_state : write_state_t := WRITE_IDLE;
 
     signal read_busy : std_ulogic := '0';
+    signal spi_write_select : std_ulogic;
 
 begin
+    -- Decode incoming write
+    spi_address_o <= write_data_i(SYS_LMK04616_ADDRESS_BITS);
+    spi_data_o <= write_data_i(SYS_LMK04616_DATA_BITS);
+    spi_read_write_n_o <= write_data_i(SYS_LMK04616_R_WN_BIT);
+    spi_write_select <= write_data_i(SYS_LMK04616_SELECT_BIT);
+
+    -- Assemble outgoing data
+    read_data_o <= (
+        SYS_LMK04616_DATA_BITS => spi_data_i,
+        others => '0'
+    );
+
     process (clk_i) begin
         if rising_edge(clk_i) then
             case write_state is
                 when WRITE_IDLE =>
-                    -- Wait for write strobe, and use command_select_i to
+                    -- Wait for write strobe, and use spi_write_select to
                     -- control the LMK selection
                     write_ack_o <= '0';
                     if write_strobe_i then
                         write_state <= WRITE_START;
-                        lmk_ctl_sel_o <= write_select_i;
+                        lmk_ctl_sel_o <= spi_write_select;
                         spi_start_o <= '1';
                     else
                         lmk_ctl_sel_o <= command_select_i;

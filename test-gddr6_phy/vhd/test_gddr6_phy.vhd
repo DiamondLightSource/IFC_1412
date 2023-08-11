@@ -90,17 +90,6 @@ architecture arch of test_gddr6_phy is
     signal lmk_reset : std_ulogic;
     signal lmk_sync : std_ulogic;
 
-    -- SPI interface to LMK
-    signal lmk_write_strobe : std_ulogic;
-    signal lmk_write_ack : std_ulogic;
-    signal lmk_read_write_n : std_ulogic;
-    signal lmk_address : std_ulogic_vector(14 downto 0);
-    signal lmk_data_in : std_ulogic_vector(7 downto 0);
-    signal lmk_write_select : std_ulogic;
-    signal lmk_read_strobe : std_ulogic;
-    signal lmk_read_ack : std_ulogic;
-    signal lmk_data_out : std_ulogic_vector(7 downto 0);
-
     -- SG clocking and reset control
     signal ck_clk : std_ulogic;
     signal riu_clk : std_ulogic;
@@ -178,27 +167,17 @@ begin
     system_registers : entity work.system_registers port map (
         clk_i => clk_i,
 
-        write_strobe_i => sys_write_strobe,
-        write_data_i => sys_write_data,
-        write_ack_o => sys_write_ack,
-        read_strobe_i => sys_read_strobe,
-        read_data_o => sys_read_data,
-        read_ack_o => sys_read_ack,
+        write_strobe_i => sys_write_strobe(SYS_CONTROL_REGS),
+        write_data_i => sys_write_data(SYS_CONTROL_REGS),
+        write_ack_o => sys_write_ack(SYS_CONTROL_REGS),
+        read_strobe_i => sys_read_strobe(SYS_CONTROL_REGS),
+        read_data_o => sys_read_data(SYS_CONTROL_REGS),
+        read_ack_o => sys_read_ack(SYS_CONTROL_REGS),
 
         lmk_command_select_o => lmk_command_select,
         lmk_status_i => lmk_status,
         lmk_reset_o => lmk_reset,
         lmk_sync_o => lmk_sync,
-
-        lmk_write_strobe_o => lmk_write_strobe,
-        lmk_write_ack_i => lmk_write_ack,
-        lmk_read_write_n_o => lmk_read_write_n,
-        lmk_address_o => lmk_address,
-        lmk_data_o => lmk_data_out,
-        lmk_write_select_o => lmk_write_select,
-        lmk_read_strobe_o => lmk_read_strobe,
-        lmk_read_ack_i => lmk_read_ack,
-        lmk_data_i => lmk_data_in,
 
         ck_reset_o => ck_reset,
         ck_locked_i => ck_clk_ok
@@ -232,16 +211,7 @@ begin
         dq_data_i => dq_data_in,
         dq_data_o => dq_data_out,
         edc_in_i => edc_in,
-        edc_out_i => edc_out,
-
-        riu_addr_o => riu_addr,
-        riu_wr_data_o => riu_wr_data,
-        riu_rd_data_i => riu_rd_data,
-        riu_wr_en_o => riu_wr_en,
-        riu_strobe_o => riu_strobe,
-        riu_ack_i => riu_ack,
-        riu_error_i => riu_error,
-        riu_vtc_handshake_o => riu_vtc_handshake
+        edc_out_i => edc_out
     );
 
 
@@ -258,16 +228,12 @@ begin
         reset_i => lmk_reset,
         sync_i => lmk_sync,
 
-        write_strobe_i => lmk_write_strobe,
-        write_ack_o => lmk_write_ack,
-        read_write_n_i => lmk_read_write_n,
-        address_i => lmk_address,
-        data_i => lmk_data_out,
-        write_select_i => lmk_write_select,
-
-        read_strobe_i => lmk_read_strobe,
-        read_ack_o => lmk_read_ack,
-        data_o => lmk_data_in,
+        write_strobe_i => sys_write_strobe(SYS_LMK04616_REG),
+        write_data_i => sys_write_data(SYS_LMK04616_REG),
+        write_ack_o => sys_write_ack(SYS_LMK04616_REG),
+        read_strobe_i => sys_read_strobe(SYS_LMK04616_REG),
+        read_data_o => sys_read_data(SYS_LMK04616_REG),
+        read_ack_o => sys_read_ack(SYS_LMK04616_REG),
 
         pad_LMK_CTL_SEL_o => pad_LMK_CTL_SEL_o,
         pad_LMK_SCL_o => pad_LMK_SCL_o,
@@ -278,6 +244,28 @@ begin
         pad_LMK_STATUS_io => pad_LMK_STATUS_io
     );
 
+
+    riu_control : entity work.riu_control port map (
+        clk_i => clk_i,
+        riu_clk_i => riu_clk,
+        riu_clk_ok_i => ck_clk_ok,
+
+        write_strobe_i => sys_write_strobe(SYS_RIU_REG),
+        write_data_i => sys_write_data(SYS_RIU_REG),
+        write_ack_o => sys_write_ack(SYS_RIU_REG),
+        read_strobe_i => sys_read_strobe(SYS_RIU_REG),
+        read_data_o => sys_read_data(SYS_RIU_REG),
+        read_ack_o => sys_read_ack(SYS_RIU_REG),
+
+        riu_addr_o => riu_addr,
+        riu_wr_data_o => riu_wr_data,
+        riu_rd_data_i => riu_rd_data,
+        riu_wr_en_o => riu_wr_en,
+        riu_strobe_o => riu_strobe,
+        riu_ack_i => riu_ack,
+        riu_error_i => riu_error,
+        riu_vtc_handshake_o => riu_vtc_handshake
+    );
 
     phy : entity work.gddr6_phy generic map (
         CK_FREQUENCY => CK_FREQUENCY
