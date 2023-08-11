@@ -192,7 +192,7 @@ begin
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
         -- Delay
-        CLK => riu_clk_i,
+        CLK => '0',
         CE => '0',
         INC => '0',
         LOAD => '0',
@@ -266,13 +266,13 @@ begin
                 TX_BIT_CTRL_IN => tx_bit_ctrl_out(i),
 
                 -- Delay management interface
-                RX_CLK => riu_clk_i,
+                RX_CLK => '0',
                 RX_CE => '0',
                 RX_INC => '0',
                 RX_LOAD => '0',
                 RX_CNTVALUEIN => 9X"000",
                 RX_CNTVALUEOUT => open,
-                TX_CLK => riu_clk_i,
+                TX_CLK => '0',
                 TX_CE => '0',
                 TX_INC => '0',
                 TX_LOAD => '0',
