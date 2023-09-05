@@ -1,0 +1,63 @@
+# Register definitions for GDDR6
+
+!GDDR6
+    !!CONTROL
+        # Static configuration settings for SG memory
+        CONFIG          RW
+            # CK region reset, held in reset by default
+            .CK_RESET_N
+            # Resets for the two DRAM devices, held in reset by default
+            .SG_RESET_N     2
+            # Bus Inversion enables
+            .ENABLE_CABI
+            .ENABLE_DBI
+            # Bitslip control
+            .RX_SLIP_LOW    3
+            .RX_SLIP_HIGH   3
+            .TX_SLIP_LOW    3
+            .TX_SLIP_HIGH   3
+
+        STATUS          R
+            # Set if CK clock is locked, otherwise all access to GDDR6 registers
+            # will be effectively ignored
+            .CK_OK
+            # Set if a CK unlock event has been seen since last read
+            .CK_UNLOCK
+            # Set if PHY read FIFO is properly synchronised
+            .FIFO_OK
+
+    !!EXCHANGE
+        COMMAND     WP
+            .START_WRITE
+            .START_READ
+            .STEP_READ
+            .EXCHANGE
+
+        CA          W
+            .RISING     10
+            .FALLING    10
+            # Special overrides for CA3, normally set to 0
+            .CA3        4
+            # Command enable, held low during reset
+            .CKE_N
+            # DQ tristate control
+            .DQ_T
+
+        DQ          RW 16
+        EDC_IN      R 2
+        EDC_OUT     R 2
+
+
+    # Read or write RIU.  To read perform write with .WRITE=0 and then read from
+    # .DATA.
+    RIU             RW
+        # Data to be written, data read on last transaction
+        .DATA       16
+        # Register to access
+        .ADDRESS    10
+        # Set to write data
+        .WRITE
+        # Set to enable VTC handshake during register access
+        .VTC
+        # Read only bit, is set if RIU register timeout detected
+        .TIMEOUT

@@ -58,6 +58,17 @@ architecture arch of gddr6_phy_clocking is
     signal wait_counter : unsigned(5 downto 0);
     signal enable_pll_clk : std_ulogic := '0';
 
+    -- Mark io_ck_in for SAME_CMT_COLUMN distribution so that this can drive
+    -- both IO PLLs using the vertical clocking backbone.  This is equivalent to
+    -- the following entry in the constraints file:
+    --
+    --  set_property CLOCK_DEDICATED_ROUTE SAME_CMT_COLUMN \
+    --      [get_nets -of [get_pins path/to/bufg_in/O]]
+    attribute CLOCK_DEDICATED_ROUTE : string;
+    attribute CLOCK_DEDICATED_ROUTE of io_ck_in : signal is "SAME_CMT_COLUMN";
+    attribute DONT_TOUCH : string;
+    attribute DONT_TOUCH of io_ck_in : signal is "YES";
+
 begin
     bufg_in : BUFG port map(
         I => io_ck_i,

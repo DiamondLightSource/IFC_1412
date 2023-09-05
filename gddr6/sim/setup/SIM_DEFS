@@ -1,0 +1,3 @@
+BUILT += gddr6_register_defines.vhd
+
+# vim: set filetype=make:

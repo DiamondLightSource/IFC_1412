@@ -87,16 +87,6 @@ architecture arch of gddr6_phy_nibble is
 
     signal tri_out_to_tbyte : std_ulogic;
 
-    function choose(choice : boolean; if_true : string; if_false : string)
-        return string is
-    begin
-        if choice then
-            return if_true;
-        else
-            return if_false;
-        end if;
-    end function;
-
 begin
     control : BITSLICE_CONTROL generic map (
         DIV_MODE => "DIV4",                 -- 1:8 division in bitslice
