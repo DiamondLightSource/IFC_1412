@@ -130,6 +130,13 @@ begin
                 reg);
         end;
 
+        procedure read_reg_result(reg : natural; result : out reg_data_t) is
+        begin
+            read_reg_result(
+                reg_clk_in, read_data_out, read_strobe_in, read_ack_out,
+                reg, result, false);
+        end;
+
 
         procedure start_write is
         begin
@@ -138,9 +145,9 @@ begin
                 others => '0'));
         end;
 
-        procedure write_data_word(word : natural; value : std_ulogic_vector) is
+        procedure write_data_word(value : std_ulogic_vector) is
         begin
-            write_reg(GDDR6_DQ_REGS'LEFT + word, value);
+            write_reg(GDDR6_DQ_REG, value);
         end;
 
         procedure write_ca(
@@ -178,12 +185,14 @@ begin
                 others => '0'));
         end;
 
-        procedure read_data_word(word : natural; step : boolean := true) is
+        procedure read_data_words(count : natural := 1) is
+            variable result : reg_data_t;
         begin
-            read_reg(GDDR6_DQ_REGS'LEFT + word);
-            if step then
-                step_read;
-            end if;
+            for i in 1 to count loop
+                read_reg_result(GDDR6_DQ_REG, result);
+                write("Data: " & to_hstring(result));
+            end loop;
+            step_read;
         end;
 
     begin
@@ -192,26 +201,27 @@ begin
 
         clk_wait(5);
         start_write;
-        write_data_word(0, X"01234567");
+        write_data_word(X"01234567");
         write_ca(10X"123", 10X"056", X"0", '0', '0');
-        write_data_word(0, X"89ABCDEF");
-        write_ca(10X"389", 10X"2BC", X"3", '1', '0');
-        write_data_word(0, X"01010101");
-        write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
+        write_data_word(X"89ABCDEF");
+        write_ca(10X"389", 10X"2BC", X"3", '0', '0');
+        write_data_word(X"01010101");
+        write_ca(10X"3FF", 10X"3FF", X"F", '0', '0');
         write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
         write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
         write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
 
         do_exchange;
 
+        -- Read all 7 captured words plus an extra word
         start_read;
-        read_data_word(0);
-        read_data_word(0);
-        read_data_word(0);
-        read_data_word(0, false);
-        read_data_word(1);
-        read_data_word(0);
-        read_data_word(0);
+        read_data_words;
+        read_data_words;
+        read_data_words;
+        read_data_words(2);
+        read_data_words;
+        read_data_words;
+        read_data_words;
 
         wait;
     end process;

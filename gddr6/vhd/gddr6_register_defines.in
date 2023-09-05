@@ -43,9 +43,9 @@
             # DQ tristate control
             .DQ_T
 
-        DQ          RW 16
-        EDC_IN      R 2
-        EDC_OUT     R 2
+        DQ          RW
+        EDC_IN      R
+        EDC_OUT     R
 
 
     # Read or write RIU.  To read perform write with .WRITE=0 and then read from
