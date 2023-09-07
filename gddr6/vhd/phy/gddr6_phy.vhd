@@ -60,9 +60,9 @@ entity gddr6_phy is
         -- if FIFO underflow or overflow is detected.
         fifo_ok_o : out std_ulogic;
 
-        -- Directly driven resets to the two GDDR6 devices.  Should be held high
+        -- Directly driven resets to the two GDDR6 devices.  Should be held low
         -- until ca_i has been properly set for configuration options.
-        sg_resets_i : in std_ulogic_vector(0 to 1);
+        sg_resets_n_i : in std_ulogic_vector(0 to 1);
 
         -- --------------------------------------------------------------------
         -- CA
@@ -153,7 +153,7 @@ architecture arch of gddr6_phy is
     -- Clocks and reset
     signal io_ck_in : std_ulogic;
     signal io_wck_in : std_ulogic_vector(0 to 1);
-    signal io_reset_n_out : std_ulogic_vector(0 to 1);
+    signal io_sg_resets_n_out : std_ulogic_vector(0 to 1);
     -- CA
     signal io_ca_out : std_ulogic_vector(9 downto 0);
     signal io_ca3_out : std_ulogic_vector(0 to 3);
@@ -223,7 +223,7 @@ begin
 
         io_ck_o => io_ck_in,
         io_wck_o => io_wck_in,
-        io_reset_n_i => io_reset_n_out,
+        io_sg_resets_n_i => io_sg_resets_n_out,
 
         io_ca_i => io_ca_out,
         io_ca3_i => io_ca3_out,
@@ -267,7 +267,7 @@ begin
     ca : entity work.gddr6_phy_ca port map (
         clk_i => ck_clk,
         reset_i => reset,
-        sg_resets_i => sg_resets_i,
+        sg_resets_n_i => sg_resets_n_i,
 
         enable_cabi_i => enable_cabi_i,
 
@@ -275,7 +275,7 @@ begin
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
 
-        io_reset_n_o => io_reset_n_out,
+        io_sg_resets_n_o => io_sg_resets_n_out,
         io_ca_o => io_ca_out,
         io_ca3_o => io_ca3_out,
         io_cabi_n_o => io_cabi_n_out,
@@ -332,7 +332,7 @@ begin
 
 
     -- Register interface to individual pin delays
-    riu_control : entity work.gddr6_phy_riu_control port map (
+    riu : entity work.gddr6_phy_riu_control port map (
         clk_i => riu_clk,
 
         riu_addr_i => riu_addr_i,

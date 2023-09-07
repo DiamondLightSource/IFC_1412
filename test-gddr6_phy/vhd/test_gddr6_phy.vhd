@@ -73,48 +73,33 @@ architecture arch of test_gddr6_phy is
     signal sys_read_data : reg_data_array_t(SYS_REGS_RANGE);
     signal sys_read_ack : std_ulogic_vector(SYS_REGS_RANGE);
 
-    -- GDDR6 register wiring
-    signal phy_write_strobe : std_ulogic_vector(PHY_REGS_RANGE);
-    signal phy_write_data : reg_data_array_t(PHY_REGS_RANGE);
-    signal phy_write_ack : std_ulogic_vector(PHY_REGS_RANGE);
-    signal phy_read_strobe : std_ulogic_vector(PHY_REGS_RANGE);
-    signal phy_read_data : reg_data_array_t(PHY_REGS_RANGE);
-    signal phy_read_ack : std_ulogic_vector(PHY_REGS_RANGE);
-
 
     -- -------------------------------------------------------------------------
-
     -- LMK config and status
+
     signal lmk_command_select : std_ulogic;
     signal lmk_status : std_ulogic_vector(1 downto 0);
     signal lmk_reset : std_ulogic;
     signal lmk_sync : std_ulogic;
 
-    -- SG clocking and reset control
+
+    -- -------------------------------------------------------------------------
+    -- GDDR6 setup
+
     signal ck_clk : std_ulogic;
     signal riu_clk : std_ulogic;
-    signal ck_reset : std_ulogic;
-    signal raw_ck_clk_ok : std_ulogic;      -- Unsynchronised
     signal ck_clk_ok : std_ulogic;
-    signal ck_unlock : std_ulogic;
-    signal fifo_ok : std_ulogic;
-    signal sg_resets : std_ulogic_vector(0 to 1);
+    signal reg_clk : std_ulogic;
 
-    -- SG CA and initial EDC
-    signal ca : vector_array(0 to 1)(9 downto 0);
-    signal ca3 : std_ulogic_vector(0 to 3);
-    signal cke_n : std_ulogic;
-    signal enable_cabi : std_ulogic;
+    signal phy_ca : vector_array(0 to 1)(9 downto 0);
+    signal phy_ca3 : std_ulogic_vector(0 to 3);
+    signal phy_cke_n : std_ulogic;
+    signal phy_dq_t : std_ulogic;
+    signal phy_data_in : std_ulogic_vector(511 downto 0);
+    signal phy_data_out : std_ulogic_vector(511 downto 0);
+    signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
 
-    -- SG DQ signals
-    signal dq_data_in : std_ulogic_vector(511 downto 0);
-    signal dq_data_out : std_ulogic_vector(511 downto 0);
-    signal dq_t : std_ulogic;
-    signal enable_dbi : std_ulogic;
-    signal edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal edc_out : vector_array(7 downto 0)(7 downto 0);
-
-    -- SG RIU control
     signal riu_addr : unsigned(9 downto 0);
     signal riu_wr_data : std_ulogic_vector(15 downto 0);
     signal riu_rd_data : std_ulogic_vector(15 downto 0);
@@ -124,18 +109,19 @@ architecture arch of test_gddr6_phy is
     signal riu_error : std_ulogic;
     signal riu_vtc_handshake : std_ulogic;
 
-    -- "Bitslip" control
+    signal ck_reset : std_ulogic;
+    signal ck_unlock : std_ulogic;
+    signal fifo_ok : std_ulogic;
+    signal sg_resets_n : std_ulogic_vector(0 to 1);
+    signal enable_cabi : std_ulogic;
+    signal enable_dbi : std_ulogic;
     signal rx_slip : unsigned_array(0 to 1)(2 downto 0);
     signal tx_slip : unsigned_array(0 to 1)(2 downto 0);
 
 begin
-    -- Decode registers into system and GDDR6 registers
-    decode_registers : entity work.decode_registers port map (
+    register_mux : entity work.register_mux port map (
         clk_i => clk_i,
-        riu_clk_ok_i => ck_clk_ok,
-        riu_clk_i => riu_clk,
 
-        -- Internal registers from AXI-lite
         write_strobe_i => regs_write_strobe_i,
         write_address_i => regs_write_address_i,
         write_data_i => regs_write_data_i,
@@ -145,21 +131,12 @@ begin
         read_data_o => regs_read_data_o,
         read_ack_o => regs_read_ack_o,
 
-        -- System registers on clk domain
-        sys_write_strobe_o => sys_write_strobe,
-        sys_write_data_o => sys_write_data,
-        sys_write_ack_i => sys_write_ack,
-        sys_read_data_i => sys_read_data,
-        sys_read_strobe_o => sys_read_strobe,
-        sys_read_ack_i => sys_read_ack,
-
-        -- GDDR6 PHY registers on riu_clk domain
-        phy_write_strobe_o => phy_write_strobe,
-        phy_write_data_o => phy_write_data,
-        phy_write_ack_i => phy_write_ack,
-        phy_read_data_i => phy_read_data,
-        phy_read_strobe_o => phy_read_strobe,
-        phy_read_ack_i => phy_read_ack
+        write_strobe_o => sys_write_strobe,
+        write_data_o => sys_write_data,
+        write_ack_i => sys_write_ack,
+        read_data_i => sys_read_data,
+        read_strobe_o => sys_read_strobe,
+        read_ack_i => sys_read_ack
     );
 
 
@@ -177,46 +154,8 @@ begin
         lmk_command_select_o => lmk_command_select,
         lmk_status_i => lmk_status,
         lmk_reset_o => lmk_reset,
-        lmk_sync_o => lmk_sync,
-
-        ck_reset_o => ck_reset,
-        ck_locked_i => ck_clk_ok
+        lmk_sync_o => lmk_sync
     );
-
-
-    gddr6_registers : entity work.gddr6_registers port map (
-        clk_i => riu_clk,
-
-        write_strobe_i => phy_write_strobe,
-        write_data_i => phy_write_data,
-        write_ack_o => phy_write_ack,
-        read_strobe_i => phy_read_strobe,
-        read_data_o => phy_read_data,
-        read_ack_o => phy_read_ack,
-
-        ck_unlock_i => ck_unlock,
-        fifo_ok_i => fifo_ok,
-
-        sg_resets_o => sg_resets,
-        enable_cabi_o => enable_cabi,
-        enable_dbi_o => enable_dbi,
-        rx_slip_o => rx_slip,
-        tx_slip_o => tx_slip,
-        dq_t_o => dq_t,
-
-        ca_o => ca,
-        ca3_o => ca3,
-        cke_n_o => cke_n,
-
-        dq_data_i => dq_data_in,
-        dq_data_o => dq_data_out,
-        edc_in_i => edc_in,
-        edc_out_i => edc_out
-    );
-
-
-    -- -------------------------------------------------------------------------
-    -- Device interfaces
 
 
     lmk04616 : entity work.lmk04616 port map (
@@ -245,17 +184,27 @@ begin
     );
 
 
-    riu_control : entity work.riu_control port map (
-        clk_i => clk_i,
+    setup : entity work.gddr6_setup port map (
+        ck_clk_i => ck_clk,
         riu_clk_i => riu_clk,
-        riu_clk_ok_i => ck_clk_ok,
+        ck_clk_ok_i => ck_clk_ok,
+        reg_clk_i => clk_i,
 
-        write_strobe_i => sys_write_strobe(SYS_RIU_REG),
-        write_data_i => sys_write_data(SYS_RIU_REG),
-        write_ack_o => sys_write_ack(SYS_RIU_REG),
-        read_strobe_i => sys_read_strobe(SYS_RIU_REG),
-        read_data_o => sys_read_data(SYS_RIU_REG),
-        read_ack_o => sys_read_ack(SYS_RIU_REG),
+        write_strobe_i => sys_write_strobe(SYS_GDDR6_REGS),
+        write_data_i => sys_write_data(SYS_GDDR6_REGS),
+        write_ack_o => sys_write_ack(SYS_GDDR6_REGS),
+        read_strobe_i => sys_read_strobe(SYS_GDDR6_REGS),
+        read_data_o => sys_read_data(SYS_GDDR6_REGS),
+        read_ack_o => sys_read_ack(SYS_GDDR6_REGS),
+
+        phy_ca_o => phy_ca,
+        phy_ca3_o => phy_ca3,
+        phy_cke_n_o => phy_cke_n,
+        phy_dq_t_o => phy_dq_t,
+        phy_data_o => phy_data_out,
+        phy_data_i => phy_data_in,
+        phy_edc_in_i => phy_edc_in,
+        phy_edc_out_i => phy_edc_out,
 
         riu_addr_o => riu_addr,
         riu_wr_data_o => riu_wr_data,
@@ -264,8 +213,19 @@ begin
         riu_strobe_o => riu_strobe,
         riu_ack_i => riu_ack,
         riu_error_i => riu_error,
-        riu_vtc_handshake_o => riu_vtc_handshake
+        riu_vtc_handshake_o => riu_vtc_handshake,
+
+        ck_reset_o => ck_reset,
+        ck_unlock_i => ck_unlock,
+        fifo_ok_i => fifo_ok,
+        sg_resets_n_o => sg_resets_n,
+
+        enable_cabi_o => enable_cabi,
+        enable_dbi_o => enable_dbi,
+        rx_slip_o => rx_slip,
+        tx_slip_o => tx_slip
     );
+
 
     phy : entity work.gddr6_phy generic map (
         CK_FREQUENCY => CK_FREQUENCY
@@ -273,23 +233,23 @@ begin
         ck_clk_o => ck_clk,
         riu_clk_o => riu_clk,
         ck_reset_i => ck_reset,
-        ck_ok_o => raw_ck_clk_ok,
+        ck_ok_o => ck_clk_ok,
         ck_unlock_o => ck_unlock,
         fifo_ok_o => fifo_ok,
 
-        sg_resets_i => sg_resets,
+        sg_resets_n_i => sg_resets_n,
 
-        ca_i => ca,
-        ca3_i => ca3,
-        cke_n_i => cke_n,
+        ca_i => phy_ca,
+        ca3_i => phy_ca3,
+        cke_n_i => phy_cke_n,
         enable_cabi_i => enable_cabi,
 
-        data_i => dq_data_out,
-        data_o => dq_data_in,
-        dq_t_i => dq_t,
+        data_i => phy_data_out,
+        data_o => phy_data_in,
+        dq_t_i => phy_dq_t,
         enable_dbi_i => enable_dbi,
-        edc_in_o => edc_in,
-        edc_out_o => edc_out,
+        edc_in_o => phy_edc_in,
+        edc_out_o => phy_edc_out,
 
         riu_addr_i => riu_addr,
         riu_wr_data_i => riu_wr_data,
@@ -330,11 +290,5 @@ begin
         pad_SG1_EDC_B_io => pad_SG1_EDC_B_io,
         pad_SG2_EDC_A_io => pad_SG2_EDC_A_io,
         pad_SG2_EDC_B_io => pad_SG2_EDC_B_io
-    );
-
-    sync_ck_ok : entity work.sync_bit port map (
-        clk_i => clk_i,
-        bit_i => raw_ck_clk_ok,
-        bit_o => ck_clk_ok
     );
 end;

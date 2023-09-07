@@ -6,6 +6,7 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.register_defines.all;
+use work.gddr6_register_defines.all;
 use work.version.all;
 
 use work.sim_support.all;
@@ -70,7 +71,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    test_gddr6_phy : entity work.test_gddr6_phy generic map (
+    test : entity work.test_gddr6_phy generic map (
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
         clk_i => clk,
@@ -133,6 +134,11 @@ begin
     pad_SG1_WCK_N <= not pad_SG1_WCK_P;
     pad_SG2_WCK_P <= pad_SG1_WCK_P;
     pad_SG2_WCK_N <= pad_SG1_WCK_N;
+    -- Pull ups on all lines
+    pad_SG1_EDC_A <= "HH";
+    pad_SG1_EDC_B <= "HH";
+    pad_SG2_EDC_A <= "HH";
+    pad_SG2_EDC_B <= "HH";
 
     process
         procedure clk_wait(count : natural := 1) is
@@ -147,11 +153,21 @@ begin
                 regs_write_ack, reg, value);
         end;
 
+        procedure write_gddr6_reg(reg : natural; value : reg_data_t) is
+        begin
+            write_reg(reg + SYS_GDDR6_REGS'LOW, value);
+        end;
+
         procedure read_reg(reg : natural) is
         begin
             read_reg(
                 clk, regs_read_data, regs_read_address, regs_read_strobe,
                 regs_read_ack, reg);
+        end;
+
+        procedure read_gddr6_reg(reg : natural) is
+        begin
+            read_reg(reg + SYS_GDDR6_REGS'LOW);
         end;
 
         procedure read_reg_result(reg : natural; result : out reg_data_t) is
@@ -161,9 +177,11 @@ begin
                 regs_read_ack, reg, result);
         end;
 
-        -- Registers are split into two groups
-        constant SYS_BASE : natural := 0;
-        constant PHY_BASE : natural := 32;
+        procedure read_gddr6_reg_result(
+            reg : natural; result : out reg_data_t) is
+        begin
+            read_reg_result(reg + SYS_GDDR6_REGS'LOW, result);
+        end;
 
         variable read_result : reg_data_t;
 
@@ -172,47 +190,32 @@ begin
         regs_read_strobe <= '0';
 
         clk_wait(5);
-        read_reg_result(SYS_BASE + SYS_GIT_VERSION_REG, read_result);
-        assert
-            to_integer(unsigned(read_result(SYS_GIT_VERSION_SHA_BITS)))
-                = GIT_VERSION and
-            to_integer(read_result(SYS_GIT_VERSION_DIRTY_BIT)) = GIT_DIRTY
-            report "Unexpected GIT VERSION " & to_hstring(read_result)
-            severity failure;
-        -- This will fail to begin with because CK is not running
-        read_reg_result(PHY_BASE + PHY_IDENT_REG, read_result);
-        assert read_result = (reg_data_t'RANGE => 'U')
-            report "Unexpected IDENT " & to_hstring(read_result)
-            severity failure;
-
-        -- Read events and stats
-        read_reg(SYS_BASE + SYS_EVENTS_REG);
-        read_reg(SYS_BASE + SYS_STATUS_REG);
+        read_gddr6_reg(GDDR6_STATUS_REG);
 
         -- Now take CK out of reset
-        write_reg(SYS_BASE + SYS_CONFIG_REG, (
-            SYS_CONFIG_CK_RESET_N_BIT => '1',
+        write_gddr6_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
             others => '0'));
 
         -- Try an LMK transaction
-        write_reg(SYS_BASE + SYS_LMK04616_REG, (
+        write_reg(SYS_LMK04616_REG, (
             SYS_LMK04616_ADDRESS_BITS => 15X"0123",
             SYS_LMK04616_R_WN_BIT => '1',
             SYS_LMK04616_SELECT_BIT => '1',
             others => '0'));
-        read_reg(SYS_BASE + SYS_LMK04616_REG);
+        read_reg(SYS_LMK04616_REG);
 
         -- Wait for locked status
         loop
-            read_reg_result(SYS_BASE + SYS_STATUS_REG, read_result);
-            exit when read_result(SYS_STATUS_CK_LOCKED_BIT);
+            read_gddr6_reg_result(GDDR6_STATUS_REG, read_result);
+            exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
-        -- Now try reading PHY IDENT again
-        read_reg_result(PHY_BASE + PHY_IDENT_REG, read_result);
-        assert to_integer(unsigned(read_result)) = PHY_MAGIC_NUMBER
-            report "Unexpected IDENT " & to_hstring(read_result)
-            severity failure;
+--         -- Now try reading PHY IDENT again
+--         read_reg_result(PHY_BASE + PHY_IDENT_REG, read_result);
+--         assert to_integer(unsigned(read_result)) = PHY_MAGIC_NUMBER
+--             report "Unexpected IDENT " & to_hstring(read_result)
+--             severity failure;
 
         wait;
     end process;

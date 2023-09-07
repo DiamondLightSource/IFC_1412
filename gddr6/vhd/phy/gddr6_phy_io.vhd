@@ -49,7 +49,7 @@ entity gddr6_phy_io is
         -- Clocks and reset
         io_ck_o : out std_ulogic;
         io_wck_o : out std_ulogic_vector(0 to 1);       -- One per IO bank
-        io_reset_n_i : in std_ulogic_vector(0 to 1);    -- One per IO bank
+        io_sg_resets_n_i : in std_ulogic_vector(0 to 1); -- One per IO bank
 
         -- CA pins
         io_ca_i : in std_ulogic_vector(9 downto 0);     -- ca_i(3) is ignored
@@ -98,8 +98,8 @@ begin
     i_misc : entity work.obuf_array generic map (
         COUNT => 4
     ) port map (
-        i_i(0) => io_reset_n_i(0),
-        i_i(1) => io_reset_n_i(1),
+        i_i(0) => io_sg_resets_n_i(0),
+        i_i(1) => io_sg_resets_n_i(1),
         i_i(2) => io_cke_n_i,
         i_i(3) => io_cabi_n_i,
         o_o(0) => pad_SG1_RESET_N_o,

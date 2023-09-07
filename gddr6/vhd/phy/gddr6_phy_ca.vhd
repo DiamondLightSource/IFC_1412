@@ -16,7 +16,7 @@ entity gddr6_phy_ca is
         -- Internal resets for IO components
         reset_i : in std_ulogic;
         -- Individual resets for GDDR6 devices
-        sg_resets_i : in std_ulogic_vector(0 to 1);
+        sg_resets_n_i : in std_ulogic_vector(0 to 1);
 
         -- Command interface, first word then second word.  Bit 3 in the second
         -- word can be overridden by ca3_i if required.
@@ -28,7 +28,7 @@ entity gddr6_phy_ca is
         enable_cabi_i : in std_ulogic;
 
         -- Pins driven out
-        io_reset_n_o : out std_ulogic_vector(0 to 1);
+        io_sg_resets_n_o : out std_ulogic_vector(0 to 1);
         io_ca_o : out std_ulogic_vector(9 downto 0);   -- Pin 3 is ignored
         io_ca3_o : out std_ulogic_vector(0 to 3);      -- 1A 1B 2A 2B
         io_cabi_n_o : out std_ulogic;
@@ -111,9 +111,9 @@ begin
         ) port map (
             SR => reset_i,
             C => clk_i,
-            D1 => not sg_resets_i(i),
-            D2 => not sg_resets_i(i),
-            Q => io_reset_n_o(i)
+            D1 => sg_resets_n_i(i),
+            D2 => sg_resets_n_i(i),
+            Q => io_sg_resets_n_o(i)
         );
     end generate;
 end;

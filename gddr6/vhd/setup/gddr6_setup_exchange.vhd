@@ -178,9 +178,9 @@ begin
         write_data_i => (others => write_data_i(GDDR6_DQ_REG)),
 
         read_data_address_i => read_address,
-        to_reg_data_array(read_data_o) => read_dq_data,
-        to_reg_data_array(read_edc_in_o) => read_edc_in_data,
-        to_reg_data_array(read_edc_out_o) => read_edc_out_data,
+        reg_data_array_t(read_data_o) => read_dq_data,
+        reg_data_array_t(read_edc_in_o) => read_edc_in_data,
+        reg_data_array_t(read_edc_out_o) => read_edc_out_data,
 
         phy_ca_o => phy_ca_o,
         phy_ca3_o => phy_ca3_o,

@@ -26,11 +26,7 @@ entity system_registers is
         lmk_command_select_o : out std_ulogic;
         lmk_status_i : in std_ulogic_vector(1 downto 0);
         lmk_reset_o : out std_ulogic;
-        lmk_sync_o : out std_ulogic;
-
-        -- GDDR interface: is the CK clock locked?
-        ck_reset_o : out std_ulogic;
-        ck_locked_i : in std_ulogic
+        lmk_sync_o : out std_ulogic
     );
 end;
 
@@ -38,12 +34,6 @@ architecture arch of system_registers is
     signal event_bits : reg_data_t;
     signal status_bits : reg_data_t;
     signal config_bits : reg_data_t;
-
-    signal ck_reset_out : std_ulogic := '1';
-    attribute false_path_from : string;
-    attribute false_path_from of ck_reset_out : signal is "TRUE";
-    attribute KEEP : string;
-    attribute KEEP of ck_reset_out : signal is "true";
 
 begin
     read_data_o(SYS_GIT_VERSION_REG) <= (
@@ -87,19 +77,9 @@ begin
 
     status_bits <= (
         SYS_STATUS_LMK_STATUS_BITS => lmk_status_i,
-        SYS_STATUS_CK_LOCKED_BIT => ck_locked_i,
         others => '0');
 
     lmk_command_select_o <= config_bits(SYS_CONFIG_LMK_SELECT_BIT);
     lmk_reset_o <= config_bits(SYS_CONFIG_LMK_RESET_BIT);
     lmk_sync_o <= config_bits(SYS_CONFIG_LMK_SYNC_BIT);
-
-    process (clk_i) begin
-        if rising_edge(clk_i) then
-            -- This needs to be separately registered so we can add the
-            -- required custom attribute
-            ck_reset_out <= not config_bits(SYS_CONFIG_CK_RESET_N_BIT);
-        end if;
-    end process;
-    ck_reset_o <= ck_reset_out;
 end;

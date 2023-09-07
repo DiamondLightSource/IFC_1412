@@ -12,11 +12,13 @@ vlib msim/xil_defaultlib
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
     built_dir/register_defines.vhd \
+    built_dir/gddr6_register_defines.vhd \
     built_dir/version.vhd \
     $common_vhd/util/sync_reset.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/sync_pulse.vhd \
     $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/memory_array_dual.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
@@ -35,6 +37,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_command.vhd \
     $common_vhd/register/register_bank_cc.vhd \
     $common_vhd/register/register_cc.vhd \
+    $common_vhd/register/register_read_block.vhd \
     $common_vhd/misc/spi_master.vhd \
     $common_vhd/iodefs/ibufds_array.vhd \
     $common_vhd/iodefs/ibuf_array.vhd \
@@ -54,14 +57,15 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/phy/gddr6_phy_dq.vhd \
     $gddr6_dir/phy/gddr6_phy_riu_control.vhd \
     $gddr6_dir/phy/gddr6_phy.vhd \
-    $vhd_dir/decode_registers.vhd \
+    $gddr6_dir/setup/gddr6_setup_control.vhd \
+    $gddr6_dir/setup/gddr6_setup_buffers.vhd \
+    $gddr6_dir/setup/gddr6_setup_exchange.vhd \
+    $gddr6_dir/setup/gddr6_setup_riu.vhd \
+    $gddr6_dir/setup/gddr6_setup.vhd \
     $vhd_dir/system_registers.vhd \
-    $vhd_dir/write_ca.vhd \
-    $vhd_dir/gddr6_registers.vhd \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
     $vhd_dir/lmk04616.vhd \
-    $vhd_dir/riu_control.vhd \
     $vhd_dir/test_gddr6_phy.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
@@ -72,15 +76,20 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "SYS Mux" test_gddr6_phy/decode_registers/sys_register_mux/*
-add wave -group "Decode" test_gddr6_phy/decode_registers/*
-add wave -group "System Regs" test_gddr6_phy/system_registers/*
-add wave -group "GDDR6 Regs" test_gddr6_phy/gddr6_registers/*
-add wave -group "LMK" test_gddr6_phy/lmk04616/*
-add wave -group "PHY" test_gddr6_phy/phy/*
-add wave -group "Test" test_gddr6_phy/*
+add wave -group "PHY IO" test/phy/io/*
+add wave -group "PHY Clocking" test/phy/clocking/*
+add wave -group "PHY CA" test/phy/ca/*
+add wave -group "PHY DQ" test/phy/dq/*
+add wave -group "PHY RIU" test/phy/riu/*
+add wave -group "PHY" test/phy/*
+add wave -group "Setup Control" test/setup/control/*
+add wave -group "Setup Exchange" test/setup/exchange/*
+add wave -group "Setup RIU" test/setup/riu/*
+add wave -group "Setup" test/setup/*
+add wave -group "Test" test/*
 add wave -group "Bench" sim:*
 
+quietly set NumericStdNoWarnings 1
 
 run 2.5 us
 

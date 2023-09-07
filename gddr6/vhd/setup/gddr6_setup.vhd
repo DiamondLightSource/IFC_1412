@@ -48,7 +48,7 @@ entity gddr6_setup is
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
         fifo_ok_i : in std_ulogic;
-        sg_resets_o : out std_ulogic_vector(0 to 1);
+        sg_resets_n_o : out std_ulogic_vector(0 to 1);
 
         -- General PHY configuration
         enable_cabi_o : out std_ulogic;
@@ -59,11 +59,20 @@ entity gddr6_setup is
 end;
 
 architecture arch of gddr6_setup is
+    signal ck_clk_ok : std_ulogic;
+
 begin
+    sync_ck_ok : entity work.sync_bit port map (
+        clk_i => reg_clk_i,
+        bit_i => ck_clk_ok_i,
+        bit_o => ck_clk_ok
+    );
+
+
     control : entity work.gddr6_setup_control port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
-        ck_clk_ok_i => ck_clk_ok_i,
+        ck_clk_ok_i => ck_clk_ok,
 
         write_strobe_i => write_strobe_i(GDDR6_CONTROL_REGS),
         write_data_i => write_data_i(GDDR6_CONTROL_REGS),
@@ -75,17 +84,18 @@ begin
         ck_reset_o => ck_reset_o,
         ck_unlock_i => ck_unlock_i,
         fifo_ok_i => fifo_ok_i,
-        sg_resets_o => sg_resets_o,
+        sg_resets_n_o => sg_resets_n_o,
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
         rx_slip_o => rx_slip_o,
         tx_slip_o => tx_slip_o
     );
 
+
     exchange : entity work.gddr6_setup_exchange port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
-        ck_clk_ok_i => ck_clk_ok_i,
+        ck_clk_ok_i => ck_clk_ok,
 
         write_strobe_i => write_strobe_i(GDDR6_EXCHANGE_REGS),
         write_data_i => write_data_i(GDDR6_EXCHANGE_REGS),
@@ -104,10 +114,11 @@ begin
         phy_edc_out_i => phy_edc_out_i
     );
 
+
     riu : entity work.gddr6_setup_riu port map (
         reg_clk_i => reg_clk_i,
         riu_clk_i => riu_clk_i,
-        riu_clk_ok_i => ck_clk_ok_i,
+        riu_clk_ok_i => ck_clk_ok,
 
         write_strobe_i => write_strobe_i(GDDR6_RIU_REG),
         write_data_i => write_data_i(GDDR6_RIU_REG),

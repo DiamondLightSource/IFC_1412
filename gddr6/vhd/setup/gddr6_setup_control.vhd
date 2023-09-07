@@ -23,11 +23,11 @@ entity gddr6_setup_control is
         read_data_o : out reg_data_array_t(GDDR6_CONTROL_REGS);
         read_ack_o : out std_ulogic_vector(GDDR6_CONTROL_REGS);
 
-        -- Controls to PHY on various clocks
-        ck_reset_o : out std_ulogic;                    -- Async
-        ck_unlock_i : in std_ulogic;                    -- CK
-        fifo_ok_i : in std_ulogic;                      -- CK
-        sg_resets_o : out std_ulogic_vector(0 to 1);    -- CK
+        -- Controls to PHY.  All except ck_reset_o on CK clock
+        ck_reset_o : out std_ulogic;
+        ck_unlock_i : in std_ulogic;
+        fifo_ok_i : in std_ulogic;
+        sg_resets_n_o : out std_ulogic_vector(0 to 1) := "00";
 
         -- General PHY configuration on CK clock
         enable_cabi_o : out std_ulogic;
@@ -54,10 +54,13 @@ architecture arch of gddr6_setup_control is
     attribute FALSE_PATH_TO of control_bits_ck : signal is "TRUE";
     attribute FALSE_PATH_TO of ck_unlock_reg : signal is "TRUE";
     attribute FALSE_PATH_TO of fifo_ok_reg : signal is "TRUE";
+    attribute FALSE_PATH_FROM : string;
+    attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
     attribute KEEP : string;
     attribute KEEP of control_bits_ck : signal is "TRUE";
     attribute KEEP of ck_unlock_reg : signal is "TRUE";
     attribute KEEP of fifo_ok_reg : signal is "TRUE";
+    attribute KEEP of ck_reset_o : signal is "TRUE";
 
 begin
     control : entity work.register_file_rw port map (
@@ -91,7 +94,7 @@ begin
         if rising_edge(ck_clk_i) then
             control_bits_ck <= control_bits_reg;
 
-            sg_resets_o <=
+            sg_resets_n_o <=
                 reverse(control_bits_ck(GDDR6_CONFIG_SG_RESET_N_BITS));
             enable_cabi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_CABI_BIT);
             enable_dbi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_DBI_BIT);
@@ -114,7 +117,7 @@ begin
 
     process (reg_clk_i) begin
         if rising_edge(reg_clk_i) then
-            ck_reset_o <= control_bits_reg(GDDR6_CONFIG_CK_RESET_N_BIT);
+            ck_reset_o <= not control_bits_reg(GDDR6_CONFIG_CK_RESET_N_BIT);
 
             -- Clock domain crossed without ceremony
             ck_unlock_reg <= ck_unlock_ck;

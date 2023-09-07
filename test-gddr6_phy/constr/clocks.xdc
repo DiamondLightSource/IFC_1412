@@ -14,10 +14,6 @@ create_clock -period [expr 1e3 / $ck_frequency / 4] \
 create_clock -period [expr 1e3 / $ck_frequency / 4] \
     -name SG2_WCK [get_ports pad_SG2_WCK_P]
 
-# Let the incoming CK BUFG use the vertical backbone
-set_property CLOCK_DEDICATED_ROUTE SAME_CMT_COLUMN \
-    [get_nets -of [get_pins phy/clocking/bufg_in/O]]
-
 
 # Set false path to all registers marked with this custom attribute.  This is
 # generally only used with util/sync_bit.vhd
