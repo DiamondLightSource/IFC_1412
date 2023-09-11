@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+
+import numpy
+
+from registers import regs
+
+DQ_WIDTH = 4
+BUFFER_DEPTH = 64
+
+DEFAULT_CA = numpy.array(0xffffff, dtype = numpy.uint32)
+DEFAULT_DQT = numpy.array(True)
+DEFAULT_DQ = numpy.zeros((1, DQ_WIDTH), dtype = numpy.uint8)
+DEFAULT_DQ[:, :] = 255
+
+
+def ensure(array, ndims, dtype):
+    array = numpy.require(array, dtype = dtype)
+    while len(array.shape) < ndims:
+        array = array[None, ...]
+    return array
+
+
+def to_string(array):
+    assert array.ndim == 1
+    return '[' + ' '.join(['%02X' % a for a in array]) + ']'
+
+
+def prepare_exchange(caa, dqta, dqa, count):
+    # Force all arrays to be the correct type and size
+    caa = ensure(caa, 1, numpy.uint32)
+    dqta = ensure(dqta, 1, numpy.bool)
+    dqa = ensure(dqa, 2, numpy.uint8)
+    if dqa.size == 0:
+        dqa = dqa.reshape((0, DQ_WIDTH))
+
+    assert dqa.shape[1] == DQ_WIDTH
+    count = max(len(caa), len(dqta), len(dqa), count)
+    assert count <= BUFFER_DEPTH
+
+    # Pad all arrays to the target length with appropriate defaults
+    caa = numpy.append(caa, numpy.repeat(DEFAULT_CA, count - len(caa)))
+    dqta = numpy.append(dqta, numpy.repeat(DEFAULT_DQT, count - len(dqta)))
+    dqa = numpy.append(
+        dqa, numpy.repeat(DEFAULT_DQ, count - len(dqa), axis = 0), axis = 0)
+
+    return (caa, dqta, dqa, count)
+
+
+def do_exchange(caa, dqta, dqa, count = 0):
+    caa, dqta, dqa, count = prepare_exchange(caa, dqta, dqa, count)
+
+    sg = regs.SYS.GDDR6
+
+    # Send the data
+    sg.COMMAND._write_fields_wo(START_WRITE = 1)
+    for ca, dqt, dq in zip(caa, dqta, dqa):
+        for d in dq.view('uint32'):
+            sg.DQ._value = d
+        sg.CA._write_fields_wo(
+            RISING = ca & 0x3FF, FALLING = (ca >> 10) & 0x3FF,
+            CA3 = 0, CKE_N = 1, DQ_T = dqt)
+
+    # Exchange
+    sg.COMMAND._write_fields_wo(EXCHANGE = 1)
+
+    # Read the data
+    data = numpy.empty((count, DQ_WIDTH//4), dtype = numpy.uint32)
+    edc_in = numpy.empty((count, 2), dtype = numpy.uint32)
+    edc_out = numpy.empty((count, 2), dtype = numpy.uint32)
+    sg.COMMAND._write_fields_wo(START_READ = 1)
+    for i in range(count):
+        for j in range(DQ_WIDTH//4):
+            data[i, j] = sg.DQ._value
+        for j in range(2):
+            edc_in[i, j] = sg.EDC_IN._value
+            edc_out[i, j] = sg.EDC_OUT._value
+        sg.COMMAND._write_fields_wo(STEP_READ = 1)
+
+    return data.view('uint8'), edc_in.view('uint8'), edc_out.view('uint8')
+
+
+def main():
+    print(regs.SYS.GDDR6.STATUS)
+
+    DQ_COUNT = 1
+    EXCH_COUNT = 20
+
+    dqa = numpy.zeros((DQ_COUNT, DQ_WIDTH), dtype = numpy.uint8)
+    dqt = numpy.zeros(DQ_COUNT, dtype = numpy.bool)
+
+    data, edc_in, edc_out = do_exchange([], dqt, dqa, EXCH_COUNT)
+    for dq, ein, eout in zip(data, edc_in, edc_out):
+        print(to_string(dq), to_string(ein), to_string(eout))
+
+
+main()

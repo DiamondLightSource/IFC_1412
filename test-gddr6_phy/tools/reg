@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+
+from fpga_lib.driver import driver
+
+
+def to_int(s):
+    return int(s, 0)
+
+parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+parser.add_argument(
+    '-a', dest = 'addr', default = 1,
+    help = 'Set physical address of card.  If not specified then card 1')
+parser.add_argument(
+    'reg', type = to_int, nargs = '?',
+    help = 'Register to read or write.  If not specified, entire bank is read')
+parser.add_argument(
+    'value', type = to_int, nargs = '?',
+    help = 'Value to write to register if specifed')
+args = parser.parse_args()
+
+
+# Attach to first few registers
+raw_regs = driver.RawRegisters('ifc_1412-gddr6', args.addr)
+regs = raw_regs[:16]
+
+
+if args.reg is None:
+    # Read block
+    for n, val in enumerate(regs):
+        if n % 8 == 0:
+            print('%02x: ' % n, end = ' ')
+        print('%08x' % val, end = ' ')
+        if n % 8 == 7:
+            print()
+elif args.value is None:
+    # Read one register
+    val = regs[args.reg]
+    print(':%d => %08X (%d)' % (args.reg, val, val))
+else:
+    # Write one register
+    regs[args.reg] = args.value

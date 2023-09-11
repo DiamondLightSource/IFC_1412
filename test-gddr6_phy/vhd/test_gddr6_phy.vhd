@@ -233,7 +233,7 @@ begin
         ck_clk_o => ck_clk,
         riu_clk_o => riu_clk,
         ck_reset_i => ck_reset,
-        ck_ok_o => ck_clk_ok,
+        ck_clk_ok_o => ck_clk_ok,
         ck_unlock_o => ck_unlock,
         fifo_ok_o => fifo_ok,
 

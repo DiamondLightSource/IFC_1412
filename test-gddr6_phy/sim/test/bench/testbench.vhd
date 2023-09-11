@@ -170,7 +170,8 @@ begin
             read_reg(reg + SYS_GDDR6_REGS'LOW);
         end;
 
-        procedure read_reg_result(reg : natural; result : out reg_data_t) is
+        procedure read_reg_result(
+            reg : natural; result : out reg_data_t; quiet : boolean := false) is
         begin
             read_reg_result(
                 clk, regs_read_data, regs_read_address, regs_read_strobe,
@@ -178,12 +179,41 @@ begin
         end;
 
         procedure read_gddr6_reg_result(
-            reg : natural; result : out reg_data_t) is
+            reg : natural; result : out reg_data_t; quiet : boolean := false) is
         begin
-            read_reg_result(reg + SYS_GDDR6_REGS'LOW, result);
+            read_reg_result(reg + SYS_GDDR6_REGS'LOW, result, quiet);
         end;
 
         variable read_result : reg_data_t;
+
+
+        procedure write_dq_ca(dq : reg_data_t; t : std_ulogic) is
+        begin
+            write_gddr6_reg(GDDR6_DQ_REG, dq);
+            write_gddr6_reg(GDDR6_CA_REG, (
+                GDDR6_CA_RISING_BITS => 10X"3FF",
+                GDDR6_CA_FALLING_BITS => 10X"3FF",
+                GDDR6_CA_CA3_BITS => X"0",
+                GDDR6_CA_CKE_N_BIT => '1',
+                GDDR6_CA_DQ_T_BIT => t,
+                others => '0'));
+        end;
+
+        procedure read_dq_edc is
+            variable dq : reg_data_t;
+            variable edc_in : reg_data_t;
+            variable edc_out : reg_data_t;
+        begin
+            read_gddr6_reg_result(GDDR6_DQ_REG, dq, true);
+            read_gddr6_reg_result(GDDR6_EDC_IN_REG, edc_in, true);
+            read_gddr6_reg_result(GDDR6_EDC_OUT_REG, edc_out, true);
+            write(
+                to_hstring(dq) & " " & to_hstring(edc_in) & " " &
+                to_hstring(edc_out));
+            write_gddr6_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_STEP_READ_BIT => '1',
+                others => '0'));
+        end;
 
     begin
         regs_write_strobe <= '0';
@@ -211,11 +241,27 @@ begin
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
---         -- Now try reading PHY IDENT again
---         read_reg_result(PHY_BASE + PHY_IDENT_REG, read_result);
---         assert to_integer(unsigned(read_result)) = PHY_MAGIC_NUMBER
---             report "Unexpected IDENT " & to_hstring(read_result)
---             severity failure;
+
+        -- Perform a complete exchange
+        write_gddr6_reg(GDDR6_COMMAND_REG, (
+            GDDR6_COMMAND_START_WRITE_BIT => '1',
+            others => '0'));
+        -- Fill CA and DQ buffer, start with writing two zeros, then padding
+        for n in 0 to 1 loop
+            write_dq_ca(X"0000_0000", '0');
+        end loop;
+        for n in 2 to 18 loop
+            write_dq_ca(X"FFFF_FFFF", '1');
+        end loop;
+        -- Perform exchange
+        write_gddr6_reg(GDDR6_COMMAND_REG, (
+            GDDR6_COMMAND_EXCHANGE_BIT => '1',
+            GDDR6_COMMAND_START_READ_BIT => '1',
+            others => '0'));
+        -- Read and print results
+        for n in 0 to 18 loop
+            read_dq_edc;
+        end loop;
 
         wait;
     end process;
