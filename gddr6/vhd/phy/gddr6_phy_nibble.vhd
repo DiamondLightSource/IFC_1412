@@ -58,7 +58,7 @@ entity gddr6_phy_nibble is
         -- Data interface
         data_o : out vector_array(0 to 5)(7 downto 0);
         data_i : in vector_array(0 to 5)(7 downto 0);
-        tbyte_i : in std_ulogic_vector(3 downto 0);
+        output_enable_i : in std_ulogic_vector(3 downto 0);
 
         pad_in_i : in std_ulogic_vector(0 to 5);
         pad_out_o : out std_ulogic_vector(0 to 5);
@@ -106,7 +106,10 @@ begin
         PLL_CLK => pll_clk_i,
         REFCLK => '0',
         RST => reset_i,
-        TBYTE_IN => tbyte_i,
+        -- Here is a confusing detail.  This value is inverted from this input
+        -- to BITSLICE.T_OUT, which means that here this is acting as an output
+        -- enable, not a tristate enable!
+        TBYTE_IN => output_enable_i,
 
         -- Register interface unit
         RIU_CLK => riu_clk_i,

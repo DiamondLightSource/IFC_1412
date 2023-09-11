@@ -21,7 +21,7 @@ entity gddr6_phy_clocking is
 
         -- Resets and clock status
         ck_reset_i : in std_ulogic;
-        ck_ok_o : out std_ulogic;
+        ck_clk_ok_o : out std_ulogic;
         ck_unlock_o : out std_ulogic;
 
         -- Clock in from SG12_CK and TX clock out to bitslices
@@ -171,7 +171,7 @@ begin
             enable_control_vtc_o <= '0';
             reset_o <= '1';
             enable_pll_clk <= '0';
-            ck_ok_o <= '0';
+            ck_clk_ok_o <= '0';
         elsif rising_edge(riu_clk) then
             case reset_state is
                 when RESET_START =>
@@ -199,7 +199,7 @@ begin
                     -- Wait for VTC_RDY
                     if vtc_ready_in then
                         reset_state <= RESET_DONE;
-                        ck_ok_o <= '1';
+                        ck_clk_ok_o <= '1';
                     end if;
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs

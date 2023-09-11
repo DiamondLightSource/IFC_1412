@@ -51,7 +51,7 @@ entity gddr6_phy_byte is
         -- Data interface
         data_o : out vector_array(0 to 11)(7 downto 0);
         data_i : in vector_array(0 to 11)(7 downto 0);
-        tbyte_i : in std_ulogic_vector(3 downto 0);
+        output_enable_i : in std_ulogic_vector(3 downto 0);
 
         pad_in_i : in std_ulogic_vector(0 to 11);
         pad_out_o : out std_ulogic_vector(0 to 11);
@@ -89,10 +89,7 @@ begin
         constant LOWER_NIBBLE : boolean := i = 0;
         signal clk_from_ext : std_ulogic;
 
-        signal tbyte_in : std_ulogic_vector(3 downto 0);
-        -- Try to stop tbyte_in being optimised
-        attribute KEEP : string;
-        attribute KEEP of tbyte_in : signal is "TRUE";
+        signal output_enable : std_ulogic_vector(3 downto 0);
 
     begin
         if_clk : if i = 0 and not CLK_FROM_PIN generate
@@ -136,7 +133,7 @@ begin
 
             data_o => data_o(BITSLICE_RANGE),
             data_i => data_i(BITSLICE_RANGE),
-            tbyte_i => tbyte_in,
+            output_enable_i => output_enable,
 
             pad_in_i => pad_in_i(BITSLICE_RANGE),
             pad_out_o => pad_out_o(BITSLICE_RANGE),
@@ -151,11 +148,10 @@ begin
             nclk_nibble_o => nclk_nibble_out(i)
         );
 
-        -- Register tbyte_i to help with timing pressure
-        -- We can use the FIFO read clock as this is actually the CK clock
+        -- Align output enable with data stream
         process (fifo_rd_clk_i) begin
             if rising_edge(fifo_rd_clk_i) then
-                tbyte_in <= tbyte_i;
+                output_enable <= output_enable_i;
             end if;
         end process;
     end generate;

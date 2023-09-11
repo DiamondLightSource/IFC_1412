@@ -57,8 +57,8 @@ architecture arch of gddr6_phy_bitslip is
         variable row : std_ulogic_vector(15 downto 0);
     begin
         for i in result'RANGE loop
-            row := previous(i) & current(i);
-            result(i) := row(shift + 7 downto shift);
+            row := current(i) & previous(i);
+            result(i) := row(15 - shift downto 8 - shift);
         end loop;
         return result;
     end;

@@ -138,9 +138,9 @@ begin
             riu_valid_o => riu_valid(i),
             riu_wr_en_i => riu_wr_en(i),
 
-            data_o => data_out(i),
-            data_i => data_in(i),
-            tbyte_i => (others => dq_t_i),
+            data_i => data_out(i),
+            data_o => data_in(i),
+            output_enable_i => (others => not dq_t_i),
 
             pad_in_i => pad_in_in(i),
             pad_out_o => pad_out_out(i),
@@ -173,8 +173,8 @@ begin
         wck_i => wck_i,
 
         -- Bitslice mapped resources
-        data_i => data_out,
-        data_o => data_in,
+        data_o => data_out,
+        data_i => data_in,
         pad_in_o => pad_in_in,
         pad_out_i => pad_out_out,
         pad_t_out_i => pad_t_out_out,

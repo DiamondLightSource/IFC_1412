@@ -52,7 +52,7 @@ entity gddr6_phy is
         ck_reset_i : in std_ulogic;
         -- This is asserted on completion of reset synchronously with ck_clk_o
         -- but is driven low directly in response to ck_reset_i.
-        ck_ok_o : out std_ulogic;
+        ck_clk_ok_o : out std_ulogic;
         -- This is asserted for one tick immediately after relocking if the CK
         -- PLL unlocks.
         ck_unlock_o : out std_ulogic;
@@ -248,7 +248,7 @@ begin
         riu_clk_o => riu_clk,
 
         ck_reset_i => ck_reset_i,
-        ck_ok_o => ck_ok_o,
+        ck_clk_ok_o => ck_clk_ok_o,
         ck_unlock_o => ck_unlock_o,
 
         io_ck_i => io_ck_in,
