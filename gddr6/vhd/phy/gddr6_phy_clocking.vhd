@@ -45,8 +45,9 @@ architecture arch of gddr6_phy_clocking is
 
     signal clk_enable : std_ulogic;
     signal raw_clk : std_ulogic;
-    signal ck_clk : std_ulogic;
-    signal riu_clk : std_ulogic;
+    -- Assigning clocks
+    alias ck_clk : std_ulogic is ck_clk_o;
+    alias riu_clk : std_ulogic is riu_clk_o;
 
     signal reset_sync : std_ulogic;
     signal dly_ready_in : std_ulogic;
@@ -127,14 +128,12 @@ begin
         O => ck_clk,
         CE => clk_enable
     );
-    ck_clk_o <= ck_clk;
 
     riu_bufg : BUFGCE port map (
         I => riu_clock_out(0),
         O => riu_clk,
         CE => clk_enable
     );
-    riu_clk_o <= riu_clk;
 
 
     -- Synchronise reset with clock for the remaining processing

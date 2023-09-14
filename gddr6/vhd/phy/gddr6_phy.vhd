@@ -172,8 +172,6 @@ architecture arch of gddr6_phy is
 
     -- Clocks resets and controls
     signal pll_clk : std_ulogic_vector(0 to 1);
-    signal ck_clk : std_ulogic;
-    signal riu_clk : std_ulogic;
     signal reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
@@ -181,6 +179,12 @@ architecture arch of gddr6_phy is
     signal fifo_enable : std_ulogic;
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_vtc : std_ulogic;
+
+    -- A clock for use elsewhere cannot be assigned, only associated, as
+    -- assigning produces a VHDL Delta cycle difference on the assigned clock,
+    -- resulting in skewed clocks in simulation.
+    alias ck_clk : std_ulogic is ck_clk_o;
+    alias riu_clk : std_ulogic is riu_clk_o;
 
     -- RIU control signals
     signal riu_addr : unsigned(9 downto 0);
@@ -259,8 +263,6 @@ begin
         vtc_ready_i => vtc_ready,
         enable_control_vtc_o => enable_control_vtc
     );
-    ck_clk_o <= ck_clk;
-    riu_clk_o <= riu_clk;
 
 
     -- CA generation
