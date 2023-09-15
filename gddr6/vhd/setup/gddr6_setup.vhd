@@ -47,6 +47,7 @@ entity gddr6_setup is
         -- Controls to PHY
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
+        reset_fifo_o : out std_ulogic;
         fifo_ok_i : in std_ulogic;
         sg_resets_n_o : out std_ulogic_vector(0 to 1);
 
@@ -83,6 +84,7 @@ begin
 
         ck_reset_o => ck_reset_o,
         ck_unlock_i => ck_unlock_i,
+        reset_fifo_o => reset_fifo_o,
         fifo_ok_i => fifo_ok_i,
         sg_resets_n_o => sg_resets_n_o,
         enable_cabi_o => enable_cabi_o,

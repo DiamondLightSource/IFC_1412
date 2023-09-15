@@ -25,6 +25,7 @@ entity gddr6_phy_dq is
         vtc_ready_o : out std_ulogic;           -- Calibration done (async)
         enable_control_vtc_i : in std_ulogic;
         enable_bitslice_vtc_i : in std_ulogic;
+        reset_fifo_i : in std_ulogic;
         fifo_ok_o : out std_ulogic;
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
@@ -254,8 +255,12 @@ begin
 
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
-            -- Enable FIFO following UG571 v1.14 p213
-            fifo_enable <= not vector_or(fifo_empty);
+            if reset_fifo_i then
+                fifo_enable <= '0';
+            else
+                -- Enable FIFO following UG571 v1.14 p213
+                fifo_enable <= not vector_or(fifo_empty);
+            end if;
             fifo_ok_o <= fifo_enable;
         end if;
     end process;

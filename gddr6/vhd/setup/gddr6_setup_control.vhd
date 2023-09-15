@@ -26,6 +26,7 @@ entity gddr6_setup_control is
         -- Controls to PHY.  All except ck_reset_o on CK clock
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
+        reset_fifo_o : out std_ulogic;
         fifo_ok_i : in std_ulogic;
         sg_resets_n_o : out std_ulogic_vector(0 to 1) := "00";
 
@@ -104,6 +105,7 @@ begin
             tx_slip_o <= (
                 0 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_LOW_BITS)),
                 1 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_HIGH_BITS)));
+            reset_fifo_o <= control_bits_ck(GDDR6_CONFIG_RESET_FIFO_BIT);
 
             -- Capture unlock events until read
             if ck_unlock_i then

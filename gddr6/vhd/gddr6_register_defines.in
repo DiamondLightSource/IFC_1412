@@ -16,6 +16,8 @@
             .RX_SLIP_HIGH   3
             .TX_SLIP_LOW    3
             .TX_SLIP_HIGH   3
+            # Hold high to hold RX FIFO in reset
+            .RESET_FIFO
 
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers

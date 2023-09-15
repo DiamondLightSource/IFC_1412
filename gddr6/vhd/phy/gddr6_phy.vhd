@@ -56,6 +56,8 @@ entity gddr6_phy is
         -- This is asserted for one tick immediately after relocking if the CK
         -- PLL unlocks.
         ck_unlock_o : out std_ulogic;
+        -- Can be used to hold the RX FIFO in reset
+        reset_fifo_i : in std_ulogic;
         -- This indicates that FIFO reset has been successful, and will go low
         -- if FIFO underflow or overflow is detected.
         fifo_ok_o : out std_ulogic;
@@ -297,6 +299,7 @@ begin
         reset_i => reset,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
+        reset_fifo_i => reset_fifo_i,
         fifo_ok_o => fifo_ok_o,
         enable_control_vtc_i => enable_control_vtc,
         enable_bitslice_vtc_i => enable_bitslice_vtc,

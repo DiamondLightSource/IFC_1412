@@ -111,6 +111,7 @@ architecture arch of test_gddr6_phy is
 
     signal ck_reset : std_ulogic;
     signal ck_unlock : std_ulogic;
+    signal reset_fifo : std_ulogic;
     signal fifo_ok : std_ulogic;
     signal sg_resets_n : std_ulogic_vector(0 to 1);
     signal enable_cabi : std_ulogic;
@@ -217,6 +218,7 @@ begin
 
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
+        reset_fifo_o => reset_fifo,
         fifo_ok_i => fifo_ok,
         sg_resets_n_o => sg_resets_n,
 
@@ -235,6 +237,7 @@ begin
         ck_reset_i => ck_reset,
         ck_clk_ok_o => ck_clk_ok,
         ck_unlock_o => ck_unlock,
+        reset_fifo_i => reset_fifo,
         fifo_ok_o => fifo_ok,
 
         sg_resets_n_i => sg_resets_n,
