@@ -32,10 +32,26 @@ architecture arch of gddr6_phy_map_data is
     signal bank_data_out : vector_array(63 downto 0)(7 downto 0);
     signal bank_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
 
+    signal bank_data_in : vector_array(63 downto 0)(7 downto 0);
+
     -- Gathered from bank_dbi_n_i and masked
     signal invert_bits_in : vector_array(7 downto 0)(7 downto 0);
     -- Computed from outgoing data
     signal invert_bits_out : vector_array(7 downto 0)(7 downto 0);
+
+    -- Computes whether to invert the outgoing bits for the selected group of
+    -- output bits and selected tick.
+    function invert_bits(
+        bank_data_in : vector_array(63 downto 0)(7 downto 0);
+        lanes: natural; tick : natural) return std_ulogic
+    is
+        variable byte : std_ulogic_vector(7 downto 0);
+    begin
+        for i in 0 to 7 loop
+            byte(i) := bank_data_in(lanes*8 + i)(tick);
+        end loop;
+        return compute_bus_inversion(byte);
+    end;
 
 begin
     -- Gather the DBI control bits.  For outgoing data we need to inspect the
@@ -48,32 +64,24 @@ begin
         -- For outgoing data we need to inspect our dataset for each tick to
         -- determine whether to enable DBI inversion
         gen_ticks : for tick in 0 to 7 generate
-            -- Getting the byte for DBI output is surprisingly tricky as input
-            -- bytes are laid out in consecutive ticks.  Each lane group indexed
-            -- by lanes represents a group of 8 bytes.
-            impure function invert_bits return std_ulogic is
-                variable byte : std_ulogic_vector(7 downto 0);
-            begin
-                for i in 0 to 7 loop
-                    -- Select outgoing bits for the same tick in the selected
-                    -- byte group
-                    byte(i) := data_i(lanes * 64 + 8 * i + tick);
-                end loop;
-                return compute_bus_inversion(byte);
-            end;
-        begin
-            invert_bits_out(lanes)(tick) <= invert_bits;
-            bank_dbi_n_out(lanes)(tick) <= not invert_bits;
+            invert_bits_out(lanes)(tick) <=
+                enable_dbi_i and invert_bits(bank_data_in, lanes, tick);
+            bank_dbi_n_out(lanes)(tick) <= not invert_bits_out(lanes)(tick);
         end generate;
     end generate;
 
 
-    -- Gather bytes across banks, each lane contains data for one byte.
+    -- Gather bytes across banks, each lane contains data for one byte,
+    -- corresponding to one IO line
     gen_bytes : for lane in 0 to 63 generate
         subtype BYTE_RANGE is natural range 8 * lane + 7 downto 8 * lane;
     begin
+        -- Data from bitslice
         data_in(BYTE_RANGE) <= invert_bits_in(lane/8)  xor bank_data_i(lane);
-        bank_data_out(lane) <= invert_bits_out(lane/8) xor data_i(BYTE_RANGE);
+
+        -- Data to bitslice
+        bank_data_in(lane) <= data_i(BYTE_RANGE);
+        bank_data_out(lane) <= invert_bits_out(lane/8) xor bank_data_in(lane);
     end generate;
 
 

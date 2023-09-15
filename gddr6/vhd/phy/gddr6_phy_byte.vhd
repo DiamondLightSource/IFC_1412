@@ -167,8 +167,8 @@ begin
         RIU_RD_VALID_LOW => riu_valid(0),
         RIU_RD_VALID_UPP => riu_valid(1)
     );
-    riu_nibble_sel(0) <= riu_addr_i(6);
-    riu_nibble_sel(1) <= not riu_addr_i(6);
+    riu_nibble_sel(0) <= not riu_addr_i(6);
+    riu_nibble_sel(1) <= riu_addr_i(6);
 
 
     -- Inter-nibble plumbing

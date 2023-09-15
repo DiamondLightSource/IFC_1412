@@ -171,4 +171,8 @@ begin
         i_i(7 downto 6) => pad_SG2_EDC_B_io,
         o_o => io_edc_o
     );
+    pad_SG1_EDC_A_io <= "ZZ";
+    pad_SG1_EDC_B_io <= "ZZ";
+    pad_SG2_EDC_A_io <= "ZZ";
+    pad_SG2_EDC_B_io <= "ZZ";
 end;
