@@ -58,11 +58,11 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/setup/gddr6_setup_buffers.vhd \
     $vhd_dir/setup/gddr6_setup_exchange.vhd \
     $vhd_dir/setup/gddr6_setup_riu.vhd \
-    $vhd_dir/setup/gddr6_setup.vhd
+    $vhd_dir/setup/gddr6_setup.vhd \
+    $vhd_dir/setup_phy.vhd \
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_sim/sim_support.vhd \
-    $bench_dir/setup_phy.vhd \
     $bench_dir/testbench.vhd
 
 vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench

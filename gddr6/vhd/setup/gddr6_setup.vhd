@@ -55,7 +55,10 @@ entity gddr6_setup is
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
         rx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0)
+        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
+
+        -- Controller enable
+        enable_controller_o : out std_ulogic
     );
 end;
 
@@ -90,7 +93,9 @@ begin
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
         rx_slip_o => rx_slip_o,
-        tx_slip_o => tx_slip_o
+        tx_slip_o => tx_slip_o,
+
+        enable_controller_o => enable_controller_o
     );
 
 

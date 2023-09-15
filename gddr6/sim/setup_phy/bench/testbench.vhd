@@ -48,6 +48,15 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
+    signal ca : vector_array(0 to 1)(9 downto 0);
+    signal ca3 : std_ulogic_vector(0 to 3);
+    signal cke_n : std_ulogic;
+    signal data_in : std_ulogic_vector(511 downto 0);
+    signal data_out : std_ulogic_vector(511 downto 0);
+    signal dq_t : std_ulogic;
+    signal edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal edc_out : vector_array(7 downto 0)(7 downto 0);
+
     signal clk : std_ulogic := '0';
 
     signal write_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
@@ -71,6 +80,15 @@ begin
         read_strobe_i => read_strobe,
         read_data_o => read_data,
         read_ack_o => read_ack,
+
+        ca_i => ca,
+        ca3_i => ca3,
+        cke_n_i => cke_n,
+        data_i => data_in,
+        data_o => data_out,
+        dq_t_i => dq_t,
+        edc_in_o => edc_in,
+        edc_out_o => edc_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

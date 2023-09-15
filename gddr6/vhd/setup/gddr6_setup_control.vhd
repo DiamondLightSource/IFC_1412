@@ -34,9 +34,10 @@ entity gddr6_setup_control is
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
         rx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0)
+        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
 
         -- Further controls will be below
+        enable_controller_o : out std_ulogic
     );
 end;
 
@@ -106,6 +107,9 @@ begin
                 0 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_LOW_BITS)),
                 1 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_HIGH_BITS)));
             reset_fifo_o <= control_bits_ck(GDDR6_CONFIG_RESET_FIFO_BIT);
+
+            enable_controller_o <=
+                control_bits_ck(GDDR6_CONFIG_ENABLE_MEMORY_BIT);
 
             -- Capture unlock events until read
             if ck_unlock_i then

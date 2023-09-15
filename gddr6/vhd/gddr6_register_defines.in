@@ -18,6 +18,9 @@
             .TX_SLIP_HIGH   3
             # Hold high to hold RX FIFO in reset
             .RESET_FIFO
+            # Set this to hand control over the memory interface to the memory
+            # controller.
+            .ENABLE_MEMORY
 
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
