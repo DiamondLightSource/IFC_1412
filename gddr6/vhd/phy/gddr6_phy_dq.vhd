@@ -224,7 +224,7 @@ begin
 
     -- Finally flatten the data across 8 ticks.  At this point we also apply
     -- DBI if appropriate
-    map_data : entity work.gddr6_phy_map_data port map (
+    dbi : entity work.gddr6_phy_map_dbi port map (
         clk_i => ck_clk_i,
 
         enable_dbi_i => enable_dbi_i,

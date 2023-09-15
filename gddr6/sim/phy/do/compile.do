@@ -23,7 +23,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_byte.vhd \
     $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
     $vhd_dir/phy/gddr6_phy_bitslip.vhd \
-    $vhd_dir/phy/gddr6_phy_map_data.vhd \
+    $vhd_dir/phy/gddr6_phy_map_dbi.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
     $vhd_dir/phy/gddr6_phy_riu_control.vhd \

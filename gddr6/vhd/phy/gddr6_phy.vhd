@@ -22,7 +22,7 @@
 --                  RXTX_BITSLICE
 --          gddr6_phy_dq_remap          Maps signals to bitslices
 --          gddr6_phy_bitslip           WCK data phase correction
---          gddr6_phy_map_data          Data remapping and DBI correction
+--          gddr6_phy_map_dbi           Data remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
 --      gddr6_phy_riu_control       Control of RIU interface
 
