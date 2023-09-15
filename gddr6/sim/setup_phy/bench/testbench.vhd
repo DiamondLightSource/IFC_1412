@@ -133,14 +133,16 @@ begin
             clk_wait(clk, count);
         end;
 
-        procedure write_reg(reg : natural; value : reg_data_t) is
+        procedure write_reg(
+            reg : natural; value : reg_data_t; quiet : boolean := false) is
         begin
-            write_reg(clk, write_data, write_strobe, write_ack, reg, value);
+            write_reg(
+                clk, write_data, write_strobe, write_ack, reg, value, quiet);
         end;
 
-        procedure read_reg(reg : natural) is
+        procedure read_reg(reg : natural; quiet : boolean := false) is
         begin
-            read_reg(clk, read_data, read_strobe, read_ack, reg);
+            read_reg(clk, read_data, read_strobe, read_ack, reg, quiet);
         end;
 
         procedure read_reg_result(
@@ -169,6 +171,7 @@ begin
         procedure write_dq(dq : reg_data_t) is
         begin
             write_reg(GDDR6_DQ_REG, dq);
+            write_reg(GDDR6_DQ_REG, dq);
             write_ca('0');
             dq_count := dq_count + 1;
         end;
@@ -186,7 +189,7 @@ begin
                 to_hstring(edc_out));
             write_reg(GDDR6_COMMAND_REG, (
                 GDDR6_COMMAND_STEP_READ_BIT => '1',
-                others => '0'));
+                others => '0'), true);
         end;
 
         constant CAPTURE_COUNT : natural := 20;

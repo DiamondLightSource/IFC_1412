@@ -75,6 +75,9 @@ add wave -group "PHY CA" test/phy/ca/*
 add wave -group "PHY Nibble(0)(0)" \
     test/phy/dq/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
 add wave -group "PHY Byte(0)" test/phy/dq/gen_bytes(0)/byte/*
+add wave -group "PHY DBI" test/phy/dq/map_data/*
+add wave -group "PHY Bitslip" test/phy/dq/bitslip/*
+add wave -group "PHY CRC" test/phy/dq/crc/*
 add wave -group "PHY DQ" test/phy/dq/*
 add wave -group "PHY RIU" test/phy/riu/*
 add wave -group "PHY" test/phy/*
