@@ -62,6 +62,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/setup/gddr6_setup_exchange.vhd \
     $gddr6_dir/setup/gddr6_setup_riu.vhd \
     $gddr6_dir/setup/gddr6_setup.vhd \
+    $gddr6_dir/gddr6_setup_phy.vhd \
     $vhd_dir/system_registers.vhd \
     $vhd_dir/lmk04616_io.vhd \
     $vhd_dir/lmk04616_control.vhd \
@@ -76,16 +77,17 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "PHY IO" test/phy/io/*
-add wave -group "PHY Clocking" test/phy/clocking/*
-add wave -group "PHY CA" test/phy/ca/*
-add wave -group "PHY DQ" test/phy/dq/*
-add wave -group "PHY RIU" test/phy/riu/*
-add wave -group "PHY" test/phy/*
-add wave -group "Setup Control" test/setup/control/*
-add wave -group "Setup Exchange" test/setup/exchange/*
-add wave -group "Setup RIU" test/setup/riu/*
-add wave -group "Setup" test/setup/*
+add wave -group "PHY IO" test/setup_phy/phy/io/*
+add wave -group "PHY Clocking" test/setup_phy/phy/clocking/*
+add wave -group "PHY CA" test/setup_phy/phy/ca/*
+add wave -group "PHY DQ" test/setup_phy/phy/dq/*
+add wave -group "PHY RIU" test/setup_phy/phy/riu/*
+add wave -group "PHY" test/setup_phy/phy/*
+add wave -group "Setup Control" test/setup_phy/setup/control/*
+add wave -group "Setup Exchange" test/setup_phy/setup/exchange/*
+add wave -group "Setup RIU" test/setup_phy/setup/riu/*
+add wave -group "Setup" test/setup_phy/setup/*
+add wave -group "Setup PHY" test/setup_phy/*
 add wave -group "Test" test/*
 add wave -group "Bench" sim:*
 
