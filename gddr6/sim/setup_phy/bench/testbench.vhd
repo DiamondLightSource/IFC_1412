@@ -222,10 +222,8 @@ begin
         -- Now take CK out of reset, set RX bitslip
         write_reg(GDDR6_CONFIG_REG, (
             GDDR6_CONFIG_CK_RESET_N_BIT => '1',
---             GDDR6_CONFIG_RX_SLIP_LOW_BITS => "001",
---             GDDR6_CONFIG_RX_SLIP_HIGH_BITS => "001",
-            GDDR6_CONFIG_TX_SLIP_LOW_BITS => "111",
-            GDDR6_CONFIG_TX_SLIP_HIGH_BITS => "111",
+            GDDR6_CONFIG_SG_RESET_N_BITS => "01",
+            GDDR6_CONFIG_ENABLE_DBI_BIT => '0',
             others => '0'));
 
         -- Wait for locked status
@@ -234,6 +232,15 @@ begin
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
+
+
+        -- Adjust bitslip on four input pins
+        for n in 0 to 3 loop
+            write_reg(GDDR6_RIU_REG, (
+                GDDR6_RIU_ADDRESS_BITS => to_std_ulogic_vector_u(n, 10),
+                GDDR6_RIU_DATA_BITS => X"0001",
+                others => '0'));
+        end loop;
 
         -- Perform a complete exchange
         write_reg(GDDR6_COMMAND_REG, (
@@ -245,16 +252,16 @@ begin
         write_dq(X"FFFF_FFFF");
         write_dq(X"0000_0000");
         write_dq(X"0000_0000");
---         write_dq(X"5555_5555");
---         write_dq(X"0000_0000");
---         write_dq(X"AAAA_AAAA");
         write_dq(X"5757_5757");
+        write_dq(X"AAAA_AAAA");
         write_dq(X"0000_0000");
         write_dq(X"0000_0000");
         write_dq(X"FFFF_FFFF");
         for n in dq_count to CAPTURE_COUNT-1 loop
             write_ca('1');
         end loop;
+        -- Leave the interface running with 55 as output
+        write_dq(X"5757_5757");
 
         -- Perform exchange
         write_reg(GDDR6_COMMAND_REG, (

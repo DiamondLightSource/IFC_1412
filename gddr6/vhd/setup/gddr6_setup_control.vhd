@@ -33,8 +33,6 @@ entity gddr6_setup_control is
         -- General PHY configuration on CK clock
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
-        rx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
 
         -- Further controls will be below
         enable_controller_o : out std_ulogic
@@ -100,12 +98,6 @@ begin
                 reverse(control_bits_ck(GDDR6_CONFIG_SG_RESET_N_BITS));
             enable_cabi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_CABI_BIT);
             enable_dbi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_DBI_BIT);
-            rx_slip_o <= (
-                0 => unsigned(control_bits_ck(GDDR6_CONFIG_RX_SLIP_LOW_BITS)),
-                1 => unsigned(control_bits_ck(GDDR6_CONFIG_RX_SLIP_HIGH_BITS)));
-            tx_slip_o <= (
-                0 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_LOW_BITS)),
-                1 => unsigned(control_bits_ck(GDDR6_CONFIG_TX_SLIP_HIGH_BITS)));
             reset_fifo_o <= control_bits_ck(GDDR6_CONFIG_RESET_FIFO_BIT);
 
             enable_controller_o <=

@@ -174,10 +174,13 @@ begin
         elsif rising_edge(riu_clk) then
             case reset_state is
                 when RESET_START =>
-                    -- Just wait one tick before we do anything
+                    -- Just wait one tick before we do anything.  Note that this
+                    -- event will not occur until the PLL is out of reset, as
+                    -- the clock is qualified by clk_enable.
                     reset_state <= RESET_RELEASE;
                 when RESET_RELEASE =>
-                    -- Release reset and start counting before releasing PLL
+                    -- Release bitslice resets and start counting before
+                    -- enabling the high speed clock
                     reset_o <= '0';
                     wait_counter <= 6X"3F";     -- 63 ticks
                     reset_state <= RESET_WAIT_PLL;

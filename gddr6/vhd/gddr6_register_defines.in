@@ -11,11 +11,6 @@
             # Bus Inversion enables
             .ENABLE_CABI
             .ENABLE_DBI
-            # Bitslip control
-            .RX_SLIP_LOW    3
-            .RX_SLIP_HIGH   3
-            .TX_SLIP_LOW    3
-            .TX_SLIP_HIGH   3
             # Hold high to hold RX FIFO in reset
             .RESET_FIFO
             # Set this to hand control over the memory interface to the memory

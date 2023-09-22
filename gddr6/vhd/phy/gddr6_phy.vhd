@@ -34,7 +34,7 @@ use work.support.all;
 
 entity gddr6_phy is
     generic (
-        CK_FREQUENCY : real         -- 250.0 or 300.0 MHz
+        CK_FREQUENCY : real := 250.0    -- 250.0 or 300.0 MHz
     );
     port (
         -- --------------------------------------------------------------------
@@ -92,10 +92,6 @@ entity gddr6_phy is
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
-        -- Bit phase control, 0 to 7 for top and bottom banks separately
-        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
-
         -- --------------------------------------------------------------------
         -- Register Interface to bitslice
         -- Read or write the selected register, addressed as follows by
@@ -112,6 +108,12 @@ entity gddr6_phy is
         riu_error_o : out std_ulogic;
         -- If this is set a complete VTC handshake is performed
         riu_vtc_handshake_i : in std_ulogic;
+
+        -- Bitslip control interface
+        bitslip_delay_i : in unsigned(3 downto 0);
+        bitslip_delay_address_i : in unsigned(6 downto 0);
+        bitslip_delay_strobe_i : in std_ulogic;
+
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -149,7 +151,7 @@ end;
 architecture arch of gddr6_phy is
     constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
     -- This is a somewhat arbitrary initial value used for time calibration.
-    constant INITIAL_DELAY : natural := 1000;    -- Max is 1250
+    constant INITIAL_DELAY : natural := 500;    -- Max is 1250
 
     -- Pads with IO buffers
     -- Clocks and reset
@@ -317,8 +319,10 @@ begin
         riu_rd_data_o => riu_rd_data,
         riu_valid_o => riu_valid,
         riu_wr_en_i => riu_wr_en,
-        rx_slip_i => rx_slip_i,
-        tx_slip_i => tx_slip_i,
+
+        bitslip_delay_i => bitslip_delay_i,
+        bitslip_delay_address_i => bitslip_delay_address_i,
+        bitslip_delay_strobe_i => bitslip_delay_strobe_i,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,

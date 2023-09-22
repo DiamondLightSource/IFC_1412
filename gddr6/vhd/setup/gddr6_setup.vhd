@@ -44,6 +44,10 @@ entity gddr6_setup is
         riu_error_i : in std_ulogic;
         riu_vtc_handshake_o : out std_ulogic;
 
+        bitslip_delay_o : out unsigned(3 downto 0);
+        bitslip_delay_address_o : out unsigned(6 downto 0);
+        bitslip_delay_strobe_o : out std_ulogic;
+
         -- Controls to PHY
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
@@ -54,8 +58,6 @@ entity gddr6_setup is
         -- General PHY configuration
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
-        rx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_o : out unsigned_array(0 to 1)(2 downto 0);
 
         -- Controller enable
         enable_controller_o : out std_ulogic
@@ -92,8 +94,6 @@ begin
         sg_resets_n_o => sg_resets_n_o,
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
-        rx_slip_o => rx_slip_o,
-        tx_slip_o => tx_slip_o,
 
         enable_controller_o => enable_controller_o
     );
@@ -143,4 +143,9 @@ begin
         riu_error_i => riu_error_i,
         riu_vtc_handshake_o => riu_vtc_handshake_o
     );
+
+    -- For a quick and dirty test patch the bitslip control into the riu
+    bitslip_delay_o <= unsigned(riu_wr_data_o(3 downto 0));
+    bitslip_delay_address_o <= riu_addr_o(6 downto 0);
+    bitslip_delay_strobe_o <= riu_strobe_o;
 end;

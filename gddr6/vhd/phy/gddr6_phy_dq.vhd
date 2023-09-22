@@ -43,9 +43,11 @@ entity gddr6_phy_dq is
         riu_rd_data_o : out std_ulogic_vector(15 downto 0);
         riu_valid_o : out std_ulogic;
         riu_wr_en_i : in std_ulogic;
-        -- Bit phase control, 0 to 7 for top and bottom banks separately
-        rx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
-        tx_slip_i : in unsigned_array(0 to 1)(2 downto 0);
+
+        -- Bitslip control interface
+        bitslip_delay_i : in unsigned(3 downto 0);
+        bitslip_delay_address_i : in unsigned(6 downto 0);
+        bitslip_delay_strobe_i : in std_ulogic;
 
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);
@@ -205,21 +207,22 @@ begin
     bitslip : entity work.gddr6_phy_bitslip port map (
         clk_i => ck_clk_i,
 
-        rx_slip_i => rx_slip_i,
-        tx_slip_i => tx_slip_i,
+        delay_i => bitslip_delay_i,
+        delay_address_i => bitslip_delay_address_i,
+        delay_strobe_i => bitslip_delay_strobe_i,
 
         slice_dq_i => bank_data_in,
-        slice_dq_o => bank_data_out,
         slice_dbi_n_i => bank_dbi_n_in,
-        slice_dbi_n_o => bank_dbi_n_out,
         slice_edc_i => bank_edc_in,
 
         fixed_dq_o => bitslip_data_in,
-        fixed_dq_i => bitslip_data_out,
         fixed_dbi_n_o => bitslip_dbi_n_in,
-        fixed_dbi_n_i => bitslip_dbi_n_out,
         fixed_edc_o => bitslip_edc_in
     );
+
+    -- We shouldn't need bitslip for outgoing data
+    bank_data_out <= bitslip_data_out;
+    bank_dbi_n_out <= bitslip_dbi_n_out;
 
 
     -- Finally flatten the data across 8 ticks.  At this point we also apply

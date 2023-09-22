@@ -109,6 +109,10 @@ architecture arch of gddr6_setup_phy is
     signal riu_error : std_ulogic;
     signal riu_vtc_handshake : std_ulogic;
 
+    signal bitslip_delay : unsigned(3 downto 0);
+    signal bitslip_delay_address : unsigned(6 downto 0);
+    signal bitslip_delay_strobe : std_ulogic;
+
     signal ck_reset : std_ulogic;
     signal ck_unlock : std_ulogic;
     signal reset_fifo : std_ulogic;
@@ -118,7 +122,6 @@ architecture arch of gddr6_setup_phy is
     signal enable_cabi : std_ulogic;
     signal enable_dbi : std_ulogic;
     signal rx_slip : unsigned_array(0 to 1)(2 downto 0);
-    signal tx_slip : unsigned_array(0 to 1)(2 downto 0);
 
     signal phy_ca : vector_array(0 to 1)(9 downto 0);
     signal phy_ca3 : std_ulogic_vector(0 to 3);
@@ -163,6 +166,10 @@ begin
         riu_error_i => riu_error,
         riu_vtc_handshake_o => riu_vtc_handshake,
 
+        bitslip_delay_o => bitslip_delay,
+        bitslip_delay_address_o => bitslip_delay_address,
+        bitslip_delay_strobe_o => bitslip_delay_strobe,
+
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
         reset_fifo_o => reset_fifo,
@@ -171,8 +178,6 @@ begin
 
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
-        rx_slip_o => rx_slip,
-        tx_slip_o => tx_slip,
 
         enable_controller_o => enable_controller
     );
@@ -204,9 +209,6 @@ begin
         edc_in_o => phy_edc_in,
         edc_out_o => phy_edc_out,
 
-        rx_slip_i => rx_slip,
-        tx_slip_i => tx_slip,
-
         riu_addr_i => riu_addr,
         riu_wr_data_i => riu_wr_data,
         riu_rd_data_o => riu_rd_data,
@@ -215,6 +217,10 @@ begin
         riu_ack_o => riu_ack,
         riu_error_o => riu_error,
         riu_vtc_handshake_i => riu_vtc_handshake,
+
+        bitslip_delay_i => bitslip_delay,
+        bitslip_delay_address_i => bitslip_delay_address,
+        bitslip_delay_strobe_i => bitslip_delay_strobe,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
