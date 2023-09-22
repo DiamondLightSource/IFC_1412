@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import time
+
+from registers import regs, sg
+from setup_lmk import setup_sys_lmk
+
+# Start by putting CK and SG in reset
+sg.CONFIG._write_fields_rw(CK_RESET_N = 0, SG_RESET_N = 0)
+
+# Configure LMK and sync
+lmk = setup_sys_lmk(regs.SYS, enable_sync_pin = False)
+lmk.GLOBAL_SYNC = 1
+time.sleep(0.01)
+lmk.GLOBAL_SYNC = 0
+
+# Give the system time to lock
+time.sleep(0.01)
+print(
+    'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
+    ', Status =', regs.SYS.STATUS.LMK_STATUS)
+
+# Now take CK out of reset
+sg.CONFIG.CK_RESET_N = 1
+time.sleep(0.1)
+print(sg.STATUS)
+print(sg.STATUS)

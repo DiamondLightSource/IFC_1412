@@ -30,4 +30,30 @@ def write_riu(nibble, reg, value):
     result = riu._get_fields()
     assert not result.TIMEOUT
 
-__all__ = ['sg', 'read_riu', 'write_riu']
+def slew_rx_delay(nibble, pin, target):
+    # Only applies to RX pins
+    pin_address = pin + 6
+    riu_address = pin + 0x12
+    current = read_riu(nibble, riu_address)
+    while target > current:
+        write_riu(nibble, pin_address, min(current + 7, target))
+        current = read_riu(nibble, riu_address)
+    while target < current:
+        write_riu(nibble, pin_address, max(current - 7, target))
+        current = read_riu(nibble, riu_address)
+
+def slew_tx_delay(nibble, pin, target):
+    # Only applies to RX pins
+    pin_address = pin + 0
+    riu_address = pin + 0x0B
+    current = read_riu(nibble, riu_address)
+    while target > current:
+        write_riu(nibble, pin_address, min(current + 7, target))
+        current = read_riu(nibble, riu_address)
+    while target < current:
+        write_riu(nibble, pin_address, max(current - 7, target))
+        current = read_riu(nibble, riu_address)
+
+
+
+__all__ = ['sg', 'read_riu', 'write_riu', 'slew_rx_delay', 'slew_tx_delay']

@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+import numpy
+import time
+
+from registers import driver, regs, sg
+from exchange import Exchange, print_header
+
+# driver.VERBOSE = True
+
+DQ_COUNT = 64
+
+# Termination controls:
+#   CA[1:0], CA[3:2] = 10 and CA[6] = 1 => 120 Ohm termination for CA signals
+#   CA[5:4] = 0x => no termination for CK
+#   CA[5:4] = 10 => 60 Ohm termination for CK
+# These patterns are taken from lines 1400-1439 of gddr6_ca_gen.vhd
+CA_RESET_CK_NO_TERM = 0b1111_01_10_10   # [5:4] = 01, [3:2] = 10, [1:0] = 10
+CA_RESET_CK_TERM    = 0b1111_10_10_10   # [5:4] = 10, [3:2] = 10, [1:0] = 10
+
+MR15_RISING  = 0b10_1111_0100_10_1111_0100
+MR15_FALLING = 0b10_1111_1000_10_1111_1000
+
+NOOP = 0xFFFFF
+
+
+assert sg.STATUS.CK_OK and not sg.STATUS.CK_UNLOCK
+
+
+# This writes a 10 bit repeated CA value
+def write_ca10(values = [0x3FF], cke_n = [1]):
+    exchange = Exchange(len(values), dq_count = 0)
+    for n, (value, cke) in enumerate(zip(values, cke_n)):
+        exchange.ca[n] = value | value << 10
+        exchange.cke_n[n] = cke
+    exchange.exchange()
+
+def ca_training():
+    # Put the memory into CA training mode
+#     write_ca10([0b10_1111_0100, 0x3FF], [0, 0])
+    mrs_command(15, 0b_1111_0100_0100)
+
+    exchange = Exchange(30, dq_count = DQ_COUNT)
+
+    TEST_PATTERN = 0b11101_11111_11011_11111
+    TEST_PATTERN = 0b11000_01111_11000_01111
+
+    # Send MR15 command for two ticks
+    exchange.ca[:] = NOOP
+    exchange.ca[:2] = TEST_PATTERN
+
+    exchange.cke_n[:] = 0
+    exchange.cke_n[0] = 1
+
+    exchange.exchange()
+    print_header(dq_count = DQ_COUNT)
+    exchange.print()
+
+def mrs_to_ca(mr, op):
+    # Rising part in low order word, falling part in high order word
+    return \
+        (0b10 << 8) | ((mr & 0xF) << 4) | (op & 0xF) | \
+        ((0b10 << 8) | ((op >> 4) & 0xFF)) << 10
+
+def mrs_command(mr, op):
+    exchange = Exchange(2, 0)
+    exchange.ca[0] = mrs_to_ca(mr, op)
+    exchange.ca[1] = NOOP
+    exchange.cke_n[:] = 0
+    exchange.exchange()
+
+def read_vendor_id():
+    exchange = Exchange(30, dq_count = DQ_COUNT)
+
+    exchange.ca[0] = mrs_to_ca(3, 0b0011_0000)
+    exchange.exchange()
+    print_header(dq_count = DQ_COUNT)
+    exchange.print()
+
+# 
+#     sg.COMMAND._write_fields_wo(START_WRITE = 1)
+#     sg.CA._write_fields_wo(
+#         RISING = value, FALLING = value, CA3 = 0, CKE_N = cke_n, DQ_T = 1)
+#     sg.COMMAND._write_fields_wo(EXCHANGE = 1)
+
+
+# Start by forcing both SG devices into reset
+sg.CONFIG.SG_RESET_N = 0
+time.sleep(0.1)
+
+
+# Program SG1 for no CK termination
+write_ca10(values = [0b1111_01_10_10], cke_n = [1])
+sg.CONFIG.SG_RESET_N = 1
+# Program SG2 for CK termination
+write_ca10(values = [0b1111_10_10_10], cke_n = [1])
+sg.CONFIG.SG_RESET_N = 3
+
+# # Trying termination on CA and CK on SG#2 only, holding SG#1 in reset
+# write_ca(value = 0b1111_10_01_01)
+# sg.CONFIG.SG_RESET_N = 2
+
+# Hold for t_ATH = 10 ns
+# Now pull CKE low and hold for t_INIT2 = 1 ms
+write_ca10(cke_n = [0])
+time.sleep(0.1)
+
+# Now try for some CA training commands
+# ca_training()
+read_vendor_id()

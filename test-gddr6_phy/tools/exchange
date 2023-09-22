@@ -4,87 +4,11 @@ import numpy
 
 from registers import driver, regs
 
+from exchange import do_exchange, print_header
+
 DQ_WRITE_WIDTH = 64
-DQ_READ_WIDTH = 64
-BUFFER_DEPTH = 64
-EDC_WIDTH = 2
+EXCH_COUNT = 30
 
-DEFAULT_CA = numpy.array(0xffffff, dtype = numpy.uint32)
-DEFAULT_DQT = numpy.array(True)
-DEFAULT_DQ = numpy.zeros((1, DQ_WRITE_WIDTH), dtype = numpy.uint8)
-DEFAULT_DQ[:, :] = 255
-
-
-def ensure(array, ndims, dtype):
-    array = numpy.require(array, dtype = dtype)
-    while len(array.shape) < ndims:
-        array = array[None, ...]
-    return array
-
-
-def to_string(array):
-    assert array.ndim == 1
-    return '[' + ' '.join(['%02X' % a for a in array]) + ']'
-
-
-def prepare_exchange(caa, dqta, dqa, count):
-    # Force all arrays to be the correct type and size
-    caa = ensure(caa, 1, numpy.uint32)
-    dqta = ensure(dqta, 1, numpy.bool)
-    dqa = ensure(dqa, 2, numpy.uint8)
-    if dqa.size == 0:
-        dqa = dqa.reshape((0, DQ_WRITE_WIDTH))
-
-    assert dqa.shape[1] == DQ_WRITE_WIDTH
-    count = max(len(caa), len(dqta), len(dqa), count)
-    assert count <= BUFFER_DEPTH
-
-    # Pad all arrays to the target length with appropriate defaults
-    caa = numpy.append(caa, numpy.repeat(DEFAULT_CA, count - len(caa)))
-    dqta = numpy.append(dqta, numpy.repeat(DEFAULT_DQT, count - len(dqta)))
-    dqa = numpy.append(
-        dqa, numpy.repeat(DEFAULT_DQ, count - len(dqa), axis = 0), axis = 0)
-
-    return (caa, dqta, dqa, count)
-
-
-def do_exchange(caa, dqta, dqa, count = 0):
-    caa, dqta, dqa, count = prepare_exchange(caa, dqta, dqa, count)
-
-#     for n, (ca, t, dq) in enumerate(zip(caa, dqta, dqa)):
-#         print(n, ':', to_string(dq), t, '%5X' % ca)
-
-    sg = regs.SYS.GDDR6
-
-    # Send the data
-    sg.COMMAND._write_fields_wo(START_WRITE = 1)
-    for ca, dqt, dq in zip(caa, dqta, dqa):
-        for d in dq.view('uint32'):
-            sg.DQ._value = d
-        sg.CA._write_fields_wo(
-            RISING = ca & 0x3FF, FALLING = (ca >> 10) & 0x3FF,
-            CA3 = 0, CKE_N = 1, DQ_T = dqt)
-
-    # Exchange
-    sg.COMMAND._write_fields_wo(EXCHANGE = 1, START_READ = 1)
-
-    # Read the data
-#     print('Starting read')
-#     driver.VERBOSE = False
-    data = numpy.empty((count, DQ_READ_WIDTH//4), dtype = numpy.uint32)
-    edc_in = numpy.empty((count, EDC_WIDTH), dtype = numpy.uint32)
-    edc_out = numpy.empty((count, EDC_WIDTH), dtype = numpy.uint32)
-#     sg.COMMAND._write_fields_wo(START_READ = 1)
-    for i in range(count):
-# #         print('Reading', i)
-        for j in range(DQ_READ_WIDTH//4):
-            data[i, j] = sg.DQ._value
-        for j in range(EDC_WIDTH):
-#             edc_in[i, j] = sg.EDC_IN._value
-            edc_out[i, j] = sg.EDC_OUT._value
-        sg.COMMAND._write_fields_wo(STEP_READ = 1)
-
-    return data.view('uint8'), edc_in.view('uint8'), edc_out.view('uint8')
 
 
 def main():
@@ -92,10 +16,11 @@ def main():
     print(status)
     assert status.CK_OK and not status.CK_UNLOCK
 
-    EXCH_COUNT = 25
     test_sequence = [0xFF, 0, 0, 0x57, 0, 0, 0xFF]
     test_sequence = [0xFF, 0, 1, 0, 0, 0xFF]
     test_sequence = [0xFF] + list(range(8)) + [0xFF]
+    test_sequence = [0xFF, 0x00, 0xFF, 0] + 4 * [0x5C] + [0x00, 0xFF]
+    test_sequence = 4 * [0]
 #     test_sequence = [255]*64
 
     DQ_COUNT = len(test_sequence)
@@ -105,17 +30,14 @@ def main():
 #     dqa = []
     dqt = numpy.zeros(DQ_COUNT, dtype = numpy.bool)
 
-#     dqa = ([0] * DQ_WRITE_WIDTH) * 4
+#     dqa = numpy.zeros((4, DQ_WRITE_WIDTH), dtype = numpy.uint8)
 #     dqt = [0, 1, 1, 0]
+#     dqt = [1, 0, 0, 1]
 
-    data, edc_in, edc_out = do_exchange([], dqt, dqa, EXCH_COUNT)
-    print('    ', end = '')
-    for n in range(64):
-        print(' %2d' % n, end = '')
-    print()
-    for n, (dq, ein, eout) in enumerate(zip(data, edc_in, edc_out)):
-#         print(n, ':', to_string(dq), to_string(ein), to_string(eout))
-        print('%2d:' % n, to_string(dq), to_string(eout))
+#     data, edc_in, edc_out = do_exchange([], dqt, dqa, EXCH_COUNT)
+    exchange = do_exchange([], dqt, dqa, EXCH_COUNT)
+    print_header(show_edc_out = True)
+    exchange.print(show_edc_out = True)
 
 
 # driver.VERBOSE = True
