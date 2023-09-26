@@ -14,11 +14,17 @@ entity gddr6_phy_dq_remap is
         wck_i : in std_ulogic_vector(0 to 1);
 
         -- Bitslice resources organised by byte and slice
-        data_i : in vector_array_array(0 to 7)(0 to 11)(7 downto 0);
-        data_o : out vector_array_array(0 to 7)(0 to 11)(7 downto 0);
-        pad_in_o : out vector_array(0 to 7)(0 to 11);
-        pad_out_i : in vector_array(0 to 7)(0 to 11);
-        pad_t_out_i : in vector_array(0 to 7)(0 to 11);
+        slice_data_i : in vector_array_array(0 to 7)(0 to 11)(7 downto 0);
+        slice_data_o : out vector_array_array(0 to 7)(0 to 11)(7 downto 0);
+        slice_pad_in_o : out vector_array(0 to 7)(0 to 11);
+        slice_pad_out_i : in vector_array(0 to 7)(0 to 11);
+        slice_pad_t_out_i : in vector_array(0 to 7)(0 to 11);
+        -- Delay controls
+        slice_rx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
+        slice_tx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
+        -- Delay readbacks
+        slice_rx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
+        slice_tx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
 
         -- Remapped data organised by pin and tick
         bank_data_o : out vector_array(63 downto 0)(7 downto 0);
@@ -26,6 +32,18 @@ entity gddr6_phy_dq_remap is
         bank_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         bank_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         bank_edc_o : out vector_array(7 downto 0)(7 downto 0);
+        -- Delay controls
+        bank_dq_rx_delay_ce_i : in std_ulogic_vector(63 downto 0);
+        bank_dq_tx_delay_ce_i : in std_ulogic_vector(63 downto 0);
+        bank_dbi_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        bank_dbi_tx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        bank_edc_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        -- Delay readbacks
+        bank_dq_rx_delay_o : out vector_array(63 downto 0)(8 downto 0);
+        bank_dq_tx_delay_o : out vector_array(63 downto 0)(8 downto 0);
+        bank_dbi_rx_delay_o : out vector_array(7 downto 0)(8 downto 0);
+        bank_dbi_tx_delay_o : out vector_array(7 downto 0)(8 downto 0);
+        bank_edc_rx_delay_o : out vector_array(7 downto 0)(8 downto 0);
 
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);
@@ -51,12 +69,17 @@ begin
         constant slice : natural := CONFIG_BANK_DQ(i).slice;
     begin
         -- IO pad binding
-        pad_in_o(byte)(slice) <= io_dq_i(i);
-        io_dq_t_o(i) <= pad_t_out_i(byte)(slice);
-        io_dq_o(i) <= pad_out_i(byte)(slice);
+        slice_pad_in_o(byte)(slice) <= io_dq_i(i);
+        io_dq_t_o(i) <= slice_pad_t_out_i(byte)(slice);
+        io_dq_o(i) <= slice_pad_out_i(byte)(slice);
         -- Data flow
-        data_o(byte)(slice) <= bank_data_i(i);
-        bank_data_o(i) <= data_i(byte)(slice);
+        slice_data_o(byte)(slice) <= bank_data_i(i);
+        bank_data_o(i) <= slice_data_i(byte)(slice);
+        -- Delay control and readback
+        slice_rx_delay_ce_o(byte)(slice) <= bank_dq_rx_delay_ce_i(i);
+        slice_tx_delay_ce_o(byte)(slice) <= bank_dq_tx_delay_ce_i(i);
+        bank_dq_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
+        bank_dq_tx_delay_o(i) <= slice_tx_delay_i(byte)(slice);
     end generate;
 
     -- DBI
@@ -65,12 +88,17 @@ begin
         constant slice : natural := CONFIG_BANK_DBI(i).slice;
     begin
         -- IO pad binding
-        pad_in_o(byte)(slice) <= io_dbi_n_i(i);
-        io_dbi_n_t_o(i) <= pad_t_out_i(byte)(slice);
-        io_dbi_n_o(i) <= pad_out_i(byte)(slice);
+        slice_pad_in_o(byte)(slice) <= io_dbi_n_i(i);
+        io_dbi_n_t_o(i) <= slice_pad_t_out_i(byte)(slice);
+        io_dbi_n_o(i) <= slice_pad_out_i(byte)(slice);
         -- Data flow
-        data_o(byte)(slice) <= bank_dbi_n_i(i);
-        bank_dbi_n_o(i) <= data_i(byte)(slice);
+        slice_data_o(byte)(slice) <= bank_dbi_n_i(i);
+        bank_dbi_n_o(i) <= slice_data_i(byte)(slice);
+        -- Delay control and readback
+        slice_rx_delay_ce_o(byte)(slice) <= bank_dbi_rx_delay_ce_i(i);
+        slice_tx_delay_ce_o(byte)(slice) <= bank_dbi_tx_delay_ce_i(i);
+        bank_dbi_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
+        bank_dbi_tx_delay_o(i) <= slice_tx_delay_i(byte)(slice);
     end generate;
 
     -- EDC (input only)
@@ -79,10 +107,14 @@ begin
         constant slice : natural := CONFIG_BANK_EDC(i).slice;
     begin
         -- IO pad binding
-        pad_in_o(byte)(slice) <= io_edc_i(i);
+        slice_pad_in_o(byte)(slice) <= io_edc_i(i);
         -- Data flow
-        data_o(byte)(slice) <= X"00";
-        bank_edc_o(i) <= data_i(byte)(slice);
+        slice_data_o(byte)(slice) <= X"00";
+        bank_edc_o(i) <= slice_data_i(byte)(slice);
+        -- Delay control and readback
+        slice_rx_delay_ce_o(byte)(slice) <= bank_edc_rx_delay_ce_i(i);
+        slice_tx_delay_ce_o(byte)(slice) <= '0';
+        bank_edc_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
     end generate;
 
     -- WCK (clock only, input only)
@@ -90,8 +122,10 @@ begin
         constant byte : natural := CONFIG_BANK_WCK(i).byte;
         constant slice : natural := CONFIG_BANK_WCK(i).slice;
     begin
-        pad_in_o(byte)(slice) <= wck_i(i);
-        data_o(byte)(slice) <= X"00";
+        slice_pad_in_o(byte)(slice) <= wck_i(i);
+        slice_data_o(byte)(slice) <= X"00";
+        slice_rx_delay_ce_o(byte)(slice) <= '0';
+        slice_tx_delay_ce_o(byte)(slice) <= '0';
     end generate;
 
     -- PATCH: link component signal to patch bitslice
@@ -99,8 +133,10 @@ begin
         constant byte : natural := CONFIG_BANK_PATCH(i).byte;
         constant slice : natural := CONFIG_BANK_PATCH(i).slice;
     begin
-        pad_in_o(byte)(slice) <= bitslice_patch_i(i);
-        data_o(byte)(slice) <= X"00";
+        slice_pad_in_o(byte)(slice) <= bitslice_patch_i(i);
+        slice_data_o(byte)(slice) <= X"00";
+        slice_rx_delay_ce_o(byte)(slice) <= '0';
+        slice_tx_delay_ce_o(byte)(slice) <= '0';
     end generate;
 
     -- Finally fill in suitable empty markers for unused entries.  This is
@@ -110,8 +146,10 @@ begin
     begin
         gen_slices : for slice in 0 to 11 generate
             gen_unused : if not BITSLICE_WANTED(slice) generate
-                pad_in_o(byte)(slice) <= '-';
-                data_o(byte)(slice) <= X"00";
+                slice_pad_in_o(byte)(slice) <= '-';
+                slice_data_o(byte)(slice) <= X"00";
+                slice_rx_delay_ce_o(byte)(slice) <= '0';
+                slice_tx_delay_ce_o(byte)(slice) <= '0';
             end generate;
         end generate;
     end generate;

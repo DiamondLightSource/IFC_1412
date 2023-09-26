@@ -75,8 +75,6 @@ entity gddr6_phy_io is
 end;
 
 architecture arch of gddr6_phy_io is
-    signal ca3_out : std_ulogic_vector(0 to 3);
-
 begin
     -- Clock inputs
     i_clocks : entity work.ibufds_array generic map (

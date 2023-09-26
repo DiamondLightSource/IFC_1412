@@ -27,6 +27,13 @@ entity gddr6_phy_ca is
         cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
 
+        -- Delay control
+        delay_clk_i : in std_ulogic;
+        delay_rst_i : in std_ulogic;
+        delay_inc_i : in std_ulogic;
+        delay_ce_i : in std_ulogic_vector(15 downto 0);
+        delay_o : out vector_array(15 downto 0)(8 downto 0);
+
         -- Pins driven out
         io_sg_resets_n_o : out std_ulogic_vector(0 to 1);
         io_ca_o : out std_ulogic_vector(9 downto 0);   -- Pin 3 is ignored
@@ -87,10 +94,15 @@ begin
     io_cke_n_o <= ca_out(15);
 
 
-    -- Generate ODDR for all CA outputs
+    -- Generate ODDR and ODELAY for all CA outputs
     gen_out : for i in 0 to 15 generate
+        signal data_out : std_ulogic;
+    begin
         -- Need to skip entry #3
-        if_ca3 : if i /= 3 generate
+        if_ca3 : if i = 3 generate
+            delay_o(i) <= 9X"000";
+            ca_out(i) <= '0';
+        else generate
             oddr : ODDRE1 generic map (
                 SRVAL => '1'
             ) port map (
@@ -98,7 +110,30 @@ begin
                 C => clk_i,
                 D1 => ca_in(0)(i),
                 D2 => ca_in(1)(i),
-                Q => ca_out(i)
+                Q => data_out
+            );
+
+            odelay : ODELAYE3 generic map (
+                DELAY_TYPE => "VAR_LOAD",
+                DELAY_FORMAT => "COUNT",
+                UPDATE_MODE => "ASYNC",
+                DELAY_VALUE => 0
+            ) port map (
+                ODATAIN => data_out,
+                DATAOUT => ca_out(i),
+                -- Delay control
+                CLK => delay_clk_i,
+                CE => delay_ce_i(i),
+                INC => delay_inc_i,
+                RST => delay_rst_i,
+                EN_VTC => '0',
+                -- Unused pins
+                LOAD => '0',
+                CNTVALUEIN => 9X"000",
+                CNTVALUEOUT => delay_o(i),
+                CASC_RETURN => '0',
+                CASC_IN => '0',
+                CASC_OUT => open
             );
         end generate;
     end generate;

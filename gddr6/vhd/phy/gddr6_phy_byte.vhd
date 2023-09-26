@@ -13,8 +13,6 @@ entity gddr6_phy_byte is
     generic (
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 11);
-        REFCLK_FREQUENCY : real;
-        INITIAL_DELAY : natural;
 
         -- For the lower nibble, the clock either comes from bitslice 0 or from
         -- another byte, and clocks are distributed to adjacent bytes
@@ -27,6 +25,7 @@ entity gddr6_phy_byte is
         -- Clocks
         pll_clk_i : in std_ulogic;      -- Backbone clock from PLL
         fifo_rd_clk_i : in std_ulogic;  -- Clock for reading RX FIFO
+        riu_clk_i : in std_ulogic;      -- Control clock
 
         -- FIFO control
         fifo_empty_o : out std_ulogic;
@@ -35,18 +34,26 @@ entity gddr6_phy_byte is
         -- Resets and controls
         reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
-        enable_tri_vtc_i : in std_ulogic_vector(0 to 1);
-        enable_bitslice_vtc_i : in std_ulogic_vector(0 to 11);
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
 
-        -- RIU interface
-        riu_clk_i : in std_ulogic;      -- Control clock
-        riu_addr_i : in unsigned(6 downto 0);
-        riu_wr_data_i : in std_ulogic_vector(15 downto 0);
-        riu_rd_data_o : out std_ulogic_vector(15 downto 0);
-        riu_valid_o : out std_ulogic;
-        riu_wr_en_i : in std_ulogic;
+        -- VTC enables
+        enable_tri_vtc_i : in std_ulogic_vector(0 to 1);
+        enable_tx_vtc_i : in std_ulogic_vector(0 to 11);
+        enable_rx_vtc_i : in std_ulogic_vector(0 to 11);
+        -- Delay resets
+        reset_tri_delay_i : in std_ulogic_vector(0 to 1);
+        reset_rx_delay_i : in std_ulogic_vector(0 to 11);
+        reset_tx_delay_i : in std_ulogic_vector(0 to 11);
+        -- Delay control
+        delay_up_down_n_i : in std_ulogic;
+        tri_delay_ce_i : in std_ulogic_vector(0 to 1);
+        rx_delay_ce_i : in std_ulogic_vector(0 to 11);
+        tx_delay_ce_i : in std_ulogic_vector(0 to 11);
+        -- Delay readbacks
+        tri_delay_o : out vector_array(0 to 1)(8 downto 0);
+        tx_delay_o : out vector_array(0 to 11)(8 downto 0);
+        rx_delay_o : out vector_array(0 to 11)(8 downto 0);
 
         -- Data interface
         data_o : out vector_array(0 to 11)(7 downto 0);
@@ -73,10 +80,6 @@ architecture arch of gddr6_phy_byte is
     signal pclk_nibble_out : std_ulogic_vector(0 to 1);
     signal nclk_nibble_out : std_ulogic_vector(0 to 1);
 
-    signal riu_rd_data : vector_array(0 to 1)(15 downto 0);
-    signal riu_valid : std_ulogic_vector(0 to 1);
-    signal riu_nibble_sel : std_ulogic_vector(0 to 1);
-
     signal fifo_empty : std_ulogic_vector(0 to 11);
     signal dly_ready : std_ulogic_vector(0 to 1);
     signal vtc_ready : std_ulogic_vector(0 to 1);
@@ -102,8 +105,6 @@ begin
 
         nibble : entity work.gddr6_phy_nibble generic map (
             BITSLICE_WANTED => BITSLICE_WANTED(BITSLICE_RANGE),
-            REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-            INITIAL_DELAY => INITIAL_DELAY,
 
             LOWER_NIBBLE => LOWER_NIBBLE,
             CLK_FROM_PIN => LOWER_NIBBLE and CLK_FROM_PIN,
@@ -112,24 +113,31 @@ begin
         ) port map (
             pll_clk_i => pll_clk_i,
             fifo_rd_clk_i => fifo_rd_clk_i,
+            riu_clk_i => riu_clk_i,
 
             fifo_empty_o => fifo_empty(BITSLICE_RANGE),
             fifo_rd_en_i => fifo_enable_i,
 
             reset_i => reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
-            enable_tri_vtc_i => enable_tri_vtc_i(i),
-            enable_bitslice_vtc_i => enable_bitslice_vtc_i(BITSLICE_RANGE),
             dly_ready_o => dly_ready(i),
             vtc_ready_o => vtc_ready(i),
 
-            riu_clk_i => riu_clk_i,
-            riu_addr_i => riu_addr_i(5 downto 0),
-            riu_wr_data_i => riu_wr_data_i,
-            riu_rd_data_o => riu_rd_data(i),
-            riu_valid_o => riu_valid(i),
-            riu_wr_en_i => riu_wr_en_i,
-            riu_nibble_sel_i => riu_nibble_sel(i),
+            enable_tri_vtc_i => enable_tri_vtc_i(i),
+            enable_tx_vtc_i => enable_tx_vtc_i(BITSLICE_RANGE),
+            enable_rx_vtc_i => enable_rx_vtc_i(BITSLICE_RANGE),
+
+            reset_tri_delay_i => reset_tri_delay_i(i),
+            reset_rx_delay_i => reset_rx_delay_i(BITSLICE_RANGE),
+            reset_tx_delay_i => reset_tx_delay_i(BITSLICE_RANGE),
+
+            delay_up_down_n_i => delay_up_down_n_i,
+            tri_delay_ce_i => tri_delay_ce_i(i),
+            rx_delay_ce_i => rx_delay_ce_i(BITSLICE_RANGE),
+            tx_delay_ce_i => tx_delay_ce_i(BITSLICE_RANGE),
+            tri_delay_o => tri_delay_o(i),
+            tx_delay_o => tx_delay_o(BITSLICE_RANGE),
+            rx_delay_o => rx_delay_o(BITSLICE_RANGE),
 
             data_o => data_o(BITSLICE_RANGE),
             data_i => data_i(BITSLICE_RANGE),
@@ -157,20 +165,6 @@ begin
     end generate;
 
 
-    -- Use built-in for data multiplexing, wired as described in UG571 (v1.14)
-    -- p325
-    riu_or_i : RIU_OR port map (
-        RIU_RD_DATA => riu_rd_data_o,
-        RIU_RD_VALID => riu_valid_o,
-        RIU_RD_DATA_LOW => riu_rd_data(0),
-        RIU_RD_DATA_UPP => riu_rd_data(1),
-        RIU_RD_VALID_LOW => riu_valid(0),
-        RIU_RD_VALID_UPP => riu_valid(1)
-    );
-    riu_nibble_sel(0) <= not riu_addr_i(6);
-    riu_nibble_sel(1) <= riu_addr_i(6);
-
-
     -- Inter-nibble plumbing
     pclk_nibble_in <= (0 => pclk_nibble_out(1), 1 => pclk_nibble_out(0));
     nclk_nibble_in <= (0 => nclk_nibble_out(1), 1 => nclk_nibble_out(0));
@@ -180,7 +174,7 @@ begin
     clk_to_south_o <= clk_to_south_out(0);
 
     -- Aggregate empty and ready statuses across both nibbles
-    fifo_empty_o <= vector_or(fifo_empty);
-    dly_ready_o <= vector_and(dly_ready);
-    vtc_ready_o <= vector_and(vtc_ready);
+    fifo_empty_o <= or fifo_empty;
+    dly_ready_o <= and dly_ready;
+    vtc_ready_o <= and vtc_ready;
 end;

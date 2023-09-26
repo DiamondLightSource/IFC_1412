@@ -14,6 +14,7 @@
 --          sync_bit
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
+--          ODELAYE1
 --      gddr6_phy_dq                DQ bus generation
 --          gddr6_phy_byte              Generates a pair of nibbles
 --              gddr6_phy_nibble            Generates complete IO nibble
@@ -22,9 +23,9 @@
 --                  RXTX_BITSLICE
 --          gddr6_phy_dq_remap          Maps signals to bitslices
 --          gddr6_phy_bitslip           WCK data phase correction
---          gddr6_phy_map_dbi           Data remapping and DBI correction
+--          gddr6_phy_map_dbi           Byte remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
---      gddr6_phy_riu_control       Control of RIU interface
+--      gddr6_phy_delay_control     Control of delay interface
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -37,34 +38,37 @@ entity gddr6_phy is
         CK_FREQUENCY : real := 250.0    -- 250.0 or 300.0 MHz
     );
     port (
-        -- --------------------------------------------------------------------
-        -- Clocks reset and control
-
-        -- Clock from CK input.  All CA and DQ signals are synchronous to this
-        -- clock.
-        ck_clk_o : out std_ulogic;
-        -- Half frequency clock for register interface, synchronous with
-        -- ck_clk_o.  The RIU interface uses this clock
-        riu_clk_o : out std_ulogic;
-
         -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
         -- are held in reset until CK is good.  This signal is asynchronous
         ck_reset_i : in std_ulogic;
         -- This is asserted on completion of reset synchronously with ck_clk_o
         -- but is driven low directly in response to ck_reset_i.
         ck_clk_ok_o : out std_ulogic;
+
+        -- Clock from CK input.  All controls on this interface are synchronous
+        -- to this clock except for ck_reset_i and ck_clk_ok_o which are
+        -- treated as asynchronous.
+        ck_clk_o : out std_ulogic;
+
+        -- --------------------------------------------------------------------
+        -- Miscellaneous controls
+
         -- This is asserted for one tick immediately after relocking if the CK
         -- PLL unlocks.
         ck_unlock_o : out std_ulogic;
         -- Can be used to hold the RX FIFO in reset
-        reset_fifo_i : in std_ulogic;
+        reset_fifo_i : in std_ulogic_vector(0 to 1);
         -- This indicates that FIFO reset has been successful, and will go low
         -- if FIFO underflow or overflow is detected.
-        fifo_ok_o : out std_ulogic;
+        fifo_ok_o : out std_ulogic_vector(0 to 1);
 
         -- Directly driven resets to the two GDDR6 devices.  Should be held low
         -- until ca_i has been properly set for configuration options.
         sg_resets_n_i : in std_ulogic_vector(0 to 1);
+
+        -- Data bus inversion enables for CA and DQ interfaces
+        enable_cabi_i : in std_ulogic;
+        enable_dbi_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- CA
@@ -74,7 +78,6 @@ entity gddr6_phy is
         ca3_i : in std_ulogic_vector(0 to 3);
         -- Clock enable, held low during normal operation
         cke_n_i : in std_ulogic;
-        enable_cabi_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- DQ
@@ -83,7 +86,6 @@ entity gddr6_phy is
         data_i : in std_ulogic_vector(511 downto 0);
         data_o : out std_ulogic_vector(511 downto 0);
         dq_t_i : in std_ulogic;
-        enable_dbi_i : in std_ulogic;
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one
         -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
@@ -93,27 +95,25 @@ entity gddr6_phy is
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
-        -- Register Interface to bitslice
-        -- Read or write the selected register, addressed as follows by
-        -- riu_addr_i: bit 9 selects the bank, bits 8:7 the byte within the
-        -- bank, bit 6 selects the nibble, bits 5:0 address the RIU register.
-        --    All riu signals are clocked by riu_clk_o
-        riu_addr_i : in unsigned(9 downto 0);
-        riu_wr_data_i : in std_ulogic_vector(15 downto 0);
-        riu_rd_data_o : out std_ulogic_vector(15 downto 0);
-        riu_wr_en_i : in std_ulogic;
-        riu_strobe_i : in std_ulogic;
-        riu_ack_o : out std_ulogic;
-        -- If the RIU stops responding this bit will be set on ack
-        riu_error_o : out std_ulogic;
-        -- If this is set a complete VTC handshake is performed
-        riu_vtc_handshake_i : in std_ulogic;
-
-        -- Bitslip control interface
-        bitslip_delay_i : in unsigned(3 downto 0);
-        bitslip_delay_address_i : in unsigned(6 downto 0);
-        bitslip_delay_strobe_i : in std_ulogic;
-
+        -- Delay control interface
+        -- The address map here is defined in gddr6_register_defines.in
+        delay_address_i : in unsigned(7 downto 0);
+        delay_i : in unsigned(7 downto 0);
+        delay_up_down_n_i : in std_ulogic;
+        delay_strobe_i : in std_ulogic;
+        delay_ack_o : out std_ulogic;
+        -- Individual delay resets.  These must be held for several ticks to
+        -- take effect
+        delay_reset_ca_i : in std_ulogic;       -- Reset all CA delays to zero
+        delay_reset_dq_rx_i : in std_ulogic;    -- Reset all DQ RX delays
+        delay_reset_dq_tx_i : in std_ulogic;    -- Reset all DQ TX delays
+        -- Individual delay readbacks
+        delay_dq_rx_o : out vector_array(63 downto 0)(8 downto 0);
+        delay_dq_tx_o : out vector_array(63 downto 0)(8 downto 0);
+        delay_dbi_rx_o : out vector_array(7 downto 0)(8 downto 0);
+        delay_dbi_tx_o : out vector_array(7 downto 0)(8 downto 0);
+        delay_edc_rx_o : out vector_array(7 downto 0)(8 downto 0);
+        delay_ca_tx_o : out vector_array(15 downto 0)(8 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -149,10 +149,6 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
-    constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
-    -- This is a somewhat arbitrary initial value used for time calibration.
-    constant INITIAL_DELAY : natural := 500;    -- Max is 1250
-
     -- Pads with IO buffers
     -- Clocks and reset
     signal io_ck_in : std_ulogic;
@@ -176,11 +172,10 @@ architecture arch of gddr6_phy is
 
     -- Clocks resets and controls
     signal pll_clk : std_ulogic_vector(0 to 1);
+    signal delay_clk : std_ulogic;
     signal reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
-    signal fifo_empty : std_ulogic;
-    signal fifo_enable : std_ulogic;
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_vtc : std_ulogic;
 
@@ -188,14 +183,20 @@ architecture arch of gddr6_phy is
     -- assigning produces a VHDL Delta cycle difference on the assigned clock,
     -- resulting in skewed clocks in simulation.
     alias ck_clk : std_ulogic is ck_clk_o;
-    alias riu_clk : std_ulogic is riu_clk_o;
 
-    -- RIU control signals
-    signal riu_addr : unsigned(9 downto 0);
-    signal riu_wr_data : std_ulogic_vector(15 downto 0);
-    signal riu_rd_data : std_ulogic_vector(15 downto 0);
-    signal riu_valid : std_ulogic;
-    signal riu_wr_en : std_ulogic;
+    -- Delay controls
+    signal delay_up_down_n : std_ulogic;
+    -- Delay strobes
+    signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
+    signal dq_rx_delay_ce : std_ulogic_vector(63 downto 0);
+    signal dq_tx_delay_ce : std_ulogic_vector(63 downto 0);
+    signal dbi_rx_delay_ce : std_ulogic_vector(7 downto 0);
+    signal dbi_tx_delay_ce : std_ulogic_vector(7 downto 0);
+    signal edc_rx_delay_ce : std_ulogic_vector(7 downto 0);
+    -- DQ bitslip
+    signal bitslip_delay : unsigned(3 downto 0);
+    signal bitslip_address : unsigned(6 downto 0);
+    signal bitslip_strobe : std_ulogic;
 
 begin
     -- Map pads to IO buffers and gather related signals
@@ -253,7 +254,7 @@ begin
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
         ck_clk_o => ck_clk,
-        riu_clk_o => riu_clk,
+        delay_clk_o => delay_clk,
 
         ck_reset_i => ck_reset_i,
         ck_clk_ok_o => ck_clk_ok_o,
@@ -281,6 +282,12 @@ begin
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
 
+        delay_clk_i => delay_clk,
+        delay_rst_i => delay_reset_ca_i,
+        delay_inc_i => delay_up_down_n,
+        delay_ce_i => ca_tx_delay_ce,
+        delay_o => delay_ca_tx_o,
+
         io_sg_resets_n_o => io_sg_resets_n_out,
         io_ca_o => io_ca_out,
         io_ca3_o => io_ca3_out,
@@ -290,39 +297,46 @@ begin
 
 
     -- Data receive and transmit
-    dq : entity work.gddr6_phy_dq generic map (
-        REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-        INITIAL_DELAY => INITIAL_DELAY
-    ) port map (
-        pll_clk_i => pll_clk,
-        wck_i => io_wck_in,
-        ck_clk_i => ck_clk,
+    dq : entity work.gddr6_phy_dq port map (
+        pll_clk_i => pll_clk,       -- Fast data transmit clock from PLL
+        wck_i => io_wck_in,         -- WCK for receive clock from edge pins
+        ck_clk_i => ck_clk,         -- Fabric clock for bitslice interface
+        delay_clk_i => delay_clk,   -- Internal bitslice and delay control clock
 
         reset_i => reset,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
-        reset_fifo_i => reset_fifo_i,
-        fifo_ok_o => fifo_ok_o,
         enable_control_vtc_i => enable_control_vtc,
         enable_bitslice_vtc_i => enable_bitslice_vtc,
+        reset_fifo_i => reset_fifo_i,
+        fifo_ok_o => fifo_ok_o,
 
-        data_i => data_i,
         data_o => data_o,
+        data_i => data_i,
         dq_t_i => dq_t_i,
         enable_dbi_i => enable_dbi_i,
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
 
-        riu_clk_i => riu_clk,
-        riu_addr_i => riu_addr,
-        riu_wr_data_i => riu_wr_data,
-        riu_rd_data_o => riu_rd_data,
-        riu_valid_o => riu_valid,
-        riu_wr_en_i => riu_wr_en,
+        delay_up_down_n_i => delay_up_down_n,
+        dq_rx_delay_ce_i => dq_rx_delay_ce,
+        dq_tx_delay_ce_i => dq_tx_delay_ce,
+        dbi_rx_delay_ce_i => dbi_rx_delay_ce,
+        dbi_tx_delay_ce_i => dbi_tx_delay_ce,
+        edc_rx_delay_ce_i => edc_rx_delay_ce,
 
-        bitslip_delay_i => bitslip_delay_i,
-        bitslip_delay_address_i => bitslip_delay_address_i,
-        bitslip_delay_strobe_i => bitslip_delay_strobe_i,
+        reset_rx_delay_i => delay_reset_dq_rx_i,
+        reset_tx_delay_i => delay_reset_dq_tx_i,
+
+        dq_rx_delay_o => delay_dq_rx_o,
+        dq_tx_delay_o => delay_dq_tx_o,
+        dbi_rx_delay_o => delay_dbi_rx_o,
+        dbi_tx_delay_o => delay_dbi_tx_o,
+        edc_rx_delay_o => delay_edc_rx_o,
+
+        bitslip_delay_i => bitslip_delay,
+        bitslip_address_i => bitslip_address,
+        bitslip_strobe_i => bitslip_strobe,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,
@@ -340,24 +354,29 @@ begin
     bitslice_patch <= (0 => io_ck_in);
 
 
-    -- Register interface to individual pin delays
-    riu : entity work.gddr6_phy_riu_control port map (
-        clk_i => riu_clk,
+    delay : entity work.gddr6_phy_delay_control port map (
+        delay_clk_i => delay_clk,
+        ck_clk_i => ck_clk,
 
-        riu_addr_i => riu_addr_i,
-        riu_wr_data_i => riu_wr_data_i,
-        riu_rd_data_o => riu_rd_data_o,
-        riu_wr_en_i => riu_wr_en_i,
-        riu_strobe_i => riu_strobe_i,
-        riu_ack_o => riu_ack_o,
-        riu_error_o => riu_error_o,
-        riu_vtc_handshake_i => riu_vtc_handshake_i,
+        delay_address_i => delay_address_i,
+        delay_i => delay_i,
+        delay_up_down_n_i => delay_up_down_n_i,
+        strobe_i => delay_strobe_i,
+        ack_o => delay_ack_o,
 
-        riu_addr_o => riu_addr,
-        riu_wr_data_o => riu_wr_data,
-        riu_rd_data_i => riu_rd_data,
-        riu_valid_i => riu_valid,
-        riu_wr_en_o => riu_wr_en,
-        enable_vtc_o => enable_bitslice_vtc
+        delay_up_down_n_o => delay_up_down_n,
+
+        ca_tx_delay_ce_o => ca_tx_delay_ce,
+        dq_rx_delay_ce_o => dq_rx_delay_ce,
+        dq_tx_delay_ce_o => dq_tx_delay_ce,
+        dbi_rx_delay_ce_o => dbi_rx_delay_ce,
+        dbi_tx_delay_ce_o => dbi_tx_delay_ce,
+        edc_rx_delay_ce_o => edc_rx_delay_ce,
+
+        bitslip_address_o => bitslip_address,
+        bitslip_delay_o => bitslip_delay,
+        bitslip_strobe_o => bitslip_strobe,
+
+        enable_bitslice_vtc_o => enable_bitslice_vtc
     );
 end;

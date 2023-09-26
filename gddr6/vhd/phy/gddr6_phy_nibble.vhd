@@ -16,9 +16,6 @@ entity gddr6_phy_nibble is
     generic (
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 5);
-        REFCLK_FREQUENCY : real;
-        -- Initial delay, used for calibration
-        INITIAL_DELAY : natural;
 
         -- The upper nibble always receives clocks from the lower nibble
         LOWER_NIBBLE : boolean;
@@ -33,6 +30,7 @@ entity gddr6_phy_nibble is
         -- Clocks
         pll_clk_i : in std_ulogic;      -- Backbone clock from PLL
         fifo_rd_clk_i : in std_ulogic;  -- Clock for reading RX FIFO
+        riu_clk_i : in std_ulogic;      -- Control clock
 
         -- FIFO control (maybe want to handle inside, or as part of reset)
         fifo_empty_o : out std_ulogic_vector(0 to 5);
@@ -41,19 +39,26 @@ entity gddr6_phy_nibble is
         -- Resets and controls
         reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
-        enable_tri_vtc_i : in std_ulogic;
-        enable_bitslice_vtc_i : in std_ulogic_vector(0 to 5);
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
 
-        -- RIU interface
-        riu_clk_i : in std_ulogic;      -- Control clock
-        riu_addr_i : in unsigned(5 downto 0);
-        riu_wr_data_i : in std_ulogic_vector(15 downto 0);
-        riu_rd_data_o : out std_ulogic_vector(15 downto 0);
-        riu_valid_o : out std_ulogic;
-        riu_wr_en_i : in std_ulogic;
-        riu_nibble_sel_i : in std_ulogic;
+        -- VTC enables
+        enable_tri_vtc_i : in std_ulogic;
+        enable_tx_vtc_i : in std_ulogic_vector(0 to 5);
+        enable_rx_vtc_i : in std_ulogic_vector(0 to 5);
+        -- Delay resets
+        reset_tri_delay_i : in std_ulogic;
+        reset_rx_delay_i : in std_ulogic_vector(0 to 5);
+        reset_tx_delay_i : in std_ulogic_vector(0 to 5);
+        -- Delay control
+        delay_up_down_n_i : in std_ulogic;
+        tri_delay_ce_i : in std_ulogic;
+        rx_delay_ce_i : in std_ulogic_vector(0 to 5);
+        tx_delay_ce_i : in std_ulogic_vector(0 to 5);
+        -- Delay readbacks
+        tri_delay_o : out std_ulogic_vector(8 downto 0);
+        tx_delay_o : out vector_array(0 to 5)(8 downto 0);
+        rx_delay_o : out vector_array(0 to 5)(8 downto 0);
 
         -- Data interface
         data_o : out vector_array(0 to 5)(7 downto 0);
@@ -96,7 +101,9 @@ begin
         EN_OTHER_PCLK => choose(LOWER_NIBBLE, "FALSE", "TRUE"),
         EN_OTHER_NCLK => choose(LOWER_NIBBLE, "FALSE", "TRUE"),
         EN_CLK_TO_EXT_NORTH => choose(CLK_TO_NORTH, "ENABLE", "DISABLE"),
-        EN_CLK_TO_EXT_SOUTH => choose(CLK_TO_SOUTH, "ENABLE", "DISABLE")
+        EN_CLK_TO_EXT_SOUTH => choose(CLK_TO_SOUTH, "ENABLE", "DISABLE"),
+        -- Required when using TBYTE_IN via TX_BITSLICE_TRI
+        TX_GATING => "ENABLE"
     ) port map (
         DLY_RDY => dly_ready_o,
         DYN_DCI => open,
@@ -111,14 +118,14 @@ begin
         -- enable, not a tristate enable!
         TBYTE_IN => output_enable_i,
 
-        -- Register interface unit
+        -- Register interface unit.  Not used, but the RIU clock is needed
         RIU_CLK => riu_clk_i,
-        RIU_ADDR => std_ulogic_vector(riu_addr_i),
-        RIU_VALID => riu_valid_o,
-        RIU_RD_DATA => riu_rd_data_o,
-        RIU_WR_DATA => riu_wr_data_i,
-        RIU_WR_EN => riu_wr_en_i,
-        RIU_NIBBLE_SEL => riu_nibble_sel_i,
+        RIU_ADDR => (others => '0'),
+        RIU_VALID => open,
+        RIU_RD_DATA => open,
+        RIU_WR_DATA => (others => '0'),
+        RIU_WR_EN => '0',
+        RIU_NIBBLE_SEL => '0',
 
         -- RX clock distribution
         CLK_TO_EXT_NORTH => clk_to_north_o,
@@ -173,24 +180,22 @@ begin
     bitslice_tri : TX_BITSLICE_TRI generic map (
         DATA_WIDTH => 8,
         DELAY_FORMAT => "TIME",
-        DELAY_TYPE => "FIXED",
-        DELAY_VALUE => INITIAL_DELAY,
-        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+        DELAY_TYPE => "FIXED"
     ) port map (
         TRI_OUT => tri_out_to_tbyte,
         EN_VTC => enable_tri_vtc_i,
         RST => reset_i,
-        RST_DLY => reset_i,
+        RST_DLY => reset_tri_delay_i,
         -- Control interface
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
         -- Delay
-        CLK => '0',
-        CE => '0',
-        INC => '0',
+        CLK => riu_clk_i,
+        CE => tri_delay_ce_i,
+        INC => delay_up_down_n_i,
         LOAD => '0',
-        CNTVALUEIN => 9X"000",
-        CNTVALUEOUT => open
+        CNTVALUEIN => (others => '0'),
+        CNTVALUEOUT => tri_delay_o
     );
 
 
@@ -217,14 +222,12 @@ begin
                 RX_DATA_TYPE => rx_data_type,
                 RX_DATA_WIDTH => 8,
                 TX_DATA_WIDTH => 8,
-                RX_DELAY_FORMAT => "TIME",
-                TX_DELAY_FORMAT => "TIME",
+                RX_DELAY_FORMAT => "COUNT",
+                TX_DELAY_FORMAT => "COUNT",
                 RX_DELAY_TYPE => "VAR_LOAD",
                 TX_DELAY_TYPE => "VAR_LOAD",
-                RX_DELAY_VALUE => INITIAL_DELAY,
-                TX_DELAY_VALUE => INITIAL_DELAY,
-                RX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-                TX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+                RX_UPDATE_MODE => "ASYNC",
+                TX_UPDATE_MODE => "ASYNC",
                 ENABLE_PRE_EMPHASIS => "TRUE",
                 TBYTE_CTL => "TBYTE_IN"
             ) port map (
@@ -245,12 +248,10 @@ begin
                 T => '0',
                 TBYTE_IN => tri_out_to_tbyte,
 
-                RX_EN_VTC => enable_bitslice_vtc_i(i),
-                TX_EN_VTC => enable_bitslice_vtc_i(i),
+                RX_EN_VTC => enable_rx_vtc_i(i),
+                TX_EN_VTC => enable_tx_vtc_i(i),
                 RX_RST => reset_i,
-                RX_RST_DLY => reset_i,
                 TX_RST => reset_i,
-                TX_RST_DLY => reset_i,
 
                 -- Control interface
                 RX_BIT_CTRL_OUT => rx_bit_ctrl_in(i),
@@ -259,18 +260,20 @@ begin
                 TX_BIT_CTRL_IN => tx_bit_ctrl_out(i),
 
                 -- Delay management interface
-                RX_CLK => '0',
-                RX_CE => '0',
-                RX_INC => '0',
+                RX_RST_DLY => reset_rx_delay_i(i),
+                RX_CLK => riu_clk_i,
+                RX_CE => rx_delay_ce_i(i),
+                RX_INC => delay_up_down_n_i,
                 RX_LOAD => '0',
-                RX_CNTVALUEIN => 9X"000",
-                RX_CNTVALUEOUT => open,
-                TX_CLK => '0',
-                TX_CE => '0',
-                TX_INC => '0',
+                RX_CNTVALUEIN => (others => '0'),
+                RX_CNTVALUEOUT => rx_delay_o(i),
+                TX_RST_DLY => reset_tx_delay_i(i),
+                TX_CLK => riu_clk_i,
+                TX_CE => tx_delay_ce_i(i),
+                TX_INC => delay_up_down_n_i,
                 TX_LOAD => '0',
-                TX_CNTVALUEIN => 9X"000",
-                TX_CNTVALUEOUT => open
+                TX_CNTVALUEIN => (others => '0'),
+                TX_CNTVALUEOUT => tx_delay_o(i)
             );
 
         else generate
@@ -283,6 +286,8 @@ begin
             data_o(i) <= 8X"00";
             pad_out_o(i) <= '0';
             pad_t_out_o(i) <= '0';
+            rx_delay_o(i) <= 9X"00";
+            tx_delay_o(i) <= 9X"00";
         end generate;
     end generate;
 end;
