@@ -15,6 +15,7 @@ end testbench;
 
 architecture arch of testbench is
     constant CK_FREQUENCY : real := 300.0;
+    constant READBACK_DELAY : boolean := true;
 
     constant CK_WIDTH : time := 1 us / CK_FREQUENCY;
     constant WCK_WIDTH : time := CK_WIDTH / 4;
@@ -70,7 +71,8 @@ begin
     clk <= not clk after 2 ns;
 
     test : entity work.gddr6_setup_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY
+        CK_FREQUENCY => CK_FREQUENCY,
+        READBACK_DELAY => READBACK_DELAY
     ) port map (
         reg_clk_i => clk,
 
@@ -210,6 +212,16 @@ begin
                 others => '0'), true);
         end;
 
+        procedure write_delay(
+            address : natural; delay : natural; no_write : std_ulogic := '0') is
+        begin
+            write_reg(GDDR6_DELAY_REG, (
+                GDDR6_DELAY_ADDRESS_BITS => to_std_ulogic_vector_u(address, 8),
+                GDDR6_DELAY_DELAY_BITS => to_std_ulogic_vector_u(delay, 9),
+                GDDR6_DELAY_NO_WRITE_BIT => no_write,
+                others => '0'));
+        end;
+
         constant CAPTURE_COUNT : natural := 20;
 
     begin
@@ -232,15 +244,6 @@ begin
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
-
-
-        -- Adjust bitslip on four input pins
-        for n in 0 to 3 loop
-            write_reg(GDDR6_RIU_REG, (
-                GDDR6_RIU_ADDRESS_BITS => to_std_ulogic_vector_u(n, 10),
-                GDDR6_RIU_DATA_BITS => X"0001",
-                others => '0'));
-        end loop;
 
         -- Perform a complete exchange
         write_reg(GDDR6_COMMAND_REG, (
@@ -268,6 +271,11 @@ begin
             GDDR6_COMMAND_EXCHANGE_BIT => '1',
             GDDR6_COMMAND_START_READ_BIT => '1',
             others => '0'));
+
+        write_delay(2#0000_0010#, 10);
+        write_delay(2#0100_0010#, 20);
+        write_delay(2#0000_0010#, 0, '1');
+        read_reg(GDDR6_DELAY_REG);
 
         -- Read and print results
         for n in 0 to CAPTURE_COUNT-1 loop

@@ -10,19 +10,24 @@ use work.register_defs.all;
 use work.gddr6_register_defines.all;
 
 entity gddr6_setup is
+    generic (
+        -- Delay readback is quite expensive in terms of fabric, so is optional
+        READBACK_DELAY : boolean := false
+    );
     port (
-        ck_clk_i : in std_ulogic;       -- CK clock
-        riu_clk_i : in std_ulogic;      -- RIU clock
-        ck_clk_ok_i : in std_ulogic;    -- CK and RIU clocks ok
         reg_clk_i : in std_ulogic;      -- Register clock
 
-        -- Register interface for data access
+        -- Register interface for data access on reg_clk_i
         write_strobe_i : in std_ulogic_vector(GDDR6_REGS_RANGE);
         write_data_i : in reg_data_array_t(GDDR6_REGS_RANGE);
         write_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
         read_strobe_i : in std_ulogic_vector(GDDR6_REGS_RANGE);
         read_data_o : out reg_data_array_t(GDDR6_REGS_RANGE);
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
+
+        -- CK clock, used for all other elements of the interface
+        ck_clk_i : in std_ulogic;       -- CK clock
+        ck_clk_ok_i : in std_ulogic;    -- Qualifies status of CK clock
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out vector_array(0 to 1)(9 downto 0);
@@ -34,28 +39,26 @@ entity gddr6_setup is
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0);
 
-        -- RIU interface on riu_clk_i
-        riu_addr_o : out unsigned(9 downto 0);
-        riu_wr_data_o : out std_ulogic_vector(15 downto 0);
-        riu_rd_data_i : in std_ulogic_vector(15 downto 0);
-        riu_wr_en_o : out std_ulogic;
-        riu_strobe_o : out std_ulogic;
-        riu_ack_i : in std_ulogic;
-        riu_error_i : in std_ulogic;
-        riu_vtc_handshake_o : out std_ulogic;
-
-        bitslip_delay_o : out unsigned(3 downto 0);
-        bitslip_delay_address_o : out unsigned(6 downto 0);
-        bitslip_delay_strobe_o : out std_ulogic;
+        -- Delay control on delay_clk_i
+        delay_address_o : out unsigned(7 downto 0);
+        delay_o : out unsigned(7 downto 0);
+        delay_up_down_n_o : out std_ulogic;
+        delay_strobe_o : out std_ulogic;
+        delay_ack_i : in std_ulogic;
+        -- Individual delay resets
+        delay_reset_ca_o : out std_ulogic;
+        delay_reset_dq_rx_o : out std_ulogic;
+        delay_reset_dq_tx_o : out std_ulogic;
+        -- Individual delay readbacks
+        read_delay_address_o : out unsigned(7 downto 0);
+        read_delay_i : in unsigned(8 downto 0);
 
         -- Controls to PHY
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
-        reset_fifo_o : out std_ulogic;
-        fifo_ok_i : in std_ulogic;
+        reset_fifo_o : out std_ulogic_vector(0 to 1);
+        fifo_ok_i : in std_ulogic_vector(0 to 1);
         sg_resets_n_o : out std_ulogic_vector(0 to 1);
-
-        -- General PHY configuration
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
 
@@ -95,7 +98,36 @@ begin
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
 
+        delay_reset_ca_o => delay_reset_ca_o,
+        delay_reset_dq_rx_o => delay_reset_dq_rx_o,
+        delay_reset_dq_tx_o => delay_reset_dq_tx_o,
+
         enable_controller_o => enable_controller_o
+    );
+
+
+    delay : entity work.gddr6_setup_delay generic map (
+        READBACK_DELAY => READBACK_DELAY
+    ) port map (
+        reg_clk_i => reg_clk_i,
+        ck_clk_i => ck_clk_i,
+        ck_clk_ok_i => ck_clk_ok,
+
+        write_strobe_i => write_strobe_i(GDDR6_DELAY_REG),
+        write_data_i => write_data_i(GDDR6_DELAY_REG),
+        write_ack_o => write_ack_o(GDDR6_DELAY_REG),
+        read_strobe_i => read_strobe_i(GDDR6_DELAY_REG),
+        read_data_o => read_data_o(GDDR6_DELAY_REG),
+        read_ack_o => read_ack_o(GDDR6_DELAY_REG),
+
+        delay_address_o => delay_address_o,
+        delay_o => delay_o,
+        delay_up_down_n_o => delay_up_down_n_o,
+        delay_strobe_o => delay_strobe_o,
+        delay_ack_i => delay_ack_i,
+
+        read_delay_address_o => read_delay_address_o,
+        read_delay_i => read_delay_i
     );
 
 
@@ -120,32 +152,4 @@ begin
         phy_edc_in_i => phy_edc_in_i,
         phy_edc_out_i => phy_edc_out_i
     );
-
-
-    riu : entity work.gddr6_setup_riu port map (
-        reg_clk_i => reg_clk_i,
-        riu_clk_i => riu_clk_i,
-        riu_clk_ok_i => ck_clk_ok,
-
-        write_strobe_i => write_strobe_i(GDDR6_RIU_REG),
-        write_data_i => write_data_i(GDDR6_RIU_REG),
-        write_ack_o => write_ack_o(GDDR6_RIU_REG),
-        read_strobe_i => read_strobe_i(GDDR6_RIU_REG),
-        read_data_o => read_data_o(GDDR6_RIU_REG),
-        read_ack_o => read_ack_o(GDDR6_RIU_REG),
-
-        riu_addr_o => riu_addr_o,
-        riu_wr_data_o => riu_wr_data_o,
-        riu_rd_data_i => riu_rd_data_i,
-        riu_wr_en_o => riu_wr_en_o,
-        riu_strobe_o => riu_strobe_o,
-        riu_ack_i => riu_ack_i,
-        riu_error_i => riu_error_i,
-        riu_vtc_handshake_o => riu_vtc_handshake_o
-    );
-
-    -- For a quick and dirty test patch the bitslip control into the riu
-    bitslip_delay_o <= unsigned(riu_wr_data_o(3 downto 0));
-    bitslip_delay_address_o <= riu_addr_o(6 downto 0);
-    bitslip_delay_strobe_o <= riu_strobe_o;
 end;

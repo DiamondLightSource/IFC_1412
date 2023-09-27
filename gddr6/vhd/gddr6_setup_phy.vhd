@@ -14,14 +14,16 @@ use work.gddr6_register_defines.all;
 
 entity gddr6_setup_phy is
     generic (
-        CK_FREQUENCY : real := 250.0
+        CK_FREQUENCY : real := 250.0;
+        -- Delay readback is quite expensive in terms of fabric, so is optional
+        READBACK_DELAY : boolean := false
     );
     port (
         reg_clk_i : in std_ulogic;      -- Register interface only
         ck_clk_o : out std_ulogic;      -- Memory controller only
 
         -- --------------------------------------------------------------------
-        -- Register interface for initial setup
+        -- Register interface for initial setup on reg_clk_i
         write_strobe_i : in std_ulogic_vector(GDDR6_REGS_RANGE);
         write_data_i : in reg_data_array_t(GDDR6_REGS_RANGE);
         write_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
@@ -88,7 +90,6 @@ end;
 
 architecture arch of gddr6_setup_phy is
     alias ck_clk : std_ulogic is ck_clk_o;
-    signal riu_clk : std_ulogic;
     signal ck_clk_ok : std_ulogic;
 
     signal setup_ca : vector_array(0 to 1)(9 downto 0);
@@ -100,29 +101,6 @@ architecture arch of gddr6_setup_phy is
     signal setup_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal setup_edc_out : vector_array(7 downto 0)(7 downto 0);
 
-    signal riu_addr : unsigned(9 downto 0);
-    signal riu_wr_data : std_ulogic_vector(15 downto 0);
-    signal riu_rd_data : std_ulogic_vector(15 downto 0);
-    signal riu_wr_en : std_ulogic;
-    signal riu_strobe : std_ulogic;
-    signal riu_ack : std_ulogic;
-    signal riu_error : std_ulogic;
-    signal riu_vtc_handshake : std_ulogic;
-
-    signal bitslip_delay : unsigned(3 downto 0);
-    signal bitslip_delay_address : unsigned(6 downto 0);
-    signal bitslip_delay_strobe : std_ulogic;
-
-    signal ck_reset : std_ulogic;
-    signal ck_unlock : std_ulogic;
-    signal reset_fifo : std_ulogic;
-    signal fifo_ok : std_ulogic;
-    signal sg_resets_n : std_ulogic_vector(0 to 1);
-
-    signal enable_cabi : std_ulogic;
-    signal enable_dbi : std_ulogic;
-    signal rx_slip : unsigned_array(0 to 1)(2 downto 0);
-
     signal phy_ca : vector_array(0 to 1)(9 downto 0);
     signal phy_ca3 : std_ulogic_vector(0 to 3);
     signal phy_cke_n : std_ulogic;
@@ -132,13 +110,33 @@ architecture arch of gddr6_setup_phy is
     signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
 
+    signal delay_address : unsigned(7 downto 0);
+    signal delay : unsigned(7 downto 0);
+    signal delay_up_down_n : std_ulogic;
+    signal delay_strobe : std_ulogic;
+    signal delay_ack : std_ulogic;
+
+    signal delay_reset_ca : std_ulogic;
+    signal delay_reset_dq_rx : std_ulogic;
+    signal delay_reset_dq_tx : std_ulogic;
+
+    signal read_delay_address : unsigned(7 downto 0);
+    signal read_delay : unsigned(8 downto 0);
+
+    signal ck_reset : std_ulogic;
+    signal ck_unlock : std_ulogic;
+    signal reset_fifo : std_ulogic_vector(0 to 1);
+    signal fifo_ok : std_ulogic_vector(0 to 1);
+    signal sg_resets_n : std_ulogic_vector(0 to 1);
+    signal enable_cabi : std_ulogic;
+    signal enable_dbi : std_ulogic;
+
     signal enable_controller : std_ulogic;
 
 begin
-    setup : entity work.gddr6_setup port map (
-        ck_clk_i => ck_clk,
-        riu_clk_i => riu_clk,
-        ck_clk_ok_i => ck_clk_ok,
+    setup : entity work.gddr6_setup generic map (
+        READBACK_DELAY => READBACK_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
 
         write_strobe_i => write_strobe_i,
@@ -147,6 +145,9 @@ begin
         read_strobe_i => read_strobe_i,
         read_data_o => read_data_o,
         read_ack_o => read_ack_o,
+
+        ck_clk_i => ck_clk,
+        ck_clk_ok_i => ck_clk_ok,
 
         phy_ca_o => setup_ca,
         phy_ca3_o => setup_ca3,
@@ -157,25 +158,22 @@ begin
         phy_edc_in_i => setup_edc_in,
         phy_edc_out_i => setup_edc_out,
 
-        riu_addr_o => riu_addr,
-        riu_wr_data_o => riu_wr_data,
-        riu_rd_data_i => riu_rd_data,
-        riu_wr_en_o => riu_wr_en,
-        riu_strobe_o => riu_strobe,
-        riu_ack_i => riu_ack,
-        riu_error_i => riu_error,
-        riu_vtc_handshake_o => riu_vtc_handshake,
-
-        bitslip_delay_o => bitslip_delay,
-        bitslip_delay_address_o => bitslip_delay_address,
-        bitslip_delay_strobe_o => bitslip_delay_strobe,
+        delay_address_o => delay_address,
+        delay_o => delay,
+        delay_up_down_n_o => delay_up_down_n,
+        delay_strobe_o => delay_strobe,
+        delay_ack_i => delay_ack,
+        delay_reset_ca_o => delay_reset_ca,
+        delay_reset_dq_rx_o => delay_reset_dq_rx,
+        delay_reset_dq_tx_o => delay_reset_dq_tx,
+        read_delay_address_o => read_delay_address,
+        read_delay_i => read_delay,
 
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
         reset_fifo_o => reset_fifo,
         fifo_ok_i => fifo_ok,
         sg_resets_n_o => sg_resets_n,
-
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
 
@@ -187,7 +185,6 @@ begin
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
         ck_clk_o => ck_clk,
-        riu_clk_o => riu_clk,
 
         ck_reset_i => ck_reset,
         ck_clk_ok_o => ck_clk_ok,
@@ -209,18 +206,16 @@ begin
         edc_in_o => phy_edc_in,
         edc_out_o => phy_edc_out,
 
-        riu_addr_i => riu_addr,
-        riu_wr_data_i => riu_wr_data,
-        riu_rd_data_o => riu_rd_data,
-        riu_wr_en_i => riu_wr_en,
-        riu_strobe_i => riu_strobe,
-        riu_ack_o => riu_ack,
-        riu_error_o => riu_error,
-        riu_vtc_handshake_i => riu_vtc_handshake,
-
-        bitslip_delay_i => bitslip_delay,
-        bitslip_delay_address_i => bitslip_delay_address,
-        bitslip_delay_strobe_i => bitslip_delay_strobe,
+        delay_address_i => delay_address,
+        delay_i => delay,
+        delay_up_down_n_i => delay_up_down_n,
+        delay_strobe_i => delay_strobe,
+        delay_ack_o => delay_ack,
+        delay_reset_ca_i => delay_reset_ca,
+        delay_reset_dq_rx_i => delay_reset_dq_rx,
+        delay_reset_dq_tx_i => delay_reset_dq_tx,
+        read_delay_address_i => read_delay_address,
+        read_delay_o => read_delay,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

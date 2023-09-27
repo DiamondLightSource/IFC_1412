@@ -23,108 +23,154 @@ entity gddr6_setup_control is
         read_data_o : out reg_data_array_t(GDDR6_CONTROL_REGS);
         read_ack_o : out std_ulogic_vector(GDDR6_CONTROL_REGS);
 
-        -- Controls to PHY.  All except ck_reset_o on CK clock
+        -- Controls to PHY
         ck_reset_o : out std_ulogic;
         ck_unlock_i : in std_ulogic;
-        reset_fifo_o : out std_ulogic;
-        fifo_ok_i : in std_ulogic;
-        sg_resets_n_o : out std_ulogic_vector(0 to 1) := "00";
-
-        -- General PHY configuration on CK clock
+        reset_fifo_o : out std_ulogic_vector(0 to 1);
+        fifo_ok_i : in std_ulogic_vector(0 to 1);
+        sg_resets_n_o : out std_ulogic_vector(0 to 1);
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
 
-        -- Further controls will be below
+        -- Individual delay resets
+        delay_reset_ca_o : out std_ulogic;
+        delay_reset_dq_rx_o : out std_ulogic;
+        delay_reset_dq_tx_o : out std_ulogic;
+
+        -- Controller enable
         enable_controller_o : out std_ulogic
     );
 end;
 
 architecture arch of gddr6_setup_control is
-    signal control_bits_reg : reg_data_t;
-    signal control_bits_ck : reg_data_t;
-    signal status_bits_reg : reg_data_t;
+    -- Plumbing for CK status readout
+    signal reg_read_status : reg_data_t;
+    signal ck_read_status : reg_data_t;
+    signal ck_status_read_strobe : std_ulogic;
+    signal ck_status_read_ack : std_ulogic;
+    signal ck_status_read_data : reg_data_t;
 
-    signal ck_unlock_ck : std_ulogic := '0';
-    signal ck_unlock_reg : std_ulogic;
-    signal fifo_ok_reg : std_ulogic;
-    signal reset_ck_events : std_ulogic;
-
-    -- False paths to the appropriate clock crossing registers
-    attribute FALSE_PATH_TO : string;
-    attribute FALSE_PATH_TO of control_bits_ck : signal is "TRUE";
-    attribute FALSE_PATH_TO of ck_unlock_reg : signal is "TRUE";
-    attribute FALSE_PATH_TO of fifo_ok_reg : signal is "TRUE";
-    attribute FALSE_PATH_FROM : string;
-    attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
-    attribute KEEP : string;
-    attribute KEEP of control_bits_ck : signal is "TRUE";
-    attribute KEEP of ck_unlock_reg : signal is "TRUE";
-    attribute KEEP of fifo_ok_reg : signal is "TRUE";
-    attribute KEEP of ck_reset_o : signal is "TRUE";
+    -- Config, status, event bits for both clock domains
+    signal reg_config_bits : reg_data_t;
+    signal ck_config_bits : reg_data_t;
+    signal reg_status_bits : reg_data_t;
+    signal ck_status_bits : reg_data_t;
+    signal reg_event_bits : reg_data_t;
+    signal ck_event_bits : reg_data_t;
 
 begin
-    control : entity work.register_file_rw port map (
+    -- CONFIG
+    -- The config register is overlaid so that writes are directed to both
+    -- domains, but only acknowleged on the CK domain.  For reading we can
+    -- just read back from the REG domain.
+
+    reg_config : entity work.register_file_rw port map (
         clk_i => reg_clk_i,
 
         write_strobe_i(0) => write_strobe_i(GDDR6_CONFIG_REG),
         write_data_i(0) => write_data_i(GDDR6_CONFIG_REG),
-        write_ack_o(0) => write_ack_o(GDDR6_CONFIG_REG),
+        write_ack_o(0) => open,
         read_strobe_i(0) => read_strobe_i(GDDR6_CONFIG_REG),
         read_data_o(0) => read_data_o(GDDR6_CONFIG_REG),
         read_ack_o(0) => read_ack_o(GDDR6_CONFIG_REG),
 
-        register_data_o(0) => control_bits_reg
+        register_data_o(0) => reg_config_bits
     );
 
-    write_ack_o(GDDR6_STATUS_REG) <= '1';
-    read_ack_o(GDDR6_STATUS_REG) <= '1';
-    read_data_o(GDDR6_STATUS_REG) <= status_bits_reg;
+    ck_config : entity work.register_file_cc port map (
+        clk_reg_i => reg_clk_i,
+        clk_data_i => ck_clk_i,
+        clk_data_ok_i => ck_clk_ok_i,
+
+        write_strobe_i(0) => write_strobe_i(GDDR6_CONFIG_REG),
+        write_data_i(0) => write_data_i(GDDR6_CONFIG_REG),
+        write_ack_o(0) => write_ack_o(GDDR6_CONFIG_REG),
+
+        data_strobe_o(0) => open,
+        register_data_o(0) => ck_config_bits
+    );
 
 
-    -- Use read strobe for status register to reset unlock register
-    strobe : entity work.sync_pulse port map (
+    -- STATUS
+    -- The status register is read only, but we need to merge bits for the
+    -- returned result.  Again, use the CK domain to return the ack.
+
+    reg_status : entity work.register_status port map (
+        clk_i => reg_clk_i,
+
+        read_strobe_i => read_strobe_i(GDDR6_STATUS_REG),
+        read_data_o => reg_read_status,
+        read_ack_o => open,
+
+        status_bits_i => reg_status_bits,
+        event_bits_i => reg_event_bits
+    );
+
+    reg_to_ck : entity work.cross_clocks_read port map (
         clk_in_i => reg_clk_i,
         clk_out_i => ck_clk_i,
-        pulse_i => read_strobe_i(GDDR6_STATUS_REG),
-        pulse_o => reset_ck_events
+        clk_out_ok_i => ck_clk_ok_i,
+
+        strobe_i => read_strobe_i(GDDR6_STATUS_REG),
+        data_o => ck_read_status,
+        ack_o => read_ack_o(GDDR6_STATUS_REG),
+
+        strobe_o => ck_status_read_strobe,
+        data_i => ck_status_read_data,
+        ack_i => ck_status_read_ack
     );
 
+    ck_status : entity work.register_status port map (
+        clk_i => ck_clk_i,
 
-    process (ck_clk_i) begin
-        if rising_edge(ck_clk_i) then
-            control_bits_ck <= control_bits_reg;
+        read_strobe_i => ck_status_read_strobe,
+        read_data_o => ck_status_read_data,
+        read_ack_o => ck_status_read_ack,
 
-            sg_resets_n_o <=
-                reverse(control_bits_ck(GDDR6_CONFIG_SG_RESET_N_BITS));
-            enable_cabi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_CABI_BIT);
-            enable_dbi_o <= control_bits_ck(GDDR6_CONFIG_ENABLE_DBI_BIT);
-            reset_fifo_o <= control_bits_ck(GDDR6_CONFIG_RESET_FIFO_BIT);
+        status_bits_i => ck_status_bits,
+        event_bits_i => ck_event_bits
+    );
 
-            enable_controller_o <=
-                control_bits_ck(GDDR6_CONFIG_ENABLE_MEMORY_BIT);
+    read_data_o(GDDR6_STATUS_REG) <= reg_read_status or ck_read_status;
+    write_ack_o(GDDR6_STATUS_REG) <= '1';
 
-            -- Capture unlock events until read
-            if ck_unlock_i then
-                ck_unlock_ck <= '1';
-            elsif reset_ck_events then
-                ck_unlock_ck <= '0';
-            end if;
-        end if;
-    end process;
 
+    -- -------------------------------------------------------------------------
 
     process (reg_clk_i) begin
         if rising_edge(reg_clk_i) then
-            ck_reset_o <= not control_bits_reg(GDDR6_CONFIG_CK_RESET_N_BIT);
+            ck_reset_o <= not reg_config_bits(GDDR6_CONFIG_CK_RESET_N_BIT);
 
-            -- Clock domain crossed without ceremony
-            ck_unlock_reg <= ck_unlock_ck;
-            fifo_ok_reg <= fifo_ok_i;
-
-            status_bits_reg <= (
+            reg_status_bits <= (
                 GDDR6_STATUS_CK_OK_BIT => ck_clk_ok_i,
-                GDDR6_STATUS_CK_UNLOCK_BIT => ck_unlock_reg,
-                GDDR6_STATUS_FIFO_OK_BIT => fifo_ok_reg,
+                others => '0');
+            reg_event_bits <= (
+                GDDR6_STATUS_CK_OK_EVENT_BIT => ck_clk_ok_i,
+                others => '0');
+        end if;
+    end process;
+
+    process (ck_clk_i) begin
+        if rising_edge(ck_clk_i) then
+            sg_resets_n_o <= ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS);
+            enable_cabi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT);
+            enable_dbi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT);
+            reset_fifo_o <= ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS);
+            enable_controller_o <=
+                ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
+            delay_reset_ca_o <=
+                ck_config_bits(GDDR6_CONFIG_RESET_CA_ODELAY_BIT);
+            delay_reset_dq_tx_o <=
+                ck_config_bits(GDDR6_CONFIG_RESET_DQ_ODELAY_BIT);
+            delay_reset_dq_rx_o <=
+                ck_config_bits(GDDR6_CONFIG_RESET_DQ_IDELAY_BIT);
+
+            ck_status_bits <= (
+                GDDR6_STATUS_FIFO_OK_BITS => fifo_ok_i,
+                others => '0');
+            ck_event_bits <= (
+                GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => ck_unlock_i,
+                GDDR6_STATUS_FIFO_OK_EVENT_BITS => fifo_ok_i,
                 others => '0');
         end if;
     end process;

@@ -8,23 +8,64 @@
             .CK_RESET_N
             # Resets for the two DRAM devices, held in reset by default
             .SG_RESET_N     2
-            # Bus Inversion enables
+            # Enable bit inversion on CA output
             .ENABLE_CABI
+            # Enable bit inversion on DQ input and output
             .ENABLE_DBI
             # Hold high to hold RX FIFO in reset
-            .RESET_FIFO
+            .RESET_FIFO     2
             # Set this to hand control over the memory interface to the memory
             # controller.
-            .ENABLE_MEMORY
+            .ENABLE_CONTROL
+
+            # Resets all CA ODELAYs
+            .RESET_CA_ODELAY
+            # Resets all IDELAYs for DQ, DBI, EDC
+            .RESET_DQ_IDELAY
+            # Resets all ODELAYs for DQ, DBI
+            .RESET_DQ_ODELAY
 
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
             # will be effectively ignored
             .CK_OK
+            # Set if CK not OK event seen since last read
+            .CK_OK_EVENT
             # Set if a CK unlock event has been seen since last read
-            .CK_UNLOCK
+            .CK_UNLOCK_EVENT
             # Set if PHY read FIFO is properly synchronised
-            .FIFO_OK
+            .FIFO_OK        2
+            # Set if FIFO not OK event seen since last read
+            .FIFO_OK_EVENT  2
+
+    # Delay control.  Writing updates selected delay control, reading
+    # returns current delay for selected output
+    DELAY           RW
+        # The address map is as follows:
+        #   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
+        #   01aaaaaa    Control ODELAY for DQ bit selected by aaaaaaa
+        #   10aaaaaa    Set bitslip input for selected DQ bit
+        #   11000aaa    Set bitslip input for DBI bit aaa
+        #   11001aaa    Set bitslip input for EDC bit aaa
+        #   11010aaa    Control IDELAY for DBI bit aaa
+        #   11011aaa    Control ODELAY for DBI bit aaa
+        #   11100aaa    Control IDELAY for EDC bit aaa
+        #   11101xxx    (unassigned)
+        #   1111cccc    Control ODELAY for CA bit selected by cccc:
+        #               0..9        CA[cccc] (cccc = 3 is ignored)
+        #               10          CABI_N
+        #               11..14      CA3[cccc-11]
+        #               15          CKE_N
+        .ADDRESS        8
+        # For bitslip this selects the bitslip delay to be written, for
+        # other delays this defines the number of delay steps in the
+        # selected direction.
+        .DELAY          9
+        # Selects direction of IDELAY/ODELAY count, is ignored for bitslip
+        .UP_DOWN_N
+        # Suppress write requested, used to set address for reading without
+        # writing
+        .NO_WRITE
 
     !!EXCHANGE
         COMMAND     WP
@@ -46,18 +87,3 @@
         DQ          RW
         EDC_IN      R
         EDC_OUT     R
-
-
-    # Read or write RIU.  To read perform write with .WRITE=0 and then read from
-    # .DATA.
-    RIU             RW
-        # Data to be written, data read on last transaction
-        .DATA       16
-        # Register to access
-        .ADDRESS    10
-        # Set to write data
-        .WRITE
-        # Set to enable VTC handshake during register access
-        .VTC
-        # Read only bit, is set if RIU register timeout detected
-        .TIMEOUT

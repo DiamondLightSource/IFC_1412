@@ -186,12 +186,12 @@ begin
             elsif exchange_active then
                 if exchange_address = exchange_count then
                     exchange_active <= '0';
-                    exchange_ack <= '1';
                 end if;
                 exchange_address <= exchange_address + 1;
-            else
-                exchange_ack <= '0';
             end if;
+
+            exchange_ack <= exchange_active and
+                to_std_ulogic(exchange_address = exchange_count);
         end if;
     end process;
 end;
