@@ -39,6 +39,20 @@ entity gddr6_phy_delay_control is
         dbi_tx_delay_ce_o : out std_ulogic_vector(7 downto 0);
         edc_rx_delay_ce_o : out std_ulogic_vector(7 downto 0);
 
+        -- Delay readbacks
+        -- Individual delay readbacks
+        delay_dq_rx_i : in vector_array(63 downto 0)(8 downto 0);
+        delay_dq_tx_i : in vector_array(63 downto 0)(8 downto 0);
+        delay_dbi_rx_i : in vector_array(7 downto 0)(8 downto 0);
+        delay_dbi_tx_i : in vector_array(7 downto 0)(8 downto 0);
+        delay_edc_rx_i : in vector_array(7 downto 0)(8 downto 0);
+        delay_ca_tx_i : in vector_array(15 downto 0)(8 downto 0);
+        -- Readback interface
+        -- There is a one delay clock tick latency from setting
+        -- read_delay_address_i to updating read_delay_o.
+        read_delay_address_i : in unsigned(7 downto 0);
+        read_delay_o : out unsigned(8 downto 0);
+
         enable_bitslice_vtc_o : out std_ulogic
     );
 end;
@@ -72,9 +86,26 @@ architecture arch of gddr6_phy_delay_control is
 
     signal ce_out : std_ulogic_vector(255 downto 0) := (others => '0');
 
+    signal delays_in : vector_array(255 downto 0)(8 downto 0);
+
 begin
     -- Map output strobes according to addressing.  The bitslice looks after
     -- itself and just takes an address
+    -- The address map is as follows:
+    --   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
+    --   01aaaaaa    Control ODELAY for DQ bit selected by aaaaaaa
+    --   10aaaaaa    Set bitslip input for selected DQ bit
+    --   11000aaa    Set bitslip input for DBI bit aaa
+    --   11001aaa    Set bitslip input for EDC bit aaa
+    --   11010aaa    Control IDELAY for DBI bit aaa
+    --   11011aaa    Control ODELAY for DBI bit aaa
+    --   11100aaa    Control IDELAY for EDC bit aaa
+    --   11101xxx    (unassigned)
+    --   1111cccc    Control ODELAY for CA bit selected by cccc:
+    --               0..9        CA[cccc] (cccc = 3 is ignored)
+    --               10          CABI_N
+    --               11..14      CA3[cccc-11]
+    --               15          CKE_N
     dq_rx_delay_ce_o  <= ce_out(2#0011_1111# downto 2#0000_0000#); -- 00xx_xxxx
     dq_tx_delay_ce_o  <= ce_out(2#0111_1111# downto 2#0100_0000#); -- 01xx_xxxx
     dbi_rx_delay_ce_o <= ce_out(2#1101_0111# downto 2#1101_0000#); -- 1101_0xxx
@@ -82,6 +113,16 @@ begin
     edc_rx_delay_ce_o <= ce_out(2#1110_0111# downto 2#1110_0000#); -- 1110_0xxx
     ca_tx_delay_ce_o  <= ce_out(2#1111_1111# downto 2#1111_0000#); -- 1111_xxxx
 
+    -- Use the same mapping for delay readbacks (no bitslip readback)
+    delays_in <= (
+        2#0011_1111# downto 2#0000_0000# => delay_dq_rx_i,         -- 00xx_xxxx
+        2#0111_1111# downto 2#0100_0000# => delay_dq_tx_i,         -- 01xx_xxxx
+        2#1100_1111# downto 2#1000_0000# => (others => '-'),
+        2#1101_0111# downto 2#1101_0000# => delay_dbi_rx_i,        -- 1101_0xxx
+        2#1101_1111# downto 2#1101_1000# => delay_dbi_tx_i,        -- 1101_1xxx
+        2#1110_0111# downto 2#1110_0000# => delay_edc_rx_i,        -- 1110_0xxx
+        2#1110_1111# downto 2#1110_1000# => (others => '-'),
+        2#1111_1111# downto 2#1111_0000# => delay_ca_tx_i);        -- 1111_xxxx
 
     -- Start processing the next request when we're not busy
     strobe_in <= not write_busy and (strobe_i or pending_request);
@@ -144,6 +185,9 @@ begin
             end if;
 
             compute_strobe(ce_out, to_integer(delay_address), running_delay);
+
+            read_delay_o <=
+                unsigned(delays_in(to_integer(read_delay_address_i)));
         end if;
     end process;
 

@@ -107,13 +107,11 @@ entity gddr6_phy is
         delay_reset_ca_i : in std_ulogic;       -- Reset all CA delays to zero
         delay_reset_dq_rx_i : in std_ulogic;    -- Reset all DQ RX delays
         delay_reset_dq_tx_i : in std_ulogic;    -- Reset all DQ TX delays
-        -- Individual delay readbacks
-        delay_dq_rx_o : out vector_array(63 downto 0)(8 downto 0);
-        delay_dq_tx_o : out vector_array(63 downto 0)(8 downto 0);
-        delay_dbi_rx_o : out vector_array(7 downto 0)(8 downto 0);
-        delay_dbi_tx_o : out vector_array(7 downto 0)(8 downto 0);
-        delay_edc_rx_o : out vector_array(7 downto 0)(8 downto 0);
-        delay_ca_tx_o : out vector_array(15 downto 0)(8 downto 0);
+        -- Readback interface.  read_delay_o is updated one or two CK clock
+        -- ticks after setting read_delay_address_i.  The address mapping is
+        -- the same as for delay_address_i.
+        read_delay_address_i : in unsigned(7 downto 0);
+        read_delay_o : out unsigned(8 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -197,6 +195,13 @@ architecture arch of gddr6_phy is
     signal bitslip_delay : unsigned(3 downto 0);
     signal bitslip_address : unsigned(6 downto 0);
     signal bitslip_strobe : std_ulogic;
+    -- Individual delay readbacks
+    signal delay_dq_rx : vector_array(63 downto 0)(8 downto 0);
+    signal delay_dq_tx : vector_array(63 downto 0)(8 downto 0);
+    signal delay_dbi_rx : vector_array(7 downto 0)(8 downto 0);
+    signal delay_dbi_tx : vector_array(7 downto 0)(8 downto 0);
+    signal delay_edc_rx : vector_array(7 downto 0)(8 downto 0);
+    signal delay_ca_tx : vector_array(15 downto 0)(8 downto 0);
 
 begin
     -- Map pads to IO buffers and gather related signals
@@ -286,7 +291,7 @@ begin
         delay_rst_i => delay_reset_ca_i,
         delay_inc_i => delay_up_down_n,
         delay_ce_i => ca_tx_delay_ce,
-        delay_o => delay_ca_tx_o,
+        delay_o => delay_ca_tx,
 
         io_sg_resets_n_o => io_sg_resets_n_out,
         io_ca_o => io_ca_out,
@@ -328,11 +333,11 @@ begin
         reset_rx_delay_i => delay_reset_dq_rx_i,
         reset_tx_delay_i => delay_reset_dq_tx_i,
 
-        dq_rx_delay_o => delay_dq_rx_o,
-        dq_tx_delay_o => delay_dq_tx_o,
-        dbi_rx_delay_o => delay_dbi_rx_o,
-        dbi_tx_delay_o => delay_dbi_tx_o,
-        edc_rx_delay_o => delay_edc_rx_o,
+        dq_rx_delay_o => delay_dq_rx,
+        dq_tx_delay_o => delay_dq_tx,
+        dbi_rx_delay_o => delay_dbi_rx,
+        dbi_tx_delay_o => delay_dbi_tx,
+        edc_rx_delay_o => delay_edc_rx,
 
         bitslip_delay_i => bitslip_delay,
         bitslip_address_i => bitslip_address,
@@ -376,6 +381,15 @@ begin
         bitslip_address_o => bitslip_address,
         bitslip_delay_o => bitslip_delay,
         bitslip_strobe_o => bitslip_strobe,
+
+        delay_dq_rx_i => delay_dq_rx,
+        delay_dq_tx_i => delay_dq_tx,
+        delay_dbi_rx_i => delay_dbi_rx,
+        delay_dbi_tx_i => delay_dbi_tx,
+        delay_edc_rx_i => delay_edc_rx,
+        delay_ca_tx_i => delay_ca_tx,
+        read_delay_address_i => read_delay_address_i,
+        read_delay_o => read_delay_o,
 
         enable_bitslice_vtc_o => enable_bitslice_vtc
     );

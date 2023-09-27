@@ -23,9 +23,11 @@ architecture arch of testbench is
     procedure write(message : string) is
         variable linebuffer : line;
     begin
+        write(linebuffer, "@ " & to_string(now, unit => ns) & ": ");
         write(linebuffer, message);
         writeline(output, linebuffer);
     end;
+
 
     signal ck_clk : std_ulogic;
     signal ck_reset_in : std_ulogic;
@@ -58,11 +60,8 @@ architecture arch of testbench is
     signal delay_reset_dq_rx_in : std_ulogic;
     signal delay_reset_dq_tx_in : std_ulogic;
 
-    signal delay_dq_rx_out : vector_array(63 downto 0)(8 downto 0);
-    signal delay_dq_tx_out : vector_array(63 downto 0)(8 downto 0);
-    signal delay_dbi_rx_out : vector_array(7 downto 0)(8 downto 0);
-    signal delay_dbi_tx_out : vector_array(7 downto 0)(8 downto 0);
-    signal delay_edc_rx_out : vector_array(7 downto 0)(8 downto 0);
+    signal read_delay_address_in : unsigned(7 downto 0);
+    signal read_delay_out : unsigned(8 downto 0);
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
@@ -129,11 +128,8 @@ begin
         delay_reset_dq_rx_i => delay_reset_dq_rx_in,
         delay_reset_dq_tx_i => delay_reset_dq_tx_in,
 
-        delay_dq_rx_o => delay_dq_rx_out,
-        delay_dq_tx_o => delay_dq_tx_out,
-        delay_dbi_rx_o => delay_dbi_rx_out,
-        delay_dbi_tx_o => delay_dbi_tx_out,
-        delay_edc_rx_o => delay_edc_rx_out,
+        read_delay_address_i => read_delay_address_in,
+        read_delay_o => read_delay_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -221,6 +217,15 @@ begin
             delay_up_down_n_in <= 'U';
         end;
 
+        procedure read_delay(address : natural) is
+        begin
+            read_delay_address_in <= to_unsigned(address, 8);
+            clk_wait(2);
+            write(
+                "delay[" & to_hstring(read_delay_address_in) &
+                "] = " & to_string(to_integer(read_delay_out)));
+        end;
+
     begin
         delay_strobe_in <= '0';
         ck_valid <= '1';
@@ -229,6 +234,7 @@ begin
         delay_reset_ca_in <= '1';
         delay_reset_dq_rx_in <= '1';
         delay_reset_dq_tx_in <= '1';
+        read_delay_address_in <= (others => '0');
 
         wait for 50 ns;
         ck_reset_in <= '0';
@@ -247,6 +253,12 @@ begin
         clk_wait;
         write_delay(2#0100_0011#, 9);       -- DQ TX 3 += 10
         write_delay(2#0100_0011#, 9, '0');  -- DQ TX 3 -= 10
+
+        read_delay(2#1111_0000#);
+        read_delay(2#1000_0001#);
+        read_delay(2#0000_0010#);
+        read_delay(2#0100_0010#);
+        read_delay(2#0100_0011#);
 
         wait;
     end process;
