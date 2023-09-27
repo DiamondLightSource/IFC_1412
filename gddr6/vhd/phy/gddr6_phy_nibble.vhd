@@ -185,7 +185,7 @@ begin
         TRI_OUT => tri_out_to_tbyte,
         EN_VTC => enable_tri_vtc_i,
         RST => reset_i,
-        RST_DLY => reset_tri_delay_i,
+        RST_DLY => reset_i or reset_tri_delay_i,
         -- Control interface
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
@@ -260,14 +260,15 @@ begin
                 TX_BIT_CTRL_IN => tx_bit_ctrl_out(i),
 
                 -- Delay management interface
-                RX_RST_DLY => reset_rx_delay_i(i),
+                RX_RST_DLY => reset_i or reset_rx_delay_i(i),
                 RX_CLK => riu_clk_i,
                 RX_CE => rx_delay_ce_i(i),
                 RX_INC => delay_up_down_n_i,
                 RX_LOAD => '0',
                 RX_CNTVALUEIN => (others => '0'),
                 RX_CNTVALUEOUT => rx_delay_o(i),
-                TX_RST_DLY => reset_tx_delay_i(i),
+
+                TX_RST_DLY => reset_i or reset_tx_delay_i(i),
                 TX_CLK => riu_clk_i,
                 TX_CE => tx_delay_ce_i(i),
                 TX_INC => delay_up_down_n_i,

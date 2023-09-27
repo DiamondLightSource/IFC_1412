@@ -125,7 +125,7 @@ begin
                 CLK => delay_clk_i,
                 CE => delay_ce_i(i),
                 INC => delay_inc_i,
-                RST => delay_rst_i,
+                RST => reset_i or delay_rst_i,
                 EN_VTC => '0',
                 -- Unused pins
                 LOAD => '0',
