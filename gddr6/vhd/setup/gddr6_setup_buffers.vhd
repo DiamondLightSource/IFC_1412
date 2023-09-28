@@ -25,7 +25,7 @@ entity gddr6_setup_buffers is
         write_ca_i : in vector_array(0 to 1)(9 downto 0);
         write_ca3_i : in std_ulogic_vector(0 to 3);
         write_cke_n_i : in std_ulogic;
-        write_dq_t_i : in std_ulogic;
+        write_output_enable_i : in std_ulogic;
 
         -- Data loading and readback interface on reg_clk_i
         write_data_strobe_i : in std_ulogic_vector(0 to 15);
@@ -42,7 +42,7 @@ entity gddr6_setup_buffers is
         phy_ca_o : out vector_array(0 to 1)(9 downto 0);
         phy_ca3_o : out std_ulogic_vector(0 to 3);
         phy_cke_n_o : out std_ulogic;
-        phy_dq_t_o : out std_ulogic;
+        phy_output_enable_o : out std_ulogic;
         phy_data_o : out std_ulogic_vector(511 downto 0);
         phy_data_i : in std_ulogic_vector(511 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
@@ -72,7 +72,7 @@ begin
         write_data_i(19 downto 10) => write_ca_i(1),
         write_data_i(23 downto 20) => write_ca3_i,
         write_data_i(24) => write_cke_n_i,
-        write_data_i(25) => write_dq_t_i,
+        write_data_i(25) => write_output_enable_i,
 
         read_clk_i => ck_clk_i,
         read_strobe_i => exchange_active,
@@ -81,7 +81,7 @@ begin
         read_data_o(19 downto 10) => phy_ca_o(1),
         read_data_o(23 downto 20) => phy_ca3_o,
         read_data_o(24) => phy_cke_n_o,
-        read_data_o(25) => phy_dq_t_o
+        read_data_o(25) => phy_output_enable_o
     );
 
 

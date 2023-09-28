@@ -49,7 +49,7 @@ architecture arch of testbench is
     signal data_in : std_ulogic_vector(511 downto 0) := (others => '0');
     signal data_out : std_ulogic_vector(511 downto 0);
     signal edc_out : std_ulogic_vector(63 downto 0);
-    signal dq_t_in : std_ulogic;
+    signal output_enable_in : std_ulogic;
 
     signal delay_address_in : unsigned(7 downto 0);
     signal delay_in : unsigned(7 downto 0);
@@ -115,7 +115,7 @@ begin
 
         data_i => data_in,
         data_o => data_out,
-        dq_t_i => dq_t_in,
+        output_enable_i => output_enable_in,
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
 
@@ -168,7 +168,7 @@ begin
     ca3_in <= (others => '0');
     cke_n_in <= '1';
 
-    dq_t_in <= '0';
+    output_enable_in <= '1';
 
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;

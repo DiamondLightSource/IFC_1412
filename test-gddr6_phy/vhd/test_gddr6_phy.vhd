@@ -166,7 +166,7 @@ begin
         cke_n_i => '0',
         data_i => (others => '0'),
         data_o => open,
-        dq_t_i => '0',
+        output_enable_i => '0',
         edc_in_o => open,
         edc_out_o => open,
 

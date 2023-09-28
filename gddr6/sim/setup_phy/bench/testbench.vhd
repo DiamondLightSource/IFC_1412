@@ -54,7 +54,7 @@ architecture arch of testbench is
     signal cke_n : std_ulogic;
     signal data_in : std_ulogic_vector(511 downto 0);
     signal data_out : std_ulogic_vector(511 downto 0);
-    signal dq_t : std_ulogic;
+    signal output_enable : std_ulogic;
     signal edc_in : vector_array(7 downto 0)(7 downto 0);
     signal edc_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -88,7 +88,7 @@ begin
         cke_n_i => cke_n,
         data_i => data_in,
         data_o => data_out,
-        dq_t_i => dq_t,
+        output_enable_i => output_enable,
         edc_in_o => edc_in,
         edc_out_o => edc_out,
 
@@ -177,14 +177,14 @@ begin
         variable dq_count : natural;
 
 
-        procedure write_ca(t : std_ulogic) is
+        procedure write_ca(oe : std_ulogic) is
         begin
             write_reg(GDDR6_CA_REG, (
                 GDDR6_CA_RISING_BITS => 10X"3FF",
                 GDDR6_CA_FALLING_BITS => 10X"3FF",
                 GDDR6_CA_CA3_BITS => X"0",
                 GDDR6_CA_CKE_N_BIT => '1',
-                GDDR6_CA_DQ_T_BIT => t,
+                GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
 
@@ -192,7 +192,7 @@ begin
         begin
             write_reg(GDDR6_DQ_REG, dq);
             write_reg(GDDR6_DQ_REG, dq);
-            write_ca('0');
+            write_ca('1');
             dq_count := dq_count + 1;
         end;
 
@@ -240,7 +240,7 @@ begin
 
         -- Wait for locked status
         loop
-            read_reg_result(GDDR6_STATUS_REG, read_result, true);
+            read_reg_result(GDDR6_STATUS_REG, read_result);
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
@@ -261,7 +261,7 @@ begin
         write_dq(X"0000_0000");
         write_dq(X"FFFF_FFFF");
         for n in dq_count to CAPTURE_COUNT-1 loop
-            write_ca('1');
+            write_ca('0');
         end loop;
         -- Leave the interface running with 55 as output
         write_dq(X"5757_5757");

@@ -10,7 +10,7 @@ entity gddr6_phy_crc is
     port (
         clk_i : in std_ulogic;
 
-        dq_t_i : in std_ulogic;
+        output_enable_i : in std_ulogic;
         bank_data_in_i : in vector_array(63 downto 0)(7 downto 0);
         bank_dbi_n_in_i : in vector_array(7 downto 0)(7 downto 0);
         bank_data_out_i : in vector_array(63 downto 0)(7 downto 0);
@@ -72,14 +72,14 @@ architecture arch of gddr6_phy_crc is
 begin
     process (clk_i) begin
         if rising_edge(clk_i) then
-            -- Select CRC data to process.  If dq_t_i is set then use the
-            -- incoming data, otherwise use outgoing data.
-            if dq_t_i then
-                bank_data <= bank_data_in_i;
-                bank_dbi <= bank_dbi_n_in_i;
-            else
+            -- Select CRC data to process.  If output_enable_i is set then use
+            -- outgoing data, otherwise use incoming data.
+            if output_enable_i then
                 bank_data <= bank_data_out_i;
                 bank_dbi <= bank_dbi_n_out_i;
+            else
+                bank_data <= bank_data_in_i;
+                bank_dbi <= bank_dbi_n_in_i;
             end if;
 
             -- Register computed CRC

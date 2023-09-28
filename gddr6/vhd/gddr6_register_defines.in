@@ -82,7 +82,7 @@
             # Command enable, held low during reset
             .CKE_N
             # DQ tristate control
-            .DQ_T
+            .OUTPUT_ENABLE
 
         DQ          RW
         EDC_IN      R

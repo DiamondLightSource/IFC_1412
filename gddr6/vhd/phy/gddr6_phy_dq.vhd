@@ -28,7 +28,7 @@ entity gddr6_phy_dq is
         -- Data interface, all values for a single CA tick, all on ck_clk_i
         data_o : out std_ulogic_vector(511 downto 0);
         data_i : in std_ulogic_vector(511 downto 0);
-        dq_t_i : in std_ulogic;
+        output_enable_i : in std_ulogic;
         enable_dbi_i : in std_ulogic;
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
@@ -169,7 +169,7 @@ begin
 
             data_i => slice_data_out(i),
             data_o => slice_data_in(i),
-            output_enable_i => (others => not dq_t_i),
+            output_enable_i => (others => output_enable_i),
 
             pad_in_i => slice_pad_in(i),
             pad_out_o => slice_pad_out(i),
@@ -289,7 +289,7 @@ begin
     crc : entity work.gddr6_phy_crc port map (
         clk_i => ck_clk_i,
 
-        dq_t_i => dq_t_i,
+        output_enable_i => output_enable_i,
         bank_data_in_i => bitslip_data_in,
         bank_dbi_n_in_i => bitslip_dbi_n_in,
         bank_data_out_i => bitslip_data_out,

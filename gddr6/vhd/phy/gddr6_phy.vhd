@@ -85,12 +85,12 @@ entity gddr6_phy is
         -- organised here as an array of 64 bytes, or 512 bits.
         data_i : in std_ulogic_vector(511 downto 0);
         data_o : out std_ulogic_vector(511 downto 0);
-        dq_t_i : in std_ulogic;
+        output_enable_i : in std_ulogic;
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one
         -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
         -- calculated value, either for incoming data or for outgoing data, as
-        -- selected by dq_t_i.
+        -- selected by output_enable_i.
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
@@ -317,7 +317,7 @@ begin
 
         data_o => data_o,
         data_i => data_i,
-        dq_t_i => dq_t_i,
+        output_enable_i => output_enable_i,
         enable_dbi_i => enable_dbi_i,
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
