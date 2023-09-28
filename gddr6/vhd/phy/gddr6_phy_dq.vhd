@@ -304,7 +304,7 @@ begin
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
             for io in 0 to 1 loop
-                if reset_fifo_i(io) then
+                if reset_i or reset_fifo_i(io) then
                     fifo_enable(io) <= '0';
                 else
                     -- Enable FIFO following UG571 v1.14 p213

@@ -45,18 +45,25 @@ end;
 architecture arch of gddr6_setup_control is
     -- Plumbing for CK status readout
     signal reg_read_status : reg_data_t;
+    signal reg_read_status_ack : std_ulogic;
     signal ck_read_status : reg_data_t;
-    signal ck_status_read_strobe : std_ulogic;
-    signal ck_status_read_ack : std_ulogic;
-    signal ck_status_read_data : reg_data_t;
+    signal ck_read_status_ack : std_ulogic;
+    signal reg_to_ck_status_read_strobe : std_ulogic;
+    signal reg_to_ck_status_read_ack : std_ulogic;
+    signal reg_to_ck_status_read_data : reg_data_t;
+    signal read_status_strobe : std_ulogic;
+    signal read_status_ack : std_ulogic;
+    -- Tracking ACK status to cope with unreliable CK response
+    signal need_reg_ack : std_ulogic := '0';
+    signal need_ck_ack : std_ulogic := '0';
 
     -- Config, status, event bits for both clock domains
     signal reg_config_bits : reg_data_t;
-    signal ck_config_bits : reg_data_t;
-    signal reg_status_bits : reg_data_t;
-    signal ck_status_bits : reg_data_t;
-    signal reg_event_bits : reg_data_t;
-    signal ck_event_bits : reg_data_t;
+    signal ck_config_bits : reg_data_t := (others => '0');
+    signal reg_status_bits : reg_data_t := (others => '0');
+    signal ck_status_bits : reg_data_t := (others => '0');
+    signal reg_event_bits : reg_data_t := (others => '0');
+    signal ck_event_bits : reg_data_t := (others => '0');
 
     -- Because this signal is being used as an asynchronous reset we need to
     -- mark it accordingly.
@@ -105,9 +112,9 @@ begin
     reg_status : entity work.register_status port map (
         clk_i => reg_clk_i,
 
-        read_strobe_i => read_strobe_i(GDDR6_STATUS_REG),
+        read_strobe_i => read_status_strobe,
         read_data_o => reg_read_status,
-        read_ack_o => open,
+        read_ack_o => reg_read_status_ack,
 
         status_bits_i => reg_status_bits,
         event_bits_i => reg_event_bits
@@ -118,33 +125,38 @@ begin
         clk_out_i => ck_clk_i,
         clk_out_ok_i => ck_clk_ok_i,
 
-        strobe_i => read_strobe_i(GDDR6_STATUS_REG),
+        strobe_i => read_status_strobe,
         data_o => ck_read_status,
-        ack_o => read_ack_o(GDDR6_STATUS_REG),
+        ack_o => ck_read_status_ack,
 
-        strobe_o => ck_status_read_strobe,
-        data_i => ck_status_read_data,
-        ack_i => ck_status_read_ack
+        strobe_o => reg_to_ck_status_read_strobe,
+        data_i => reg_to_ck_status_read_data,
+        ack_i => reg_to_ck_status_read_ack
     );
 
     ck_status : entity work.register_status port map (
         clk_i => ck_clk_i,
 
-        read_strobe_i => ck_status_read_strobe,
-        read_data_o => ck_status_read_data,
-        read_ack_o => ck_status_read_ack,
+        read_strobe_i => reg_to_ck_status_read_strobe,
+        read_data_o => reg_to_ck_status_read_data,
+        read_ack_o => reg_to_ck_status_read_ack,
 
         status_bits_i => ck_status_bits,
         event_bits_i => ck_event_bits
     );
 
+    read_status_strobe <= read_strobe_i(GDDR6_STATUS_REG);
+    read_ack_o(GDDR6_STATUS_REG) <= read_status_ack;
     read_data_o(GDDR6_STATUS_REG) <= reg_read_status or ck_read_status;
     write_ack_o(GDDR6_STATUS_REG) <= '1';
 
 
     -- -------------------------------------------------------------------------
 
-    process (reg_clk_i) begin
+    process (reg_clk_i)
+        variable next_need_reg_ack : std_ulogic;
+        variable next_need_ck_ack : std_ulogic;
+    begin
         if rising_edge(reg_clk_i) then
             ck_reset_o <= not reg_config_bits(GDDR6_CONFIG_CK_RESET_N_BIT);
 
@@ -152,8 +164,26 @@ begin
                 GDDR6_STATUS_CK_OK_BIT => ck_clk_ok_i,
                 others => '0');
             reg_event_bits <= (
-                GDDR6_STATUS_CK_OK_EVENT_BIT => ck_clk_ok_i,
+                GDDR6_STATUS_CK_OK_EVENT_BIT => not ck_clk_ok_i,
                 others => '0');
+
+            -- Computing the status ack is annoyingly gnarly.  We want to ensure
+            -- that we have seen the ack from both domains (reg and ck) and we
+            -- need to take care not to miss any ack, in particular the CK ack
+            -- can be missed if ck_clk_ok_i changes state.
+            if read_status_strobe then
+                next_need_reg_ack := not reg_read_status_ack;
+                next_need_ck_ack  := not ck_read_status_ack;
+            else
+                next_need_reg_ack := not reg_read_status_ack and need_reg_ack;
+                next_need_ck_ack  := not ck_read_status_ack  and need_ck_ack;
+            end if;
+            need_reg_ack <= next_need_reg_ack;
+            need_ck_ack  <= next_need_ck_ack;
+            -- Can finally acknowledge status request when both acks are seen
+            read_status_ack <=
+                (need_reg_ack or need_ck_ack) and
+                not next_need_reg_ack and not next_need_ck_ack;
         end if;
     end process;
 
@@ -177,7 +207,7 @@ begin
                 others => '0');
             ck_event_bits <= (
                 GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => ck_unlock_i,
-                GDDR6_STATUS_FIFO_OK_EVENT_BITS => fifo_ok_i,
+                GDDR6_STATUS_FIFO_OK_EVENT_BITS => not fifo_ok_i,
                 others => '0');
         end if;
     end process;
