@@ -16,7 +16,7 @@ end testbench;
 
 
 architecture arch of testbench is
-    constant CK_FREQUENCY : real := 300.0;
+    constant CK_FREQUENCY : real := 250.0;
 
     constant CK_WIDTH : time := 1 us / CK_FREQUENCY;
     constant WCK_WIDTH : time := CK_WIDTH / 4;
@@ -67,6 +67,10 @@ architecture arch of testbench is
     signal regs_read_address : unsigned(13 downto 0);
     signal regs_read_data : std_ulogic_vector(31 downto 0);
     signal regs_read_ack : std_ulogic;
+
+    -- Gather CA and CKE from pads
+    signal ca : std_ulogic_vector(9 downto 0);
+    signal cke_n : std_ulogic;
 
 begin
     clk <= not clk after 2 ns;
@@ -139,6 +143,16 @@ begin
     pad_SG1_EDC_B <= "HH";
     pad_SG2_EDC_A <= "HH";
     pad_SG2_EDC_B <= "HH";
+
+
+    -- Gather CA values
+    ca <= (
+        2 downto 0 => pad_SG12_CAL,
+        3 => pad_SG1_CA3_A,         -- Choose one
+        9 downto 4 => pad_SG12_CAU
+    );
+    cke_n <= pad_SG12_CKE_N;
+
 
     process
         procedure clk_wait(count : natural := 1) is
@@ -215,6 +229,34 @@ begin
                 others => '0'));
         end;
 
+
+        -- Writes a sequence of CA commands with no associated DQ data.
+        procedure write_ca(
+            ca : vector_array(open)(19 downto 0);
+            cke_n : std_ulogic_vector) is
+        begin
+            write_gddr6_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_START_WRITE_BIT => '1',
+                others => '0'));
+            for n in ca'RANGE loop
+                write_gddr6_reg(GDDR6_CA_REG, (
+                    GDDR6_CA_RISING_BITS => ca(n)(19 downto 10),
+                    GDDR6_CA_FALLING_BITS => ca(n)(9 downto 0),
+                    GDDR6_CA_CKE_N_BIT => cke_n(n),
+                    GDDR6_CA_DQ_T_BIT => '1',
+                    others => '0'));
+            end loop;
+            write_gddr6_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_EXCHANGE_BIT => '1',
+                others => '0'));
+        end;
+
+        procedure write_ca(
+            ca : std_ulogic_vector(19 downto 0); cke_n : std_ulogic) is
+        begin
+            write_ca((0 => ca), (0 => cke_n));
+        end;
+
     begin
         regs_write_strobe <= '0';
         regs_read_strobe <= '0';
@@ -241,27 +283,50 @@ begin
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
+        -- Bring SG2 out of reset
+        write_ca(20B"1111_10_10_10_1111_10_10_10", '1');
+        write_gddr6_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
+            GDDR6_CONFIG_SG_RESET_N_BITS => "10",
+            others => '0'));
 
-        -- Perform a complete exchange
-        write_gddr6_reg(GDDR6_COMMAND_REG, (
-            GDDR6_COMMAND_START_WRITE_BIT => '1',
-            others => '0'));
-        -- Fill CA and DQ buffer, start with writing two zeros, then padding
-        for n in 0 to 1 loop
-            write_dq_ca(X"0000_0000", '0');
-        end loop;
-        for n in 2 to 18 loop
-            write_dq_ca(X"FFFF_FFFF", '1');
-        end loop;
-        -- Perform exchange
-        write_gddr6_reg(GDDR6_COMMAND_REG, (
-            GDDR6_COMMAND_EXCHANGE_BIT => '1',
-            GDDR6_COMMAND_START_READ_BIT => '1',
-            others => '0'));
-        -- Read and print results
-        for n in 0 to 18 loop
-            read_dq_edc;
-        end loop;
+        -- Pull CKE_n low and hold NOP command
+        write_ca(20X"FFFFF", '0');
+
+        -- Wait for t_INIT2 + t_INIT3 (faked)
+        clk_wait(10);
+
+        -- Write MRS CA Training command.  Write it twice, leave CKE_N low with
+        -- NOP running
+        write_ca((
+            20B"10_1111_0100_10_1111_0100",
+            20B"10_1111_0100_10_1111_0100", 20X"FFFFF"), "000");
+
+        clk_wait(10);
+
+        -- Write a test pattern
+        write_ca((20X"A5A5A", 20X"FFFFF"), "10");
+
+--         -- Perform a complete exchange
+--         write_gddr6_reg(GDDR6_COMMAND_REG, (
+--             GDDR6_COMMAND_START_WRITE_BIT => '1',
+--             others => '0'));
+--         -- Fill CA and DQ buffer, start with writing two zeros, then padding
+--         for n in 0 to 1 loop
+--             write_dq_ca(X"0000_0000", '0');
+--         end loop;
+--         for n in 2 to 18 loop
+--             write_dq_ca(X"FFFF_FFFF", '1');
+--         end loop;
+--         -- Perform exchange
+--         write_gddr6_reg(GDDR6_COMMAND_REG, (
+--             GDDR6_COMMAND_EXCHANGE_BIT => '1',
+--             GDDR6_COMMAND_START_READ_BIT => '1',
+--             others => '0'));
+--         -- Read and print results
+--         for n in 0 to 18 loop
+--             read_dq_edc;
+--         end loop;
 
         wait;
     end process;
