@@ -58,6 +58,13 @@ architecture arch of gddr6_setup_control is
     signal reg_event_bits : reg_data_t;
     signal ck_event_bits : reg_data_t;
 
+    -- Because this signal is being used as an asynchronous reset we need to
+    -- mark it accordingly.
+    attribute KEEP : string;
+    attribute FALSE_PATH_FROM : string;
+    attribute KEEP of ck_reset_o : signal is "TRUE";
+    attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
+
 begin
     -- CONFIG
     -- The config register is overlaid so that writes are directed to both
