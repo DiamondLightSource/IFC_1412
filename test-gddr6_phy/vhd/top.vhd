@@ -6,6 +6,8 @@ use work.support.all;
 
 architecture arch of top is
     constant CK_FREQUENCY : real := 250.0;
+    -- Enable this for testing, it might prove helpful!
+    constant ENABLE_DELAY_READBACK : boolean := true;
 
     -- Clocks and resets
     signal clk : std_ulogic;
@@ -144,7 +146,8 @@ begin
 
 
     test_gddr6_phy : entity work.test_gddr6_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY
+        CK_FREQUENCY => CK_FREQUENCY,
+        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
     ) port map (
         clk_i => clk,
 

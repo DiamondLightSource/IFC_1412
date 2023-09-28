@@ -12,7 +12,7 @@ use work.gddr6_register_defines.all;
 entity gddr6_setup_delay is
     generic (
         -- Delay readback is quite expensive in terms of fabric, so is optional
-        READBACK_DELAY : boolean
+        ENABLE_DELAY_READBACK : boolean
     );
     port (
         ck_clk_i : in std_ulogic;       -- CK clock
@@ -88,7 +88,7 @@ begin
             delay_strobe_o <= write_strobe and not suppress_write;
             write_ack <= delay_ack_i or (suppress_write and write_strobe);
 
-            if READBACK_DELAY then
+            if ENABLE_DELAY_READBACK then
                 read_data <= (
                     GDDR6_DELAY_ADDRESS_BITS =>
                         std_ulogic_vector(read_delay_address_o),

@@ -12,7 +12,7 @@ use work.gddr6_register_defines.all;
 entity gddr6_setup is
     generic (
         -- Delay readback is quite expensive in terms of fabric, so is optional
-        READBACK_DELAY : boolean := false
+        ENABLE_DELAY_READBACK : boolean := false
     );
     port (
         reg_clk_i : in std_ulogic;      -- Register clock
@@ -107,7 +107,7 @@ begin
 
 
     delay : entity work.gddr6_setup_delay generic map (
-        READBACK_DELAY => READBACK_DELAY
+        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
     ) port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,

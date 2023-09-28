@@ -16,7 +16,7 @@ entity gddr6_setup_phy is
     generic (
         CK_FREQUENCY : real := 250.0;
         -- Delay readback is quite expensive in terms of fabric, so is optional
-        READBACK_DELAY : boolean := false
+        ENABLE_DELAY_READBACK : boolean := false
     );
     port (
         reg_clk_i : in std_ulogic;      -- Register interface only
@@ -135,7 +135,7 @@ architecture arch of gddr6_setup_phy is
 
 begin
     setup : entity work.gddr6_setup generic map (
-        READBACK_DELAY => READBACK_DELAY
+        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
     ) port map (
         reg_clk_i => reg_clk_i,
 
