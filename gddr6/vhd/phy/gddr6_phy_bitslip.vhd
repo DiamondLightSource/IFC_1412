@@ -47,12 +47,21 @@ architecture arch of gddr6_phy_bitslip is
     signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(23 downto 0);
     signal bit_arrays_out : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
 
+    signal delay_strobe_in : std_ulogic := '0';
+    signal delay_address_in : natural range 0 to 79;
+    signal delay_in : unsigned(3 downto 0);
+
 begin
     -- Writing selected delay
     process (clk_i) begin
         if rising_edge(clk_i) then
-            if delay_strobe_i then
-                bitslip(to_integer(delay_address_i)) <= delay_i;
+            -- Allow for more placement optimisation by pipelining this write
+            delay_strobe_in <= delay_strobe_i;
+            delay_address_in <= to_integer(delay_address_i);
+            delay_in <= delay_i;
+
+            if delay_strobe_in then
+                bitslip(delay_address_in) <= delay_in;
             end if;
         end if;
     end process;

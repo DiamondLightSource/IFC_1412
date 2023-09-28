@@ -250,25 +250,27 @@ begin
 
     -- Setup and controller MUX.  Not registered at present, but this can be
     -- done if required.
-    process (all) begin
-        if enable_controller then
-            phy_ca <= ca_i;
-            phy_ca3 <= ca3_i;
-            phy_cke_n <= cke_n_i;
-            phy_data_out <= data_i;
-            phy_dq_t <= dq_t_i;
-        else
-            phy_ca <= setup_ca;
-            phy_ca3 <= setup_ca3;
-            phy_cke_n <= setup_cke_n;
-            phy_data_out <= setup_data_out;
-            phy_dq_t <= setup_dq_t;
+    process (ck_clk) begin
+        if rising_edge(ck_clk) then
+            if enable_controller then
+                phy_ca <= ca_i;
+                phy_ca3 <= ca3_i;
+                phy_cke_n <= cke_n_i;
+                phy_data_out <= data_i;
+                phy_dq_t <= dq_t_i;
+            else
+                phy_ca <= setup_ca;
+                phy_ca3 <= setup_ca3;
+                phy_cke_n <= setup_cke_n;
+                phy_data_out <= setup_data_out;
+                phy_dq_t <= setup_dq_t;
+            end if;
+            data_o <= phy_data_in;
+            edc_in_o <= phy_edc_in;
+            edc_out_o <= phy_edc_out;
+            setup_data_in <= phy_data_in;
+            setup_edc_in <= phy_edc_in;
+            setup_edc_out <= phy_edc_out;
         end if;
-        data_o <= phy_data_in;
-        edc_in_o <= phy_edc_in;
-        edc_out_o <= phy_edc_out;
-        setup_data_in <= phy_data_in;
-        setup_edc_in <= phy_edc_in;
-        setup_edc_out <= phy_edc_out;
     end process;
 end;

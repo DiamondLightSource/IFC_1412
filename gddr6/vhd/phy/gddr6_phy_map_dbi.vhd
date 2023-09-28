@@ -26,6 +26,8 @@ entity gddr6_phy_map_dbi is
 end;
 
 architecture arch of gddr6_phy_map_dbi is
+    signal enable_dbi_in : std_ulogic;
+
     -- Data path from DRAM: bank_data_i -> data_in => data_o
     signal data_in : std_ulogic_vector(511 downto 0);
     -- Data path to DRAM: data_i -> bank_data_out => bank_data_o
@@ -59,13 +61,13 @@ begin
     gen_dbi : for lanes in 0 to 7 generate
         -- For incoming data we just obey the incoming bits for each group of
         -- lanes
-        invert_bits_in(lanes) <= enable_dbi_i and not bank_dbi_n_i(lanes);
+        invert_bits_in(lanes) <= enable_dbi_in and not bank_dbi_n_i(lanes);
 
         -- For outgoing data we need to inspect our dataset for each tick to
         -- determine whether to enable DBI inversion
         gen_ticks : for tick in 0 to 7 generate
             invert_bits_out(lanes)(tick) <=
-                enable_dbi_i and invert_bits(bank_data_in, lanes, tick);
+                enable_dbi_in and invert_bits(bank_data_in, lanes, tick);
             bank_dbi_n_out(lanes)(tick) <= not invert_bits_out(lanes)(tick);
         end generate;
     end generate;
@@ -88,6 +90,8 @@ begin
     -- Register incoming and outgoing data
     process (clk_i) begin
         if rising_edge(clk_i) then
+            enable_dbi_in <= enable_dbi_i;
+
             data_o <= data_in;
             bank_data_o <= bank_data_out;
             bank_dbi_n_o <= bank_dbi_n_out;
