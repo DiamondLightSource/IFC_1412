@@ -10,24 +10,19 @@ entity gddr6_phy_delay_control is
     port (
         ck_clk_i : std_ulogic;
 
-        -- Control interface from registers on CK clock
+        -- Control interface from registers
         delay_address_i : in unsigned(7 downto 0);
         delay_i : in unsigned(7 downto 0);
         delay_up_down_n_i : in std_ulogic;
         strobe_i : in std_ulogic;
         ack_o : out std_ulogic;
 
-        -- Bitslip control on CK clock
+        -- Bitslip control
         bitslip_address_o : out unsigned(6 downto 0);
         bitslip_delay_o : out unsigned(3 downto 0);
         bitslip_strobe_o : out std_ulogic;
 
-
-        -- All I/O delay controls are on delay clock synchronous with ck_clk_i
-        -- but at half frequency
-        delay_clk_i : std_ulogic;
-
-        -- Delay direction common to all I/O DELAY controls on delay clock
+        -- Delay direction common to all I/O DELAY controls
         delay_up_down_n_o : out std_ulogic := '0';
 
         -- CA control
@@ -48,8 +43,8 @@ entity gddr6_phy_delay_control is
         delay_edc_rx_i : in vector_array(7 downto 0)(8 downto 0);
         delay_ca_tx_i : in vector_array(15 downto 0)(8 downto 0);
         -- Readback interface
-        -- There is a one delay clock tick latency from setting
-        -- read_delay_address_i to updating read_delay_o.
+        -- There is a one clock tick latency from setting read_delay_address_i
+        -- to updating read_delay_o.
         read_delay_address_i : in unsigned(7 downto 0);
         read_delay_o : out unsigned(8 downto 0);
 
@@ -64,14 +59,13 @@ architecture arch of gddr6_phy_delay_control is
 
     -- Handshake from CK => Delay and back again.  State machine is a
     -- combination of write_request, set in response to strobe_in, and
-    -- runner_active, set in response to write_request and reset when done.
+    -- running_delay, set in response to write_request and reset when done.
     -- States:
     --  not request, not active:    Idle, waiting for strobe_in
     --  request, not active:        Waking delay counter in Delay domain
     --  request, active:            Delay counter started
     --  not request, active:        Waiting for counter to complete
     signal write_request : std_ulogic := '0';   -- Waiting for write to complete
-    signal runner_active : std_ulogic := '0';   -- Copy of running delay
     signal write_busy : std_ulogic;
 
     signal is_bitslip : boolean;
@@ -126,7 +120,7 @@ begin
 
     -- Start processing the next request when we're not busy
     strobe_in <= not write_busy and (strobe_i or pending_request);
-    write_busy <= write_request or runner_active;
+    write_busy <= write_request or running_delay;
 
     -- The address range 10xx_xxxx and 1100_xxxx is under bitslice control.
     -- Note that this is only valid when strobe_in is active!
@@ -157,20 +151,10 @@ begin
                 else
                     write_request <= '1';
                 end if;
-            elsif runner_active then
+            elsif running_delay then
                 write_request <= '0';
             end if;
 
-            -- Take a copy of the running state of the runner.  This is good
-            -- practice to avoid logic across clock domains, but is fairly
-            runner_active <= running_delay;
-        end if;
-    end process;
-
-
-    -- Generate CE output on delay clock domain, report completion when done
-    process (delay_clk_i) begin
-        if rising_edge(delay_clk_i) then
             if running_delay then
                 if delay_count > 0 then
                     delay_count <= delay_count - 1;

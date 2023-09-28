@@ -12,7 +12,8 @@ use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_ca is
     port (
-        clk_i : in std_ulogic;
+        ck_clk_i : in std_ulogic;
+
         -- Internal resets for IO components
         reset_i : in std_ulogic;
         -- Individual resets for GDDR6 devices
@@ -28,7 +29,6 @@ entity gddr6_phy_ca is
         enable_cabi_i : in std_ulogic;
 
         -- Delay control
-        delay_clk_i : in std_ulogic;
         delay_rst_i : in std_ulogic;
         delay_inc_i : in std_ulogic;
         delay_ce_i : in std_ulogic_vector(15 downto 0);
@@ -107,7 +107,7 @@ begin
                 SRVAL => '1'
             ) port map (
                 SR => reset_i,
-                C => clk_i,
+                C => ck_clk_i,
                 D1 => ca_in(0)(i),
                 D2 => ca_in(1)(i),
                 Q => data_out
@@ -122,7 +122,7 @@ begin
                 ODATAIN => data_out,
                 DATAOUT => ca_out(i),
                 -- Delay control
-                CLK => delay_clk_i,
+                CLK => ck_clk_i,
                 CE => delay_ce_i(i),
                 INC => delay_inc_i,
                 RST => reset_i or delay_rst_i,
@@ -145,7 +145,7 @@ begin
             SRVAL => '0'
         ) port map (
             SR => reset_i,
-            C => clk_i,
+            C => ck_clk_i,
             D1 => sg_resets_n_i(i),
             D2 => sg_resets_n_i(i),
             Q => io_sg_resets_n_o(i)

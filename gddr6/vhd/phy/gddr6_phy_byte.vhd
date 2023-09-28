@@ -23,8 +23,8 @@ entity gddr6_phy_byte is
 
     port (
         -- Clocks
-        pll_clk_i : in std_ulogic;      -- Backbone clock from PLL
-        fifo_rd_clk_i : in std_ulogic;  -- Clock for reading RX FIFO
+        phy_clk_i : in std_ulogic;      -- Backbone clock from PLL
+        ck_clk_i : in std_ulogic;       -- Clock for reading RX FIFO
         riu_clk_i : in std_ulogic;      -- Control clock
 
         -- FIFO control
@@ -111,8 +111,8 @@ begin
             CLK_TO_NORTH => LOWER_NIBBLE and CLK_TO_NORTH,
             CLK_TO_SOUTH => LOWER_NIBBLE and CLK_TO_SOUTH
         ) port map (
-            pll_clk_i => pll_clk_i,
-            fifo_rd_clk_i => fifo_rd_clk_i,
+            phy_clk_i => phy_clk_i,
+            ck_clk_i => ck_clk_i,
             riu_clk_i => riu_clk_i,
 
             fifo_empty_o => fifo_empty(BITSLICE_RANGE),
@@ -157,8 +157,8 @@ begin
         );
 
         -- Align output enable with data stream
-        process (fifo_rd_clk_i) begin
-            if rising_edge(fifo_rd_clk_i) then
+        process (ck_clk_i) begin
+            if rising_edge(ck_clk_i) then
                 output_enable <= output_enable_i;
             end if;
         end process;

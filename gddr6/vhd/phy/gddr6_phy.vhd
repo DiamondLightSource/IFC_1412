@@ -168,19 +168,19 @@ architecture arch of gddr6_phy is
 
     signal bitslice_patch : std_ulogic_vector(0 to 0);
 
-    -- Clocks resets and controls
-    signal pll_clk : std_ulogic_vector(0 to 1);
-    signal delay_clk : std_ulogic;
+    -- A clock for use elsewhere cannot be assigned, only associated, as
+    -- assigning produces a VHDL Delta cycle difference on the assigned clock,
+    -- resulting in skewed clocks in simulation.
+    alias ck_clk : std_ulogic is ck_clk_o;
+
+    -- Other clocks, resets, controls
+    signal phy_clk : std_ulogic_vector(0 to 1);
+    signal riu_clk : std_ulogic;
     signal reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_vtc : std_ulogic;
-
-    -- A clock for use elsewhere cannot be assigned, only associated, as
-    -- assigning produces a VHDL Delta cycle difference on the assigned clock,
-    -- resulting in skewed clocks in simulation.
-    alias ck_clk : std_ulogic is ck_clk_o;
 
     -- Delay controls
     signal delay_up_down_n : std_ulogic;
@@ -258,15 +258,15 @@ begin
     clocking : entity work.gddr6_phy_clocking generic map (
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
+        io_ck_i => io_ck_in,
+
+        phy_clk_o => phy_clk,
         ck_clk_o => ck_clk,
-        delay_clk_o => delay_clk,
+        riu_clk_o => riu_clk,
 
         ck_reset_i => ck_reset_i,
         ck_clk_ok_o => ck_clk_ok_o,
         ck_unlock_o => ck_unlock_o,
-
-        io_ck_i => io_ck_in,
-        pll_clk_o => pll_clk,
 
         reset_o => reset,
         dly_ready_i => dly_ready,
@@ -277,7 +277,7 @@ begin
 
     -- CA generation
     ca : entity work.gddr6_phy_ca port map (
-        clk_i => ck_clk,
+        ck_clk_i => ck_clk,
         reset_i => reset,
         sg_resets_n_i => sg_resets_n_i,
 
@@ -287,7 +287,6 @@ begin
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
 
-        delay_clk_i => delay_clk,
         delay_rst_i => delay_reset_ca_i,
         delay_inc_i => delay_up_down_n,
         delay_ce_i => ca_tx_delay_ce,
@@ -303,10 +302,10 @@ begin
 
     -- Data receive and transmit
     dq : entity work.gddr6_phy_dq port map (
-        pll_clk_i => pll_clk,       -- Fast data transmit clock from PLL
+        phy_clk_i => phy_clk,       -- Fast data transmit clock from PLL
         wck_i => io_wck_in,         -- WCK for receive clock from edge pins
         ck_clk_i => ck_clk,         -- Fabric clock for bitslice interface
-        delay_clk_i => delay_clk,   -- Internal bitslice and delay control clock
+        riu_clk_i => riu_clk,       -- Internal bitslice and delay control clock
 
         reset_i => reset,
         dly_ready_o => dly_ready,
@@ -360,7 +359,6 @@ begin
 
 
     delay : entity work.gddr6_phy_delay_control port map (
-        delay_clk_i => delay_clk,
         ck_clk_i => ck_clk,
 
         delay_address_i => delay_address_i,

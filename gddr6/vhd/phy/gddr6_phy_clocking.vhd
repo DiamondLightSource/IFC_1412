@@ -16,8 +16,9 @@ entity gddr6_phy_clocking is
     port (
         -- Main clock and reset control.  Hold in reset until CK input valid
         ck_clk_o : out std_ulogic;
-        -- Delay control and state machine clock at half CK frequency
-        delay_clk_o : out std_ulogic;
+        -- Dedicated clock for bitslice RIU.  This is needed for the bitslice
+        -- control, but cannot run at full CK clock speed
+        riu_clk_o : out std_ulogic;
 
         -- Resets and clock status
         ck_reset_i : in std_ulogic;
@@ -26,7 +27,7 @@ entity gddr6_phy_clocking is
 
         -- Clock in from SG12_CK and TX clock out to bitslices
         io_ck_i : in std_ulogic;
-        pll_clk_o : out std_ulogic_vector(0 to 1);
+        phy_clk_o : out std_ulogic_vector(0 to 1);
 
         -- Reset control and management
         reset_o : out std_ulogic;              -- Bitslice reset
@@ -38,8 +39,8 @@ end;
 
 architecture arch of gddr6_phy_clocking is
     signal io_ck_in : std_ulogic;
-    signal clock_out : std_ulogic_vector(0 to 1);
-    signal delay_clock_out : std_ulogic_vector(0 to 1);
+    signal ck_clock_out : std_ulogic_vector(0 to 1);
+    signal riu_clock_out : std_ulogic_vector(0 to 1);
     signal pll_locked : std_ulogic_vector(0 to 1);
     signal unlock_detect : std_ulogic;
 
@@ -47,7 +48,6 @@ architecture arch of gddr6_phy_clocking is
     signal raw_clk : std_ulogic;
     -- Assigning clocks
     alias ck_clk : std_ulogic is ck_clk_o;
-    alias delay_clk : std_ulogic is delay_clk_o;
 
     signal reset_sync : std_ulogic;
     signal dly_ready_in : std_ulogic;
@@ -89,9 +89,9 @@ begin
             CLKOUTPHY_MODE => "VCO_2X" -- 2 or 2.4 GHz on CLKOUTPHY
         ) port map (
             CLKIN => io_ck_in,
-            CLKOUTPHY => pll_clk_o(i),
-            CLKOUT0 => clock_out(i),
-            CLKOUT1 => delay_clock_out(i),
+            CLKOUTPHY => phy_clk_o(i),
+            CLKOUT0 => ck_clock_out(i),
+            CLKOUT1 => riu_clock_out(i),
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
             LOCKED => pll_locked(i),
@@ -109,7 +109,7 @@ begin
     --    It looks like the safest way to do this is to take an unguarded copy
     -- of the clock and use this through a synchroniser.
     raw_bufg : BUFG port map (
-        I => delay_clock_out(0),
+        I => riu_clock_out(0),
         O => raw_clk
     );
 
@@ -124,14 +124,14 @@ begin
 
     -- Enable the global clocks once we're out of reset and the PLL is locked
     ck_bufg : BUFGCE port map (
-        I => clock_out(0),
+        I => ck_clock_out(0),
         O => ck_clk,
         CE => clk_enable
     );
 
-    delay_bufg : BUFGCE port map (
-        I => delay_clock_out(0),
-        O => delay_clk,
+    riu_bufg : BUFGCE port map (
+        I => riu_clock_out(0),
+        O => riu_clk_o,
         CE => clk_enable
     );
 

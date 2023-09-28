@@ -28,8 +28,8 @@ entity gddr6_phy_nibble is
 
     port (
         -- Clocks
-        pll_clk_i : in std_ulogic;      -- Backbone clock from PLL
-        fifo_rd_clk_i : in std_ulogic;  -- Clock for reading RX FIFO
+        phy_clk_i : in std_ulogic;      -- Backbone clock from PLL
+        ck_clk_i : in std_ulogic;       -- Clock for reading RX FIFO
         riu_clk_i : in std_ulogic;      -- Control clock
 
         -- FIFO control (maybe want to handle inside, or as part of reset)
@@ -110,7 +110,7 @@ begin
         VTC_RDY => vtc_ready_o,
         EN_VTC => enable_control_vtc_i,
 
-        PLL_CLK => pll_clk_i,
+        PLL_CLK => phy_clk_i,
         REFCLK => '0',
         RST => reset_i,
         -- Here is a confusing detail.  This value is inverted from this input
@@ -190,7 +190,7 @@ begin
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
         -- Delay
-        CLK => riu_clk_i,
+        CLK => ck_clk_i,
         CE => tri_delay_ce_i,
         INC => delay_up_down_n_i,
         LOAD => '0',
@@ -234,7 +234,7 @@ begin
                 -- Receiver
                 DATAIN => pad_in_i(i),          -- Data in from pad
                 FIFO_EMPTY => fifo_empty_o(i),  -- Read FIFO empty
-                FIFO_RD_CLK => fifo_rd_clk_i,   -- Clock to read fifo
+                FIFO_RD_CLK => ck_clk_i,        -- Clock to read fifo
                 FIFO_RD_EN => fifo_rd_en_i,     -- FIFO enable
                 Q => data_o(i),                 -- Data in read
 
@@ -261,7 +261,7 @@ begin
 
                 -- Delay management interface
                 RX_RST_DLY => reset_i or reset_rx_delay_i(i),
-                RX_CLK => riu_clk_i,
+                RX_CLK => ck_clk_i,
                 RX_CE => rx_delay_ce_i(i),
                 RX_INC => delay_up_down_n_i,
                 RX_LOAD => '0',
@@ -269,7 +269,7 @@ begin
                 RX_CNTVALUEOUT => rx_delay_o(i),
 
                 TX_RST_DLY => reset_i or reset_tx_delay_i(i),
-                TX_CLK => riu_clk_i,
+                TX_CLK => ck_clk_i,
                 TX_CE => tx_delay_ce_i(i),
                 TX_INC => delay_up_down_n_i,
                 TX_LOAD => '0',

@@ -11,10 +11,10 @@ use work.gddr6_config_defs.all;
 entity gddr6_phy_dq is
     port (
         -- Clocks
-        pll_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
+        phy_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
         wck_i : in std_ulogic_vector(0 to 1);       -- RX data clocks
         ck_clk_i : in std_ulogic;                   -- General CK/data clock
-        delay_clk_i : in std_ulogic;                -- Delay control clock
+        riu_clk_i : in std_ulogic;                  -- Delay control clock
 
         -- Resets and control
         reset_i : in std_ulogic;                -- Bitslice reset
@@ -139,9 +139,9 @@ begin
             CLK_TO_NORTH => MAP_CLK_TO_NORTH(i mod 4),
             CLK_TO_SOUTH => MAP_CLK_TO_SOUTH(i mod 4)
         ) port map (
-            pll_clk_i => pll_clk_i(i / 4),
-            fifo_rd_clk_i => ck_clk_i,
-            riu_clk_i => delay_clk_i,
+            phy_clk_i => phy_clk_i(i / 4),
+            ck_clk_i => ck_clk_i,
+            riu_clk_i => riu_clk_i,
 
             fifo_empty_o => slice_fifo_empty(i),
             fifo_enable_i => fifo_enable(i / 4),
