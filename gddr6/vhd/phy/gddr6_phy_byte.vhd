@@ -92,7 +92,7 @@ begin
         constant LOWER_NIBBLE : boolean := i = 0;
         signal clk_from_ext : std_ulogic;
 
-        signal output_enable : std_ulogic_vector(3 downto 0);
+        signal output_enable : std_ulogic_vector(3 downto 0) := (others => '0');
 
     begin
         if_clk : if i = 0 and not CLK_FROM_PIN generate
@@ -156,7 +156,8 @@ begin
             nclk_nibble_o => nclk_nibble_out(i)
         );
 
-        -- Align output enable with data stream
+        -- This extra delay is needed for timing closure.  Unfortunately this
+        -- results in misaligning output_enable and data.
         process (ck_clk_i) begin
             if rising_edge(ck_clk_i) then
                 output_enable <= output_enable_i;

@@ -41,15 +41,15 @@ architecture arch of testbench is
 
     signal ca_in : vector_array(0 to 1)(9 downto 0)
         := (others => (others => '0'));
-    signal ca3_in : std_ulogic_vector(0 to 3);
-    signal cke_n_in : std_ulogic;
+    signal ca3_in : std_ulogic_vector(0 to 3) := (others => '0');
+    signal cke_n_in : std_ulogic := '1';
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
 
     signal data_in : std_ulogic_vector(511 downto 0) := (others => '0');
     signal data_out : std_ulogic_vector(511 downto 0);
     signal edc_out : std_ulogic_vector(63 downto 0);
-    signal output_enable_in : std_ulogic;
+    signal output_enable_in : std_ulogic := '0';
 
     signal delay_address_in : unsigned(7 downto 0);
     signal delay_in : unsigned(7 downto 0);
@@ -168,8 +168,6 @@ begin
     ca3_in <= (others => '0');
     cke_n_in <= '1';
 
-    output_enable_in <= '1';
-
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
@@ -178,14 +176,14 @@ begin
     pad_SG2_WCK_P <= not pad_SG1_WCK_P after WCK_PERIOD / 2 when ck_ok_out;
     pad_SG2_WCK_N <= not pad_SG2_WCK_P;
 
-    pad_SG1_DQ_A <= (others => 'Z');
-    pad_SG1_DQ_B <= (others => 'Z');
-    pad_SG2_DQ_A <= (others => 'Z');
-    pad_SG2_DQ_B <= (others => 'Z');
-    pad_SG1_DBI_N_A <= (others => 'Z');
-    pad_SG1_DBI_N_B <= (others => 'Z');
-    pad_SG2_DBI_N_A <= (others => 'Z');
-    pad_SG2_DBI_N_B <= (others => 'Z');
+    pad_SG1_DQ_A <= (others => 'H');
+    pad_SG1_DQ_B <= (others => 'H');
+    pad_SG2_DQ_A <= (others => 'H');
+    pad_SG2_DQ_B <= (others => 'H');
+    pad_SG1_DBI_N_A <= (others => 'H');
+    pad_SG1_DBI_N_B <= (others => 'H');
+    pad_SG2_DBI_N_A <= (others => 'H');
+    pad_SG2_DBI_N_B <= (others => 'H');
     pad_SG1_EDC_A <= (others => 'H');
     pad_SG1_EDC_B <= (others => 'H');
     pad_SG2_EDC_A <= (others => 'H');
@@ -236,6 +234,9 @@ begin
         delay_reset_dq_tx_in <= '1';
         read_delay_address_in <= (others => '0');
 
+        data_in <= (others => '1');
+        output_enable_in <= '0';
+
         wait for 50 ns;
         ck_reset_in <= '0';
 
@@ -260,15 +261,14 @@ begin
         read_delay(2#0100_0010#);
         read_delay(2#0100_0011#);
 
+        clk_wait;
+        output_enable_in <= '1';
+        clk_wait;
+        output_enable_in <= '0';
+        data_in <= (others => '0');
+        clk_wait;
+        data_in <= (others => '1');
+
         wait;
-    end process;
-
-
-    -- Generate toggling data on CA and DQ output
-    process (ck_clk) begin
-        if rising_edge(ck_clk) then
-            ca_in(0) <= not ca_in(0);
-            data_in <= not data_in;
-        end if;
     end process;
 end;

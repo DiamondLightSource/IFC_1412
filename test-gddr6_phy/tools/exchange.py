@@ -48,7 +48,7 @@ class Exchange:
                 sg.DQ._value = d
             sg.CA._write_fields_wo(
                 RISING = ca & 0x3FF, FALLING = (ca >> 10) & 0x3FF,
-                CA3 = ca3, CKE_N = cke_n, DQ_T = dqt)
+                CA3 = ca3, CKE_N = cke_n, OUTPUT_ENABLE = not dqt)
 
         # Exchange
         sg.COMMAND._write_fields_wo(EXCHANGE = 1, START_READ = 1)

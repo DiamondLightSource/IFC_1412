@@ -62,7 +62,7 @@ begin
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
         DATA_BITS => 26,
-        INITIAL => (others => '1'),
+        INITIAL => (25 => '0', others => '1'),
         MARK_FALSE_PATH => true
     ) port map (
         write_clk_i => reg_clk_i,
