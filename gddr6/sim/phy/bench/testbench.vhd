@@ -54,6 +54,7 @@ architecture arch of testbench is
     signal delay_address_in : unsigned(7 downto 0);
     signal delay_in : unsigned(7 downto 0);
     signal delay_up_down_n_in : std_ulogic;
+    signal delay_byteslip_in : std_ulogic;
     signal delay_strobe_in : std_ulogic;
     signal delay_ack_out : std_ulogic;
     signal delay_reset_ca_in : std_ulogic;
@@ -122,6 +123,7 @@ begin
         delay_address_i => delay_address_in,
         delay_i => delay_in,
         delay_up_down_n_i => delay_up_down_n_in,
+        delay_byteslip_i => delay_byteslip_in,
         delay_strobe_i => delay_strobe_in,
         delay_ack_o => delay_ack_out,
         delay_reset_ca_i => delay_reset_ca_in,
@@ -198,12 +200,14 @@ begin
         end;
 
         procedure write_delay(
-            address : natural; delay : natural; up_down_n : std_ulogic := '1')
+            address : natural; delay : natural;
+            up_down_n : std_ulogic := '1'; byteslip : std_ulogic := '0')
         is
         begin
             delay_address_in <= to_unsigned(address, 8);
             delay_in <= to_unsigned(delay, 8);
             delay_up_down_n_in <= up_down_n;
+            delay_byteslip_in <= byteslip;
             delay_strobe_in <= '1';
             loop
                 clk_wait;
@@ -213,6 +217,7 @@ begin
             delay_address_in <= (others => 'U');
             delay_in <= (others => 'U');
             delay_up_down_n_in <= 'U';
+            delay_byteslip_in <= 'U';
         end;
 
         procedure read_delay(address : natural) is
@@ -222,6 +227,11 @@ begin
             write(
                 "delay[" & to_hstring(read_delay_address_in) &
                 "] = " & to_string(to_integer(read_delay_out)));
+        end;
+
+        procedure byteslip(address : natural) is
+        begin
+            write_delay(address, 0, '0', '1');
         end;
 
     begin
@@ -248,12 +258,14 @@ begin
         clk_wait(10);
 
         write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6
-        write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 += 8
+        write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 = 7
         write_delay(2#0000_0010#, 6);       -- DQ RX 2 += 7
         write_delay(2#0100_0010#, 12);      -- DQ TX 2 += 13
         clk_wait;
         write_delay(2#0100_0011#, 9);       -- DQ TX 3 += 10
         write_delay(2#0100_0011#, 9, '0');  -- DQ TX 3 -= 10
+
+        byteslip(2#0000_0010#);             -- DQ RX 2 byteslip
 
         read_delay(2#1111_0000#);
         read_delay(2#1000_0001#);

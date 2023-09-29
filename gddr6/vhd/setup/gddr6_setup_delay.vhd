@@ -31,6 +31,7 @@ entity gddr6_setup_delay is
         delay_address_o : out unsigned(7 downto 0);
         delay_o : out unsigned(7 downto 0);
         delay_up_down_n_o : out std_ulogic;
+        delay_byteslip_o : out std_ulogic;
         delay_strobe_o : out std_ulogic;
         delay_ack_i : in std_ulogic;
         -- Individual delay readbacks
@@ -84,6 +85,7 @@ begin
                 unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS));
             delay_o <= full_delay_out(delay_o'RANGE);
             delay_up_down_n_o <= write_data(GDDR6_DELAY_UP_DOWN_N_BIT);
+            delay_byteslip_o <= write_data(GDDR6_DELAY_BYTESLIP_BIT);
 
             delay_strobe_o <= write_strobe and not suppress_write;
             write_ack <= delay_ack_i or (suppress_write and write_strobe);

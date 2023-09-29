@@ -22,6 +22,7 @@ entity gddr6_phy_dq_remap is
         -- Delay controls
         slice_rx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
         slice_tx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
+        slice_rx_byteslip_o : out vector_array(0 to 7)(0 to 11);
         -- Delay readbacks
         slice_rx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
         slice_tx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
@@ -35,9 +36,12 @@ entity gddr6_phy_dq_remap is
         -- Delay controls
         bank_dq_rx_delay_ce_i : in std_ulogic_vector(63 downto 0);
         bank_dq_tx_delay_ce_i : in std_ulogic_vector(63 downto 0);
+        bank_dq_rx_byteslip_i : in std_ulogic_vector(63 downto 0);
         bank_dbi_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
         bank_dbi_tx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        bank_dbi_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
         bank_edc_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        bank_edc_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
         -- Delay readbacks
         bank_dq_rx_delay_o : out vector_array(63 downto 0)(8 downto 0);
         bank_dq_tx_delay_o : out vector_array(63 downto 0)(8 downto 0);
@@ -78,6 +82,7 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= bank_dq_rx_delay_ce_i(i);
         slice_tx_delay_ce_o(byte)(slice) <= bank_dq_tx_delay_ce_i(i);
+        slice_rx_byteslip_o(byte)(slice) <= bank_dq_rx_byteslip_i(i);
         bank_dq_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
         bank_dq_tx_delay_o(i) <= slice_tx_delay_i(byte)(slice);
     end generate;
@@ -97,6 +102,7 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= bank_dbi_rx_delay_ce_i(i);
         slice_tx_delay_ce_o(byte)(slice) <= bank_dbi_tx_delay_ce_i(i);
+        slice_rx_byteslip_o(byte)(slice) <= bank_dbi_rx_byteslip_i(i);
         bank_dbi_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
         bank_dbi_tx_delay_o(i) <= slice_tx_delay_i(byte)(slice);
     end generate;
@@ -114,6 +120,7 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= bank_edc_rx_delay_ce_i(i);
         slice_tx_delay_ce_o(byte)(slice) <= '0';
+        slice_rx_byteslip_o(byte)(slice) <= bank_edc_rx_byteslip_i(i);
         bank_edc_rx_delay_o(i) <= slice_rx_delay_i(byte)(slice);
     end generate;
 
@@ -126,6 +133,7 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
+        slice_rx_byteslip_o(byte)(slice) <= '0';
     end generate;
 
     -- PATCH: link component signal to patch bitslice
@@ -137,6 +145,7 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
+        slice_rx_byteslip_o(byte)(slice) <= '0';
     end generate;
 
     -- Finally fill in suitable empty markers for unused entries.  This is
@@ -150,6 +159,7 @@ begin
                 slice_data_o(byte)(slice) <= X"00";
                 slice_rx_delay_ce_o(byte)(slice) <= '0';
                 slice_tx_delay_ce_o(byte)(slice) <= '0';
+                slice_rx_byteslip_o(byte)(slice) <= '0';
             end generate;
         end generate;
     end generate;

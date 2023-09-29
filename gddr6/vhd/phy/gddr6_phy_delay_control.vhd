@@ -14,12 +14,13 @@ entity gddr6_phy_delay_control is
         delay_address_i : in unsigned(7 downto 0);
         delay_i : in unsigned(7 downto 0);
         delay_up_down_n_i : in std_ulogic;
+        byteslip_i : in std_ulogic;
         strobe_i : in std_ulogic;
         ack_o : out std_ulogic;
 
         -- Bitslip control
         bitslip_address_o : out unsigned(6 downto 0);
-        bitslip_delay_o : out unsigned(3 downto 0);
+        bitslip_delay_o : out unsigned(2 downto 0);
         bitslip_strobe_o : out std_ulogic;
 
         -- Delay direction common to all I/O DELAY controls
@@ -30,9 +31,12 @@ entity gddr6_phy_delay_control is
         -- DQ controls
         dq_rx_delay_ce_o : out std_ulogic_vector(63 downto 0);
         dq_tx_delay_ce_o : out std_ulogic_vector(63 downto 0);
+        dq_rx_byteslip_o : out std_ulogic_vector(63 downto 0);
         dbi_rx_delay_ce_o : out std_ulogic_vector(7 downto 0);
         dbi_tx_delay_ce_o : out std_ulogic_vector(7 downto 0);
+        dbi_rx_byteslip_o : out std_ulogic_vector(7 downto 0);
         edc_rx_delay_ce_o : out std_ulogic_vector(7 downto 0);
+        edc_rx_byteslip_o : out std_ulogic_vector(7 downto 0);
 
         -- Delay readbacks
         -- Individual delay readbacks
@@ -42,6 +46,7 @@ entity gddr6_phy_delay_control is
         delay_dbi_tx_i : in vector_array(7 downto 0)(8 downto 0);
         delay_edc_rx_i : in vector_array(7 downto 0)(8 downto 0);
         delay_ca_tx_i : in vector_array(15 downto 0)(8 downto 0);
+
         -- Readback interface
         -- There is a one clock tick latency from setting read_delay_address_i
         -- to updating read_delay_o.
@@ -57,15 +62,6 @@ architecture arch of gddr6_phy_delay_control is
     signal pending_request : std_ulogic := '0'; -- Strobe seen, but waiting
     signal strobe_in : std_ulogic;              -- Start working on request
 
-    -- Handshake from CK => Delay and back again.  State machine is a
-    -- combination of write_request, set in response to strobe_in, and
-    -- running_delay, set in response to write_request and reset when done.
-    -- States:
-    --  not request, not active:    Idle, waiting for strobe_in
-    --  request, not active:        Waking delay counter in Delay domain
-    --  request, active:            Delay counter started
-    --  not request, active:        Waiting for counter to complete
-    signal write_request : std_ulogic := '0';   -- Waiting for write to complete
     signal write_busy : std_ulogic;
 
     signal is_bitslip : boolean;
@@ -73,12 +69,10 @@ architecture arch of gddr6_phy_delay_control is
     signal running_delay : std_ulogic := '0';
     signal delay_count : delay_i'SUBTYPE;
 
-    signal delay_address_in : delay_address_i'SUBTYPE;
     signal delay_address : delay_address_i'SUBTYPE := (others => '0');
-    signal delay_up_down_n_in : std_ulogic;
-    signal delay_in : delay_i'SUBTYPE;
 
     signal ce_out : std_ulogic_vector(255 downto 0) := (others => '0');
+    signal bs_out : std_ulogic_vector(255 downto 0) := (others => '0');
 
     signal delays_in : vector_array(255 downto 0)(8 downto 0);
 
@@ -107,6 +101,11 @@ begin
     edc_rx_delay_ce_o <= ce_out(2#1110_0111# downto 2#1110_0000#); -- 1110_0xxx
     ca_tx_delay_ce_o  <= ce_out(2#1111_1111# downto 2#1111_0000#); -- 1111_xxxx
 
+    -- Byteslips use similar addresses on the low part
+    dq_rx_byteslip_o  <= bs_out(2#0011_1111# downto 2#0000_0000#); --  0xx_xxxx
+    dbi_rx_byteslip_o <= bs_out(2#0100_0111# downto 2#0100_0000#); --  100_0xxx
+    edc_rx_byteslip_o <= bs_out(2#0100_1111# downto 2#0100_1000#); --  100_1xxx
+
     -- Use the same mapping for delay readbacks (no bitslip readback)
     delays_in <= (
         2#0011_1111# downto 2#0000_0000# => delay_dq_rx_i,         -- 00xx_xxxx
@@ -120,7 +119,7 @@ begin
 
     -- Start processing the next request when we're not busy
     strobe_in <= not write_busy and (strobe_i or pending_request);
-    write_busy <= write_request or running_delay;
+    write_busy <= running_delay;
 
     -- The address range 10xx_xxxx and 1100_xxxx is under bitslice control.
     -- Note that this is only valid when strobe_in is active!
@@ -140,41 +139,40 @@ begin
 
             if strobe_in then
                 -- Register parameters on incoming strobe while they're valid
-                delay_address_in <= delay_address_i;
-                delay_up_down_n_in <= delay_up_down_n_i;
-                delay_in <= delay_i;
+                delay_address <= delay_address_i;
 
-                if is_bitslip then
+                if byteslip_i then
+                    -- No action required here
+                elsif is_bitslip then
                     -- Forward relevant part of address to bitslip control
-                    bitslip_address_o <= delay_address_i(6 downto 0);
-                    bitslip_delay_o <= delay_i(3 downto 0);
+                    bitslip_address_o <=
+                        delay_address_i(bitslip_address_o'RANGE);
+                    bitslip_delay_o <= delay_i(bitslip_delay_o'RANGE);
                 else
-                    write_request <= '1';
+                    delay_up_down_n_o <= delay_up_down_n_i;
+                    delay_count <= delay_i;
+                    running_delay <= '1';
                 end if;
             elsif running_delay then
-                write_request <= '0';
-            end if;
-
-            if running_delay then
                 if delay_count > 0 then
                     delay_count <= delay_count - 1;
                 else
                     running_delay <= '0';
                 end if;
-            elsif write_request then
-                delay_up_down_n_o <= delay_up_down_n_in;
-                delay_address <= delay_address_in;
-                delay_count <= delay_in;
-                running_delay <= '1';
             end if;
 
             compute_strobe(ce_out, to_integer(delay_address), running_delay);
+            if strobe_in then
+                compute_strobe(bs_out, to_integer(delay_address_i), byteslip_i);
+            else
+                bs_out <= (others => '0');
+            end if;
 
+            -- Decode incoming delays from given address
             read_delay_o <=
                 unsigned(delays_in(to_integer(read_delay_address_i)));
         end if;
     end process;
-
 
     -- When operating in DELAY = "COUNT" mode we must hold VTC low
     enable_bitslice_vtc_o <= '0';

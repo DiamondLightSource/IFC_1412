@@ -37,9 +37,12 @@ entity gddr6_phy_dq is
         delay_up_down_n_i : in std_ulogic;
         dq_rx_delay_ce_i : in std_ulogic_vector(63 downto 0);
         dq_tx_delay_ce_i : in std_ulogic_vector(63 downto 0);
+        dq_rx_byteslip_i : in std_ulogic_vector(63 downto 0);
         dbi_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
         dbi_tx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        dbi_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
         edc_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
+        edc_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
         -- Individual delay resets
         reset_rx_delay_i : in std_ulogic;
         reset_tx_delay_i : in std_ulogic;
@@ -51,7 +54,7 @@ entity gddr6_phy_dq is
         edc_rx_delay_o : out vector_array(7 downto 0)(8 downto 0);
 
         -- Bitslip control
-        bitslip_delay_i : in unsigned(3 downto 0);
+        bitslip_delay_i : in unsigned(2 downto 0);
         bitslip_address_i : in unsigned(6 downto 0);
         bitslip_strobe_i : in std_ulogic;
 
@@ -101,6 +104,7 @@ architecture arch of gddr6_phy_dq is
     signal slice_tri_delay_ce : vector_array(0 to 7)(0 to 1);
     signal slice_rx_delay_ce : vector_array(0 to 7)(0 to 11);
     signal slice_tx_delay_ce : vector_array(0 to 7)(0 to 11);
+    signal slice_rx_byteslip : vector_array(0 to 7)(0 to 11);
     -- Delay readbacks
     signal slice_tri_delay : vector_array_array(0 to 7)(0 to 1)(8 downto 0);
     signal slice_rx_delay : vector_array_array(0 to 7)(0 to 11)(8 downto 0);
@@ -163,6 +167,7 @@ begin
             tri_delay_ce_i => slice_tri_delay_ce(i),
             rx_delay_ce_i => slice_rx_delay_ce(i),
             tx_delay_ce_i => slice_tx_delay_ce(i),
+            rx_byteslip_i => slice_rx_byteslip(i),
             tri_delay_o => slice_tri_delay(i),
             tx_delay_o => slice_tx_delay(i),
             rx_delay_o => slice_rx_delay(i),
@@ -210,6 +215,7 @@ begin
         -- Delay control
         slice_rx_delay_ce_o => slice_rx_delay_ce,
         slice_tx_delay_ce_o => slice_tx_delay_ce,
+        slice_rx_byteslip_o => slice_rx_byteslip,
         -- Delay readbacks
         slice_rx_delay_i => slice_rx_delay,
         slice_tx_delay_i => slice_tx_delay,
@@ -223,9 +229,12 @@ begin
         -- Delay control
         bank_dq_rx_delay_ce_i => dq_rx_delay_ce_i,
         bank_dq_tx_delay_ce_i => dq_tx_delay_ce_i,
+        bank_dq_rx_byteslip_i => dq_rx_byteslip_i,
         bank_dbi_rx_delay_ce_i => dbi_rx_delay_ce_i,
         bank_dbi_tx_delay_ce_i => dbi_tx_delay_ce_i,
+        bank_dbi_rx_byteslip_i => dbi_rx_byteslip_i,
         bank_edc_rx_delay_ce_i => edc_rx_delay_ce_i,
+        bank_edc_rx_byteslip_i => edc_rx_byteslip_i,
         -- Delay readbacks
         bank_dq_rx_delay_o => dq_rx_delay_o,
         bank_dq_tx_delay_o => dq_tx_delay_o,

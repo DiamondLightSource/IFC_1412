@@ -43,6 +43,7 @@ entity gddr6_setup is
         delay_address_o : out unsigned(7 downto 0);
         delay_o : out unsigned(7 downto 0);
         delay_up_down_n_o : out std_ulogic;
+        delay_byteslip_o : out std_ulogic;
         delay_strobe_o : out std_ulogic;
         delay_ack_i : in std_ulogic;
         -- Individual delay resets
@@ -123,6 +124,7 @@ begin
         delay_address_o => delay_address_o,
         delay_o => delay_o,
         delay_up_down_n_o => delay_up_down_n_o,
+        delay_byteslip_o => delay_byteslip_o,
         delay_strobe_o => delay_strobe_o,
         delay_ack_i => delay_ack_i,
 

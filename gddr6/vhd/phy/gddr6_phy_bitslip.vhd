@@ -18,8 +18,8 @@ entity gddr6_phy_bitslip is
         clk_i : in std_ulogic;
 
         -- Control interface.  Each bit needs a separate control, and a shift of
-        -- up to 15 bits can be selected
-        delay_i : in unsigned(3 downto 0);
+        -- up to 7 bits can be selected
+        delay_i : in unsigned(2 downto 0);
         -- The bits are addressed as follows:
         --  63..0  => Selects DQ input
         --  71..64 => Selectes DBI input
@@ -41,15 +41,15 @@ end;
 
 architecture arch of gddr6_phy_bitslip is
     subtype BIT_ARRAY_RANGE is natural range 79 downto 0;
-    signal bitslip : unsigned_array(BIT_ARRAY_RANGE)(3 downto 0)
+    signal bitslip : unsigned_array(BIT_ARRAY_RANGE)(2 downto 0)
         := (others => (others => '0'));
     signal bit_arrays_in : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
-    signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(23 downto 0);
+    signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(15 downto 0);
     signal bit_arrays_out : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
 
     signal delay_strobe_in : std_ulogic := '0';
     signal delay_address_in : natural range 0 to 79;
-    signal delay_in : unsigned(3 downto 0);
+    signal delay_in : unsigned(2 downto 0);
 
 begin
     -- Writing selected delay
@@ -76,19 +76,19 @@ begin
     -- Process all bits
     gen_bits : for bit in BIT_ARRAY_RANGE generate
         -- The first byte is just a copy of the original data
-        bit_arrays(bit)(23 downto 16) <= bit_arrays_in(bit);
+        bit_arrays(bit)(15 downto 8) <= bit_arrays_in(bit);
 
         process (clk_i)
-            variable shift : natural range 0 to 15;
+            variable shift : natural range 0 to 7;
         begin
             if rising_edge(clk_i) then
                 -- The rest of the array remembers older bits
-                bit_arrays(bit)(15 downto 0) <= bit_arrays(bit)(23 downto 8);
+                bit_arrays(bit)(7 downto 0) <= bit_arrays(bit)(15 downto 8);
 
                 -- Select desired output
                 shift := to_integer(bitslip(bit));
                 bit_arrays_out(bit) <=
-                    bit_arrays(bit)(23 - shift downto 16 - shift);
+                    bit_arrays(bit)(15 - shift downto 8 - shift);
             end if;
         end process;
     end generate;

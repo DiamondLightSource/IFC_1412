@@ -113,6 +113,7 @@ architecture arch of gddr6_setup_phy is
     signal delay_address : unsigned(7 downto 0);
     signal delay : unsigned(7 downto 0);
     signal delay_up_down_n : std_ulogic;
+    signal delay_byteslip : std_ulogic;
     signal delay_strobe : std_ulogic;
     signal delay_ack : std_ulogic;
 
@@ -161,6 +162,7 @@ begin
         delay_address_o => delay_address,
         delay_o => delay,
         delay_up_down_n_o => delay_up_down_n,
+        delay_byteslip_o => delay_byteslip,
         delay_strobe_o => delay_strobe,
         delay_ack_i => delay_ack,
         delay_reset_ca_o => delay_reset_ca,
@@ -209,6 +211,7 @@ begin
         delay_address_i => delay_address,
         delay_i => delay,
         delay_up_down_n_i => delay_up_down_n,
+        delay_byteslip_i => delay_byteslip,
         delay_strobe_i => delay_strobe,
         delay_ack_o => delay_ack,
         delay_reset_ca_i => delay_reset_ca,

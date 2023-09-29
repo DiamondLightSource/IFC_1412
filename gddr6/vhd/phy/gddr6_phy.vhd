@@ -100,6 +100,7 @@ entity gddr6_phy is
         delay_address_i : in unsigned(7 downto 0);
         delay_i : in unsigned(7 downto 0);
         delay_up_down_n_i : in std_ulogic;
+        delay_byteslip_i : in std_ulogic;
         delay_strobe_i : in std_ulogic;
         delay_ack_o : out std_ulogic;
         -- Individual delay resets.  These must be held for several ticks to
@@ -188,11 +189,14 @@ architecture arch of gddr6_phy is
     signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
     signal dq_rx_delay_ce : std_ulogic_vector(63 downto 0);
     signal dq_tx_delay_ce : std_ulogic_vector(63 downto 0);
+    signal dq_rx_byteslip : std_ulogic_vector(63 downto 0);
     signal dbi_rx_delay_ce : std_ulogic_vector(7 downto 0);
     signal dbi_tx_delay_ce : std_ulogic_vector(7 downto 0);
+    signal dbi_rx_byteslip : std_ulogic_vector(7 downto 0);
     signal edc_rx_delay_ce : std_ulogic_vector(7 downto 0);
+    signal edc_rx_byteslip : std_ulogic_vector(7 downto 0);
     -- DQ bitslip
-    signal bitslip_delay : unsigned(3 downto 0);
+    signal bitslip_delay : unsigned(2 downto 0);
     signal bitslip_address : unsigned(6 downto 0);
     signal bitslip_strobe : std_ulogic;
     -- Individual delay readbacks
@@ -325,9 +329,12 @@ begin
         delay_up_down_n_i => delay_up_down_n,
         dq_rx_delay_ce_i => dq_rx_delay_ce,
         dq_tx_delay_ce_i => dq_tx_delay_ce,
+        dq_rx_byteslip_i => dq_rx_byteslip,
         dbi_rx_delay_ce_i => dbi_rx_delay_ce,
         dbi_tx_delay_ce_i => dbi_tx_delay_ce,
+        dbi_rx_byteslip_i => dbi_rx_byteslip,
         edc_rx_delay_ce_i => edc_rx_delay_ce,
+        edc_rx_byteslip_i => edc_rx_byteslip,
 
         reset_rx_delay_i => delay_reset_dq_rx_i,
         reset_tx_delay_i => delay_reset_dq_tx_i,
@@ -364,6 +371,7 @@ begin
         delay_address_i => delay_address_i,
         delay_i => delay_i,
         delay_up_down_n_i => delay_up_down_n_i,
+        byteslip_i => delay_byteslip_i,
         strobe_i => delay_strobe_i,
         ack_o => delay_ack_o,
 
@@ -372,9 +380,12 @@ begin
         ca_tx_delay_ce_o => ca_tx_delay_ce,
         dq_rx_delay_ce_o => dq_rx_delay_ce,
         dq_tx_delay_ce_o => dq_tx_delay_ce,
+        dq_rx_byteslip_o => dq_rx_byteslip,
         dbi_rx_delay_ce_o => dbi_rx_delay_ce,
         dbi_tx_delay_ce_o => dbi_tx_delay_ce,
+        dbi_rx_byteslip_o => dbi_rx_byteslip,
         edc_rx_delay_ce_o => edc_rx_delay_ce,
+        edc_rx_byteslip_o => edc_rx_byteslip,
 
         bitslip_address_o => bitslip_address,
         bitslip_delay_o => bitslip_delay,

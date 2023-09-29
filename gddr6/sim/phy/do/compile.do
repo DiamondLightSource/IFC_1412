@@ -41,6 +41,7 @@ add wave -group "Clocking" /phy/clocking/*
 add wave -group "CA" /phy/ca/*
 add wave -group "DQ Nibble(0)" /phy/dq/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
 add wave -group "Map Slices" /phy/dq/map_slices/*
+add wave -group "Bitslip" /phy/dq/bitslip/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
 add wave -group "Delay" /phy/delay/*

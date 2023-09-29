@@ -66,6 +66,9 @@
         # Suppress write requested, used to set address for reading without
         # writing
         .NO_WRITE
+        # If this bit is set this is a byteslip write and only the .ADDRESS
+        # field is used
+        .BYTESLIP
 
     !!EXCHANGE
         COMMAND     WP
