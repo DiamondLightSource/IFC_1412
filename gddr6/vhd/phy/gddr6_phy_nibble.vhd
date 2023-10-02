@@ -19,6 +19,11 @@ entity gddr6_phy_nibble is
         -- Slices with special EDC tristate control
         BITSLICE_EDC : std_ulogic_vector(0 to 5);
 
+        -- Calibration mode
+        CALIBRATE_DELAY : boolean;
+        INITIAL_DELAY : natural;
+        REFCLK_FREQUENCY : real;
+
         -- The upper nibble always receives clocks from the lower nibble
         LOWER_NIBBLE : boolean;
         -- For the lower nibble, the clock either comes from bitslice 0 or from
@@ -228,8 +233,12 @@ begin
                 RX_DATA_TYPE => rx_data_type,
                 RX_DATA_WIDTH => 8,
                 TX_DATA_WIDTH => 8,
-                RX_DELAY_FORMAT => "COUNT",
-                TX_DELAY_FORMAT => "COUNT",
+                RX_DELAY_FORMAT => choose(CALIBRATE_DELAY, "TIME", "COUNT"),
+                TX_DELAY_FORMAT => choose(CALIBRATE_DELAY, "TIME", "COUNT"),
+                RX_DELAY_VALUE => INITIAL_DELAY,
+                TX_DELAY_VALUE => INITIAL_DELAY,
+                RX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+                TX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 RX_DELAY_TYPE => "VAR_LOAD",
                 TX_DELAY_TYPE => "VAR_LOAD",
                 RX_UPDATE_MODE => "ASYNC",

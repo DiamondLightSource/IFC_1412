@@ -9,6 +9,11 @@ use work.support.all;
 use work.gddr6_config_defs.all;
 
 entity gddr6_phy_dq is
+    generic (
+        CALIBRATE_DELAY : boolean;
+        INITIAL_DELAY : natural;
+        REFCLK_FREQUENCY : real
+    );
     port (
         -- Clocks
         phy_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
@@ -144,6 +149,11 @@ begin
         byte : entity work.gddr6_phy_byte generic map (
             BITSLICE_WANTED => bitslice_wanted(i),
             BITSLICE_EDC => bitslice_wanted(i, CONFIG_BANK_EDC),
+
+            CALIBRATE_DELAY => CALIBRATE_DELAY,
+            INITIAL_DELAY => INITIAL_DELAY,
+            REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+
             CLK_FROM_PIN => MAP_CLK_FROM_PIN(i mod 4),
             CLK_TO_NORTH => MAP_CLK_TO_NORTH(i mod 4),
             CLK_TO_SOUTH => MAP_CLK_TO_SOUTH(i mod 4)

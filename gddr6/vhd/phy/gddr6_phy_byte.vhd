@@ -16,6 +16,11 @@ entity gddr6_phy_byte is
         -- Slices with special EDC tristate control
         BITSLICE_EDC : std_ulogic_vector(0 to 11);
 
+        -- Calibration mode
+        CALIBRATE_DELAY : boolean;
+        INITIAL_DELAY : natural;
+        REFCLK_FREQUENCY : real;
+
         -- For the lower nibble, the clock either comes from bitslice 0 or from
         -- another byte, and clocks are distributed to adjacent bytes
         CLK_FROM_PIN : boolean;         -- Set if clock from bitslice 0
@@ -110,6 +115,10 @@ begin
         nibble : entity work.gddr6_phy_nibble generic map (
             BITSLICE_WANTED => BITSLICE_WANTED(BITSLICE_RANGE),
             BITSLICE_EDC => BITSLICE_EDC(BITSLICE_RANGE),
+
+            CALIBRATE_DELAY => CALIBRATE_DELAY,
+            INITIAL_DELAY => INITIAL_DELAY,
+            REFCLK_FREQUENCY => REFCLK_FREQUENCY,
 
             LOWER_NIBBLE => LOWER_NIBBLE,
             CLK_FROM_PIN => LOWER_NIBBLE and CLK_FROM_PIN,

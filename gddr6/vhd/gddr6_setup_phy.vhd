@@ -16,7 +16,10 @@ entity gddr6_setup_phy is
     generic (
         CK_FREQUENCY : real := 250.0;
         -- Delay readback is quite expensive in terms of fabric, so is optional
-        ENABLE_DELAY_READBACK : boolean := false
+        ENABLE_DELAY_READBACK : boolean := false;
+        -- Optionally operate with calibrated delays
+        CALIBRATE_DELAY : boolean := false;
+        INITIAL_DELAY : natural := 0
     );
     port (
         reg_clk_i : in std_ulogic;      -- Register interface only
@@ -186,7 +189,9 @@ begin
 
 
     phy : entity work.gddr6_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY
+        CK_FREQUENCY => CK_FREQUENCY,
+        CALIBRATE_DELAY => CALIBRATE_DELAY,
+        INITIAL_DELAY => INITIAL_DELAY
     ) port map (
         ck_clk_o => ck_clk,
 

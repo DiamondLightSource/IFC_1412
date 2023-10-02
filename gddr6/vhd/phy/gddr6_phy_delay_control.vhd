@@ -7,6 +7,9 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 entity gddr6_phy_delay_control is
+    generic (
+        CALIBRATE_DELAY : boolean
+    );
     port (
         ck_clk_i : std_ulogic;
 
@@ -77,6 +80,10 @@ architecture arch of gddr6_phy_delay_control is
     signal delays_in : vector_array(255 downto 0)(8 downto 0);
 
 begin
+    assert not CALIBRATE_DELAY
+        report "Delay TIME calibration not implemented yet"
+        severity failure;
+
     -- Map output strobes according to addressing.  The bitslice looks after
     -- itself and just takes an address
     -- The address map is as follows:

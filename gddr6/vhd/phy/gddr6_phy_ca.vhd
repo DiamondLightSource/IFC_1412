@@ -11,6 +11,11 @@ use work.support.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_ca is
+    generic (
+        CALIBRATE_DELAY : boolean;
+        INITIAL_DELAY : natural;
+        REFCLK_FREQUENCY : real
+    );
     port (
         ck_clk_i : in std_ulogic;
 
@@ -114,10 +119,11 @@ begin
             );
 
             odelay : ODELAYE3 generic map (
+                DELAY_FORMAT => choose(CALIBRATE_DELAY, "TIME", "COUNT"),
+                REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+                DELAY_VALUE => INITIAL_DELAY,
                 DELAY_TYPE => "VAR_LOAD",
-                DELAY_FORMAT => "COUNT",
-                UPDATE_MODE => "ASYNC",
-                DELAY_VALUE => 0
+                UPDATE_MODE => "ASYNC"
             ) port map (
                 ODATAIN => data_out,
                 DATAOUT => ca_out(i),

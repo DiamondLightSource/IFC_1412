@@ -35,7 +35,9 @@ use work.support.all;
 
 entity gddr6_phy is
     generic (
-        CK_FREQUENCY : real := 250.0    -- 250.0 or 300.0 MHz
+        CK_FREQUENCY : real := 250.0;       -- 250.0 or 300.0 MHz
+        CALIBRATE_DELAY : boolean := false; -- Enables use of DELAY_FORMAT=TIME
+        INITIAL_DELAY : natural := 0
     );
     port (
         -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
@@ -150,6 +152,8 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
+    constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
+
     -- Pads with IO buffers
     -- Clocks and reset
     signal io_ck_in : std_ulogic;
@@ -286,7 +290,11 @@ begin
 
 
     -- CA generation
-    ca : entity work.gddr6_phy_ca port map (
+    ca : entity work.gddr6_phy_ca generic map (
+        CALIBRATE_DELAY => CALIBRATE_DELAY,
+        INITIAL_DELAY => INITIAL_DELAY,
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+    ) port map (
         ck_clk_i => ck_clk,
         reset_i => reset,
         sg_resets_n_i => sg_resets_n_i,
@@ -311,7 +319,11 @@ begin
 
 
     -- Data receive and transmit
-    dq : entity work.gddr6_phy_dq port map (
+    dq : entity work.gddr6_phy_dq generic map (
+        CALIBRATE_DELAY => CALIBRATE_DELAY,
+        INITIAL_DELAY => INITIAL_DELAY,
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+    ) port map (
         phy_clk_i => phy_clk,       -- Fast data transmit clock from PLL
         wck_i => io_wck_in,         -- WCK for receive clock from edge pins
         ck_clk_i => ck_clk,         -- Fabric clock for bitslice interface
@@ -375,7 +387,9 @@ begin
     bitslice_patch <= (0 => io_ck_in);
 
 
-    delay : entity work.gddr6_phy_delay_control port map (
+    delay : entity work.gddr6_phy_delay_control generic map (
+        CALIBRATE_DELAY => CALIBRATE_DELAY
+    ) port map (
         ck_clk_i => ck_clk,
 
         delay_address_i => delay_address_i,
