@@ -50,6 +50,7 @@ architecture arch of testbench is
     signal data_out : std_ulogic_vector(511 downto 0);
     signal edc_out : std_ulogic_vector(63 downto 0);
     signal output_enable_in : std_ulogic := '0';
+    signal edc_t_in : std_ulogic := '0';
 
     signal delay_address_in : unsigned(7 downto 0);
     signal delay_in : unsigned(7 downto 0);
@@ -117,6 +118,7 @@ begin
         data_i => data_in,
         data_o => data_out,
         output_enable_i => output_enable_in,
+        edc_t_i => edc_t_in,
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
 
@@ -256,6 +258,7 @@ begin
         delay_reset_dq_tx_in <= '0';
 
         clk_wait(10);
+        edc_t_in <= '1';
 
         write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6
         write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 = 7

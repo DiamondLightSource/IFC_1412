@@ -235,7 +235,6 @@ begin
         write_reg(GDDR6_CONFIG_REG, (
             GDDR6_CONFIG_CK_RESET_N_BIT => '1',
             GDDR6_CONFIG_SG_RESET_N_BITS => "01",
-            GDDR6_CONFIG_ENABLE_DBI_BIT => '0',
             others => '0'));
 
         -- Wait for locked status
@@ -244,6 +243,12 @@ begin
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
 
+        -- Put EDC into tristate
+        write_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
+            GDDR6_CONFIG_SG_RESET_N_BITS => "01",
+            GDDR6_CONFIG_EDC_T_BIT => '1',
+            others => '0'));
 
         -- Perform a complete exchange
         write_reg(GDDR6_COMMAND_REG, (

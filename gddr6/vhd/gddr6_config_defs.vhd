@@ -59,8 +59,15 @@ package gddr6_config_defs is
     constant CONFIG_BANK_PATCH : pin_config_array_t(0 to 0) := (
         0 => (2,  0));          -- Connected to SG12_CK
 
+    -- Aggregate of all the configs above
+    constant CONFIG_BANK_ALL : pin_config_array_t;
+
+
     -- Returns bitmask of wanted slices matching the given byte
-    function bitslice_wanted(byte : natural) return std_ulogic_vector;
+    function bitslice_wanted(
+        byte : natural;
+        config : pin_config_array_t := CONFIG_BANK_ALL)
+    return std_ulogic_vector;
 end;
 
 package body gddr6_config_defs is
@@ -80,13 +87,15 @@ package body gddr6_config_defs is
         CONFIG_BANK_DQ & CONFIG_BANK_DBI & CONFIG_BANK_EDC & CONFIG_BANK_WCK &
         CONFIG_BANK_PATCH;
 
-    function bitslice_wanted(byte : natural) return std_ulogic_vector
+    function bitslice_wanted(
+        byte : natural;
+        config : pin_config_array_t := CONFIG_BANK_ALL) return std_ulogic_vector
     is
         variable result : std_ulogic_vector(0 to 11) := (others => '0');
     begin
-        for i in CONFIG_BANK_ALL'RANGE loop
-            if CONFIG_BANK_ALL(i).byte = byte then
-                result(CONFIG_BANK_ALL(i).slice) := '1';
+        for i in config'RANGE loop
+            if config(i).byte = byte then
+                result(config(i).slice) := '1';
             end if;
         end loop;
         return result;

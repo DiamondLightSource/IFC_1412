@@ -33,6 +33,7 @@ entity gddr6_phy_dq_remap is
         bank_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         bank_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         bank_edc_o : out vector_array(7 downto 0)(7 downto 0);
+        bank_edc_i : in std_ulogic;
         -- Delay controls
         bank_dq_rx_delay_ce_i : in std_ulogic_vector(63 downto 0);
         bank_dq_tx_delay_ce_i : in std_ulogic_vector(63 downto 0);
@@ -57,6 +58,8 @@ entity gddr6_phy_dq_remap is
         io_dbi_n_i : in std_ulogic_vector(7 downto 0);
         io_dbi_n_t_o : out std_ulogic_vector(7 downto 0);
         io_edc_i : in std_ulogic_vector(7 downto 0);
+        io_edc_o : out std_ulogic_vector(7 downto 0);
+        io_edc_t_o : out std_ulogic_vector(7 downto 0);
 
         -- Patch inputs
         bitslice_patch_i : in std_ulogic_vector
@@ -114,8 +117,10 @@ begin
     begin
         -- IO pad binding
         slice_pad_in_o(byte)(slice) <= io_edc_i(i);
+        io_edc_t_o(i) <= slice_pad_t_out_i(byte)(slice);
+        io_edc_o(i) <= slice_pad_out_i(byte)(slice);
         -- Data flow
-        slice_data_o(byte)(slice) <= X"00";
+        slice_data_o(byte)(slice) <= (others => bank_edc_i);
         bank_edc_o(i) <= slice_data_i(byte)(slice);
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= bank_edc_rx_delay_ce_i(i);

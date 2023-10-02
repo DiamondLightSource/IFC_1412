@@ -32,6 +32,8 @@ entity gddr6_phy_dq is
         enable_dbi_i : in std_ulogic;
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_i : in std_ulogic;      -- Config value only
+        edc_t_i : in std_ulogic;    -- Output only enabled during config
 
         -- RX/TX DELAY controls
         delay_up_down_n_i : in std_ulogic;
@@ -66,6 +68,8 @@ entity gddr6_phy_dq is
         io_dbi_n_i : in std_ulogic_vector(7 downto 0);
         io_dbi_n_t_o : out std_ulogic_vector(7 downto 0);
         io_edc_i : in std_ulogic_vector(7 downto 0);
+        io_edc_o : out std_ulogic_vector(7 downto 0);
+        io_edc_t_o : out std_ulogic_vector(7 downto 0);
 
         -- Fixup required to locate patchup bitslice
         bitslice_patch_i : in std_ulogic_vector
@@ -139,6 +143,7 @@ begin
     gen_bytes : for i in 0 to 7 generate
         byte : entity work.gddr6_phy_byte generic map (
             BITSLICE_WANTED => bitslice_wanted(i),
+            BITSLICE_EDC => bitslice_wanted(i, CONFIG_BANK_EDC),
             CLK_FROM_PIN => MAP_CLK_FROM_PIN(i mod 4),
             CLK_TO_NORTH => MAP_CLK_TO_NORTH(i mod 4),
             CLK_TO_SOUTH => MAP_CLK_TO_SOUTH(i mod 4)
@@ -175,6 +180,7 @@ begin
             data_i => slice_data_out(i),
             data_o => slice_data_in(i),
             output_enable_i => (others => output_enable_i),
+            edc_t_i => edc_t_i,
 
             pad_in_i => slice_pad_in(i),
             pad_out_o => slice_pad_out(i),
@@ -226,6 +232,7 @@ begin
         bank_dbi_n_o => bank_dbi_n_in,
         bank_dbi_n_i => bank_dbi_n_out,
         bank_edc_o => bank_edc_in,
+        bank_edc_i => edc_i,
         -- Delay control
         bank_dq_rx_delay_ce_i => dq_rx_delay_ce_i,
         bank_dq_tx_delay_ce_i => dq_tx_delay_ce_i,
@@ -252,7 +259,9 @@ begin
         io_dbi_n_o => io_dbi_n_o,
         io_dbi_n_i => io_dbi_n_i,
         io_dbi_n_t_o => io_dbi_n_t_o,
-        io_edc_i => io_edc_i
+        io_edc_i => io_edc_i,
+        io_edc_o => io_edc_o,
+        io_edc_t_o => io_edc_t_o
     );
 
 

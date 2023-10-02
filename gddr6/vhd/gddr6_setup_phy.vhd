@@ -129,6 +129,7 @@ architecture arch of gddr6_setup_phy is
     signal reset_fifo : std_ulogic_vector(0 to 1);
     signal fifo_ok : std_ulogic_vector(0 to 1);
     signal sg_resets_n : std_ulogic_vector(0 to 1);
+    signal edc_t : std_ulogic;
     signal enable_cabi : std_ulogic;
     signal enable_dbi : std_ulogic;
 
@@ -176,6 +177,7 @@ begin
         reset_fifo_o => reset_fifo,
         fifo_ok_i => fifo_ok,
         sg_resets_n_o => sg_resets_n,
+        edc_t_o => edc_t,
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
 
@@ -195,6 +197,7 @@ begin
         fifo_ok_o => fifo_ok,
 
         sg_resets_n_i => sg_resets_n,
+        edc_t_i => edc_t,
 
         ca_i => phy_ca,
         ca3_i => phy_ca3,

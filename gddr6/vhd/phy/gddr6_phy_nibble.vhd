@@ -16,6 +16,8 @@ entity gddr6_phy_nibble is
     generic (
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 5);
+        -- Slices with special EDC tristate control
+        BITSLICE_EDC : std_ulogic_vector(0 to 5);
 
         -- The upper nibble always receives clocks from the lower nibble
         LOWER_NIBBLE : boolean;
@@ -65,6 +67,7 @@ entity gddr6_phy_nibble is
         data_o : out vector_array(0 to 5)(7 downto 0);
         data_i : in vector_array(0 to 5)(7 downto 0);
         output_enable_i : in std_ulogic_vector(3 downto 0);
+        edc_t_i : in std_ulogic;
 
         pad_in_i : in std_ulogic_vector(0 to 5);
         pad_out_o : out std_ulogic_vector(0 to 5);
@@ -217,6 +220,8 @@ begin
             end if;
         end;
 
+        signal t : std_ulogic;
+
     begin
         gen_bitslice : if rx_data_type /= "UNUSED" generate
             bitslice : RXTX_BITSLICE generic map (
@@ -230,7 +235,7 @@ begin
                 RX_UPDATE_MODE => "ASYNC",
                 TX_UPDATE_MODE => "ASYNC",
                 ENABLE_PRE_EMPHASIS => "TRUE",
-                TBYTE_CTL => "TBYTE_IN"
+                TBYTE_CTL => choose(BITSLICE_EDC(i) = '1', "T", "TBYTE_IN")
             ) port map (
                 -- Receiver
                 DATAIN => pad_in_i(i),
@@ -246,7 +251,7 @@ begin
                 O => pad_out_o(i),
 
                 T_OUT => pad_t_out_o(i),        -- Tristate control out to pad
-                T => '0',
+                T => t,
                 TBYTE_IN => tri_out_to_tbyte,
 
                 RX_EN_VTC => enable_rx_vtc_i(i),
@@ -277,6 +282,9 @@ begin
                 TX_CNTVALUEIN => (others => '0'),
                 TX_CNTVALUEOUT => tx_delay_o(i)
             );
+
+            -- Don't plumb edt_t_i through unless we want to use it!
+            t <= edc_t_i when BITSLICE_EDC(i) else '0';
 
         else generate
             -- Fill in unconnected signals

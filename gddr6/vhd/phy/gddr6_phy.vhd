@@ -93,6 +93,8 @@ entity gddr6_phy is
         -- selected by output_enable_i.
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
+        -- Must be held low during SG reset, high during normal operation
+        edc_t_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- Delay control interface
@@ -166,6 +168,8 @@ architecture arch of gddr6_phy is
     signal io_dbi_n_out : std_ulogic_vector(7 downto 0);
     signal io_dbi_n_t_out : std_ulogic_vector(7 downto 0);
     signal io_edc_in : std_ulogic_vector(7 downto 0);
+    signal io_edc_out : std_ulogic_vector(7 downto 0);
+    signal io_edc_t_out : std_ulogic_vector(7 downto 0);
 
     signal bitslice_patch : std_ulogic_vector(0 to 0);
 
@@ -254,7 +258,9 @@ begin
         io_dbi_n_i => io_dbi_n_out,
         io_dbi_n_o => io_dbi_n_in,
         io_dbi_n_t_i => io_dbi_n_t_out,
-        io_edc_o => io_edc_in
+        io_edc_o => io_edc_in,
+        io_edc_i => io_edc_out,
+        io_edc_t_i => io_edc_t_out
     );
 
 
@@ -325,6 +331,8 @@ begin
         enable_dbi_i => enable_dbi_i,
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
+        edc_i => '1',           -- Configures memory for x1 mode during reset
+        edc_t_i => edc_t_i,
 
         delay_up_down_n_i => delay_up_down_n,
         dq_rx_delay_ce_i => dq_rx_delay_ce,
@@ -356,6 +364,8 @@ begin
         io_dbi_n_i => io_dbi_n_in,
         io_dbi_n_t_o => io_dbi_n_t_out,
         io_edc_i => io_edc_in,
+        io_edc_o => io_edc_out,
+        io_edc_t_o => io_edc_t_out,
 
         bitslice_patch_i => bitslice_patch
     );

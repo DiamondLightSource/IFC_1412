@@ -13,6 +13,8 @@ entity gddr6_phy_byte is
     generic (
         -- Selects which bitslices to instantiate
         BITSLICE_WANTED : std_ulogic_vector(0 to 11);
+        -- Slices with special EDC tristate control
+        BITSLICE_EDC : std_ulogic_vector(0 to 11);
 
         -- For the lower nibble, the clock either comes from bitslice 0 or from
         -- another byte, and clocks are distributed to adjacent bytes
@@ -60,6 +62,7 @@ entity gddr6_phy_byte is
         data_o : out vector_array(0 to 11)(7 downto 0);
         data_i : in vector_array(0 to 11)(7 downto 0);
         output_enable_i : in std_ulogic_vector(3 downto 0);
+        edc_t_i : in std_ulogic;
 
         pad_in_i : in std_ulogic_vector(0 to 11);
         pad_out_o : out std_ulogic_vector(0 to 11);
@@ -106,6 +109,7 @@ begin
 
         nibble : entity work.gddr6_phy_nibble generic map (
             BITSLICE_WANTED => BITSLICE_WANTED(BITSLICE_RANGE),
+            BITSLICE_EDC => BITSLICE_EDC(BITSLICE_RANGE),
 
             LOWER_NIBBLE => LOWER_NIBBLE,
             CLK_FROM_PIN => LOWER_NIBBLE and CLK_FROM_PIN,
@@ -144,6 +148,7 @@ begin
             data_o => data_o(BITSLICE_RANGE),
             data_i => data_i(BITSLICE_RANGE),
             output_enable_i => output_enable,
+            edc_t_i => edc_t_i,
 
             pad_in_i => pad_in_i(BITSLICE_RANGE),
             pad_out_o => pad_out_o(BITSLICE_RANGE),

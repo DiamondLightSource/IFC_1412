@@ -60,6 +60,7 @@ entity gddr6_setup is
         reset_fifo_o : out std_ulogic_vector(0 to 1);
         fifo_ok_i : in std_ulogic_vector(0 to 1);
         sg_resets_n_o : out std_ulogic_vector(0 to 1);
+        edc_t_o : out std_ulogic;
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
 
@@ -96,6 +97,7 @@ begin
         reset_fifo_o => reset_fifo_o,
         fifo_ok_i => fifo_ok_i,
         sg_resets_n_o => sg_resets_n_o,
+        edc_t_o => edc_t_o,
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
 

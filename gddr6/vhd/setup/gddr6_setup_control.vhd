@@ -29,6 +29,7 @@ entity gddr6_setup_control is
         reset_fifo_o : out std_ulogic_vector(0 to 1);
         fifo_ok_i : in std_ulogic_vector(0 to 1);
         sg_resets_n_o : out std_ulogic_vector(0 to 1);
+        edc_t_o : out std_ulogic;
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
 
@@ -190,6 +191,7 @@ begin
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
             sg_resets_n_o <= ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS);
+            edc_t_o <= ck_config_bits(GDDR6_CONFIG_EDC_T_BIT);
             enable_cabi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT);
             enable_dbi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT);
             reset_fifo_o <= ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS);

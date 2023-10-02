@@ -8,6 +8,8 @@
             .CK_RESET_N
             # Resets for the two DRAM devices, held in reset by default
             .SG_RESET_N     2
+            # Must be held low during reset, high after reset completed
+            .EDC_T
             # Enable bit inversion on CA output
             .ENABLE_CABI
             # Enable bit inversion on DQ input and output
