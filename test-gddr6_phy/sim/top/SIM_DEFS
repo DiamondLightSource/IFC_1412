@@ -1,8 +1,4 @@
-BUILT += register_defines.vhd
-BUILT += version.vhd
 BUILT += top_entity.vhd
-
-# Path to gddr6 files
-export GDDR6_DIR = $(PROJECT_TOP)/../gddr6/vhd
+BUILT += test_gddr6_phy.vhd.dummy
 
 # vim: set filetype=make:

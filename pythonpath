@@ -7,7 +7,7 @@ if ! python -c 'import fpga_lib' 2>/dev/null; then
     # Find path to FPGA_COMMON in CONFIG file
     if FPGA_COMMON="$(
             sed -n '/^FPGA_COMMON\> *= */{s///;p;q0}; $q1' \
-                "$(dirname ${BASH_SOURCE[0]})"/CONFIG)"; then
+                "$(dirname "$(readlink -f ${BASH_SOURCE[0]})")"/CONFIG)"; then
         # Add this path to end of PYTHONPATH with separator if necessary
         export PYTHONPATH="$PYTHONPATH${PYTHONPATH:+:}$FPGA_COMMON"
         echo >&2 "Added path to fpga_lib to PYTHONPATH"

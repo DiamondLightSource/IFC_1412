@@ -201,7 +201,7 @@ begin
         variable read_result : reg_data_t;
 
 
-        procedure write_dq_ca(dq : reg_data_t; t : std_ulogic) is
+        procedure write_dq_ca(dq : reg_data_t; oe : std_ulogic) is
         begin
             write_gddr6_reg(GDDR6_DQ_REG, dq);
             write_gddr6_reg(GDDR6_CA_REG, (
@@ -209,7 +209,7 @@ begin
                 GDDR6_CA_FALLING_BITS => 10X"3FF",
                 GDDR6_CA_CA3_BITS => X"0",
                 GDDR6_CA_CKE_N_BIT => '1',
-                GDDR6_CA_DQ_T_BIT => t,
+                GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
 
@@ -243,7 +243,7 @@ begin
                     GDDR6_CA_RISING_BITS => ca(n)(19 downto 10),
                     GDDR6_CA_FALLING_BITS => ca(n)(9 downto 0),
                     GDDR6_CA_CKE_N_BIT => cke_n(n),
-                    GDDR6_CA_DQ_T_BIT => '1',
+                    GDDR6_CA_OUTPUT_ENABLE_BIT => '0',
                     others => '0'));
             end loop;
             write_gddr6_reg(GDDR6_COMMAND_REG, (
@@ -313,10 +313,10 @@ begin
 --             others => '0'));
 --         -- Fill CA and DQ buffer, start with writing two zeros, then padding
 --         for n in 0 to 1 loop
---             write_dq_ca(X"0000_0000", '0');
+--             write_dq_ca(X"0000_0000", '1');
 --         end loop;
 --         for n in 2 to 18 loop
---             write_dq_ca(X"FFFF_FFFF", '1');
+--             write_dq_ca(X"FFFF_FFFF", '0');
 --         end loop;
 --         -- Perform exchange
 --         write_gddr6_reg(GDDR6_COMMAND_REG, (
