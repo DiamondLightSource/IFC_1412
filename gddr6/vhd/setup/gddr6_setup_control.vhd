@@ -190,11 +190,13 @@ begin
 
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
-            sg_resets_n_o <= ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS);
+            sg_resets_n_o <=
+                reverse(ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS));
             edc_t_o <= ck_config_bits(GDDR6_CONFIG_EDC_T_BIT);
             enable_cabi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT);
             enable_dbi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT);
-            reset_fifo_o <= ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS);
+            reset_fifo_o <=
+                reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS));
             enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
             delay_reset_ca_o <=
@@ -205,7 +207,7 @@ begin
                 ck_config_bits(GDDR6_CONFIG_RESET_DQ_IDELAY_BIT);
 
             ck_status_bits <= (
-                GDDR6_STATUS_FIFO_OK_BITS => fifo_ok_i,
+                GDDR6_STATUS_FIFO_OK_BITS => reverse(fifo_ok_i),
                 others => '0');
             ck_event_bits <= (
                 GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => ck_unlock_i,
