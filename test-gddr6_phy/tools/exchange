@@ -14,14 +14,16 @@ EXCH_COUNT = 30
 def main():
     status = regs.SYS.GDDR6.STATUS._get_fields()
     print(status)
-    assert status.CK_OK and not status.CK_UNLOCK
+    assert status.CK_OK and not status.CK_UNLOCK_EVENT
 
     test_sequence = [0xFF, 0, 0, 0x57, 0, 0, 0xFF]
     test_sequence = [0xFF, 0, 1, 0, 0, 0xFF]
     test_sequence = [0xFF] + list(range(8)) + [0xFF]
     test_sequence = [0xFF, 0x00, 0xFF, 0] + 4 * [0x5C] + [0x00, 0xFF]
-    test_sequence = 4 * [0]
+    test_sequence = [0xFF, 0xC3, 0, 0x5C, 0]
 #     test_sequence = [255]*64
+    test_sequence = [0xFF, 0xFF, 0, 0, 0xFF]
+#     test_sequence = [0, 0, 0xFF, 0, 0]
 
     DQ_COUNT = len(test_sequence)
     dqa = numpy.empty((DQ_COUNT, DQ_WRITE_WIDTH), dtype = numpy.uint8)

@@ -6,7 +6,7 @@ from registers import sg
 
 # Start by putting CK and SG in reset
 sg.CONFIG._write_fields_rw(CK_RESET_N = 0, SG_RESET_N = 0)
-time.sleep(0.01)
+time.sleep(0.1)
 # Now take CK out of reset
 sg.CONFIG.CK_RESET_N = 1
 time.sleep(0.1)

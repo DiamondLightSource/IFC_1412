@@ -14,46 +14,31 @@ regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
 sg = regs.SYS.GDDR6
 
 
-def read_riu(nibble, reg):
-    riu = sg.RIU
-    address = (nibble << 6) | (reg & 0x3F)
+def is_bitslip_address(address):
+    return (address & 0xC0) == 0x80 or (address & 0xF0) == 0xC0
 
-    riu._write_fields_wo(ADDRESS = address, WRITE = 0, VTC = 1)
-    result = riu._get_fields()
-    assert not result.TIMEOUT
-    return result.DATA
+def step_delay(address, amount):
+    assert not is_bitslip_address(address)
+    if amount == 0:
+        return
+    elif amount < 0:
+        up_down_n = 0
+        amount = - amount
+    else:
+        up_down_n = 1
+    sg.DELAY._write_fields_wo(
+        ADDRESS = address, DELAY = amount - 1, UP_DOWN_N = up_down_n)
 
-def write_riu(nibble, reg, value):
-    riu = sg.RIU
-    address = (nibble << 6) | (reg & 0x3F)
-    riu._write_fields_wo(DATA = value, ADDRESS = address, WRITE = 1, VTC = 1)
-    result = riu._get_fields()
-    assert not result.TIMEOUT
+def set_delay(address, amount):
+    assert is_bitslip_address(address)
+    sg.DELAY._write_fields_wo(ADDRESS = address, DELAY = amount)
 
-def slew_rx_delay(nibble, pin, target):
-    # Only applies to RX pins
-    pin_address = pin + 6
-    riu_address = pin + 0x12
-    current = read_riu(nibble, riu_address)
-    while target > current:
-        write_riu(nibble, pin_address, min(current + 7, target))
-        current = read_riu(nibble, riu_address)
-    while target < current:
-        write_riu(nibble, pin_address, max(current - 7, target))
-        current = read_riu(nibble, riu_address)
+def read_delay(address):
+    sg.DELAY._write_fields_wo(ADDRESS = address, NO_WRITE = 1)
+    return sg.DELAY.DELAY
 
-def slew_tx_delay(nibble, pin, target):
-    # Only applies to RX pins
-    pin_address = pin + 0
-    riu_address = pin + 0x0B
-    current = read_riu(nibble, riu_address)
-    while target > current:
-        write_riu(nibble, pin_address, min(current + 7, target))
-        current = read_riu(nibble, riu_address)
-    while target < current:
-        write_riu(nibble, pin_address, max(current - 7, target))
-        current = read_riu(nibble, riu_address)
+def byteslip(address):
+    sg.DELAY._write_fields_wo(ADDRESS = address, BYTESLIP = 1)
 
 
-
-__all__ = ['sg', 'read_riu', 'write_riu', 'slew_rx_delay', 'slew_tx_delay']
+# __all__ = ['sg', 'step_delay', 'set_delay', 'read_delay', 'byteslip']

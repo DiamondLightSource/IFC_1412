@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+
+import sys
+import numpy
+
+from registers import sg, set_delay, step_delay, byteslip
+
+
+PATTERN_COUNT = 16
+
+
+def write_dq(value):
+    for n in range(16):
+        sg.DQ._value = value
+
+def write_ca(oe):
+    sg.CA._write_fields_wo(
+        RISING = 0x3FF, FALLING = 0x3FF, CKE_N = 1, OUTPUT_ENABLE = oe)
+
+def load_test_pattern():
+    sg.COMMAND._write_fields_wo(START_WRITE = 1)
+    write_dq(0xFFFFFFFF)
+    write_ca(1)
+    write_dq(0)
+    for n in range(15):
+        write_ca(0)
+
+def exchange():
+    sg.COMMAND._write_fields_wo(EXCHANGE = 1, START_READ = 1)
+    data = numpy.empty((PATTERN_COUNT, 16), dtype = numpy.uint32)
+    for i in range(PATTERN_COUNT):
+        for j in range(16):
+            data[i, j] = sg.DQ._value
+        sg.COMMAND._write_fields_wo(STEP_READ = 1)
+    return data.view('uint8')
+
+def to_string(array):
+    assert array.ndim == 1
+    return '[' + ' '.join(['%02X' % a for a in array]) + ']'
+
+def header_string(count):
+    return ' '.join('%2d' % n for n in range(count))
+
+def print_data(data):
+    print(header_string(64))
+    for n, d in enumerate(data):
+        print('%2d:' % n, to_string(d))
+
+def find_first_zero(bytes):
+    for n, b in enumerate(bytes):
+        if b != 0xFF:
+            break
+    else:
+        assert False, 'Cannot find a zero bit!'
+    for m in range(8):
+        if (b >> m) & 1 == 0:
+            break
+    else:
+        assert False, 'Whoops!'
+    return 8 * n + m
+
+def find_first_zeros(data):
+    return numpy.array([find_first_zero(data[:, n]) for n in range(64)])
+
+load_test_pattern()
+# data = exchange()
+# print_data(data[11:15])
+# data = exchange()
+# print_data(data)
+
+# print(find_first_zero(data[:, 0]))
+
+# for n in range(4):
+#     data = exchange()
+#     print(to_string(find_first_zeros(data)))
+
+# Reset the ODELAYS
+sg.CONFIG.RESET_DQ_IDELAY = 1
+sg.CONFIG.RESET_DQ_IDELAY = 0
+
+# Because we can't read bitslip delays reset them here
+for n in range(64):
+    set_delay(0x80 + n, 0)
+
+# Alas, we can't reset byteslips reliably without a complete reset of the
+# bitslice array
+
+data = exchange()
+zeros = find_first_zeros(data)
+print(max(zeros), numpy.ceil(max(zeros) / 8))
+target = 8 * ((max(zeros) + 7) // 8)
+print(target - zeros)
+
+assert numpy.max(target-zeros) < 16, 'Cannot correct this much skew'
+
+for n, delta in enumerate(target - zeros):
+    if delta >= 8:
+        byteslip(n)
+        delta -= 8
+    set_delay(0x80 + n, delta)
+
+data = exchange()
+zeros = find_first_zeros(data)
+print(target - zeros)
+
+
+sys.exit()
+
+for i in range(20):
+    for n in range(64):
+        step_delay(n, +10)
+    data = exchange()
+    zeros = find_first_zeros(data)
+    print(target - zeros)

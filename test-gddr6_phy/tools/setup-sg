@@ -3,10 +3,12 @@
 import numpy
 import time
 
+assert False, 'Not ready to use!'
+
 from registers import driver, regs, sg
 from exchange import Exchange, print_header
 
-# driver.VERBOSE = True
+driver.VERBOSE = True
 
 DQ_COUNT = 64
 
@@ -106,5 +108,5 @@ write_ca10(cke_n = [0])
 time.sleep(0.1)
 
 # Now try for some CA training commands
-# ca_training()
-read_vendor_id()
+ca_training()
+# read_vendor_id()
