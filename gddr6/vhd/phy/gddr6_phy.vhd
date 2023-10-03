@@ -105,6 +105,9 @@ entity gddr6_phy is
         delay_i : in unsigned(7 downto 0);
         delay_up_down_n_i : in std_ulogic;
         delay_byteslip_i : in std_ulogic;
+        delay_read_write_n_i : in std_ulogic;
+        -- Delay readback for supported delays (IDELAY and ODELAY delays)
+        delay_o : out unsigned(8 downto 0);
         delay_strobe_i : in std_ulogic;
         delay_ack_o : out std_ulogic;
         -- Individual delay resets.  These must be held for several ticks to
@@ -112,11 +115,6 @@ entity gddr6_phy is
         delay_reset_ca_i : in std_ulogic;       -- Reset all CA delays to zero
         delay_reset_dq_rx_i : in std_ulogic;    -- Reset all DQ RX delays
         delay_reset_dq_tx_i : in std_ulogic;    -- Reset all DQ TX delays
-        -- Readback interface.  read_delay_o is updated one or two CK clock
-        -- ticks after setting read_delay_address_i.  The address mapping is
-        -- the same as for delay_address_i.
-        read_delay_address_i : in unsigned(7 downto 0);
-        read_delay_o : out unsigned(8 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -396,6 +394,8 @@ begin
         delay_i => delay_i,
         delay_up_down_n_i => delay_up_down_n_i,
         byteslip_i => delay_byteslip_i,
+        read_write_n_i => delay_read_write_n_i,
+        delay_o => delay_o,
         strobe_i => delay_strobe_i,
         ack_o => delay_ack_o,
 
@@ -421,8 +421,6 @@ begin
         delay_dbi_tx_i => delay_dbi_tx,
         delay_edc_rx_i => delay_edc_rx,
         delay_ca_tx_i => delay_ca_tx,
-        read_delay_address_i => read_delay_address_i,
-        read_delay_o => read_delay_o,
 
         enable_bitslice_vtc_o => enable_bitslice_vtc
     );

@@ -56,14 +56,13 @@ architecture arch of testbench is
     signal delay_in : unsigned(7 downto 0);
     signal delay_up_down_n_in : std_ulogic;
     signal delay_byteslip_in : std_ulogic;
+    signal delay_read_write_n_in : std_ulogic;
+    signal delay_out : unsigned(8 downto 0);
     signal delay_strobe_in : std_ulogic;
     signal delay_ack_out : std_ulogic;
     signal delay_reset_ca_in : std_ulogic;
     signal delay_reset_dq_rx_in : std_ulogic;
     signal delay_reset_dq_tx_in : std_ulogic;
-
-    signal read_delay_address_in : unsigned(7 downto 0);
-    signal read_delay_out : unsigned(8 downto 0);
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
@@ -126,14 +125,13 @@ begin
         delay_i => delay_in,
         delay_up_down_n_i => delay_up_down_n_in,
         delay_byteslip_i => delay_byteslip_in,
+        delay_read_write_n_i => delay_read_write_n_in,
+        delay_o => delay_out,
         delay_strobe_i => delay_strobe_in,
         delay_ack_o => delay_ack_out,
         delay_reset_ca_i => delay_reset_ca_in,
         delay_reset_dq_rx_i => delay_reset_dq_rx_in,
         delay_reset_dq_tx_i => delay_reset_dq_tx_in,
-
-        read_delay_address_i => read_delay_address_in,
-        read_delay_o => read_delay_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -210,6 +208,7 @@ begin
             delay_in <= to_unsigned(delay, 8);
             delay_up_down_n_in <= up_down_n;
             delay_byteslip_in <= byteslip;
+            delay_read_write_n_in <= '0';
             delay_strobe_in <= '1';
             loop
                 clk_wait;
@@ -220,15 +219,24 @@ begin
             delay_in <= (others => 'U');
             delay_up_down_n_in <= 'U';
             delay_byteslip_in <= 'U';
+            delay_read_write_n_in <= 'U';
         end;
 
         procedure read_delay(address : natural) is
         begin
-            read_delay_address_in <= to_unsigned(address, 8);
-            clk_wait(2);
+            delay_address_in <= to_unsigned(address, 8);
+            delay_read_write_n_in <= '1';
+            delay_strobe_in <= '1';
+            loop
+                clk_wait;
+                delay_strobe_in <= '0';
+                exit when delay_ack_out;
+            end loop;
+            delay_address_in <= (others => 'U');
+            delay_read_write_n_in <= 'U';
             write(
-                "delay[" & to_hstring(read_delay_address_in) &
-                "] = " & to_string(to_integer(read_delay_out)));
+                "delay[" & to_hstring(to_unsigned(address, 8)) &
+                "] = " & to_hstring(delay_out));
         end;
 
         procedure byteslip(address : natural) is
@@ -244,7 +252,6 @@ begin
         delay_reset_ca_in <= '1';
         delay_reset_dq_rx_in <= '1';
         delay_reset_dq_tx_in <= '1';
-        read_delay_address_in <= (others => '0');
 
         data_in <= (others => '1');
         output_enable_in <= '0';
@@ -270,11 +277,11 @@ begin
 
         byteslip(2#0000_0010#);             -- DQ RX 2 byteslip
 
-        read_delay(2#1111_0000#);
-        read_delay(2#1000_0001#);
-        read_delay(2#0000_0010#);
-        read_delay(2#0100_0010#);
-        read_delay(2#0100_0011#);
+        read_delay(2#1111_0000#);           -- Should be 7
+        read_delay(2#1000_0001#);           -- Should be X (no bitslip read)
+        read_delay(2#0000_0010#);           -- Should be 7
+        read_delay(2#0100_0010#);           -- Should be 13 (00D)
+        read_delay(2#0100_0011#);           -- Should be 0
 
         clk_wait;
         output_enable_in <= '1';

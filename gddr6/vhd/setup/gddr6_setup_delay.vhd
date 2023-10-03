@@ -32,11 +32,10 @@ entity gddr6_setup_delay is
         delay_o : out unsigned(7 downto 0);
         delay_up_down_n_o : out std_ulogic;
         delay_byteslip_o : out std_ulogic;
+        delay_read_write_n_o : out std_ulogic;
+        delay_i : in unsigned(8 downto 0);
         delay_strobe_o : out std_ulogic;
-        delay_ack_i : in std_ulogic;
-        -- Individual delay readbacks
-        read_delay_address_o : out unsigned(7 downto 0);
-        read_delay_i : in unsigned(8 downto 0)
+        delay_ack_i : in std_ulogic
     );
 end;
 
@@ -44,13 +43,10 @@ architecture arch of gddr6_setup_delay is
     -- Entire control is on ck clock
     signal write_strobe : std_ulogic;
     signal write_data : reg_data_t;
-    signal write_ack : std_ulogic;
+    signal write_ack : std_ulogic := '0';
     signal read_strobe : std_ulogic;
     signal read_data : reg_data_t;
-    signal read_ack : std_ulogic;
-
-    signal suppress_write : std_ulogic;
-    signal full_delay_out : unsigned(8 downto 0);
+    signal read_ack : std_ulogic := '0';
 
 begin
     -- Bring the delay register over to the CK domain
@@ -74,27 +70,29 @@ begin
         read_ack_i(0) => read_ack
     );
 
-    read_ack <= '1';
-
-    suppress_write <= write_data(GDDR6_DELAY_NO_WRITE_BIT);
-    full_delay_out <= unsigned(write_data(GDDR6_DELAY_DELAY_BITS));
-    process (ck_clk_i) begin
+    process (ck_clk_i)
+        variable full_delay_out : unsigned(8 downto 0);
+    begin
         if rising_edge(ck_clk_i) then
+            full_delay_out := unsigned(write_data(GDDR6_DELAY_DELAY_BITS));
+
             delay_address_o <= unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS));
-            read_delay_address_o <=
-                unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS));
             delay_o <= full_delay_out(delay_o'RANGE);
             delay_up_down_n_o <= write_data(GDDR6_DELAY_UP_DOWN_N_BIT);
             delay_byteslip_o <= write_data(GDDR6_DELAY_BYTESLIP_BIT);
+            delay_read_write_n_o <= write_data(GDDR6_DELAY_NO_WRITE_BIT);
 
-            delay_strobe_o <= write_strobe and not suppress_write;
-            write_ack <= delay_ack_i or (suppress_write and write_strobe);
+            delay_strobe_o <= write_strobe;
 
-            if ENABLE_DELAY_READBACK then
+            write_ack <= delay_ack_i;
+            read_ack <= read_strobe;
+
+            -- Capture read data on completion of any write
+            if ENABLE_DELAY_READBACK and delay_ack_i = '1' then
                 read_data <= (
                     GDDR6_DELAY_ADDRESS_BITS =>
-                        std_ulogic_vector(read_delay_address_o),
-                    GDDR6_DELAY_DELAY_BITS => std_ulogic_vector(read_delay_i),
+                        std_ulogic_vector(delay_address_o),
+                    GDDR6_DELAY_DELAY_BITS => std_ulogic_vector(delay_i),
                     others => '0');
             end if;
         end if;

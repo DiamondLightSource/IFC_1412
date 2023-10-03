@@ -18,6 +18,8 @@ entity gddr6_phy_delay_control is
         delay_i : in unsigned(7 downto 0);
         delay_up_down_n_i : in std_ulogic;
         byteslip_i : in std_ulogic;
+        read_write_n_i : in std_ulogic;
+        delay_o : out unsigned(8 downto 0);
         strobe_i : in std_ulogic;
         ack_o : out std_ulogic;
 
@@ -49,12 +51,6 @@ entity gddr6_phy_delay_control is
         delay_dbi_tx_i : in vector_array(7 downto 0)(8 downto 0);
         delay_edc_rx_i : in vector_array(7 downto 0)(8 downto 0);
         delay_ca_tx_i : in vector_array(15 downto 0)(8 downto 0);
-
-        -- Readback interface
-        -- There is a one clock tick latency from setting read_delay_address_i
-        -- to updating read_delay_o.
-        read_delay_address_i : in unsigned(7 downto 0);
-        read_delay_o : out unsigned(8 downto 0);
 
         enable_bitslice_vtc_o : out std_ulogic
     );
@@ -130,7 +126,7 @@ begin
 
     -- The address range 10xx_xxxx and 1100_xxxx is under bitslice control.
     -- Note that this is only valid when strobe_in is active!
-    is_bitslip <= strobe_in = '1' and
+    is_bitslip <= strobe_in = '1' and read_write_n_i = '0' and
         (delay_address_i(7 downto 6) = "10" or
          delay_address_i(7 downto 4) = "1100");
 
@@ -148,7 +144,7 @@ begin
                 -- Register parameters on incoming strobe while they're valid
                 delay_address <= delay_address_i;
 
-                if byteslip_i then
+                if byteslip_i or read_write_n_i then
                     -- No action required here
                 elsif is_bitslip then
                     -- Forward relevant part of address to bitslip control
@@ -170,14 +166,16 @@ begin
 
             compute_strobe(ce_out, to_integer(delay_address), running_delay);
             if strobe_in then
-                compute_strobe(bs_out, to_integer(delay_address_i), byteslip_i);
+                compute_strobe(bs_out, to_integer(delay_address_i),
+                    byteslip_i and not read_write_n_i);
             else
                 bs_out <= (others => '0');
             end if;
 
             -- Decode incoming delays from given address
-            read_delay_o <=
-                unsigned(delays_in(to_integer(read_delay_address_i)));
+            if strobe_in then
+                delay_o <= unsigned(delays_in(to_integer(delay_address_i)));
+            end if;
         end if;
     end process;
 

@@ -117,6 +117,8 @@ architecture arch of gddr6_setup_phy is
     signal delay : unsigned(7 downto 0);
     signal delay_up_down_n : std_ulogic;
     signal delay_byteslip : std_ulogic;
+    signal delay_read_write_n : std_ulogic;
+    signal read_delay : unsigned(8 downto 0);
     signal delay_strobe : std_ulogic;
     signal delay_ack : std_ulogic;
 
@@ -124,8 +126,6 @@ architecture arch of gddr6_setup_phy is
     signal delay_reset_dq_rx : std_ulogic;
     signal delay_reset_dq_tx : std_ulogic;
 
-    signal read_delay_address : unsigned(7 downto 0);
-    signal read_delay : unsigned(8 downto 0);
 
     signal ck_reset : std_ulogic;
     signal ck_unlock : std_ulogic;
@@ -167,13 +167,13 @@ begin
         delay_o => delay,
         delay_up_down_n_o => delay_up_down_n,
         delay_byteslip_o => delay_byteslip,
+        delay_read_write_n_o => delay_read_write_n,
+        delay_i => read_delay,
         delay_strobe_o => delay_strobe,
         delay_ack_i => delay_ack,
         delay_reset_ca_o => delay_reset_ca,
         delay_reset_dq_rx_o => delay_reset_dq_rx,
         delay_reset_dq_tx_o => delay_reset_dq_tx,
-        read_delay_address_o => read_delay_address,
-        read_delay_i => read_delay,
 
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
@@ -220,13 +220,13 @@ begin
         delay_i => delay,
         delay_up_down_n_i => delay_up_down_n,
         delay_byteslip_i => delay_byteslip,
+        delay_read_write_n_i => delay_read_write_n,
+        delay_o => read_delay,
         delay_strobe_i => delay_strobe,
         delay_ack_o => delay_ack,
         delay_reset_ca_i => delay_reset_ca,
         delay_reset_dq_rx_i => delay_reset_dq_rx,
         delay_reset_dq_tx_i => delay_reset_dq_tx,
-        read_delay_address_i => read_delay_address,
-        read_delay_o => read_delay,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
