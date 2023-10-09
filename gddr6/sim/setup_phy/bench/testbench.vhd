@@ -49,14 +49,14 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
-    signal ca : vector_array(0 to 1)(9 downto 0);
-    signal ca3 : std_ulogic_vector(0 to 3);
-    signal cke_n : std_ulogic;
-    signal data_in : std_ulogic_vector(511 downto 0);
-    signal data_out : std_ulogic_vector(511 downto 0);
-    signal output_enable : std_ulogic;
-    signal edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal edc_out : vector_array(7 downto 0)(7 downto 0);
+    signal ctrl_ca : vector_array(0 to 1)(9 downto 0);
+    signal ctrl_ca3 : std_ulogic_vector(0 to 3);
+    signal ctrl_cke_n : std_ulogic_vector(0 to 1);
+    signal ctrl_data_in : std_ulogic_vector(511 downto 0);
+    signal ctrl_data_out : std_ulogic_vector(511 downto 0);
+    signal ctrl_output_enable : std_ulogic;
+    signal ctrl_edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal ctrl_edc_out : vector_array(7 downto 0)(7 downto 0);
 
     signal clk : std_ulogic := '0';
 
@@ -83,14 +83,14 @@ begin
         read_data_o => read_data,
         read_ack_o => read_ack,
 
-        ca_i => ca,
-        ca3_i => ca3,
-        cke_n_i => cke_n,
-        data_i => data_in,
-        data_o => data_out,
-        output_enable_i => output_enable,
-        edc_in_o => edc_in,
-        edc_out_o => edc_out,
+        ctrl_ca_i => ctrl_ca,
+        ctrl_ca3_i => ctrl_ca3,
+        ctrl_cke_n_i => ctrl_cke_n,
+        ctrl_data_i => ctrl_data_in,
+        ctrl_data_o => ctrl_data_out,
+        ctrl_output_enable_i => ctrl_output_enable,
+        ctrl_edc_in_o => ctrl_edc_in,
+        ctrl_edc_out_o => ctrl_edc_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -173,26 +173,46 @@ begin
                 clk, read_data, read_strobe, read_ack, reg, result, quiet);
         end;
 
-        variable read_result : reg_data_t;
-        variable dq_count : natural;
+        procedure start_write is
+        begin
+            write_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_START_WRITE_BIT => '1',
+                others => '0'));
+        end;
 
+        procedure do_exchange(start_read : std_ulogic := '1') is
+        begin
+            write_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_EXCHANGE_BIT => '1',
+                GDDR6_COMMAND_START_READ_BIT => start_read,
+                others => '0'));
+        end;
 
-        procedure write_ca(oe : std_ulogic) is
+        procedure write_ca(
+            oe : std_ulogic := '0';
+            rising : std_ulogic_vector(9 downto 0) := 10X"3FF";
+            falling : std_ulogic_vector(9 downto 0) := 10X"3FF";
+            ca3 : std_ulogic_vector(3 downto 0) := X"0";
+            cke_n : std_ulogic_vector(1 downto 0) := "11") is
         begin
             write_reg(GDDR6_CA_REG, (
-                GDDR6_CA_RISING_BITS => 10X"3FF",
-                GDDR6_CA_FALLING_BITS => 10X"3FF",
-                GDDR6_CA_CA3_BITS => X"0",
-                GDDR6_CA_CKE_N_BIT => '1',
+                GDDR6_CA_RISING_BITS => rising,
+                GDDR6_CA_FALLING_BITS => falling,
+                GDDR6_CA_CA3_BITS => ca3,
+                GDDR6_CA_CKE_N_BITS => cke_n,
                 GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
+
+
+        variable read_result : reg_data_t;
+        variable dq_count : natural;
 
         procedure write_dq(dq : reg_data_t) is
         begin
             write_reg(GDDR6_DQ_REG, dq);
             write_reg(GDDR6_DQ_REG, dq);
-            write_ca('1');
+            write_ca(oe => '1');
             dq_count := dq_count + 1;
         end;
 
@@ -250,10 +270,20 @@ begin
             GDDR6_CONFIG_EDC_T_BIT => '1',
             others => '0'));
 
+
+        -- Simple exchange to check CA
+        start_write;
+        write_ca(cke_n => "01");
+        write_ca(cke_n => "00", rising => 10X"155", falling => 10X"2AA");
+        write_ca(
+            cke_n => "10", rising => 10X"000", falling => 10X"000",
+            ca3 => X"5");
+        write_ca(cke_n => "11");
+        do_exchange;
+
+
         -- Perform a complete exchange
-        write_reg(GDDR6_COMMAND_REG, (
-            GDDR6_COMMAND_START_WRITE_BIT => '1',
-            others => '0'));
+        start_write;
         dq_count := 0;
 
         -- Fill CA and DQ buffer, start with writing two zeros, then padding
@@ -266,16 +296,13 @@ begin
         write_dq(X"0000_0000");
         write_dq(X"FFFF_FFFF");
         for n in dq_count to CAPTURE_COUNT-1 loop
-            write_ca('0');
+            write_ca;
         end loop;
         -- Leave the interface running with 55 as output
         write_dq(X"5757_5757");
 
         -- Perform exchange
-        write_reg(GDDR6_COMMAND_REG, (
-            GDDR6_COMMAND_EXCHANGE_BIT => '1',
-            GDDR6_COMMAND_START_READ_BIT => '1',
-            others => '0'));
+        do_exchange;
 
         write_delay(2#0000_0010#, 10);
         write_delay(2#0100_0010#, 20);

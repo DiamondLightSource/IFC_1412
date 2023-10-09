@@ -38,25 +38,25 @@ entity gddr6_setup_phy is
         -- CA
         -- Bit 3 in the second tick, ca_i(1)(3), can be overridden by ca3_i.
         -- To allow this set ca_i(1)(3) to '0', then ca3_i(n) will be used.
-        ca_i : in vector_array(0 to 1)(9 downto 0);
-        ca3_i : in std_ulogic_vector(0 to 3);
+        ctrl_ca_i : in vector_array(0 to 1)(9 downto 0);
+        ctrl_ca3_i : in std_ulogic_vector(0 to 3);
         -- Clock enable, held low during normal operation
-        cke_n_i : in std_ulogic_vector(0 to 1);
+        ctrl_cke_n_i : in std_ulogic_vector(0 to 1);
 
         -- --------------------------------------------------------------------
         -- DQ
         -- Data is transferred in a burst of 128 bytes over two ticks, and so is
         -- organised here as an array of 64 bytes, or 512 bits.
-        data_i : in std_ulogic_vector(511 downto 0);
-        data_o : out std_ulogic_vector(511 downto 0);
-        output_enable_i : in std_ulogic;
+        ctrl_data_i : in std_ulogic_vector(511 downto 0);
+        ctrl_data_o : out std_ulogic_vector(511 downto 0);
+        ctrl_output_enable_i : in std_ulogic;
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one
         -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
         -- calculated value, either for incoming data or for outgoing data, as
         -- selected by output_enable_i.
-        edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_out_o : out vector_array(7 downto 0)(7 downto 0);
+        ctrl_edc_in_o : out vector_array(7 downto 0)(7 downto 0);
+        ctrl_edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -264,11 +264,11 @@ begin
     process (ck_clk) begin
         if rising_edge(ck_clk) then
             if enable_controller then
-                phy_ca <= ca_i;
-                phy_ca3 <= ca3_i;
-                phy_cke_n <= cke_n_i;
-                phy_data_out <= data_i;
-                phy_output_enable <= output_enable_i;
+                phy_ca <= ctrl_ca_i;
+                phy_ca3 <= ctrl_ca3_i;
+                phy_cke_n <= ctrl_cke_n_i;
+                phy_data_out <= ctrl_data_i;
+                phy_output_enable <= ctrl_output_enable_i;
             else
                 phy_ca <= setup_ca;
                 phy_ca3 <= setup_ca3;
@@ -276,9 +276,9 @@ begin
                 phy_data_out <= setup_data_out;
                 phy_output_enable <= setup_output_enable;
             end if;
-            data_o <= phy_data_in;
-            edc_in_o <= phy_edc_in;
-            edc_out_o <= phy_edc_out;
+            ctrl_data_o <= phy_data_in;
+            ctrl_edc_in_o <= phy_edc_in;
+            ctrl_edc_out_o <= phy_edc_out;
             setup_data_in <= phy_data_in;
             setup_edc_in <= phy_edc_in;
             setup_edc_out <= phy_edc_out;

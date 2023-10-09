@@ -161,14 +161,14 @@ begin
 
         -- Unused operational interface
         ck_clk_o => open,
-        ca_i => (others => (others => '0')),
-        ca3_i => (others => '0'),
-        cke_n_i => '0',
-        data_i => (others => '0'),
-        data_o => open,
-        output_enable_i => '0',
-        edc_in_o => open,
-        edc_out_o => open,
+        ctrl_ca_i => (others => (others => '0')),
+        ctrl_ca3_i => (others => '0'),
+        ctrl_cke_n_i => "00",
+        ctrl_data_i => (others => '0'),
+        ctrl_data_o => open,
+        ctrl_output_enable_i => '0',
+        ctrl_edc_in_o => open,
+        ctrl_edc_out_o => open,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

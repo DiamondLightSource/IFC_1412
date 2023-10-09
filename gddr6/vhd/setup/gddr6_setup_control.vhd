@@ -24,22 +24,22 @@ entity gddr6_setup_control is
         read_ack_o : out std_ulogic_vector(GDDR6_CONTROL_REGS);
 
         -- Controls to PHY
-        ck_reset_o : out std_ulogic;
-        ck_unlock_i : in std_ulogic;
-        reset_fifo_o : out std_ulogic_vector(0 to 1);
-        fifo_ok_i : in std_ulogic_vector(0 to 1);
-        sg_resets_n_o : out std_ulogic_vector(0 to 1);
-        edc_t_o : out std_ulogic;
-        enable_cabi_o : out std_ulogic;
-        enable_dbi_o : out std_ulogic;
+        ck_reset_o : out std_ulogic := '0';
+        ck_unlock_i : in std_ulogic := '0';
+        reset_fifo_o : out std_ulogic_vector(0 to 1) := "00";
+        fifo_ok_i : in std_ulogic_vector(0 to 1) := "00";
+        sg_resets_n_o : out std_ulogic_vector(0 to 1) := "00";
+        edc_t_o : out std_ulogic := '0';
+        enable_cabi_o : out std_ulogic := '0';
+        enable_dbi_o : out std_ulogic := '0';
 
         -- Individual delay resets
-        delay_reset_ca_o : out std_ulogic;
-        delay_reset_dq_rx_o : out std_ulogic;
-        delay_reset_dq_tx_o : out std_ulogic;
+        delay_reset_ca_o : out std_ulogic := '0';
+        delay_reset_dq_rx_o : out std_ulogic := '0';
+        delay_reset_dq_tx_o : out std_ulogic := '0';
 
         -- Controller enable
-        enable_controller_o : out std_ulogic
+        enable_controller_o : out std_ulogic := '0'
     );
 end;
 
