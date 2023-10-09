@@ -79,7 +79,7 @@ entity gddr6_phy is
         ca_i : in vector_array(0 to 1)(9 downto 0);
         ca3_i : in std_ulogic_vector(0 to 3);
         -- Clock enable, held low during normal operation
-        cke_n_i : in std_ulogic;
+        cke_n_i : in std_ulogic_vector(0 to 1);
 
         -- --------------------------------------------------------------------
         -- DQ

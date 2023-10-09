@@ -84,8 +84,8 @@
             .FALLING    10
             # Special overrides for CA3, normally set to 0
             .CA3        4
-            # Command enable, held low during reset
-            .CKE_N
+            # Command enable
+            .CKE_N      2
             # DQ tristate control
             .OUTPUT_ENABLE
 

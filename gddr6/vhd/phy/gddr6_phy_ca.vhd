@@ -30,7 +30,7 @@ entity gddr6_phy_ca is
         -- The second tick of bit 3 can be overridded by or-ing in ca3_i so that
         -- this can act as a chip select
         ca3_i : in std_ulogic_vector(0 to 3);
-        cke_n_i : in std_ulogic;
+        cke_n_i : in std_ulogic_vector(0 to 1);
         enable_cabi_i : in std_ulogic;
 
         -- Delay control
@@ -87,7 +87,7 @@ begin
             -- Outputs to CA3 per channel and device
             14 downto 11 => invert_bits xor ca3_in(i, ca_i(i)(3), ca3_i),
             -- Channel enable
-            15 => cke_n_i
+            15 => cke_n_i(i)
         );
     end generate;
 

@@ -39,10 +39,9 @@ architecture arch of testbench is
     signal enable_cabi_in : std_ulogic;
     signal enable_dbi_in : std_ulogic;
 
-    signal ca_in : vector_array(0 to 1)(9 downto 0)
-        := (others => (others => '0'));
-    signal ca3_in : std_ulogic_vector(0 to 3) := (others => '0');
-    signal cke_n_in : std_ulogic := '1';
+    signal ca_in : vector_array(0 to 1)(9 downto 0);
+    signal ca3_in : std_ulogic_vector(0 to 3);
+    signal cke_n_in : std_ulogic_vector(0 to 1);
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -167,9 +166,6 @@ begin
     enable_cabi_in <= '0';
     enable_dbi_in <= '0';
 
-    ca3_in <= (others => '0');
-    cke_n_in <= '1';
-
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
 
@@ -253,6 +249,9 @@ begin
         delay_reset_dq_rx_in <= '1';
         delay_reset_dq_tx_in <= '1';
 
+        ca_in <= (others => (others => '1'));
+        ca3_in <= X"0";
+        cke_n_in <= "11";
         data_in <= (others => '1');
         output_enable_in <= '0';
 
@@ -265,6 +264,22 @@ begin
         delay_reset_dq_tx_in <= '0';
 
         clk_wait(10);
+
+        -- Test pattern for CA
+        cke_n_in <= "10";
+        clk_wait;
+        cke_n_in <= "00";
+        ca_in <= (0 => 10X"155", 1 => 10X"2AA");
+        clk_wait;
+        ca_in <= (10X"000", 10X"000");
+        ca3_in <= X"5";
+        clk_wait;
+        ca_in <= (10X"000", 10X"000");
+        ca3_in <= X"0";
+        cke_n_in <= "01";
+        clk_wait;
+        cke_n_in <= "11";
+
         edc_t_in <= '1';
 
         write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6

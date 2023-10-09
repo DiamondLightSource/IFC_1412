@@ -24,7 +24,7 @@ entity gddr6_setup_buffers is
         write_ca_address_i : in unsigned(5 downto 0);
         write_ca_i : in vector_array(0 to 1)(9 downto 0);
         write_ca3_i : in std_ulogic_vector(0 to 3);
-        write_cke_n_i : in std_ulogic;
+        write_cke_n_i : in std_ulogic_vector(0 to 1);
         write_output_enable_i : in std_ulogic;
 
         -- Data loading and readback interface on reg_clk_i
@@ -41,7 +41,7 @@ entity gddr6_setup_buffers is
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out vector_array(0 to 1)(9 downto 0);
         phy_ca3_o : out std_ulogic_vector(0 to 3);
-        phy_cke_n_o : out std_ulogic;
+        phy_cke_n_o : out std_ulogic_vector(0 to 1);
         phy_output_enable_o : out std_ulogic;
         phy_data_o : out std_ulogic_vector(511 downto 0);
         phy_data_i : in std_ulogic_vector(511 downto 0);
@@ -61,8 +61,8 @@ begin
     -- CA buffer
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
-        DATA_BITS => 26,
-        INITIAL => (25 => '0', others => '1'),
+        DATA_BITS => 27,
+        INITIAL => (26 => '0', others => '1'),
         MARK_FALSE_PATH => true
     ) port map (
         write_clk_i => reg_clk_i,
@@ -71,8 +71,8 @@ begin
         write_data_i(9 downto 0) => write_ca_i(0),
         write_data_i(19 downto 10) => write_ca_i(1),
         write_data_i(23 downto 20) => write_ca3_i,
-        write_data_i(24) => write_cke_n_i,
-        write_data_i(25) => write_output_enable_i,
+        write_data_i(25 downto 24) => write_cke_n_i,
+        write_data_i(26) => write_output_enable_i,
 
         read_clk_i => ck_clk_i,
         read_strobe_i => exchange_active,
@@ -80,8 +80,8 @@ begin
         read_data_o(9 downto 0) => phy_ca_o(0),
         read_data_o(19 downto 10) => phy_ca_o(1),
         read_data_o(23 downto 20) => phy_ca3_o,
-        read_data_o(24) => phy_cke_n_o,
-        read_data_o(25) => phy_output_enable_o
+        read_data_o(25 downto 24) => phy_cke_n_o,
+        read_data_o(26) => phy_output_enable_o
     );
 
 
