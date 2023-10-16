@@ -1,17 +1,20 @@
 BUILT += metadata.coe
-BUILT += register_defines.vhd
 BUILT += version.vhd
+BUILT += register_defines.vhd
 BUILT += gddr6_register_defines.vhd
 
 BLOCK_DESIGNS += interconnect
 
 # Path to gddr6 files
-export GDDR6_DIR = $(PROJECT_TOP)/../gddr6/vhd
+GDDR6_DIR = $(PROJECT_TOP)/../gddr6/vhd
 
 VHD_DIRS += $(GDDR6_DIR)
+VPATH += $(GDDR6_DIR)
 
 # This allows the GDDR6 register range to be included as part of the
 # register_defines build
 REG_INCLUDES_register += $(GDDR6_DIR)/gddr6_register_defines.in
+
+CONSTR_FILES += $(wildcard $(BOARD_DIR)/*.xdc)
 
 # vim: set filetype=make:

@@ -1,6 +1,6 @@
+BUILT += version.vhd
 BUILT += register_defines.vhd
 BUILT += gddr6_register_defines.vhd
-BUILT += version.vhd
 
 # This allows the GDDR6 register range to be included as part of the
 # register_defines build
