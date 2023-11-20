@@ -6,7 +6,7 @@ BUILT += gddr6_register_defines.vhd
 BLOCK_DESIGNS += interconnect
 
 # Path to gddr6 files
-GDDR6_DIR = $(PROJECT_TOP)/../gddr6/vhd
+GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
 
 VHD_DIRS += $(GDDR6_DIR)
 VPATH += $(GDDR6_DIR)

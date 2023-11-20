@@ -120,7 +120,7 @@ begin
 
             odelay : ODELAYE3 generic map (
                 DELAY_FORMAT => choose(CALIBRATE_DELAY, "TIME", "COUNT"),
-                REFCLK_FREQUENCY => REFCLK_FREQUENCY,
+--                 REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 DELAY_VALUE => INITIAL_DELAY,
                 DELAY_TYPE => "VAR_LOAD",
                 UPDATE_MODE => "ASYNC"

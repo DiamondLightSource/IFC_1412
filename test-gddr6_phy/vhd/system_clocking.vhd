@@ -30,7 +30,7 @@ architecture arch of system_clocking is
     signal ref_pll_locked : std_ulogic;
     signal clk_pll_out : std_ulogic;
     -- Generated clock
-    signal clk : std_ulogic;
+    alias clk : std_ulogic is clk_o;
 
     -- Reset generation.  We need to generate our own reset, so we do this by
     -- counting down
@@ -78,7 +78,6 @@ begin
         I => clk_pll_out,
         O => clk
     );
-    clk_o <= clk;
 
 
     -- Create reset

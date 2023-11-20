@@ -62,6 +62,9 @@ def find_first_zero(bytes):
 def find_first_zeros(data):
     return numpy.array([find_first_zero(data[:, n]) for n in range(64)])
 
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+
 load_test_pattern()
 # data = exchange()
 # print_data(data[11:15])
