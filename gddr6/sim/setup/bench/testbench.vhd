@@ -15,7 +15,6 @@ end testbench;
 architecture arch of testbench is
     signal reg_clk_in : std_ulogic := '0';
     signal ck_clk_in : std_ulogic := '0';
-    signal riu_clk_in : std_ulogic := '0';
     signal ck_clk_ok_in : std_ulogic;
 
     signal write_strobe_in : std_ulogic_vector(GDDR6_REGS_RANGE);
@@ -27,41 +26,44 @@ architecture arch of testbench is
 
     signal phy_ca_out : vector_array(0 to 1)(9 downto 0);
     signal phy_ca3_out : std_ulogic_vector(0 to 3);
-    signal phy_cke_n_out : std_ulogic;
-    signal phy_dq_t_out : std_ulogic;
+    signal phy_cke_n_out : std_ulogic_vector(0 to 1);
+    signal phy_output_enable_out : std_ulogic;
     signal phy_data_out : std_ulogic_vector(511 downto 0);
     signal phy_data_in : std_ulogic_vector(511 downto 0);
     signal phy_edc_in_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_out_in : vector_array(7 downto 0)(7 downto 0);
 
-    signal riu_addr_out : unsigned(9 downto 0);
-    signal riu_wr_data_out : std_ulogic_vector(15 downto 0);
-    signal riu_rd_data_in : std_ulogic_vector(15 downto 0);
-    signal riu_wr_en_out : std_ulogic;
-    signal riu_strobe_out : std_ulogic;
-    signal riu_ack_in : std_ulogic;
-    signal riu_error_in : std_ulogic;
-    signal riu_vtc_handshake_out : std_ulogic;
+    signal delay_address_out : unsigned(7 downto 0);
+    signal delay_out : unsigned(8 downto 0);
+    signal delay_up_down_n_out : std_ulogic;
+    signal delay_byteslip_out : std_ulogic;
+    signal delay_read_write_n_out : std_ulogic;
+    signal delay_in : unsigned(8 downto 0);
+    signal delay_strobe_out : std_ulogic;
+    signal delay_ack_in : std_ulogic;
+    signal delay_reset_ca_out : std_ulogic;
+    signal delay_reset_dq_rx_out : std_ulogic;
+    signal delay_reset_dq_tx_out : std_ulogic;
 
     signal ck_reset_out : std_ulogic;
     signal ck_unlock_in : std_ulogic;
-    signal fifo_ok_in : std_ulogic;
-    signal sg_resets_out : std_ulogic_vector(0 to 1);
+    signal reset_fifo_out : std_ulogic_vector(0 to 1);
+    signal fifo_ok_in : std_ulogic_vector(0 to 1);
+    signal sg_resets_n_out : std_ulogic_vector(0 to 1);
+    signal edc_t_out : std_ulogic;
     signal enable_cabi_out : std_ulogic;
     signal enable_dbi_out : std_ulogic;
-    signal rx_slip_out : unsigned_array(0 to 1)(2 downto 0);
-    signal tx_slip_out : unsigned_array(0 to 1)(2 downto 0);
+    signal capture_dbi_out : std_ulogic;
+    signal edc_delay_out : unsigned(4 downto 0);
 
 begin
     reg_clk_in <= not reg_clk_in after 2.3 ns;
     ck_clk_in <= not ck_clk_in after 2 ns;
-    riu_clk_in <= not riu_clk_in after 4 ns;
     ck_clk_ok_in <= '1';
 
     setup : entity work.gddr6_setup port map (
         reg_clk_i => reg_clk_in,
         ck_clk_i => ck_clk_in,
-        riu_clk_i => riu_clk_in,
         ck_clk_ok_i => ck_clk_ok_in,
 
         write_strobe_i => write_strobe_in,
@@ -74,34 +76,39 @@ begin
         phy_ca_o => phy_ca_out,
         phy_ca3_o => phy_ca3_out,
         phy_cke_n_o => phy_cke_n_out,
-        phy_dq_t_o => phy_dq_t_out,
+        phy_output_enable_o => phy_output_enable_out,
         phy_data_o => phy_data_out,
         phy_data_i => phy_data_in,
         phy_edc_in_i => phy_edc_in_in,
         phy_edc_out_i => phy_edc_out_in,
 
-        riu_addr_o => riu_addr_out,
-        riu_wr_data_o => riu_wr_data_out,
-        riu_rd_data_i => riu_rd_data_in,
-        riu_wr_en_o => riu_wr_en_out,
-        riu_strobe_o => riu_strobe_out,
-        riu_ack_i => riu_ack_in,
-        riu_error_i => riu_error_in,
-        riu_vtc_handshake_o => riu_vtc_handshake_out,
+        delay_address_o => delay_address_out,
+        delay_o => delay_out,
+        delay_up_down_n_o => delay_up_down_n_out,
+        delay_byteslip_o => delay_byteslip_out,
+        delay_read_write_n_o => delay_read_write_n_out,
+        delay_i => delay_in,
+        delay_strobe_o => delay_strobe_out,
+        delay_ack_i => delay_ack_in,
+        delay_reset_ca_o => delay_reset_ca_out,
+        delay_reset_dq_rx_o => delay_reset_dq_rx_out,
+        delay_reset_dq_tx_o => delay_reset_dq_tx_out,
 
         ck_reset_o => ck_reset_out,
         ck_unlock_i => ck_unlock_in,
+        reset_fifo_o => reset_fifo_out,
         fifo_ok_i => fifo_ok_in,
-        sg_resets_o => sg_resets_out,
+        sg_resets_n_o => sg_resets_n_out,
+        edc_t_o => edc_t_out,
         enable_cabi_o => enable_cabi_out,
         enable_dbi_o => enable_dbi_out,
-        rx_slip_o => rx_slip_out,
-        tx_slip_o => tx_slip_out
+        capture_dbi_o => capture_dbi_out,
+        edc_delay_o => edc_delay_out
     );
 
     process (ck_clk_in) begin
         if rising_edge(ck_clk_in) then
-            if phy_dq_t_out then
+            if phy_output_enable_out then
                 phy_data_in <= (others => '1');
             else
                 phy_data_in <= phy_data_out;
@@ -153,14 +160,15 @@ begin
         procedure write_ca(
             ca0 : std_ulogic_vector; ca1 : std_ulogic_vector;
             ca3 : std_ulogic_vector;
-            cke_n : std_ulogic; dq_t : std_ulogic) is
+            cke_n : std_ulogic_vector(1 downto 0);
+            output_enable : std_ulogic) is
         begin
             write_reg(GDDR6_CA_REG, (
                 GDDR6_CA_RISING_BITS => ca0,
                 GDDR6_CA_FALLING_BITS => ca1,
                 GDDR6_CA_CA3_BITS => ca3,
-                GDDR6_CA_CKE_N_BIT => cke_n,
-                GDDR6_CA_DQ_T_BIT => dq_t,
+                GDDR6_CA_CKE_N_BITS => cke_n,
+                GDDR6_CA_OUTPUT_ENABLE_BIT => output_enable,
                 others => '0'));
         end;
 
@@ -202,14 +210,14 @@ begin
         clk_wait(5);
         start_write;
         write_data_word(X"01234567");
-        write_ca(10X"123", 10X"056", X"0", '0', '0');
+        write_ca(10X"123", 10X"056", X"0", "00", '0');
         write_data_word(X"89ABCDEF");
-        write_ca(10X"389", 10X"2BC", X"3", '0', '0');
+        write_ca(10X"389", 10X"2BC", X"3", "00", '0');
         write_data_word(X"01010101");
-        write_ca(10X"3FF", 10X"3FF", X"F", '0', '0');
-        write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
-        write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
-        write_ca(10X"3FF", 10X"3FF", X"F", '1', '1');
+        write_ca(10X"3FF", 10X"3FF", X"F", "00", '0');
+        write_ca(10X"3FF", 10X"3FF", X"F", "11", '1');
+        write_ca(10X"3FF", 10X"3FF", X"F", "11", '1');
+        write_ca(10X"3FF", 10X"3FF", X"F", "11", '1');
 
         do_exchange;
 

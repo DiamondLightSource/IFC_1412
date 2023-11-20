@@ -29,12 +29,14 @@ entity gddr6_phy_dq is
         enable_bitslice_vtc_i : in std_ulogic;
         reset_fifo_i : in std_ulogic_vector(0 to 1);
         fifo_ok_o : out std_ulogic_vector(0 to 1);
+        capture_dbi_i : in std_ulogic;
+        edc_delay_i : in unsigned(4 downto 0);
+        enable_dbi_i : in std_ulogic;
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
         data_o : out std_ulogic_vector(511 downto 0);
         data_i : in std_ulogic_vector(511 downto 0);
         output_enable_i : in std_ulogic;
-        enable_dbi_i : in std_ulogic;
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
         edc_i : in std_ulogic;      -- Config value only
@@ -317,11 +319,14 @@ begin
     crc : entity work.gddr6_phy_crc port map (
         clk_i => ck_clk_i,
 
+        capture_dbi_i => capture_dbi_i,
+        edc_delay_i => edc_delay_i,
+
         output_enable_i => output_enable_i,
-        bank_data_in_i => bitslip_data_in,
-        bank_dbi_n_in_i => bitslip_dbi_n_in,
-        bank_data_out_i => bitslip_data_out,
-        bank_dbi_n_out_i => bitslip_dbi_n_out,
+        data_in_i => bitslip_data_in,
+        dbi_n_in_i => bitslip_dbi_n_in,
+        data_out_i => bitslip_data_out,
+        dbi_n_out_i => bitslip_dbi_n_out,
 
         edc_out_o => edc_out_o
     );

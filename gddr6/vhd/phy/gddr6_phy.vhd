@@ -71,6 +71,11 @@ entity gddr6_phy is
         -- Data bus inversion enables for CA and DQ interfaces
         enable_cabi_i : in std_ulogic;
         enable_dbi_i : in std_ulogic;
+        -- If this flag is set then DBI is captured as edc_out_o
+        capture_dbi_i : in std_ulogic;
+        -- This delay is used to align data_o with data_i so that edc_out_o can
+        -- be computed correctly
+        edc_delay_i : in unsigned(4 downto 0);
 
         -- --------------------------------------------------------------------
         -- CA
@@ -92,7 +97,7 @@ entity gddr6_phy is
         -- value received from the memory, each 8-bit value is the CRC for one
         -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
         -- calculated value, either for incoming data or for outgoing data, as
-        -- selected by output_enable_i.
+        -- selected by output_enable_i, unless capture_dbi_i is set.
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
         -- Must be held low during SG reset, high during normal operation
@@ -334,11 +339,13 @@ begin
         enable_bitslice_vtc_i => enable_bitslice_vtc,
         reset_fifo_i => reset_fifo_i,
         fifo_ok_o => fifo_ok_o,
+        capture_dbi_i => capture_dbi_i,
+        edc_delay_i => edc_delay_i,
+        enable_dbi_i => enable_dbi_i,
 
         data_o => data_o,
         data_i => data_i,
         output_enable_i => output_enable_i,
-        enable_dbi_i => enable_dbi_i,
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
         edc_i => '1',           -- Configures memory for x1 mode during reset

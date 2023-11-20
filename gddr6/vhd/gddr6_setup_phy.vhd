@@ -135,6 +135,8 @@ architecture arch of gddr6_setup_phy is
     signal edc_t : std_ulogic;
     signal enable_cabi : std_ulogic;
     signal enable_dbi : std_ulogic;
+    signal capture_dbi : std_ulogic;
+    signal edc_delay : unsigned(4 downto 0);
 
     signal enable_controller : std_ulogic;
 
@@ -183,6 +185,8 @@ begin
         edc_t_o => edc_t,
         enable_cabi_o => enable_cabi,
         enable_dbi_o => enable_dbi,
+        capture_dbi_o => capture_dbi,
+        edc_delay_o => edc_delay,
 
         enable_controller_o => enable_controller
     );
@@ -208,6 +212,8 @@ begin
         ca3_i => phy_ca3,
         cke_n_i => phy_cke_n,
         enable_cabi_i => enable_cabi,
+        capture_dbi_i => capture_dbi,
+        edc_delay_i => edc_delay,
 
         data_i => phy_data_out,
         data_o => phy_data_in,

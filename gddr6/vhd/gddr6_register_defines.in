@@ -27,6 +27,12 @@
             # Resets all ODELAYs for DQ, DBI
             .RESET_DQ_ODELAY
 
+            # Set to enable capture of DBI to EDC_OUT
+            .CAPTURE_DBI
+            # Configures delay on data out to CRC, must be setup correctly
+            # during training
+            .EDC_DELAY      5
+
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
             # will be effectively ignored

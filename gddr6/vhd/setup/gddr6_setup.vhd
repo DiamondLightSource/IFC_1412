@@ -62,6 +62,8 @@ entity gddr6_setup is
         edc_t_o : out std_ulogic;
         enable_cabi_o : out std_ulogic;
         enable_dbi_o : out std_ulogic;
+        capture_dbi_o : out std_ulogic;
+        edc_delay_o : out unsigned(4 downto 0);
 
         -- Controller enable
         enable_controller_o : out std_ulogic
@@ -99,6 +101,8 @@ begin
         edc_t_o => edc_t_o,
         enable_cabi_o => enable_cabi_o,
         enable_dbi_o => enable_dbi_o,
+        capture_dbi_o => capture_dbi_o,
+        edc_delay_o => edc_delay_o,
 
         delay_reset_ca_o => delay_reset_ca_o,
         delay_reset_dq_rx_o => delay_reset_dq_rx_o,

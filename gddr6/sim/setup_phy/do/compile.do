@@ -25,6 +25,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/cross_clocks_write.vhd \
     $common_vhd/util/cross_clocks_read.vhd \
     $common_vhd/util/cross_clocks_write_read.vhd \
+    $common_vhd/util/short_delay.vhd \
     $common_vhd/register/register_defs.vhd \
     $common_vhd/register/register_buffer.vhd \
     $common_vhd/register/register_mux_strobe.vhd \
@@ -53,6 +54,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_map_dbi.vhd \
     $vhd_dir/phy/gddr6_phy_bitslip.vhd \
     $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
+    $vhd_dir/phy/gddr6_phy_crc_core.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
     $vhd_dir/phy/gddr6_phy_delay_control.vhd \

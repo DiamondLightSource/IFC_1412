@@ -38,6 +38,8 @@ architecture arch of testbench is
     signal sg_resets_n_in : std_ulogic_vector(0 to 1);
     signal enable_cabi_in : std_ulogic;
     signal enable_dbi_in : std_ulogic;
+    signal capture_dbi_in : std_ulogic;
+    signal edc_delay_in : unsigned(4 downto 0);
 
     signal ca_in : vector_array(0 to 1)(9 downto 0);
     signal ca3_in : std_ulogic_vector(0 to 3);
@@ -108,6 +110,8 @@ begin
         sg_resets_n_i => sg_resets_n_in,
         enable_cabi_i => enable_cabi_in,
         enable_dbi_i => enable_dbi_in,
+        capture_dbi_i => capture_dbi_in,
+        edc_delay_i => edc_delay_in,
 
         ca_i => ca_in,
         ca3_i => ca3_in,
@@ -165,6 +169,8 @@ begin
     sg_resets_n_in <= "11";
     enable_cabi_in <= '0';
     enable_dbi_in <= '0';
+    capture_dbi_in <= '1';
+    edc_delay_in <= 5X"00";
 
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
