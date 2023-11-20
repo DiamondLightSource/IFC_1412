@@ -41,7 +41,7 @@ entity gddr6_setup is
 
         -- Delay control on delay_clk_i
         delay_address_o : out unsigned(7 downto 0);
-        delay_o : out unsigned(7 downto 0);
+        delay_o : out unsigned(8 downto 0);
         delay_up_down_n_o : out std_ulogic;
         delay_byteslip_o : out std_ulogic;
         delay_read_write_n_o : out std_ulogic;

@@ -114,7 +114,7 @@ architecture arch of gddr6_setup_phy is
     signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
 
     signal delay_address : unsigned(7 downto 0);
-    signal delay : unsigned(7 downto 0);
+    signal delay : unsigned(8 downto 0);
     signal delay_up_down_n : std_ulogic;
     signal delay_byteslip : std_ulogic;
     signal delay_read_write_n : std_ulogic;

@@ -52,7 +52,7 @@ architecture arch of testbench is
     signal edc_t_in : std_ulogic := '0';
 
     signal delay_address_in : unsigned(7 downto 0);
-    signal delay_in : unsigned(7 downto 0);
+    signal delay_in : unsigned(8 downto 0);
     signal delay_up_down_n_in : std_ulogic;
     signal delay_byteslip_in : std_ulogic;
     signal delay_read_write_n_in : std_ulogic;
@@ -201,7 +201,7 @@ begin
         is
         begin
             delay_address_in <= to_unsigned(address, 8);
-            delay_in <= to_unsigned(delay, 8);
+            delay_in <= to_unsigned(delay, 9);
             delay_up_down_n_in <= up_down_n;
             delay_byteslip_in <= byteslip;
             delay_read_write_n_in <= '0';

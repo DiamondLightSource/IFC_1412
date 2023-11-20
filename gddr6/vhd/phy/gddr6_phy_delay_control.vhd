@@ -15,7 +15,7 @@ entity gddr6_phy_delay_control is
 
         -- Control interface from registers
         delay_address_i : in unsigned(7 downto 0);
-        delay_i : in unsigned(7 downto 0);
+        delay_i : in unsigned(8 downto 0);
         delay_up_down_n_i : in std_ulogic;
         byteslip_i : in std_ulogic;
         read_write_n_i : in std_ulogic;

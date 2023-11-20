@@ -102,7 +102,7 @@ entity gddr6_phy is
         -- Delay control interface
         -- The address map here is defined in gddr6_register_defines.in
         delay_address_i : in unsigned(7 downto 0);
-        delay_i : in unsigned(7 downto 0);
+        delay_i : in unsigned(8 downto 0);
         delay_up_down_n_i : in std_ulogic;
         delay_byteslip_i : in std_ulogic;
         delay_read_write_n_i : in std_ulogic;

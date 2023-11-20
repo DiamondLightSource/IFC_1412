@@ -29,7 +29,7 @@ entity gddr6_setup_delay is
 
         -- Delay control on delay_clk_i
         delay_address_o : out unsigned(7 downto 0);
-        delay_o : out unsigned(7 downto 0);
+        delay_o : out unsigned(8 downto 0);
         delay_up_down_n_o : out std_ulogic;
         delay_byteslip_o : out std_ulogic;
         delay_read_write_n_o : out std_ulogic;
@@ -70,14 +70,10 @@ begin
         read_ack_i(0) => read_ack
     );
 
-    process (ck_clk_i)
-        variable full_delay_out : unsigned(8 downto 0);
-    begin
+    process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
-            full_delay_out := unsigned(write_data(GDDR6_DELAY_DELAY_BITS));
-
             delay_address_o <= unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS));
-            delay_o <= full_delay_out(delay_o'RANGE);
+            delay_o <= unsigned(write_data(GDDR6_DELAY_DELAY_BITS));
             delay_up_down_n_o <= write_data(GDDR6_DELAY_UP_DOWN_N_BIT);
             delay_byteslip_o <= write_data(GDDR6_DELAY_BYTESLIP_BIT);
             delay_read_write_n_o <= write_data(GDDR6_DELAY_NO_WRITE_BIT);
