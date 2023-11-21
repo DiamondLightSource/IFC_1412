@@ -24,79 +24,71 @@ entity gddr6_phy_crc is
 end;
 
 architecture arch of gddr6_phy_crc is
-    signal edc_delay_in : edc_delay_i'SUBTYPE := (others => '0');
-    signal output_enable_delay : std_ulogic;
-    signal data_out_delay : vector_array(63 downto 0)(7 downto 0);
-    signal dbi_n_out_delay : vector_array(7 downto 0)(7 downto 0);
-
-    signal selected_data : vector_array(63 downto 0)(7 downto 0);
-    signal selected_dbi_n : vector_array(7 downto 0)(7 downto 0);
+    signal edc_in : vector_array(7 downto 0)(7 downto 0);
     signal edc_out : vector_array(7 downto 0)(7 downto 0);
 
+    signal enable_delay : edc_delay_i'SUBTYPE := (others => '0');
+    signal crc_delay : edc_delay_i'SUBTYPE := (others => '0');
+    signal output_enable_delay : std_ulogic;
+    signal edc_out_delay : vector_array(7 downto 0)(7 downto 0);
+
 begin
-    -- Programmable delays for output enable and outgoing data so that we only
-    -- need one instance of the CRC.
-    delay_enable : entity work.short_delay generic map (
-        REGISTER_OUTPUT => true
-    ) port map (
+    -- Separate CRC calculations for incoming and outgoing data, but only one of
+    -- them will be useful.
+    crc_in : entity work.gddr6_phy_crc_core port map (
         clk_i => clk_i,
-        delay_i => edc_delay_in,
+        data_i => data_in_i,
+        dbi_n_i => dbi_n_in_i,
+        edc_o => edc_in
+    );
+
+    crc_out : entity work.gddr6_phy_crc_core port map (
+        clk_i => clk_i,
+        data_i => data_out_i,
+        dbi_n_i => dbi_n_out_i,
+        edc_o => edc_out
+    );
+
+
+    -- Delay output_enable and computed edc_out by configurable delay before
+    -- selecting which result to deliver
+    delay_enable : entity work.short_delay port map (
+        clk_i => clk_i,
+        delay_i => enable_delay,
         data_i(0) => output_enable_i,
         data_o(0) => output_enable_delay
     );
 
-    gen_data_delay : for i in 0 to 63 generate
+    gen_crc_delay : for i in 0 to 7 generate
         delay : entity work.short_delay generic map (
-            WIDTH => 8,
-            REGISTER_OUTPUT => false
+            WIDTH => 8
         ) port map (
             clk_i => clk_i,
-            delay_i => edc_delay_in,
-            data_i => data_out_i(i),
-            data_o => data_out_delay(i)
-        );
-    end generate;
-
-    gen_dbi_delay : for i in 0 to 7 generate
-        delay : entity work.short_delay generic map (
-            WIDTH => 8,
-            REGISTER_OUTPUT => false
-        ) port map (
-            clk_i => clk_i,
-            delay_i => edc_delay_in,
-            data_i => dbi_n_out_i(i),
-            data_o => dbi_n_out_delay(i)
+            delay_i => crc_delay,
+            data_i => edc_out(i),
+            data_o => edc_out_delay(i)
         );
     end generate;
 
 
     process (clk_i) begin
         if rising_edge(clk_i) then
-            edc_delay_in <= edc_delay_i;
+            -- Due to an extra output delay on enable_delay it needs to be one
+            -- tick ahead of the data, and upstream processing (in _map_dbi)
+            -- plus the crc calculation above delays this a further two ticks.
+            -- We fudge this here with an extra delay!
+            crc_delay <= edc_delay_i;
+            enable_delay <= edc_delay_i + 3;
 
             -- Select CRC data to process.  If output_enable_i is set then use
             -- outgoing data, otherwise use incoming data.
-            if output_enable_delay then
-                selected_data <= data_out_delay;
-                selected_dbi_n <= dbi_n_out_delay;
-            else
-                selected_data <= data_in_i;
-                selected_dbi_n <= dbi_n_in_i;
-            end if;
-
             if capture_dbi_i then
                 edc_out_o <= dbi_n_in_i;
+            elsif output_enable_delay then
+                edc_out_o <= edc_out_delay;
             else
-                edc_out_o <= edc_out;
+                edc_out_o <= edc_in;
             end if;
         end if;
     end process;
-
-
-    crc : entity work.gddr6_phy_crc_core port map (
-        clk_i => clk_i,
-        data_i => selected_data,
-        dbi_n_i => selected_dbi_n,
-        edc_o => edc_out
-    );
 end;

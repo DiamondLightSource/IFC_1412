@@ -25,6 +25,7 @@
 --          gddr6_phy_bitslip           WCK data phase correction
 --          gddr6_phy_map_dbi           Byte remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
+--              gddr6_phy_crc_core          CRC calculation
 --      gddr6_phy_delay_control     Control of delay interface
 
 library ieee;
@@ -92,6 +93,8 @@ entity gddr6_phy is
         -- organised here as an array of 64 bytes, or 512 bits.
         data_i : in std_ulogic_vector(511 downto 0);
         data_o : out std_ulogic_vector(511 downto 0);
+        -- Due to an extra delay in the BITSLICE output stages output_enable_i
+        -- must be presented 1 CK tick earlier than data_i.
         output_enable_i : in std_ulogic;
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one

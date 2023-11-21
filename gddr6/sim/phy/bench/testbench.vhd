@@ -2,9 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library unisim;
-use unisim.vcomponents.all;
-
 use std.textio.all;
 
 use work.support.all;
@@ -169,7 +166,7 @@ begin
     sg_resets_n_in <= "11";
     enable_cabi_in <= '0';
     enable_dbi_in <= '0';
-    capture_dbi_in <= '1';
+    capture_dbi_in <= '0';
     edc_delay_in <= 5X"00";
 
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
@@ -270,6 +267,26 @@ begin
         delay_reset_dq_tx_in <= '0';
 
         clk_wait(10);
+
+
+        -- Test alignment of DQ and OE.  Test pattern sequence is:
+        --  ck  |   |   |   |   |   |   |   |
+        --  d    FF  00  00  FF  00  00  FF
+        --  oe   0   0   1   1   1   0   0
+        data_in <= (8 => '1', others => '0');
+        clk_wait;
+        output_enable_in <= '1';
+        clk_wait;
+        clk_wait;
+        data_in <= (8 => '0', others => '1');
+        clk_wait;
+        data_in <= (8 => '1', others => '0');
+        clk_wait;
+        output_enable_in <= '0';
+        clk_wait;
+        data_in <= (8 => '0', others => '1');
+        clk_wait;
+
 
         -- Test pattern for CA
         cke_n_in <= "10";
