@@ -170,7 +170,6 @@ begin
             enable_control_vtc_o <= '0';
             reset_o <= '1';
             enable_pll_clk <= '0';
-            ck_clk_ok_o <= '0';
         elsif rising_edge(ck_clk) then
             case reset_state is
                 when RESET_START =>
@@ -201,13 +200,14 @@ begin
                     -- Wait for VTC_RDY
                     if vtc_ready_in then
                         reset_state <= RESET_DONE;
-                        ck_clk_ok_o <= '1';
                     end if;
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs
             end case;
         end if;
     end process;
+
+    ck_clk_ok_o <= to_std_ulogic(reset_state = RESET_DONE) and (and pll_locked);
 
     -- Detect PLL unlock and generate single pulse on resumption of lock
     process (ck_clk, pll_locked) begin

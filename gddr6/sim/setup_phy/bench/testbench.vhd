@@ -20,6 +20,8 @@ architecture arch of testbench is
     constant CK_WIDTH : time := 1 us / CK_FREQUENCY;
     constant WCK_WIDTH : time := CK_WIDTH / 4;
 
+    signal ck_clock_running : boolean := true;
+
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
     signal pad_SG1_WCK_P : std_ulogic := '0';
@@ -124,7 +126,7 @@ begin
 
 
     -- Run CK at 300 MHz (we should be so lucky on real hardware)
-    pad_SG12_CK_P <= not pad_SG12_CK_P after CK_WIDTH / 2;
+    pad_SG12_CK_P <= not pad_SG12_CK_P after CK_WIDTH / 2 when ck_clock_running;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
     -- Run WCK at 4 times this frequency
     pad_SG1_WCK_P <= not pad_SG1_WCK_P after WCK_WIDTH / 2;
@@ -313,6 +315,17 @@ begin
         for n in 0 to CAPTURE_COUNT-1 loop
             read_dq_edc(n);
         end loop;
+        write("Capture complete", true);
+
+
+        -- Now stop the clocks and try reading the status
+        ck_clock_running <= false;
+        clk_wait(5);
+        read_reg(GDDR6_STATUS_REG);
+        -- Restart clock and try reading again
+        ck_clock_running <= true;
+        read_reg(GDDR6_STATUS_REG);
+
 
         wait;
     end process;
