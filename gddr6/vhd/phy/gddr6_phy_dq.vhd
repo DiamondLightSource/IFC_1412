@@ -22,9 +22,9 @@ entity gddr6_phy_dq is
         riu_clk_i : in std_ulogic;                  -- Delay control clock
 
         -- Resets and control
-        reset_i : in std_ulogic;                -- Bitslice reset
-        dly_ready_o : out std_ulogic;           -- Delay ready (async)
-        vtc_ready_o : out std_ulogic;           -- Calibration done (async)
+        bitslice_reset_i : in std_ulogic;           -- Bitslice reset
+        dly_ready_o : out std_ulogic;               -- Delay ready (async)
+        vtc_ready_o : out std_ulogic;               -- Calibration done (async)
         enable_control_vtc_i : in std_ulogic;
         enable_bitslice_vtc_i : in std_ulogic;
         reset_fifo_i : in std_ulogic_vector(0 to 1);
@@ -167,7 +167,7 @@ begin
             fifo_empty_o => slice_fifo_empty(i),
             fifo_enable_i => fifo_enable(i / 4),
 
-            reset_i => reset_i,
+            bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
             dly_ready_o => slice_dly_ready(i),
             vtc_ready_o => slice_vtc_ready(i),
@@ -337,7 +337,7 @@ begin
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
             for io in 0 to 1 loop
-                if reset_i or reset_fifo_i(io) then
+                if bitslice_reset_i or reset_fifo_i(io) then
                     fifo_enable(io) <= '0';
                 else
                     -- Enable FIFO following UG571 v1.14 p213

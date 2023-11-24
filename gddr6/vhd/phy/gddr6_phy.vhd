@@ -191,7 +191,7 @@ architecture arch of gddr6_phy is
     -- Other clocks, resets, controls
     signal phy_clk : std_ulogic_vector(0 to 1);
     signal riu_clk : std_ulogic;
-    signal reset : std_ulogic;
+    signal bitslice_reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
@@ -288,7 +288,7 @@ begin
         ck_clk_ok_o => ck_clk_ok_o,
         ck_unlock_o => ck_unlock_o,
 
-        reset_o => reset,
+        bitslice_reset_o => bitslice_reset,
         dly_ready_i => dly_ready,
         vtc_ready_i => vtc_ready,
         enable_control_vtc_o => enable_control_vtc
@@ -302,7 +302,7 @@ begin
         REFCLK_FREQUENCY => REFCLK_FREQUENCY
     ) port map (
         ck_clk_i => ck_clk,
-        reset_i => reset,
+        reset_i => bitslice_reset,
         sg_resets_n_i => sg_resets_n_i,
 
         enable_cabi_i => enable_cabi_i,
@@ -335,7 +335,7 @@ begin
         ck_clk_i => ck_clk,         -- Fabric clock for bitslice interface
         riu_clk_i => riu_clk,       -- Internal bitslice and delay control clock
 
-        reset_i => reset,
+        bitslice_reset_i => bitslice_reset,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
         enable_control_vtc_i => enable_control_vtc,

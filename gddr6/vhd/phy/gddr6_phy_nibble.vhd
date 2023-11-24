@@ -44,7 +44,7 @@ entity gddr6_phy_nibble is
         fifo_rd_en_i : in std_ulogic;
 
         -- Resets and controls
-        reset_i : in std_ulogic;
+        bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
@@ -121,7 +121,7 @@ begin
 
         PLL_CLK => phy_clk_i,
         REFCLK => '0',
-        RST => reset_i,
+        RST => bitslice_reset_i,
         -- Here is a confusing detail.  This value is inverted from this input
         -- to BITSLICE.T_OUT, which means that here this is acting as an output
         -- enable, not a tristate enable!
@@ -193,8 +193,8 @@ begin
     ) port map (
         TRI_OUT => tri_out_to_tbyte,
         EN_VTC => enable_tri_vtc_i,
-        RST => reset_i,
-        RST_DLY => reset_i or reset_tri_delay_i,
+        RST => bitslice_reset_i,
+        RST_DLY => bitslice_reset_i or reset_tri_delay_i,
         -- Control interface
         BIT_CTRL_IN => tx_bit_ctrl_out_tri,
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
@@ -265,8 +265,8 @@ begin
 
                 RX_EN_VTC => enable_rx_vtc_i(i),
                 TX_EN_VTC => enable_tx_vtc_i(i),
-                RX_RST => reset_i,
-                TX_RST => reset_i,
+                RX_RST => bitslice_reset_i,
+                TX_RST => bitslice_reset_i,
 
                 -- Control interface
                 RX_BIT_CTRL_OUT => rx_bit_ctrl_in(i),
@@ -275,7 +275,7 @@ begin
                 TX_BIT_CTRL_IN => tx_bit_ctrl_out(i),
 
                 -- Delay management interface
-                RX_RST_DLY => reset_i or reset_rx_delay_i(i),
+                RX_RST_DLY => bitslice_reset_i or reset_rx_delay_i(i),
                 RX_CLK => ck_clk_i,
                 RX_CE => rx_delay_ce_i(i),
                 RX_INC => delay_up_down_n_i,
@@ -283,7 +283,7 @@ begin
                 RX_CNTVALUEIN => (others => '0'),
                 RX_CNTVALUEOUT => rx_delay_o(i),
 
-                TX_RST_DLY => reset_i or reset_tx_delay_i(i),
+                TX_RST_DLY => bitslice_reset_i or reset_tx_delay_i(i),
                 TX_CLK => ck_clk_i,
                 TX_CE => tx_delay_ce_i(i),
                 TX_INC => delay_up_down_n_i,

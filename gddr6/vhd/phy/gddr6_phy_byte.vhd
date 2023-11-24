@@ -39,7 +39,7 @@ entity gddr6_phy_byte is
         fifo_enable_i : in std_ulogic;
 
         -- Resets and controls
-        reset_i : in std_ulogic;
+        bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
@@ -132,7 +132,7 @@ begin
             fifo_empty_o => fifo_empty(BITSLICE_RANGE),
             fifo_rd_en_i => fifo_enable_i,
 
-            reset_i => reset_i,
+            bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
             dly_ready_o => dly_ready(i),
             vtc_ready_o => vtc_ready(i),

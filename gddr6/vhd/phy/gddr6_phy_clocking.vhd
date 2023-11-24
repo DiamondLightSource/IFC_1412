@@ -30,7 +30,7 @@ entity gddr6_phy_clocking is
         phy_clk_o : out std_ulogic_vector(0 to 1);
 
         -- Reset control and management
-        reset_o : out std_ulogic;              -- Bitslice reset
+        bitslice_reset_o : out std_ulogic;     -- Bitslice reset
         dly_ready_i : in std_ulogic;           -- Delay ready (async)
         vtc_ready_i : in std_ulogic;           -- Calibration done (async)
         enable_control_vtc_o : out std_ulogic
@@ -118,7 +118,7 @@ begin
     ) port map (
         clk_i => raw_clk,
         reset_i => ck_reset_i,
-        bit_i => and pll_locked,
+        bit_i => vector_and(pll_locked),
         bit_o => clk_enable
     );
 
@@ -168,7 +168,7 @@ begin
         if reset_sync then
             reset_state <= RESET_START;
             enable_control_vtc_o <= '0';
-            reset_o <= '1';
+            bitslice_reset_o <= '1';
             enable_pll_clk <= '0';
         elsif rising_edge(ck_clk) then
             case reset_state is
@@ -180,7 +180,7 @@ begin
                 when RESET_RELEASE =>
                     -- Release bitslice resets and start counting before
                     -- enabling the high speed clock
-                    reset_o <= '0';
+                    bitslice_reset_o <= '0';
                     wait_counter <= 6X"3F";     -- 63 ticks
                     reset_state <= RESET_WAIT_PLL;
                 when RESET_WAIT_PLL =>
@@ -207,7 +207,8 @@ begin
         end if;
     end process;
 
-    ck_clk_ok_o <= to_std_ulogic(reset_state = RESET_DONE) and (and pll_locked);
+    ck_clk_ok_o <=
+        to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
 
     -- Detect PLL unlock and generate single pulse on resumption of lock
     process (ck_clk, pll_locked) begin
