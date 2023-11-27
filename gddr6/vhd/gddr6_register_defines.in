@@ -20,13 +20,6 @@
             # controller.
             .ENABLE_CONTROL
 
-            # Resets all CA ODELAYs
-            .RESET_CA_ODELAY
-            # Resets all IDELAYs for DQ, DBI, EDC
-            .RESET_DQ_IDELAY
-            # Resets all ODELAYs for DQ, DBI
-            .RESET_DQ_ODELAY
-
             # Set to enable capture of DBI to EDC_OUT
             .CAPTURE_DBI
             # Configures delay on data out to CRC, must be setup correctly

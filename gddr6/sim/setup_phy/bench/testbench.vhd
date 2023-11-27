@@ -14,7 +14,7 @@ end testbench;
 
 
 architecture arch of testbench is
-    constant CK_FREQUENCY : real := 300.0;
+    constant CK_FREQUENCY : real := 250.0;
     constant ENABLE_DELAY_READBACK : boolean := true;
 
     constant CK_WIDTH : time := 1 us / CK_FREQUENCY;
@@ -72,10 +72,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    test : entity work.gddr6_setup_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY,
-        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
-    ) port map (
+    test : entity work.gddr6_setup_phy port map (
         reg_clk_i => clk,
 
         write_strobe_i => write_strobe,

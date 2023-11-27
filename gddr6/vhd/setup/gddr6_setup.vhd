@@ -10,10 +10,6 @@ use work.register_defs.all;
 use work.gddr6_register_defines.all;
 
 entity gddr6_setup is
-    generic (
-        -- Delay readback is quite expensive in terms of fabric, so is optional
-        ENABLE_DELAY_READBACK : boolean := false
-    );
     port (
         reg_clk_i : in std_ulogic;      -- Register clock
 
@@ -48,10 +44,6 @@ entity gddr6_setup is
         delay_i : in unsigned(8 downto 0);
         delay_strobe_o : out std_ulogic;
         delay_ack_i : in std_ulogic;
-        -- Individual delay resets
-        delay_reset_ca_o : out std_ulogic;
-        delay_reset_dq_rx_o : out std_ulogic;
-        delay_reset_dq_tx_o : out std_ulogic;
 
         -- Controls to PHY
         ck_reset_o : out std_ulogic;
@@ -104,17 +96,11 @@ begin
         capture_dbi_o => capture_dbi_o,
         edc_delay_o => edc_delay_o,
 
-        delay_reset_ca_o => delay_reset_ca_o,
-        delay_reset_dq_rx_o => delay_reset_dq_rx_o,
-        delay_reset_dq_tx_o => delay_reset_dq_tx_o,
-
         enable_controller_o => enable_controller_o
     );
 
 
-    delay : entity work.gddr6_setup_delay generic map (
-        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
-    ) port map (
+    delay : entity work.gddr6_setup_delay port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok,

@@ -34,12 +34,9 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_phy_defs.all;
+
 entity gddr6_phy is
-    generic (
-        CK_FREQUENCY : real := 250.0;       -- 250.0 or 300.0 MHz
-        CALIBRATE_DELAY : boolean := false; -- Enables use of DELAY_FORMAT=TIME
-        INITIAL_DELAY : natural := 0
-    );
     port (
         -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
         -- are held in reset until CK is good.  This signal is asynchronous
@@ -118,11 +115,6 @@ entity gddr6_phy is
         delay_o : out unsigned(8 downto 0);
         delay_strobe_i : in std_ulogic;
         delay_ack_o : out std_ulogic;
-        -- Individual delay resets.  These must be held for several ticks to
-        -- take effect
-        delay_reset_ca_i : in std_ulogic;       -- Reset all CA delays to zero
-        delay_reset_dq_rx_i : in std_ulogic;    -- Reset all DQ RX delays
-        delay_reset_dq_tx_i : in std_ulogic;    -- Reset all DQ TX delays
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -158,6 +150,7 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
+    constant CK_FREQUENCY : real := 250.0;
     constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
 
     -- Pads with IO buffers
@@ -195,30 +188,20 @@ architecture arch of gddr6_phy is
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
+    signal enable_bitslice_control : std_ulogic;
     signal enable_bitslice_vtc : std_ulogic;
 
-    -- Delay controls
-    signal delay_up_down_n : std_ulogic;
-    -- Delay strobes
-    signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
-    signal dq_rx_delay_ce : std_ulogic_vector(63 downto 0);
-    signal dq_tx_delay_ce : std_ulogic_vector(63 downto 0);
-    signal dq_rx_byteslip : std_ulogic_vector(63 downto 0);
-    signal dbi_rx_delay_ce : std_ulogic_vector(7 downto 0);
-    signal dbi_tx_delay_ce : std_ulogic_vector(7 downto 0);
-    signal dbi_rx_byteslip : std_ulogic_vector(7 downto 0);
-    signal edc_rx_delay_ce : std_ulogic_vector(7 downto 0);
-    signal edc_rx_byteslip : std_ulogic_vector(7 downto 0);
+    -- Delay controls and readbacks
+    signal delay_control : delay_control_t;
+    signal delay_readbacks : delay_readbacks_t;
+
     -- DQ bitslip
     signal bitslip_delay : unsigned(2 downto 0);
     signal bitslip_address : unsigned(6 downto 0);
     signal bitslip_strobe : std_ulogic;
-    -- Individual delay readbacks
-    signal delay_dq_rx : vector_array(63 downto 0)(8 downto 0);
-    signal delay_dq_tx : vector_array(63 downto 0)(8 downto 0);
-    signal delay_dbi_rx : vector_array(7 downto 0)(8 downto 0);
-    signal delay_dbi_tx : vector_array(7 downto 0)(8 downto 0);
-    signal delay_edc_rx : vector_array(7 downto 0)(8 downto 0);
+
+    -- CA delays (might not be needed)
+    signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
     signal delay_ca_tx : vector_array(15 downto 0)(8 downto 0);
 
 begin
@@ -291,18 +274,15 @@ begin
         bitslice_reset_o => bitslice_reset,
         dly_ready_i => dly_ready,
         vtc_ready_i => vtc_ready,
-        enable_control_vtc_o => enable_control_vtc
+        enable_control_vtc_o => enable_control_vtc,
+        enable_bitslice_control_o => enable_bitslice_control
     );
 
 
     -- CA generation
-    ca : entity work.gddr6_phy_ca generic map (
-        CALIBRATE_DELAY => CALIBRATE_DELAY,
-        INITIAL_DELAY => INITIAL_DELAY,
-        REFCLK_FREQUENCY => REFCLK_FREQUENCY
-    ) port map (
+    ca : entity work.gddr6_phy_ca port map (
         ck_clk_i => ck_clk,
-        reset_i => bitslice_reset,
+        bitslice_reset_i => bitslice_reset,
         sg_resets_n_i => sg_resets_n_i,
 
         enable_cabi_i => enable_cabi_i,
@@ -311,8 +291,7 @@ begin
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
 
-        delay_rst_i => delay_reset_ca_i,
-        delay_inc_i => delay_up_down_n,
+        delay_inc_i => delay_control.delay_up_down_n,
         delay_ce_i => ca_tx_delay_ce,
         delay_o => delay_ca_tx,
 
@@ -326,8 +305,6 @@ begin
 
     -- Data receive and transmit
     dq : entity work.gddr6_phy_dq generic map (
-        CALIBRATE_DELAY => CALIBRATE_DELAY,
-        INITIAL_DELAY => INITIAL_DELAY,
         REFCLK_FREQUENCY => REFCLK_FREQUENCY
     ) port map (
         phy_clk_i => phy_clk,       -- Fast data transmit clock from PLL
@@ -339,7 +316,7 @@ begin
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
         enable_control_vtc_i => enable_control_vtc,
-        enable_bitslice_vtc_i => enable_bitslice_vtc,
+        enable_bitslice_control_i => enable_bitslice_control,
         reset_fifo_i => reset_fifo_i,
         fifo_ok_o => fifo_ok_o,
         capture_dbi_i => capture_dbi_i,
@@ -354,24 +331,8 @@ begin
         edc_i => '1',           -- Configures memory for x1 mode during reset
         edc_t_i => edc_t_i,
 
-        delay_up_down_n_i => delay_up_down_n,
-        dq_rx_delay_ce_i => dq_rx_delay_ce,
-        dq_tx_delay_ce_i => dq_tx_delay_ce,
-        dq_rx_byteslip_i => dq_rx_byteslip,
-        dbi_rx_delay_ce_i => dbi_rx_delay_ce,
-        dbi_tx_delay_ce_i => dbi_tx_delay_ce,
-        dbi_rx_byteslip_i => dbi_rx_byteslip,
-        edc_rx_delay_ce_i => edc_rx_delay_ce,
-        edc_rx_byteslip_i => edc_rx_byteslip,
-
-        reset_rx_delay_i => delay_reset_dq_rx_i,
-        reset_tx_delay_i => delay_reset_dq_tx_i,
-
-        dq_rx_delay_o => delay_dq_rx,
-        dq_tx_delay_o => delay_dq_tx,
-        dbi_rx_delay_o => delay_dbi_rx,
-        dbi_tx_delay_o => delay_dbi_tx,
-        edc_rx_delay_o => delay_edc_rx,
+        delay_control_i => delay_control,
+        delay_readbacks_o => delay_readbacks,
 
         bitslip_delay_i => bitslip_delay,
         bitslip_address_i => bitslip_address,
@@ -395,10 +356,8 @@ begin
     bitslice_patch <= (0 => io_ck_in);
 
 
-    delay : entity work.gddr6_phy_delay_control generic map (
-        CALIBRATE_DELAY => CALIBRATE_DELAY
-    ) port map (
-        ck_clk_i => ck_clk,
+    delay : entity work.gddr6_phy_delay_control port map (
+        clk_i => ck_clk,
 
         delay_address_i => delay_address_i,
         delay_i => delay_i,
@@ -409,28 +368,15 @@ begin
         strobe_i => delay_strobe_i,
         ack_o => delay_ack_o,
 
-        delay_up_down_n_o => delay_up_down_n,
+        delay_control_o => delay_control,
+        delay_readbacks_i => delay_readbacks,
 
         ca_tx_delay_ce_o => ca_tx_delay_ce,
-        dq_rx_delay_ce_o => dq_rx_delay_ce,
-        dq_tx_delay_ce_o => dq_tx_delay_ce,
-        dq_rx_byteslip_o => dq_rx_byteslip,
-        dbi_rx_delay_ce_o => dbi_rx_delay_ce,
-        dbi_tx_delay_ce_o => dbi_tx_delay_ce,
-        dbi_rx_byteslip_o => dbi_rx_byteslip,
-        edc_rx_delay_ce_o => edc_rx_delay_ce,
-        edc_rx_byteslip_o => edc_rx_byteslip,
+        delay_ca_tx_i => delay_ca_tx,
 
         bitslip_address_o => bitslip_address,
         bitslip_delay_o => bitslip_delay,
         bitslip_strobe_o => bitslip_strobe,
-
-        delay_dq_rx_i => delay_dq_rx,
-        delay_dq_tx_i => delay_dq_tx,
-        delay_dbi_rx_i => delay_dbi_rx,
-        delay_dbi_tx_i => delay_dbi_tx,
-        delay_edc_rx_i => delay_edc_rx,
-        delay_ca_tx_i => delay_ca_tx,
 
         enable_bitslice_vtc_o => enable_bitslice_vtc
     );

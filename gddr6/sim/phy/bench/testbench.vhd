@@ -11,8 +11,9 @@ end testbench;
 
 
 architecture arch of testbench is
-    -- Base frequency in MHz, either 250 or 300 MHz
-    constant CK_FREQUENCY : real := 300.0;
+    -- Base frequency in MHz.  Would like to run at 300 MHz, but this seems to
+    -- defeat timing closure across the board for BITSLICE IO!
+    constant CK_FREQUENCY : real := 250.0;
 
     constant CK_PERIOD : time := 1 us / CK_FREQUENCY;
     constant WCK_PERIOD : time := CK_PERIOD / 4;
@@ -58,9 +59,6 @@ architecture arch of testbench is
     signal delay_out : unsigned(8 downto 0);
     signal delay_strobe_in : std_ulogic;
     signal delay_ack_out : std_ulogic;
-    signal delay_reset_ca_in : std_ulogic;
-    signal delay_reset_dq_rx_in : std_ulogic;
-    signal delay_reset_dq_tx_in : std_ulogic;
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
@@ -94,9 +92,7 @@ architecture arch of testbench is
     signal ck_valid : std_ulogic;
 
 begin
-    phy : entity work.gddr6_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY
-    ) port map (
+    phy : entity work.gddr6_phy port map (
         ck_reset_i => ck_reset_in,
         ck_clk_ok_o => ck_ok_out,
         ck_clk_o => ck_clk,
@@ -129,9 +125,6 @@ begin
         delay_o => delay_out,
         delay_strobe_i => delay_strobe_in,
         delay_ack_o => delay_ack_out,
-        delay_reset_ca_i => delay_reset_ca_in,
-        delay_reset_dq_rx_i => delay_reset_dq_rx_in,
-        delay_reset_dq_tx_i => delay_reset_dq_tx_in,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -248,9 +241,6 @@ begin
         ck_valid <= '1';
         ck_reset_in <= '1';
         reset_fifo_in <= "00";
-        delay_reset_ca_in <= '1';
-        delay_reset_dq_rx_in <= '1';
-        delay_reset_dq_tx_in <= '1';
 
         ca_in <= (others => (others => '1'));
         ca3_in <= X"0";
@@ -262,9 +252,6 @@ begin
         ck_reset_in <= '0';
 
         wait until ck_ok_out;
-        delay_reset_ca_in <= '0';
-        delay_reset_dq_rx_in <= '0';
-        delay_reset_dq_tx_in <= '0';
 
         clk_wait(10);
 

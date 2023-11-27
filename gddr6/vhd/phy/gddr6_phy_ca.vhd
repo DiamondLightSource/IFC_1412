@@ -11,16 +11,11 @@ use work.support.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_ca is
-    generic (
-        CALIBRATE_DELAY : boolean;
-        INITIAL_DELAY : natural;
-        REFCLK_FREQUENCY : real
-    );
     port (
         ck_clk_i : in std_ulogic;
 
         -- Internal resets for IO components
-        reset_i : in std_ulogic;
+        bitslice_reset_i : in std_ulogic;
         -- Individual resets for GDDR6 devices
         sg_resets_n_i : in std_ulogic_vector(0 to 1);
 
@@ -34,7 +29,6 @@ entity gddr6_phy_ca is
         enable_cabi_i : in std_ulogic;
 
         -- Delay control
-        delay_rst_i : in std_ulogic;
         delay_inc_i : in std_ulogic;
         delay_ce_i : in std_ulogic_vector(15 downto 0);
         delay_o : out vector_array(15 downto 0)(8 downto 0);
@@ -111,7 +105,7 @@ begin
             oddr : ODDRE1 generic map (
                 SRVAL => '1'
             ) port map (
-                SR => reset_i,
+                SR => bitslice_reset_i,
                 C => ck_clk_i,
                 D1 => ca_in(0)(i),
                 D2 => ca_in(1)(i),
@@ -119,9 +113,8 @@ begin
             );
 
             odelay : ODELAYE3 generic map (
-                DELAY_FORMAT => choose(CALIBRATE_DELAY, "TIME", "COUNT"),
---                 REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-                DELAY_VALUE => INITIAL_DELAY,
+                DELAY_FORMAT => "COUNT",
+                DELAY_VALUE => 0,
                 DELAY_TYPE => "VAR_LOAD",
                 UPDATE_MODE => "ASYNC"
             ) port map (
@@ -131,7 +124,7 @@ begin
                 CLK => ck_clk_i,
                 CE => delay_ce_i(i),
                 INC => delay_inc_i,
-                RST => reset_i or delay_rst_i,
+                RST => bitslice_reset_i,
                 EN_VTC => '0',
                 -- Unused pins
                 LOAD => '0',
@@ -150,7 +143,7 @@ begin
         i_reset : ODDRE1 generic map (
             SRVAL => '0'
         ) port map (
-            SR => reset_i,
+            SR => bitslice_reset_i,
             C => ck_clk_i,
             D1 => sg_resets_n_i(i),
             D2 => sg_resets_n_i(i),

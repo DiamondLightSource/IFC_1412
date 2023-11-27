@@ -35,11 +35,6 @@ entity gddr6_setup_control is
         capture_dbi_o : out std_ulogic;
         edc_delay_o : out unsigned(4 downto 0);
 
-        -- Individual delay resets
-        delay_reset_ca_o : out std_ulogic := '0';
-        delay_reset_dq_rx_o : out std_ulogic := '0';
-        delay_reset_dq_tx_o : out std_ulogic := '0';
-
         -- Controller enable
         enable_controller_o : out std_ulogic := '0'
     );
@@ -204,12 +199,6 @@ begin
                 reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS));
             enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
-            delay_reset_ca_o <=
-                ck_config_bits(GDDR6_CONFIG_RESET_CA_ODELAY_BIT);
-            delay_reset_dq_tx_o <=
-                ck_config_bits(GDDR6_CONFIG_RESET_DQ_ODELAY_BIT);
-            delay_reset_dq_rx_o <=
-                ck_config_bits(GDDR6_CONFIG_RESET_DQ_IDELAY_BIT);
 
             ck_status_bits <= (
                 GDDR6_STATUS_FIFO_OK_BITS => reverse(fifo_ok_i),

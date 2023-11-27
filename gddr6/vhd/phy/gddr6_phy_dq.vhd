@@ -7,11 +7,10 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.gddr6_config_defs.all;
+use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_dq is
     generic (
-        CALIBRATE_DELAY : boolean;
-        INITIAL_DELAY : natural;
         REFCLK_FREQUENCY : real
     );
     port (
@@ -23,15 +22,15 @@ entity gddr6_phy_dq is
 
         -- Resets and control
         bitslice_reset_i : in std_ulogic;           -- Bitslice reset
+        enable_control_vtc_i : in std_ulogic;
+        enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;               -- Delay ready (async)
         vtc_ready_o : out std_ulogic;               -- Calibration done (async)
-        enable_control_vtc_i : in std_ulogic;
-        enable_bitslice_vtc_i : in std_ulogic;
         reset_fifo_i : in std_ulogic_vector(0 to 1);
         fifo_ok_o : out std_ulogic_vector(0 to 1);
-        capture_dbi_i : in std_ulogic;
-        edc_delay_i : in unsigned(4 downto 0);
-        enable_dbi_i : in std_ulogic;
+        capture_dbi_i : in std_ulogic;              -- Select edc_out_o source
+        edc_delay_i : in unsigned(4 downto 0);      -- Alignment of EDC sources
+        enable_dbi_i : in std_ulogic;               -- Data Bus Inversion
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
         data_o : out std_ulogic_vector(511 downto 0);
@@ -43,24 +42,9 @@ entity gddr6_phy_dq is
         edc_t_i : in std_ulogic;    -- Output only enabled during config
 
         -- RX/TX DELAY controls
-        delay_up_down_n_i : in std_ulogic;
-        dq_rx_delay_ce_i : in std_ulogic_vector(63 downto 0);
-        dq_tx_delay_ce_i : in std_ulogic_vector(63 downto 0);
-        dq_rx_byteslip_i : in std_ulogic_vector(63 downto 0);
-        dbi_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
-        dbi_tx_delay_ce_i : in std_ulogic_vector(7 downto 0);
-        dbi_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
-        edc_rx_delay_ce_i : in std_ulogic_vector(7 downto 0);
-        edc_rx_byteslip_i : in std_ulogic_vector(7 downto 0);
-        -- Individual delay resets
-        reset_rx_delay_i : in std_ulogic;
-        reset_tx_delay_i : in std_ulogic;
+        delay_control_i : in delay_control_t;
         -- Delay readbacks
-        dq_rx_delay_o : out vector_array(63 downto 0)(8 downto 0);
-        dq_tx_delay_o : out vector_array(63 downto 0)(8 downto 0);
-        dbi_rx_delay_o : out vector_array(7 downto 0)(8 downto 0);
-        dbi_tx_delay_o : out vector_array(7 downto 0)(8 downto 0);
-        edc_rx_delay_o : out vector_array(7 downto 0)(8 downto 0);
+        delay_readbacks_o : out delay_readbacks_t;
 
         -- Bitslip control
         bitslip_delay_i : in unsigned(2 downto 0);
@@ -107,10 +91,6 @@ architecture arch of gddr6_phy_dq is
     signal slice_enable_tri_vtc : vector_array(0 to 7)(0 to 1);
     signal slice_enable_rx_vtc : vector_array(0 to 7)(0 to 11);
     signal slice_enable_tx_vtc : vector_array(0 to 7)(0 to 11);
-    -- Delay resets
-    signal slice_reset_tri_delay : vector_array(0 to 7)(0 to 1);
-    signal slice_reset_rx_delay : vector_array(0 to 7)(0 to 11);
-    signal slice_reset_tx_delay : vector_array(0 to 7)(0 to 11);
     -- Delay control
     signal slice_tri_delay_ce : vector_array(0 to 7)(0 to 1);
     signal slice_rx_delay_ce : vector_array(0 to 7)(0 to 11);
@@ -152,8 +132,6 @@ begin
             BITSLICE_WANTED => bitslice_wanted(i),
             BITSLICE_EDC => bitslice_wanted(i, CONFIG_BANK_EDC),
 
-            CALIBRATE_DELAY => CALIBRATE_DELAY,
-            INITIAL_DELAY => INITIAL_DELAY,
             REFCLK_FREQUENCY => REFCLK_FREQUENCY,
 
             CLK_FROM_PIN => MAP_CLK_FROM_PIN(i mod 4),
@@ -169,6 +147,7 @@ begin
 
             bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
+            enable_bitslice_control_i => enable_bitslice_control_i,
             dly_ready_o => slice_dly_ready(i),
             vtc_ready_o => slice_vtc_ready(i),
 
@@ -176,11 +155,7 @@ begin
             enable_tx_vtc_i => slice_enable_tx_vtc(i),
             enable_rx_vtc_i => slice_enable_rx_vtc(i),
 
-            reset_tri_delay_i => slice_reset_tri_delay(i),
-            reset_rx_delay_i => slice_reset_rx_delay(i),
-            reset_tx_delay_i => slice_reset_tx_delay(i),
-
-            delay_up_down_n_i => delay_up_down_n_i,
+            delay_up_down_n_i => delay_control_i.delay_up_down_n,
             tri_delay_ce_i => slice_tri_delay_ce(i),
             rx_delay_ce_i => slice_rx_delay_ce(i),
             tx_delay_ce_i => slice_tx_delay_ce(i),
@@ -230,6 +205,10 @@ begin
         slice_pad_in_o => slice_pad_in,
         slice_pad_out_i => slice_pad_out,
         slice_pad_t_out_i => slice_pad_t_out,
+        -- VTC controls
+        slice_enable_tri_vtc_o => slice_enable_tri_vtc,
+        slice_enable_rx_vtc_o => slice_enable_rx_vtc,
+        slice_enable_tx_vtc_o => slice_enable_tx_vtc,
         -- Delay control
         slice_rx_delay_ce_o => slice_rx_delay_ce,
         slice_tx_delay_ce_o => slice_tx_delay_ce,
@@ -245,21 +224,11 @@ begin
         bank_dbi_n_i => bank_dbi_n_out,
         bank_edc_o => bank_edc_in,
         bank_edc_i => edc_i,
+
         -- Delay control
-        bank_dq_rx_delay_ce_i => dq_rx_delay_ce_i,
-        bank_dq_tx_delay_ce_i => dq_tx_delay_ce_i,
-        bank_dq_rx_byteslip_i => dq_rx_byteslip_i,
-        bank_dbi_rx_delay_ce_i => dbi_rx_delay_ce_i,
-        bank_dbi_tx_delay_ce_i => dbi_tx_delay_ce_i,
-        bank_dbi_rx_byteslip_i => dbi_rx_byteslip_i,
-        bank_edc_rx_delay_ce_i => edc_rx_delay_ce_i,
-        bank_edc_rx_byteslip_i => edc_rx_byteslip_i,
+        delay_control_i => delay_control_i,
         -- Delay readbacks
-        bank_dq_rx_delay_o => dq_rx_delay_o,
-        bank_dq_tx_delay_o => dq_tx_delay_o,
-        bank_dbi_rx_delay_o => dbi_rx_delay_o,
-        bank_dbi_tx_delay_o => dbi_tx_delay_o,
-        bank_edc_rx_delay_o => edc_rx_delay_o,
+        delay_readbacks_o => delay_readbacks_o,
 
         -- Patch inputs for locating bitslice 0 where required
         bitslice_patch_i => bitslice_patch_i,
@@ -351,18 +320,8 @@ begin
         end if;
     end process;
 
-    -- Control all bitslice VTC signals together
-    slice_enable_tri_vtc <= (others => (others => enable_bitslice_vtc_i));
-    slice_enable_rx_vtc <= (others => (others => enable_bitslice_vtc_i));
-    slice_enable_tx_vtc <= (others => (others => enable_bitslice_vtc_i));
-
     -- TRI output delays are not controlled at present
-    slice_reset_tri_delay <= (others => (others => '0'));
     slice_tri_delay_ce <= (others => (others => '0'));
-
-    -- Apply RX and TX resets to all IO
-    slice_reset_rx_delay <= (others => (others => reset_rx_delay_i));
-    slice_reset_tx_delay <= (others => (others => reset_tx_delay_i));
 
     -- Gather statuses needed for resets
     dly_ready_o <= and slice_dly_ready;

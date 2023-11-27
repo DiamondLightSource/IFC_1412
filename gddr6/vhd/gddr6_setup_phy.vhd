@@ -13,14 +13,6 @@ use work.register_defs.all;
 use work.gddr6_register_defines.all;
 
 entity gddr6_setup_phy is
-    generic (
-        CK_FREQUENCY : real := 250.0;
-        -- Delay readback is quite expensive in terms of fabric, so is optional
-        ENABLE_DELAY_READBACK : boolean := false;
-        -- Optionally operate with calibrated delays
-        CALIBRATE_DELAY : boolean := false;
-        INITIAL_DELAY : natural := 0
-    );
     port (
         reg_clk_i : in std_ulogic;      -- Register interface only
         ck_clk_o : out std_ulogic;      -- Memory controller only
@@ -122,11 +114,6 @@ architecture arch of gddr6_setup_phy is
     signal delay_strobe : std_ulogic;
     signal delay_ack : std_ulogic;
 
-    signal delay_reset_ca : std_ulogic;
-    signal delay_reset_dq_rx : std_ulogic;
-    signal delay_reset_dq_tx : std_ulogic;
-
-
     signal ck_reset : std_ulogic;
     signal ck_unlock : std_ulogic;
     signal reset_fifo : std_ulogic_vector(0 to 1);
@@ -141,9 +128,7 @@ architecture arch of gddr6_setup_phy is
     signal enable_controller : std_ulogic;
 
 begin
-    setup : entity work.gddr6_setup generic map (
-        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
-    ) port map (
+    setup : entity work.gddr6_setup port map (
         reg_clk_i => reg_clk_i,
 
         write_strobe_i => write_strobe_i,
@@ -173,9 +158,6 @@ begin
         delay_i => read_delay,
         delay_strobe_o => delay_strobe,
         delay_ack_i => delay_ack,
-        delay_reset_ca_o => delay_reset_ca,
-        delay_reset_dq_rx_o => delay_reset_dq_rx,
-        delay_reset_dq_tx_o => delay_reset_dq_tx,
 
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
@@ -192,11 +174,7 @@ begin
     );
 
 
-    phy : entity work.gddr6_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY,
-        CALIBRATE_DELAY => CALIBRATE_DELAY,
-        INITIAL_DELAY => INITIAL_DELAY
-    ) port map (
+    phy : entity work.gddr6_phy port map (
         ck_clk_o => ck_clk,
 
         ck_reset_i => ck_reset,
@@ -230,9 +208,6 @@ begin
         delay_o => read_delay,
         delay_strobe_i => delay_strobe,
         delay_ack_o => delay_ack,
-        delay_reset_ca_i => delay_reset_ca,
-        delay_reset_dq_rx_i => delay_reset_dq_rx,
-        delay_reset_dq_tx_i => delay_reset_dq_tx,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

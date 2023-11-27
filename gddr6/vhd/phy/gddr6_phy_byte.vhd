@@ -16,9 +16,6 @@ entity gddr6_phy_byte is
         -- Slices with special EDC tristate control
         BITSLICE_EDC : std_ulogic_vector(0 to 11);
 
-        -- Calibration mode
-        CALIBRATE_DELAY : boolean;
-        INITIAL_DELAY : natural;
         REFCLK_FREQUENCY : real;
 
         -- For the lower nibble, the clock either comes from bitslice 0 or from
@@ -41,6 +38,7 @@ entity gddr6_phy_byte is
         -- Resets and controls
         bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
+        enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
 
@@ -48,10 +46,6 @@ entity gddr6_phy_byte is
         enable_tri_vtc_i : in std_ulogic_vector(0 to 1);
         enable_tx_vtc_i : in std_ulogic_vector(0 to 11);
         enable_rx_vtc_i : in std_ulogic_vector(0 to 11);
-        -- Delay resets
-        reset_tri_delay_i : in std_ulogic_vector(0 to 1);
-        reset_rx_delay_i : in std_ulogic_vector(0 to 11);
-        reset_tx_delay_i : in std_ulogic_vector(0 to 11);
         -- Delay control
         delay_up_down_n_i : in std_ulogic;
         tri_delay_ce_i : in std_ulogic_vector(0 to 1);
@@ -116,8 +110,6 @@ begin
             BITSLICE_WANTED => BITSLICE_WANTED(BITSLICE_RANGE),
             BITSLICE_EDC => BITSLICE_EDC(BITSLICE_RANGE),
 
-            CALIBRATE_DELAY => CALIBRATE_DELAY,
-            INITIAL_DELAY => INITIAL_DELAY,
             REFCLK_FREQUENCY => REFCLK_FREQUENCY,
 
             LOWER_NIBBLE => LOWER_NIBBLE,
@@ -134,16 +126,13 @@ begin
 
             bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
+            enable_bitslice_control_i => enable_bitslice_control_i,
             dly_ready_o => dly_ready(i),
             vtc_ready_o => vtc_ready(i),
 
             enable_tri_vtc_i => enable_tri_vtc_i(i),
             enable_tx_vtc_i => enable_tx_vtc_i(BITSLICE_RANGE),
             enable_rx_vtc_i => enable_rx_vtc_i(BITSLICE_RANGE),
-
-            reset_tri_delay_i => reset_tri_delay_i(i),
-            reset_rx_delay_i => reset_rx_delay_i(BITSLICE_RANGE),
-            reset_tx_delay_i => reset_tx_delay_i(BITSLICE_RANGE),
 
             delay_up_down_n_i => delay_up_down_n_i,
             tri_delay_ce_i => tri_delay_ce_i(i),

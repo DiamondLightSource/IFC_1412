@@ -33,7 +33,8 @@ entity gddr6_phy_clocking is
         bitslice_reset_o : out std_ulogic;     -- Bitslice reset
         dly_ready_i : in std_ulogic;           -- Delay ready (async)
         vtc_ready_i : in std_ulogic;           -- Calibration done (async)
-        enable_control_vtc_o : out std_ulogic
+        enable_control_vtc_o : out std_ulogic;
+        enable_bitslice_control_o : out std_ulogic
     );
 end;
 
@@ -193,11 +194,11 @@ begin
                     -- Enable the pll clock to slices and wait for DLY_RDY
                     enable_pll_clk <= '1';
                     if dly_ready_in then
-                        enable_control_vtc_o <= '1';
                         reset_state <= RESET_WAIT_VTC_RDY;
                     end if;
                 when RESET_WAIT_VTC_RDY =>
                     -- Wait for VTC_RDY
+                    enable_control_vtc_o <= '1';
                     if vtc_ready_in then
                         reset_state <= RESET_DONE;
                     end if;
@@ -207,6 +208,7 @@ begin
         end if;
     end process;
 
+    enable_bitslice_control_o <= to_std_ulogic(reset_state = RESET_DONE);
     ck_clk_ok_o <=
         to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
 
