@@ -8,6 +8,7 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
+use work.gddr6_defs.all;
 
 entity gddr6_setup is
     port (
@@ -35,15 +36,9 @@ entity gddr6_setup is
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0);
 
-        -- Delay control on delay_clk_i
-        delay_address_o : out unsigned(7 downto 0);
-        delay_o : out unsigned(8 downto 0);
-        delay_up_down_n_o : out std_ulogic;
-        delay_byteslip_o : out std_ulogic;
-        delay_read_write_n_o : out std_ulogic;
-        delay_i : in unsigned(8 downto 0);
-        delay_strobe_o : out std_ulogic;
-        delay_ack_i : in std_ulogic;
+        -- Delay control
+        setup_delay_o : out setup_delay_t;
+        setup_delay_i : in setup_delay_result_t;
 
         -- Controls to PHY
         ck_reset_o : out std_ulogic;
@@ -112,14 +107,8 @@ begin
         read_data_o => read_data_o(GDDR6_DELAY_REG),
         read_ack_o => read_ack_o(GDDR6_DELAY_REG),
 
-        delay_address_o => delay_address_o,
-        delay_o => delay_o,
-        delay_up_down_n_o => delay_up_down_n_o,
-        delay_byteslip_o => delay_byteslip_o,
-        delay_read_write_n_o => delay_read_write_n_o,
-        delay_i => delay_i,
-        delay_strobe_o => delay_strobe_o,
-        delay_ack_i => delay_ack_i
+        setup_delay_o => setup_delay_o,
+        setup_delay_i => setup_delay_i
     );
 
 

@@ -107,8 +107,8 @@ entity gddr6_phy is
         -- --------------------------------------------------------------------
         -- Delay control interface
         -- The address map here is defined in gddr6_register_defines.in
-        delay_setup_i : in setup_delay_t;
-        delay_setup_o : out setup_delay_result_t;
+        setup_delay_i : in setup_delay_t;
+        setup_delay_o : out setup_delay_result_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -352,8 +352,8 @@ begin
     delay : entity work.gddr6_phy_delay_control port map (
         clk_i => ck_clk,
 
-        setup_i => delay_setup_i,
-        setup_o => delay_setup_o,
+        setup_i => setup_delay_i,
+        setup_o => setup_delay_o,
 
         delay_control_o => delay_control,
         delay_readbacks_i => delay_readbacks,

@@ -8,6 +8,7 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
+use work.gddr6_defs.all;
 
 entity gddr6_setup_delay is
     port (
@@ -24,14 +25,8 @@ entity gddr6_setup_delay is
         read_ack_o : out std_ulogic;
 
         -- Delay control on delay_clk_i
-        delay_address_o : out unsigned(7 downto 0);
-        delay_o : out unsigned(8 downto 0);
-        delay_up_down_n_o : out std_ulogic;
-        delay_byteslip_o : out std_ulogic;
-        delay_read_write_n_o : out std_ulogic;
-        delay_i : in unsigned(8 downto 0);
-        delay_strobe_o : out std_ulogic;
-        delay_ack_i : in std_ulogic
+        setup_delay_o : out setup_delay_t;
+        setup_delay_i : in setup_delay_result_t
     );
 end;
 
@@ -66,25 +61,27 @@ begin
         read_ack_i(0) => read_ack
     );
 
+    setup_delay_o <= (
+        address => unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS)),
+        delay => unsigned(write_data(GDDR6_DELAY_DELAY_BITS)),
+        up_down_n => write_data(GDDR6_DELAY_UP_DOWN_N_BIT),
+        byteslip => write_data(GDDR6_DELAY_BYTESLIP_BIT),
+        enable_write => write_data(GDDR6_DELAY_ENABLE_WRITE_BIT),
+        write_strobe => write_strobe,
+        read_strobe => read_strobe
+    );
+
+    write_ack <= setup_delay_i.write_ack;
+
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
-            delay_address_o <= unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS));
-            delay_o <= unsigned(write_data(GDDR6_DELAY_DELAY_BITS));
-            delay_up_down_n_o <= write_data(GDDR6_DELAY_UP_DOWN_N_BIT);
-            delay_byteslip_o <= write_data(GDDR6_DELAY_BYTESLIP_BIT);
-            delay_read_write_n_o <= write_data(GDDR6_DELAY_NO_WRITE_BIT);
+            read_ack <= setup_delay_i.read_ack;
 
-            delay_strobe_o <= write_strobe;
-
-            write_ack <= delay_ack_i;
-            read_ack <= read_strobe;
-
-            -- Capture read data on completion of any write
-            if delay_ack_i = '1' then
+            -- Capture read data on completion of read
+            if setup_delay_i.read_ack then
                 read_data <= (
-                    GDDR6_DELAY_ADDRESS_BITS =>
-                        std_ulogic_vector(delay_address_o),
-                    GDDR6_DELAY_DELAY_BITS => std_ulogic_vector(delay_i),
+                    GDDR6_DELAY_DELAY_BITS =>
+                        std_ulogic_vector(setup_delay_i.delay),
                     others => '0');
             end if;
         end if;

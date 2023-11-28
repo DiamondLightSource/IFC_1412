@@ -11,6 +11,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
+use work.gddr6_defs.all;
 
 entity gddr6_setup_phy is
     port (
@@ -105,14 +106,8 @@ architecture arch of gddr6_setup_phy is
     signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
 
-    signal delay_address : unsigned(7 downto 0);
-    signal delay : unsigned(8 downto 0);
-    signal delay_up_down_n : std_ulogic;
-    signal delay_byteslip : std_ulogic;
-    signal delay_read_write_n : std_ulogic;
-    signal read_delay : unsigned(8 downto 0);
-    signal delay_strobe : std_ulogic;
-    signal delay_ack : std_ulogic;
+    signal setup_delay : setup_delay_t;
+    signal setup_delay_result : setup_delay_result_t;
 
     signal ck_reset : std_ulogic;
     signal ck_unlock : std_ulogic;
@@ -150,14 +145,8 @@ begin
         phy_edc_in_i => setup_edc_in,
         phy_edc_out_i => setup_edc_out,
 
-        delay_address_o => delay_address,
-        delay_o => delay,
-        delay_up_down_n_o => delay_up_down_n,
-        delay_byteslip_o => delay_byteslip,
-        delay_read_write_n_o => delay_read_write_n,
-        delay_i => read_delay,
-        delay_strobe_o => delay_strobe,
-        delay_ack_i => delay_ack,
+        setup_delay_o => setup_delay,
+        setup_delay_i => setup_delay_result,
 
         ck_reset_o => ck_reset,
         ck_unlock_i => ck_unlock,
@@ -200,14 +189,8 @@ begin
         edc_in_o => phy_edc_in,
         edc_out_o => phy_edc_out,
 
-        delay_address_i => delay_address,
-        delay_i => delay,
-        delay_up_down_n_i => delay_up_down_n,
-        delay_byteslip_i => delay_byteslip,
-        delay_read_write_n_i => delay_read_write_n,
-        delay_o => read_delay,
-        delay_strobe_i => delay_strobe,
-        delay_ack_o => delay_ack,
+        setup_delay_i => setup_delay,
+        setup_delay_o => setup_delay_result,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
