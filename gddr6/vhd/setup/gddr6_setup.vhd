@@ -23,6 +23,7 @@ entity gddr6_setup is
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
         -- CK clock, used for all other elements of the interface
+        ck_reset_o : out std_ulogic;    -- Reset control for CK
         ck_clk_i : in std_ulogic;       -- CK clock
         ck_clk_ok_i : in std_ulogic;    -- Qualifies status of CK clock
 
@@ -36,21 +37,13 @@ entity gddr6_setup is
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0);
 
+        -- PHY configuration and status
+        phy_setup_o : out phy_setup_t;
+        phy_status_i : in phy_status_t;
+
         -- Delay control
         setup_delay_o : out setup_delay_t;
         setup_delay_i : in setup_delay_result_t;
-
-        -- Controls to PHY
-        ck_reset_o : out std_ulogic;
-        ck_unlock_i : in std_ulogic;
-        reset_fifo_o : out std_ulogic_vector(0 to 1);
-        fifo_ok_i : in std_ulogic_vector(0 to 1);
-        sg_resets_n_o : out std_ulogic_vector(0 to 1);
-        edc_t_o : out std_ulogic;
-        enable_cabi_o : out std_ulogic;
-        enable_dbi_o : out std_ulogic;
-        capture_dbi_o : out std_ulogic;
-        edc_delay_o : out unsigned(4 downto 0);
 
         -- Controller enable
         enable_controller_o : out std_ulogic
@@ -72,6 +65,7 @@ begin
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok,
+        ck_reset_o => ck_reset_o,
 
         write_strobe_i => write_strobe_i(GDDR6_CONTROL_REGS),
         write_data_i => write_data_i(GDDR6_CONTROL_REGS),
@@ -80,16 +74,8 @@ begin
         read_data_o => read_data_o(GDDR6_CONTROL_REGS),
         read_ack_o => read_ack_o(GDDR6_CONTROL_REGS),
 
-        ck_reset_o => ck_reset_o,
-        ck_unlock_i => ck_unlock_i,
-        reset_fifo_o => reset_fifo_o,
-        fifo_ok_i => fifo_ok_i,
-        sg_resets_n_o => sg_resets_n_o,
-        edc_t_o => edc_t_o,
-        enable_cabi_o => enable_cabi_o,
-        enable_dbi_o => enable_dbi_o,
-        capture_dbi_o => capture_dbi_o,
-        edc_delay_o => edc_delay_o,
+        phy_setup_o => phy_setup_o,
+        phy_status_i => phy_status_i,
 
         enable_controller_o => enable_controller_o
     );

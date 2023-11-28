@@ -32,14 +32,9 @@ architecture arch of testbench is
     signal ck_clk : std_ulogic;
     signal ck_reset_in : std_ulogic;
     signal ck_ok_out : std_ulogic;
-    signal ck_unlock_out : std_ulogic;
-    signal reset_fifo_in : std_ulogic_vector(0 to 1);
-    signal fifo_ok_out : std_ulogic_vector(0 to 1);
-    signal sg_resets_n_in : std_ulogic_vector(0 to 1);
-    signal enable_cabi_in : std_ulogic;
-    signal enable_dbi_in : std_ulogic;
-    signal capture_dbi_in : std_ulogic;
-    signal edc_delay_in : unsigned(4 downto 0);
+
+    signal phy_setup : phy_setup_t;
+    signal phy_status : phy_status_t;
 
     signal ca_in : vector_array(0 to 1)(9 downto 0);
     signal ca3_in : std_ulogic_vector(0 to 3);
@@ -53,9 +48,9 @@ architecture arch of testbench is
     signal output_enable_in : std_ulogic := '0';
     signal edc_t_in : std_ulogic := '0';
 
-    signal delay_setup_in : setup_delay_t;
-    signal delay_setup_out : setup_delay_result_t;
-    constant DELAY_SETUP_IDLE : setup_delay_t := (
+    signal setup_delay_in : setup_delay_t;
+    signal setup_delay_out : setup_delay_result_t;
+    constant SETUP_DELAY_IDLE : setup_delay_t := (
         address => (others => 'U'),
         delay => (others => 'U'),
         up_down_n => 'U',
@@ -102,14 +97,11 @@ begin
         ck_clk_ok_o => ck_ok_out,
         ck_clk_o => ck_clk,
 
-        ck_unlock_o => ck_unlock_out,
-        reset_fifo_i => reset_fifo_in,
-        fifo_ok_o => fifo_ok_out,
-        sg_resets_n_i => sg_resets_n_in,
-        enable_cabi_i => enable_cabi_in,
-        enable_dbi_i => enable_dbi_in,
-        capture_dbi_i => capture_dbi_in,
-        edc_delay_i => edc_delay_in,
+        phy_setup_i => phy_setup,
+        phy_status_o => phy_status,
+
+        setup_delay_i => setup_delay_in,
+        setup_delay_o => setup_delay_out,
 
         ca_i => ca_in,
         ca3_i => ca3_in,
@@ -118,12 +110,8 @@ begin
         data_i => data_in,
         data_o => data_out,
         output_enable_i => output_enable_in,
-        edc_t_i => edc_t_in,
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
-
-        delay_setup_i => delay_setup_in,
-        delay_setup_o => delay_setup_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -155,11 +143,6 @@ begin
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
 
-    sg_resets_n_in <= "11";
-    enable_cabi_in <= '0';
-    enable_dbi_in <= '0';
-    capture_dbi_in <= '0';
-    edc_delay_in <= 5X"00";
 
     pad_SG12_CK_P <= not pad_SG12_CK_P after CK_PERIOD / 2 when ck_valid;
     pad_SG12_CK_N <= not pad_SG12_CK_P;
@@ -197,7 +180,7 @@ begin
         is
             variable plus_minus : string(0 to 0);
         begin
-            delay_setup_in <= (
+            setup_delay_in <= (
                 address => to_unsigned(address, 8),
                 delay => to_unsigned(delay, 9),
                 up_down_n => up_down_n,
@@ -208,10 +191,10 @@ begin
             );
             loop
                 clk_wait;
-                delay_setup_in.write_strobe <= '0';
-                exit when delay_setup_out.write_ack;
+                setup_delay_in.write_strobe <= '0';
+                exit when setup_delay_out.write_ack;
             end loop;
-            delay_setup_in <= DELAY_SETUP_IDLE;
+            setup_delay_in <= SETUP_DELAY_IDLE;
             plus_minus := "*" when byteslip else "+" when up_down_n else "-";
             write(
                 "delay[" & to_string(to_unsigned(address, 8)) &
@@ -221,7 +204,7 @@ begin
         -- Can be called directly after a write to return the read delay
         procedure readback_delay is
         begin
-            delay_setup_in <= (
+            setup_delay_in <= (
                 address => (others => 'U'),
                 delay => (others => 'U'),
                 up_down_n => 'U',
@@ -232,11 +215,11 @@ begin
             );
             loop
                 clk_wait;
-                delay_setup_in.read_strobe <= '0';
-                exit when delay_setup_out.read_ack;
+                setup_delay_in.read_strobe <= '0';
+                exit when setup_delay_out.read_ack;
             end loop;
-            delay_setup_in <= DELAY_SETUP_IDLE;
-            write("delay => " & to_hstring(delay_setup_out.delay));
+            setup_delay_in <= SETUP_DELAY_IDLE;
+            write("delay => " & to_hstring(setup_delay_out.delay));
         end;
 
         -- Performs a dummy write to select the address to read followed by a
@@ -244,7 +227,7 @@ begin
         procedure read_delay(address : natural) is
         begin
             write("read " & to_string(to_unsigned(address, 8)));
-            delay_setup_in <= (
+            setup_delay_in <= (
                 address => to_unsigned(address, 8),
                 delay => (others => 'U'),
                 up_down_n => '0',   -- Must be valid for ODELAY
@@ -255,10 +238,10 @@ begin
             );
             loop
                 clk_wait;
-                delay_setup_in.write_strobe <= '0';
-                exit when delay_setup_out.write_ack;
+                setup_delay_in.write_strobe <= '0';
+                exit when setup_delay_out.write_ack;
             end loop;
-            delay_setup_in <= DELAY_SETUP_IDLE;
+            setup_delay_in <= SETUP_DELAY_IDLE;
             readback_delay;
         end;
 
@@ -268,11 +251,19 @@ begin
         end;
 
     begin
-        delay_setup_in <= DELAY_SETUP_IDLE;
+        setup_delay_in <= SETUP_DELAY_IDLE;
 
         ck_valid <= '1';
         ck_reset_in <= '1';
-        reset_fifo_in <= "00";
+        phy_setup <= (
+            reset_fifo => "00",
+            sg_resets_n => "00",
+            enable_cabi => '0',
+            enable_dbi => '0',
+            capture_dbi => '0',
+            edc_delay => 5X"00",
+            edc_t => '0'
+        );
 
         ca_in <= (others => (others => '1'));
         ca3_in <= X"0";
@@ -322,7 +313,7 @@ begin
         clk_wait;
         cke_n_in <= "11";
 
-        edc_t_in <= '1';
+        phy_setup.edc_t <= '1';
 
         write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6
         write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 = 7

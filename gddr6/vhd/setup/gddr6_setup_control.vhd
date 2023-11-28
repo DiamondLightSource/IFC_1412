@@ -8,12 +8,14 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
+use work.gddr6_defs.all;
 
 entity gddr6_setup_control is
     port (
         ck_clk_i : in std_ulogic;       -- CK clock
         ck_clk_ok_i : in std_ulogic;    -- CK and RIU clocks ok
         reg_clk_i : in std_ulogic;      -- Register clock
+        ck_reset_o : out std_ulogic := '0';
 
         -- Register interface for data access
         write_strobe_i : in std_ulogic_vector(GDDR6_CONTROL_REGS);
@@ -24,16 +26,8 @@ entity gddr6_setup_control is
         read_ack_o : out std_ulogic_vector(GDDR6_CONTROL_REGS);
 
         -- Controls to PHY
-        ck_reset_o : out std_ulogic := '0';
-        ck_unlock_i : in std_ulogic := '0';
-        reset_fifo_o : out std_ulogic_vector(0 to 1) := "00";
-        fifo_ok_i : in std_ulogic_vector(0 to 1) := "00";
-        sg_resets_n_o : out std_ulogic_vector(0 to 1) := "00";
-        edc_t_o : out std_ulogic := '0';
-        enable_cabi_o : out std_ulogic := '0';
-        enable_dbi_o : out std_ulogic := '0';
-        capture_dbi_o : out std_ulogic;
-        edc_delay_o : out unsigned(4 downto 0);
+        phy_setup_o : out phy_setup_t;
+        phy_status_i : in phy_status_t;
 
         -- Controller enable
         enable_controller_o : out std_ulogic := '0'
@@ -187,25 +181,31 @@ begin
 
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
-            sg_resets_n_o <=
-                reverse(ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS));
-            edc_t_o <= ck_config_bits(GDDR6_CONFIG_EDC_T_BIT);
-            enable_cabi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT);
-            enable_dbi_o <= ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT);
-            capture_dbi_o <= ck_config_bits(GDDR6_CONFIG_CAPTURE_DBI_BIT);
-            edc_delay_o <=
-                unsigned(ck_config_bits(GDDR6_CONFIG_EDC_DELAY_BITS));
-            reset_fifo_o <=
-                reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS));
+            phy_setup_o <= (
+                sg_resets_n =>
+                    reverse(ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS)),
+                edc_t => ck_config_bits(GDDR6_CONFIG_EDC_T_BIT),
+                enable_cabi =>
+                    ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT),
+                enable_dbi =>
+                    ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT),
+                capture_dbi =>
+                    ck_config_bits(GDDR6_CONFIG_CAPTURE_DBI_BIT),
+                edc_delay =>
+                    unsigned(ck_config_bits(GDDR6_CONFIG_EDC_DELAY_BITS)),
+                reset_fifo =>
+                    reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS))
+            );
+
             enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
 
             ck_status_bits <= (
-                GDDR6_STATUS_FIFO_OK_BITS => reverse(fifo_ok_i),
+                GDDR6_STATUS_FIFO_OK_BITS => reverse(phy_status_i.fifo_ok),
                 others => '0');
             ck_event_bits <= (
-                GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => ck_unlock_i,
-                GDDR6_STATUS_FIFO_OK_EVENT_BITS => not fifo_ok_i,
+                GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => phy_status_i.ck_unlock,
+                GDDR6_STATUS_FIFO_OK_EVENT_BITS => not phy_status_i.fifo_ok,
                 others => '0');
         end if;
     end process;

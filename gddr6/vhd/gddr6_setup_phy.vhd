@@ -87,6 +87,7 @@ end;
 architecture arch of gddr6_setup_phy is
     alias ck_clk : std_ulogic is ck_clk_o;
     signal ck_clk_ok : std_ulogic;
+    signal ck_reset : std_ulogic;
 
     signal setup_ca : vector_array(0 to 1)(9 downto 0);
     signal setup_ca3 : std_ulogic_vector(0 to 3);
@@ -109,16 +110,8 @@ architecture arch of gddr6_setup_phy is
     signal setup_delay : setup_delay_t;
     signal setup_delay_result : setup_delay_result_t;
 
-    signal ck_reset : std_ulogic;
-    signal ck_unlock : std_ulogic;
-    signal reset_fifo : std_ulogic_vector(0 to 1);
-    signal fifo_ok : std_ulogic_vector(0 to 1);
-    signal sg_resets_n : std_ulogic_vector(0 to 1);
-    signal edc_t : std_ulogic;
-    signal enable_cabi : std_ulogic;
-    signal enable_dbi : std_ulogic;
-    signal capture_dbi : std_ulogic;
-    signal edc_delay : unsigned(4 downto 0);
+    signal phy_setup : phy_setup_t;
+    signal phy_status : phy_status_t;
 
     signal enable_controller : std_ulogic;
 
@@ -135,6 +128,7 @@ begin
 
         ck_clk_i => ck_clk,
         ck_clk_ok_i => ck_clk_ok,
+        ck_reset_o => ck_reset,
 
         phy_ca_o => setup_ca,
         phy_ca3_o => setup_ca3,
@@ -148,49 +142,33 @@ begin
         setup_delay_o => setup_delay,
         setup_delay_i => setup_delay_result,
 
-        ck_reset_o => ck_reset,
-        ck_unlock_i => ck_unlock,
-        reset_fifo_o => reset_fifo,
-        fifo_ok_i => fifo_ok,
-        sg_resets_n_o => sg_resets_n,
-        edc_t_o => edc_t,
-        enable_cabi_o => enable_cabi,
-        enable_dbi_o => enable_dbi,
-        capture_dbi_o => capture_dbi,
-        edc_delay_o => edc_delay,
+        phy_setup_o => phy_setup,
+        phy_status_i => phy_status,
 
         enable_controller_o => enable_controller
     );
 
 
     phy : entity work.gddr6_phy port map (
-        ck_clk_o => ck_clk,
-
         ck_reset_i => ck_reset,
         ck_clk_ok_o => ck_clk_ok,
-        ck_unlock_o => ck_unlock,
-        reset_fifo_i => reset_fifo,
-        fifo_ok_o => fifo_ok,
+        ck_clk_o => ck_clk,
 
-        sg_resets_n_i => sg_resets_n,
-        edc_t_i => edc_t,
+        phy_setup_i => phy_setup,
+        phy_status_o => phy_status,
+
+        setup_delay_i => setup_delay,
+        setup_delay_o => setup_delay_result,
 
         ca_i => phy_ca,
         ca3_i => phy_ca3,
         cke_n_i => phy_cke_n,
-        enable_cabi_i => enable_cabi,
-        capture_dbi_i => capture_dbi,
-        edc_delay_i => edc_delay,
 
         data_i => phy_data_out,
         data_o => phy_data_in,
         output_enable_i => phy_output_enable,
-        enable_dbi_i => enable_dbi,
         edc_in_o => phy_edc_in,
         edc_out_o => phy_edc_out,
-
-        setup_delay_i => setup_delay,
-        setup_delay_o => setup_delay_result,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

@@ -7,6 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 package gddr6_defs is
+    -- Controls for setting delays
     type setup_delay_t is record
         -- The address map is as follows:
         --   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
@@ -41,6 +42,7 @@ package gddr6_defs is
         read_strobe : std_ulogic;
     end record;
 
+    -- Readback and handshakes from delays
     type setup_delay_result_t is record
         write_ack : std_ulogic;
         -- Acknowledge for reading.  To avoid reading invalid data while a
@@ -48,5 +50,35 @@ package gddr6_defs is
         -- completed before reading delay.
         read_ack : std_ulogic;
         delay : unsigned(8 downto 0);
+    end record;
+
+
+    -- Configuration settings for PHY
+    type phy_setup_t is record
+        -- Can be used to hold the RX FIFO in reset
+        reset_fifo : std_ulogic_vector(0 to 1);
+        -- Directly driven resets to the two GDDR6 devices.  Should be held low
+        -- until ca_i has been properly set for configuration options.
+        sg_resets_n : std_ulogic_vector(0 to 1);
+        -- Data bus inversion enables for CA and DQ interfaces
+        enable_cabi : std_ulogic;
+        enable_dbi : std_ulogic;
+        -- If this flag is set then DBI is captured as edc_out_o
+        capture_dbi : std_ulogic;
+        -- This delay is used to align data_o with data_i so that edc_out_o can
+        -- be computed correctly
+        edc_delay : unsigned(4 downto 0);
+        -- Must be held low during SG reset, high during normal operation
+        edc_t : std_ulogic;
+    end record;
+
+    -- Readbacks from PHY
+    type phy_status_t is record
+        -- This is asserted for one tick immediately after relocking if the CK
+        -- PLL unlocks.
+        ck_unlock : std_ulogic;
+        -- This indicates that FIFO reset has been successful, and will go low
+        -- if FIFO underflow or overflow is detected.
+        fifo_ok : std_ulogic_vector(0 to 1);
     end record;
 end;

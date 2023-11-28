@@ -53,28 +53,14 @@ entity gddr6_phy is
 
         -- --------------------------------------------------------------------
         -- Miscellaneous controls
+        phy_setup_i : in phy_setup_t;
+        phy_status_o : out phy_status_t;
 
-        -- This is asserted for one tick immediately after relocking if the CK
-        -- PLL unlocks.
-        ck_unlock_o : out std_ulogic;
-        -- Can be used to hold the RX FIFO in reset
-        reset_fifo_i : in std_ulogic_vector(0 to 1);
-        -- This indicates that FIFO reset has been successful, and will go low
-        -- if FIFO underflow or overflow is detected.
-        fifo_ok_o : out std_ulogic_vector(0 to 1);
-
-        -- Directly driven resets to the two GDDR6 devices.  Should be held low
-        -- until ca_i has been properly set for configuration options.
-        sg_resets_n_i : in std_ulogic_vector(0 to 1);
-
-        -- Data bus inversion enables for CA and DQ interfaces
-        enable_cabi_i : in std_ulogic;
-        enable_dbi_i : in std_ulogic;
-        -- If this flag is set then DBI is captured as edc_out_o
-        capture_dbi_i : in std_ulogic;
-        -- This delay is used to align data_o with data_i so that edc_out_o can
-        -- be computed correctly
-        edc_delay_i : in unsigned(4 downto 0);
+        -- --------------------------------------------------------------------
+        -- Delay control interface
+        -- The address map here is defined in gddr6_register_defines.in
+        setup_delay_i : in setup_delay_t;
+        setup_delay_o : out setup_delay_result_t;
 
         -- --------------------------------------------------------------------
         -- CA
@@ -101,14 +87,6 @@ entity gddr6_phy is
         -- selected by output_enable_i, unless capture_dbi_i is set.
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
-        -- Must be held low during SG reset, high during normal operation
-        edc_t_i : in std_ulogic;
-
-        -- --------------------------------------------------------------------
-        -- Delay control interface
-        -- The address map here is defined in gddr6_register_defines.in
-        setup_delay_i : in setup_delay_t;
-        setup_delay_o : out setup_delay_result_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -174,6 +152,10 @@ architecture arch of gddr6_phy is
     -- assigning produces a VHDL Delta cycle difference on the assigned clock,
     -- resulting in skewed clocks in simulation.
     alias ck_clk : std_ulogic is ck_clk_o;
+
+    -- Status readbacks
+    signal ck_unlock : std_ulogic;
+    signal fifo_ok : std_ulogic_vector(0 to 1);
 
     -- Other clocks, resets, controls
     signal phy_clk : std_ulogic_vector(0 to 1);
@@ -262,7 +244,7 @@ begin
 
         ck_reset_i => ck_reset_i,
         ck_clk_ok_o => ck_clk_ok_o,
-        ck_unlock_o => ck_unlock_o,
+        ck_unlock_o => ck_unlock,
 
         bitslice_reset_o => bitslice_reset,
         dly_ready_i => dly_ready,
@@ -276,9 +258,9 @@ begin
     ca : entity work.gddr6_phy_ca port map (
         ck_clk_i => ck_clk,
         bitslice_reset_i => bitslice_reset,
-        sg_resets_n_i => sg_resets_n_i,
+        sg_resets_n_i => phy_setup_i.sg_resets_n,
 
-        enable_cabi_i => enable_cabi_i,
+        enable_cabi_i => phy_setup_i.enable_cabi,
 
         ca_i => ca_i,
         ca3_i => ca3_i,
@@ -310,11 +292,11 @@ begin
         vtc_ready_o => vtc_ready,
         enable_control_vtc_i => enable_control_vtc,
         enable_bitslice_control_i => enable_bitslice_control,
-        reset_fifo_i => reset_fifo_i,
-        fifo_ok_o => fifo_ok_o,
-        capture_dbi_i => capture_dbi_i,
-        edc_delay_i => edc_delay_i,
-        enable_dbi_i => enable_dbi_i,
+        reset_fifo_i => phy_setup_i.reset_fifo,
+        fifo_ok_o => fifo_ok,
+        capture_dbi_i => phy_setup_i.capture_dbi,
+        edc_delay_i => phy_setup_i.edc_delay,
+        enable_dbi_i => phy_setup_i.enable_dbi,
 
         data_o => data_o,
         data_i => data_i,
@@ -322,7 +304,7 @@ begin
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
         edc_i => '1',           -- Configures memory for x1 mode during reset
-        edc_t_i => edc_t_i,
+        edc_t_i => phy_setup_i.edc_t,
 
         delay_control_i => delay_control,
         delay_readbacks_o => delay_readbacks,
@@ -364,5 +346,12 @@ begin
         bitslip_address_o => bitslip_address,
         bitslip_delay_o => bitslip_delay,
         bitslip_strobe_o => bitslip_strobe
+    );
+
+
+    -- Status readbacks
+    phy_status_o <= (
+        ck_unlock => ck_unlock,
+        fifo_ok => fifo_ok
     );
 end;
