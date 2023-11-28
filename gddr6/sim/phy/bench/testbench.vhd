@@ -6,6 +6,8 @@ use std.textio.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
+
 entity testbench is
 end testbench;
 
@@ -51,14 +53,17 @@ architecture arch of testbench is
     signal output_enable_in : std_ulogic := '0';
     signal edc_t_in : std_ulogic := '0';
 
-    signal delay_address_in : unsigned(7 downto 0);
-    signal delay_in : unsigned(8 downto 0);
-    signal delay_up_down_n_in : std_ulogic;
-    signal delay_byteslip_in : std_ulogic;
-    signal delay_read_write_n_in : std_ulogic;
-    signal delay_out : unsigned(8 downto 0);
-    signal delay_strobe_in : std_ulogic;
-    signal delay_ack_out : std_ulogic;
+    signal delay_setup_in : setup_delay_t;
+    signal delay_setup_out : setup_delay_result_t;
+    constant DELAY_SETUP_IDLE : setup_delay_t := (
+        address => (others => 'U'),
+        delay => (others => 'U'),
+        up_down_n => 'U',
+        byteslip => 'U',
+        enable_write => 'U',
+        write_strobe => '0',
+        read_strobe => '0'
+    );
 
     signal pad_SG12_CK_P : std_ulogic := '0';
     signal pad_SG12_CK_N : std_ulogic;
@@ -117,14 +122,8 @@ begin
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
 
-        delay_address_i => delay_address_in,
-        delay_i => delay_in,
-        delay_up_down_n_i => delay_up_down_n_in,
-        delay_byteslip_i => delay_byteslip_in,
-        delay_read_write_n_i => delay_read_write_n_in,
-        delay_o => delay_out,
-        delay_strobe_i => delay_strobe_in,
-        delay_ack_o => delay_ack_out,
+        delay_setup_i => delay_setup_in,
+        delay_setup_o => delay_setup_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -191,44 +190,76 @@ begin
             end loop;
         end;
 
+        -- Writes selected delay to selected address
         procedure write_delay(
             address : natural; delay : natural;
             up_down_n : std_ulogic := '1'; byteslip : std_ulogic := '0')
         is
+            variable plus_minus : string(0 to 0);
         begin
-            delay_address_in <= to_unsigned(address, 8);
-            delay_in <= to_unsigned(delay, 9);
-            delay_up_down_n_in <= up_down_n;
-            delay_byteslip_in <= byteslip;
-            delay_read_write_n_in <= '0';
-            delay_strobe_in <= '1';
+            delay_setup_in <= (
+                address => to_unsigned(address, 8),
+                delay => to_unsigned(delay, 9),
+                up_down_n => up_down_n,
+                byteslip => byteslip,
+                enable_write => '1',
+                write_strobe => '1',
+                read_strobe => '0'
+            );
             loop
                 clk_wait;
-                delay_strobe_in <= '0';
-                exit when delay_ack_out;
+                delay_setup_in.write_strobe <= '0';
+                exit when delay_setup_out.write_ack;
             end loop;
-            delay_address_in <= (others => 'U');
-            delay_in <= (others => 'U');
-            delay_up_down_n_in <= 'U';
-            delay_byteslip_in <= 'U';
-            delay_read_write_n_in <= 'U';
+            delay_setup_in <= DELAY_SETUP_IDLE;
+            plus_minus := "*" when byteslip else "+" when up_down_n else "-";
+            write(
+                "delay[" & to_string(to_unsigned(address, 8)) &
+                "] <= " & plus_minus & to_hstring(to_unsigned(delay, 9)));
         end;
 
-        procedure read_delay(address : natural) is
+        -- Can be called directly after a write to return the read delay
+        procedure readback_delay is
         begin
-            delay_address_in <= to_unsigned(address, 8);
-            delay_read_write_n_in <= '1';
-            delay_strobe_in <= '1';
+            delay_setup_in <= (
+                address => (others => 'U'),
+                delay => (others => 'U'),
+                up_down_n => 'U',
+                byteslip => 'U',
+                enable_write => 'U',
+                write_strobe => '0',
+                read_strobe => '1'
+            );
             loop
                 clk_wait;
-                delay_strobe_in <= '0';
-                exit when delay_ack_out;
+                delay_setup_in.read_strobe <= '0';
+                exit when delay_setup_out.read_ack;
             end loop;
-            delay_address_in <= (others => 'U');
-            delay_read_write_n_in <= 'U';
-            write(
-                "delay[" & to_hstring(to_unsigned(address, 8)) &
-                "] = " & to_hstring(delay_out));
+            delay_setup_in <= DELAY_SETUP_IDLE;
+            write("delay => " & to_hstring(delay_setup_out.delay));
+        end;
+
+        -- Performs a dummy write to select the address to read followed by a
+        -- direct readback
+        procedure read_delay(address : natural) is
+        begin
+            write("read " & to_string(to_unsigned(address, 8)));
+            delay_setup_in <= (
+                address => to_unsigned(address, 8),
+                delay => (others => 'U'),
+                up_down_n => '0',   -- Must be valid for ODELAY
+                byteslip => 'U',
+                enable_write => '0',
+                write_strobe => '1',
+                read_strobe => '0'
+            );
+            loop
+                clk_wait;
+                delay_setup_in.write_strobe <= '0';
+                exit when delay_setup_out.write_ack;
+            end loop;
+            delay_setup_in <= DELAY_SETUP_IDLE;
+            readback_delay;
         end;
 
         procedure byteslip(address : natural) is
@@ -237,7 +268,8 @@ begin
         end;
 
     begin
-        delay_strobe_in <= '0';
+        delay_setup_in <= DELAY_SETUP_IDLE;
+
         ck_valid <= '1';
         ck_reset_in <= '1';
         reset_fifo_in <= "00";
@@ -295,10 +327,14 @@ begin
         write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6
         write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 = 7
         write_delay(2#0000_0010#, 6);       -- DQ RX 2 += 7
+        readback_delay;
         write_delay(2#0100_0010#, 12);      -- DQ TX 2 += 13
+        readback_delay;
         clk_wait;
         write_delay(2#0100_0011#, 9);       -- DQ TX 3 += 10
+        readback_delay;
         write_delay(2#0100_0011#, 9, '0');  -- DQ TX 3 -= 10
+        readback_delay;
 
         byteslip(2#0000_0010#);             -- DQ RX 2 byteslip
 

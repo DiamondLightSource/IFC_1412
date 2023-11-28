@@ -155,7 +155,7 @@ begin
             enable_tx_vtc_i => slice_enable_tx_vtc(i),
             enable_rx_vtc_i => slice_enable_rx_vtc(i),
 
-            delay_up_down_n_i => delay_control_i.delay_up_down_n,
+            delay_up_down_n_i => delay_control_i.up_down_n,
             tri_delay_ce_i => slice_tri_delay_ce(i),
             rx_delay_ce_i => slice_rx_delay_ce(i),
             tx_delay_ce_i => slice_tx_delay_ce(i),

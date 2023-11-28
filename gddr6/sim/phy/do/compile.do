@@ -22,6 +22,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/stretch_pulse.vhd \
     $common_vhd/util/strobe_ack.vhd \
     $vhd_dir/gddr6_config_defs.vhd \
+    $vhd_dir/gddr6_defs.vhd \
     $vhd_dir/phy/gddr6_phy_defs.vhd \
     $vhd_dir/phy/gddr6_phy_io.vhd \
     $vhd_dir/phy/gddr6_phy_clocking.vhd \
@@ -52,11 +53,11 @@ add wave -group "Map Slices" /phy/dq/map_slices/*
 add wave -group "Bitslip" /phy/dq/bitslip/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
-add wave -group "Delay" /phy/delay/*
+add wave -group "Delay" /phy/delay/* /phy/delay/control/*
 add wave -group "Phy" /phy/*
 add wave -group "Bench" sim:*
 
 
-run 2.5 us
+run 3.5 us
 
 # vim: set filetype=tcl:

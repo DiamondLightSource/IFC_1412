@@ -83,16 +83,14 @@ begin
         slice_data_o(byte)(slice) <= bank_data_i(i);
         bank_data_o(i) <= slice_data_i(byte)(slice);
         -- Delay control and readback
-        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dq_rx_delay_ce(i);
-        slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dq_tx_delay_ce(i);
+        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dq_rx_ce(i);
+        slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dq_tx_ce(i);
         slice_rx_byteslip_o(byte)(slice) <= delay_control_i.dq_rx_byteslip(i);
         dq_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dq_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
         -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <=
-            delay_control_i.dq_rx_delay_vtc(i);
-        slice_enable_tx_vtc_o(byte)(slice) <=
-            delay_control_i.dq_tx_delay_vtc(i);
+        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.dq_rx_vtc(i);
+        slice_enable_tx_vtc_o(byte)(slice) <= delay_control_i.dq_tx_vtc(i);
     end generate;
 
     -- DBI
@@ -108,16 +106,14 @@ begin
         slice_data_o(byte)(slice) <= bank_dbi_n_i(i);
         bank_dbi_n_o(i) <= slice_data_i(byte)(slice);
         -- Delay control and readback
-        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_rx_delay_ce(i);
-        slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_tx_delay_ce(i);
+        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_rx_ce(i);
+        slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_tx_ce(i);
         slice_rx_byteslip_o(byte)(slice) <= delay_control_i.dbi_rx_byteslip(i);
         dbi_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dbi_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
         -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <=
-            delay_control_i.dbi_rx_delay_vtc(i);
-        slice_enable_tx_vtc_o(byte)(slice) <=
-            delay_control_i.dbi_tx_delay_vtc(i);
+        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.dbi_rx_vtc(i);
+        slice_enable_tx_vtc_o(byte)(slice) <= delay_control_i.dbi_tx_vtc(i);
     end generate;
 
     -- EDC (input only)
@@ -133,13 +129,12 @@ begin
         slice_data_o(byte)(slice) <= (others => bank_edc_i);
         bank_edc_o(i) <= slice_data_i(byte)(slice);
         -- Delay control and readback
-        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.edc_rx_delay_ce(i);
+        slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.edc_rx_ce(i);
         slice_tx_delay_ce_o(byte)(slice) <= '0';
         slice_rx_byteslip_o(byte)(slice) <= delay_control_i.edc_rx_byteslip(i);
         edc_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <=
-            delay_control_i.edc_rx_delay_vtc(i);
+        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.edc_rx_vtc(i);
         slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
 

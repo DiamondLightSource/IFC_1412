@@ -34,6 +34,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy is
@@ -106,15 +107,8 @@ entity gddr6_phy is
         -- --------------------------------------------------------------------
         -- Delay control interface
         -- The address map here is defined in gddr6_register_defines.in
-        delay_address_i : in unsigned(7 downto 0);
-        delay_i : in unsigned(8 downto 0);
-        delay_up_down_n_i : in std_ulogic;
-        delay_byteslip_i : in std_ulogic;
-        delay_read_write_n_i : in std_ulogic;
-        -- Delay readback for supported delays (IDELAY and ODELAY delays)
-        delay_o : out unsigned(8 downto 0);
-        delay_strobe_i : in std_ulogic;
-        delay_ack_o : out std_ulogic;
+        delay_setup_i : in setup_delay_t;
+        delay_setup_o : out setup_delay_result_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -189,7 +183,6 @@ architecture arch of gddr6_phy is
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_control : std_ulogic;
-    signal enable_bitslice_vtc : std_ulogic;
 
     -- Delay controls and readbacks
     signal delay_control : delay_control_t;
@@ -291,7 +284,7 @@ begin
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
 
-        delay_inc_i => delay_control.delay_up_down_n,
+        delay_inc_i => delay_control.up_down_n,
         delay_ce_i => ca_tx_delay_ce,
         delay_o => delay_ca_tx,
 
@@ -359,14 +352,8 @@ begin
     delay : entity work.gddr6_phy_delay_control port map (
         clk_i => ck_clk,
 
-        delay_address_i => delay_address_i,
-        delay_i => delay_i,
-        delay_up_down_n_i => delay_up_down_n_i,
-        byteslip_i => delay_byteslip_i,
-        read_write_n_i => delay_read_write_n_i,
-        delay_o => delay_o,
-        strobe_i => delay_strobe_i,
-        ack_o => delay_ack_o,
+        setup_i => delay_setup_i,
+        setup_o => delay_setup_o,
 
         delay_control_o => delay_control,
         delay_readbacks_i => delay_readbacks,
@@ -376,8 +363,6 @@ begin
 
         bitslip_address_o => bitslip_address,
         bitslip_delay_o => bitslip_delay,
-        bitslip_strobe_o => bitslip_strobe,
-
-        enable_bitslice_vtc_o => enable_bitslice_vtc
+        bitslip_strobe_o => bitslip_strobe
     );
 end;
