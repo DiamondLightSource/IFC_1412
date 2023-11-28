@@ -10,10 +10,6 @@ use work.register_defs.all;
 use work.register_defines.all;
 
 entity test_gddr6_phy is
-    generic (
-        CK_FREQUENCY : real := 250.0;
-        ENABLE_DELAY_READBACK : boolean := false
-    );
     port (
         clk_i : in std_ulogic;
 
@@ -146,10 +142,7 @@ begin
     );
 
 
-    setup_phy : entity work.gddr6_setup_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY,
-        ENABLE_DELAY_READBACK => ENABLE_DELAY_READBACK
-    ) port map (
+    setup_phy : entity work.gddr6_setup_phy port map (
         reg_clk_i => clk_i,
 
         write_strobe_i => sys_write_strobe(SYS_GDDR6_REGS),
