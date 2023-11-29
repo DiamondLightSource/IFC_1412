@@ -178,7 +178,7 @@ begin
             address : natural; delay : natural;
             up_down_n : std_ulogic := '1'; byteslip : std_ulogic := '0')
         is
-            variable plus_minus : string(0 to 0);
+            variable plus_minus : string(1 to 1);
         begin
             setup_delay_in <= (
                 address => to_unsigned(address, 8),

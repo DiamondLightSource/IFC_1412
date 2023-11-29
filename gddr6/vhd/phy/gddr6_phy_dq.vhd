@@ -46,11 +46,6 @@ entity gddr6_phy_dq is
         -- Delay readbacks
         delay_readbacks_o : out delay_readbacks_t;
 
-        -- Bitslip control
-        bitslip_delay_i : in unsigned(2 downto 0);
-        bitslip_address_i : in unsigned(6 downto 0);
-        bitslip_strobe_i : in std_ulogic;
-
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);
         io_dq_i : in std_ulogic_vector(63 downto 0);
@@ -250,9 +245,8 @@ begin
     bitslip : entity work.gddr6_phy_bitslip port map (
         clk_i => ck_clk_i,
 
-        delay_i => bitslip_delay_i,
-        delay_address_i => bitslip_address_i,
-        delay_strobe_i => bitslip_strobe_i,
+        delay_i => delay_control_i.bitslip_delay,
+        delay_strobe_i => delay_control_i.bitslip_strobe,
 
         slice_dq_i => bank_data_in,
         slice_dbi_n_i => bank_dbi_n_in,

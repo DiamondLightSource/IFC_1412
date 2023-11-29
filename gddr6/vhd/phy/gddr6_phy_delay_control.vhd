@@ -17,11 +17,6 @@ entity gddr6_phy_delay_control is
         setup_i : in setup_delay_t;
         setup_o : out setup_delay_result_t;
 
-        -- Bitslip control
-        bitslip_address_o : out unsigned(6 downto 0) := (others => '0');
-        bitslip_delay_o : out unsigned(2 downto 0) := (others => '0');
-        bitslip_strobe_o : out std_ulogic := '0';
-
         -- Delay controls and readbacks
         delay_control_o : out delay_control_t;
         delay_readbacks_i : in delay_readbacks_t;
@@ -37,6 +32,7 @@ architecture arch of gddr6_phy_delay_control is
     signal ce_out : std_ulogic_vector(255 downto 0) := (others => '0');
     signal vtc_out : std_ulogic_vector(255 downto 0) := (others => '1');
     signal bs_out : std_ulogic_vector(255 downto 0) := (others => '0');
+    signal bitslip_strobe : std_ulogic_vector(79 downto 0) := (others => '0');
 
     signal delays_in : vector_array(255 downto 0)(8 downto 0);
 
@@ -44,6 +40,7 @@ architecture arch of gddr6_phy_delay_control is
     signal write_ack : std_ulogic;
     signal read_ack : std_ulogic;
     signal delay_out : unsigned(8 downto 0);
+    signal bitslip_delay : unsigned(2 downto 0);
 
     signal delay_count : unsigned(8 downto 0);
     signal address : unsigned(7 downto 0) := (others => '0');
@@ -93,7 +90,10 @@ begin
         -- Byteslips use similar addresses on the low part
         dq_rx_byteslip =>  bs_out(2#0011_1111# downto 2#0000_0000#), -- 0xx_xxxx
         dbi_rx_byteslip => bs_out(2#0100_0111# downto 2#0100_0000#), -- 100_0xxx
-        edc_rx_byteslip => bs_out(2#0100_1111# downto 2#0100_1000#)  -- 100_1xxx
+        edc_rx_byteslip => bs_out(2#0100_1111# downto 2#0100_1000#), -- 100_1xxx
+        -- Bitslip control isn't decoded at this level
+        bitslip_delay => bitslip_delay,
+        bitslip_strobe => bitslip_strobe
     );
     ca_tx_delay_ce_o <= ce_out(2#1111_1111# downto 2#1111_0000#);   -- 1111_xxxx
 
@@ -129,12 +129,13 @@ begin
     );
 
 
-    control : process (clk_i)
+    process (clk_i)
         variable do_write : std_ulogic;
         variable is_bitslip : std_ulogic;
         variable is_byteslip : std_ulogic;
         variable do_vtc : std_ulogic;
         variable do_capture : boolean;
+        variable byteslip_address : natural;
         variable bitslip_address : natural;
 
     begin
@@ -160,6 +161,7 @@ begin
                 delay_count <= setup_i.delay;
                 address <= setup_i.address;
                 delay_up_down_n <= setup_i.up_down_n;
+                bitslip_delay <= setup_i.delay(2 downto 0);
             end if;
 
             -- The write state machine goes through the following steps:
@@ -215,21 +217,19 @@ begin
                 vtc_out, to_integer(address),
                 to_std_ulogic(write_state = WRITE_IDLE), '1');
 
-            -- These two strobes happen at the point of the write request, so
-            -- the current address needs to be used.
-            -- The address is assigned separately here to avoid simulation
+            -- The bitslip and byteslip strobes happen at the point of the write
+            -- request, so the current address needs to be used.  In each case
+            -- the address is assigned separately here to avoid simulation
             -- complaints when setup_i.address is invalid (only valid when
-            -- writing bitslip).
-            bitslip_address :=
+            -- do_write is valid).
+            byteslip_address :=
                 to_integer(setup_i.address) when is_byteslip else 0;
-            compute_strobe(bs_out, bitslip_address, is_byteslip, '0');
+            compute_strobe(bs_out, byteslip_address, is_byteslip, '0');
 
-            -- Bitslip strobe is directly from bitslip request (for the moment)
-            if is_bitslip then
-                bitslip_address_o <= setup_i.address(6 downto 0);
-                bitslip_delay_o <= setup_i.delay(2 downto 0);
-            end if;
-            bitslip_strobe_o <= is_bitslip;
+            bitslip_address :=
+                to_integer(setup_i.address(6 downto 0)) when is_bitslip else 0;
+            compute_strobe(bitslip_strobe, bitslip_address, is_bitslip, '0');
+
 
             -- Decode incoming delays from given address
             if do_capture then

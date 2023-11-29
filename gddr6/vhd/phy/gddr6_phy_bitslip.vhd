@@ -24,8 +24,7 @@ entity gddr6_phy_bitslip is
         --  63..0  => Selects DQ input
         --  71..64 => Selectes DBI input
         --  79..72 => Selects EDC input
-        delay_address_i : in unsigned(6 downto 0);
-        delay_strobe_i : in std_ulogic;
+        delay_strobe_i : in std_ulogic_vector(79 downto 0);
 
         -- Interface to bitslice
         slice_dq_i : in vector_array(63 downto 0)(7 downto 0);
@@ -47,8 +46,7 @@ architecture arch of gddr6_phy_bitslip is
     signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(15 downto 0);
     signal bit_arrays_out : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
 
-    signal delay_strobe_in : std_ulogic := '0';
-    signal delay_address_in : natural range 0 to 79;
+    signal delay_strobe_in : std_ulogic_vector(79 downto 0);
     signal delay_in : unsigned(2 downto 0);
 
 begin
@@ -57,12 +55,13 @@ begin
         if rising_edge(clk_i) then
             -- Allow for more placement optimisation by pipelining this write
             delay_strobe_in <= delay_strobe_i;
-            delay_address_in <= to_integer(delay_address_i);
             delay_in <= delay_i;
 
-            if delay_strobe_in then
-                bitslip(delay_address_in) <= delay_in;
-            end if;
+            for i in 0 to 79 loop
+                if delay_strobe_in(i) then
+                    bitslip(i) <= delay_in;
+                end if;
+            end loop;
         end if;
     end process;
 

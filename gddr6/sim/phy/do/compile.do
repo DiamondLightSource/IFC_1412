@@ -53,7 +53,7 @@ add wave -group "Map Slices" /phy/dq/map_slices/*
 add wave -group "Bitslip" /phy/dq/bitslip/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
-add wave -group "Delay" /phy/delay/* /phy/delay/control/*
+add wave -group "Delay" /phy/delay/*
 add wave -group "Phy" /phy/*
 add wave -group "Bench" sim:*
 

@@ -170,11 +170,6 @@ architecture arch of gddr6_phy is
     signal delay_control : delay_control_t;
     signal delay_readbacks : delay_readbacks_t;
 
-    -- DQ bitslip
-    signal bitslip_delay : unsigned(2 downto 0);
-    signal bitslip_address : unsigned(6 downto 0);
-    signal bitslip_strobe : std_ulogic;
-
     -- CA delays (might not be needed)
     signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
     signal delay_ca_tx : vector_array(15 downto 0)(8 downto 0);
@@ -309,10 +304,6 @@ begin
         delay_control_i => delay_control,
         delay_readbacks_o => delay_readbacks,
 
-        bitslip_delay_i => bitslip_delay,
-        bitslip_address_i => bitslip_address,
-        bitslip_strobe_i => bitslip_strobe,
-
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,
         io_dq_t_o => io_dq_t_out,
@@ -341,11 +332,7 @@ begin
         delay_readbacks_i => delay_readbacks,
 
         ca_tx_delay_ce_o => ca_tx_delay_ce,
-        delay_ca_tx_i => delay_ca_tx,
-
-        bitslip_address_o => bitslip_address,
-        bitslip_delay_o => bitslip_delay,
-        bitslip_strobe_o => bitslip_strobe
+        delay_ca_tx_i => delay_ca_tx
     );
 
 
