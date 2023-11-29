@@ -75,9 +75,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    test : entity work.test_gddr6_phy generic map (
-        CK_FREQUENCY => CK_FREQUENCY
-    ) port map (
+    test : entity work.test_gddr6_phy port map (
         clk_i => clk,
 
         regs_write_strobe_i => regs_write_strobe,
@@ -286,6 +284,16 @@ begin
             read_gddr6_reg_result(GDDR6_STATUS_REG, read_result);
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
+        write("CK clock OK", true);
+
+
+        -- Write some data
+        start_write;
+        write_dq_ca(X"5555_5555", '0');
+        write_dq_ca(X"AAAA_AAAA", '1');
+        write_dq_ca(X"0000_0000", '0');
+        do_exchange;
+
 
         -- Bring SG2 out of reset
         start_write;
@@ -303,6 +311,7 @@ begin
 
         -- Wait for t_INIT2 + t_INIT3 (faked)
         clk_wait(10);
+
 
         -- Write MRS CA Training command.  Write it twice, leave CKE_N low with
         -- NOP running
