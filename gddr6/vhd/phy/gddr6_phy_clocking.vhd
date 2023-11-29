@@ -205,10 +205,12 @@ begin
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs
             end case;
+
+            enable_bitslice_control_o <=
+                to_std_ulogic(reset_state = RESET_DONE);
         end if;
     end process;
 
-    enable_bitslice_control_o <= to_std_ulogic(reset_state = RESET_DONE);
     ck_clk_ok_o <=
         to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
 

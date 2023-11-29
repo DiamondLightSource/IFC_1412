@@ -44,9 +44,11 @@ entity gddr6_phy_nibble is
         -- Resets and controls
         bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
-        enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
+        -- Slice controls including output enable
+        tbyte_in_i : in std_ulogic_vector(3 downto 0);
+        phy_rden_i : in std_ulogic_vector(3 downto 0);
 
         -- VTC enables
         enable_tri_vtc_i : in std_ulogic;
@@ -66,7 +68,6 @@ entity gddr6_phy_nibble is
         -- Data interface
         data_o : out vector_array(0 to 5)(7 downto 0);
         data_i : in vector_array(0 to 5)(7 downto 0);
-        output_enable_i : in std_ulogic_vector(3 downto 0);
         edc_t_i : in std_ulogic;
 
         pad_in_i : in std_ulogic_vector(0 to 5);
@@ -88,10 +89,6 @@ end;
 architecture arch of gddr6_phy_nibble is
     constant INITIAL_DELAY : natural := 0;
 
-    -- Initial states of bitslice controls during reset
-    signal tbyte_in : std_ulogic_vector(3 downto 0);
-    signal phy_rden : std_ulogic_vector(3 downto 0);
-
     -- Plumbing between BITSLICE_CONTROL and {RXTX,TRI}_BITSLICE
     signal rx_bit_ctrl_in : vector_array(0 to 5)(39 downto 0);
     signal tx_bit_ctrl_in : vector_array(0 to 5)(39 downto 0);
@@ -103,13 +100,6 @@ architecture arch of gddr6_phy_nibble is
     signal tri_out_to_tbyte : std_ulogic;
 
 begin
-    -- These two controls need to be in a defined state during reset.  This is
-    -- (badly) documented on pages 297/298 of UG571 (v1.14), so here I am
-    -- reading between the lines to infer that these need to be held low until
-    -- the entire reset process is complete
-    tbyte_in <= "0000" when enable_bitslice_control_i else output_enable_i;
-    phy_rden <= "0000" when enable_bitslice_control_i else "1111";
-
     control : BITSLICE_CONTROL generic map (
         DIV_MODE => "DIV4",                 -- 1:8 division in bitslice
         REFCLK_SRC => "PLLCLK",
@@ -130,10 +120,7 @@ begin
         PLL_CLK => phy_clk_i,
         REFCLK => '0',
         RST => bitslice_reset_i,
-        -- Here is a confusing detail.  This value is inverted from this input
-        -- to BITSLICE.T_OUT, which means that here this is acting as an output
-        -- enable, not a tristate enable!
-        TBYTE_IN => tbyte_in,
+        TBYTE_IN => tbyte_in_i,
 
         -- Register interface unit.  Not used, but the RIU clock is needed
         RIU_CLK => riu_clk_i,
@@ -156,7 +143,7 @@ begin
         -- No special PHY control
         PHY_RDCS0 => "0000",
         PHY_RDCS1 => "0000",
-        PHY_RDEN => phy_rden,
+        PHY_RDEN => phy_rden_i,
         PHY_WRCS0 => "0000",
         PHY_WRCS1 => "0000",
 

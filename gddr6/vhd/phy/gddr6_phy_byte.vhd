@@ -95,7 +95,8 @@ begin
         constant LOWER_NIBBLE : boolean := i = 0;
         signal clk_from_ext : std_ulogic;
 
-        signal output_enable : std_ulogic_vector(3 downto 0) := (others => '0');
+        signal tbyte_in : std_ulogic_vector(3 downto 0) := "0000";
+        signal phy_rden : std_ulogic_vector(3 downto 0) := "0000";
 
     begin
         if_clk : if i = 0 and not CLK_FROM_PIN generate
@@ -126,9 +127,10 @@ begin
 
             bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
-            enable_bitslice_control_i => enable_bitslice_control_i,
             dly_ready_o => dly_ready(i),
             vtc_ready_o => vtc_ready(i),
+            tbyte_in_i => tbyte_in,
+            phy_rden_i => phy_rden,
 
             enable_tri_vtc_i => enable_tri_vtc_i(i),
             enable_tx_vtc_i => enable_tx_vtc_i(BITSLICE_RANGE),
@@ -145,7 +147,6 @@ begin
 
             data_o => data_o(BITSLICE_RANGE),
             data_i => data_i(BITSLICE_RANGE),
-            output_enable_i => output_enable,
             edc_t_i => edc_t_i,
 
             pad_in_i => pad_in_i(BITSLICE_RANGE),
@@ -161,11 +162,26 @@ begin
             nclk_nibble_o => nclk_nibble_out(i)
         );
 
-        -- This extra delay is needed for timing closure.  Unfortunately this
-        -- results in misaligning output_enable and data.
+        -- This extra delay is needed for timing closure as the timing into the
+        -- BITSLICE_CONTROL is pretty tight.  Unfortunately this results in
+        -- misaligning output_enable and data.
         process (ck_clk_i) begin
             if rising_edge(ck_clk_i) then
-                output_enable <= output_enable_i;
+                if enable_bitslice_control_i then
+                    -- Here is a confusing detail.  This value is inverted from
+                    -- this input to BITSLICE.T_OUT, which means that here this
+                    -- is acting as an output enable, not a tristate enable!
+                    tbyte_in <= output_enable_i;
+                    phy_rden <= "1111";
+                else
+                    -- These two controls need to be in a defined state during
+                    -- reset.  This is (badly) documented on pages 297/298 of
+                    -- UG571 (v1.14), so here I am reading between the lines to
+                    -- infer that these need to be held low until the entire
+                    -- reset process is complete.
+                    tbyte_in <= "0000";
+                    phy_rden <= "0000";
+                end if;
             end if;
         end process;
     end generate;
