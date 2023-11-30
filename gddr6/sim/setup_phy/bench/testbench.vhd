@@ -258,9 +258,10 @@ begin
 
         -- Wait for locked status
         loop
-            read_reg_result(GDDR6_STATUS_REG, read_result);
+            read_reg_result(GDDR6_STATUS_REG, read_result, true);
             exit when read_result(GDDR6_STATUS_CK_OK_BIT);
         end loop;
+        write("CK locked");
 
         -- Put EDC into tristate
         write_reg(GDDR6_CONFIG_REG, (

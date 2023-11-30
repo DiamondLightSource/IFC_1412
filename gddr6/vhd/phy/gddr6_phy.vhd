@@ -122,6 +122,7 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
+    -- Have tried 300 MHz, but cannot get timing closure of BITSLICE IOs!
     constant CK_FREQUENCY : real := 250.0;
     constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
 

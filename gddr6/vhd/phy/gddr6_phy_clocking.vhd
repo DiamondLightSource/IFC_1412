@@ -23,7 +23,7 @@ entity gddr6_phy_clocking is
         -- Resets and clock status
         ck_reset_i : in std_ulogic;
         ck_clk_ok_o : out std_ulogic;
-        ck_unlock_o : out std_ulogic;
+        ck_unlock_o : out std_ulogic := '0';
 
         -- Clock in from SG12_CK and TX clock out to bitslices
         io_ck_i : in std_ulogic;
@@ -49,6 +49,7 @@ architecture arch of gddr6_phy_clocking is
     signal raw_clk : std_ulogic;
     -- Assigning clocks
     alias ck_clk : std_ulogic is ck_clk_o;
+    alias riu_clk : std_ulogic is riu_clk_o;
 
     signal reset_sync : std_ulogic;
     signal dly_ready_in : std_ulogic;
@@ -80,7 +81,7 @@ begin
     gen_plls : for i in 0 to 1 generate
         signal clkfb : std_ulogic;
     begin
-        -- Input clock is 250 or 300 MHz, the PLL runs at 1 or 1.2 GHz
+        -- Input clock is 250, the PLL runs at 1 GHz
         pll : PLLE3_BASE generic map (
             CLKFBOUT_MULT => 4,
             CLKFBOUT_PHASE => 0.0,
@@ -132,7 +133,7 @@ begin
 
     riu_bufg : BUFGCE port map (
         I => riu_clock_out(0),
-        O => riu_clk_o,
+        O => riu_clk,
         CE => clk_enable
     );
 
@@ -141,20 +142,20 @@ begin
     sync_reset : entity work.sync_bit generic map (
         INITIAL => '1'
     ) port map (
-        clk_i => ck_clk,
+        clk_i => riu_clk,
         reset_i => ck_reset_i,
         bit_i => '0',
         bit_o => reset_sync
     );
 
     sync_dly_ready : entity work.sync_bit port map (
-        clk_i => ck_clk,
+        clk_i => riu_clk,
         bit_i => dly_ready_i,
         bit_o => dly_ready_in
     );
 
     sync_vtc_ready : entity work.sync_bit port map (
-        clk_i => ck_clk,
+        clk_i => riu_clk,
         bit_i => vtc_ready_i,
         bit_o => vtc_ready_in
     );
@@ -162,22 +163,24 @@ begin
 
     -- Generate reset sequence.  This follows the reset process documented in
     -- UG571 starting on p296 of v1.14.
-    --
-    -- ... still need to sort out pull ups of TBYTE_IN ... don't
-    -- actually understand this ...
-    process (ck_clk, reset_sync) begin
+    process (riu_clk, reset_sync) begin
         if reset_sync then
             reset_state <= RESET_START;
             enable_control_vtc_o <= '0';
             bitslice_reset_o <= '1';
             enable_pll_clk <= '0';
-        elsif rising_edge(ck_clk) then
+            enable_bitslice_control_o <= '0';
+            wait_counter <= 6X"0F";
+        elsif rising_edge(riu_clk) then
             case reset_state is
                 when RESET_START =>
-                    -- Just wait one tick before we do anything.  Note that this
+                    -- Wait a few ticks before we do anything.  Note that this
                     -- event will not occur until the PLL is out of reset, as
                     -- the clock is qualified by clk_enable.
-                    reset_state <= RESET_RELEASE;
+                    wait_counter <= wait_counter - 1;
+                    if wait_counter = 0 then
+                        reset_state <= RESET_RELEASE;
+                    end if;
                 when RESET_RELEASE =>
                     -- Release bitslice resets and start counting before
                     -- enabling the high speed clock
@@ -204,15 +207,10 @@ begin
                     end if;
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs
+                    enable_bitslice_control_o <= '1';
             end case;
-
-            enable_bitslice_control_o <=
-                to_std_ulogic(reset_state = RESET_DONE);
         end if;
     end process;
-
-    ck_clk_ok_o <=
-        to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
 
     -- Detect PLL unlock and generate single pulse on resumption of lock
     process (ck_clk, pll_locked) begin
@@ -223,4 +221,8 @@ begin
             ck_unlock_o <= unlock_detect;
         end if;
     end process;
+
+    -- Ensure we report CK not ok if we lose valid CK at any time
+    ck_clk_ok_o <=
+        to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
 end;
