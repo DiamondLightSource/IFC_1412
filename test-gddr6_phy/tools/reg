@@ -12,7 +12,7 @@ def to_int(s):
 
 parser = argparse.ArgumentParser(description = 'Read/write raw registers')
 parser.add_argument(
-    '-a', dest = 'addr', default = 1,
+    '-a', dest = 'addr', default = 0,
     help = 'Set physical address of card.  If not specified then card 1')
 parser.add_argument(
     'reg', type = to_int, nargs = '?',

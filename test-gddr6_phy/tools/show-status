@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+from registers import regs, sg
+
+
+COLOUR_OK = '1;32'
+COLOUR_NOTE = '1;33'
+COLOUR_ALERT = '1;31;41'
+
+def colour(text, colour = COLOUR_NOTE):
+    set_colour = '\x1B[%sm' % colour
+    unset_colour = '\x1B[0m'
+    return '%s%s%s' % (set_colour, text, unset_colour)
+
+def choose(ok, good, bad, bad_status = COLOUR_ALERT):
+    if ok:
+        return colour(good, COLOUR_OK)
+    else:
+        return colour(bad, bad_status)
+
+
+status = sg.STATUS._get_fields()
+config = sg.CONFIG._get_fields()
+
+print(config)
+print(status)
+
+if status.CK_OK:
+    print('CK %s, FIFO %s, Events: %s, %s, %s' % (
+        colour('locked', COLOUR_OK),
+        choose(status.FIFO_OK == 3, 'ok', 'desync'),
+        colour('CK not ok') if status.CK_OK_EVENT else '-',
+        colour('CK unlock') if status.CK_UNLOCK_EVENT else '-',
+        colour('FIFO unlock') if status.FIFO_OK_EVENT else '-'))
+else:
+    print(colour('CK unlocked'))

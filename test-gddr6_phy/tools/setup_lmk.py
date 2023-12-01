@@ -92,9 +92,9 @@ def configure_sys_lmk(lmk, use_fclk = True):
     lmk.OSCOUT_DRV_MODE = 0         # Power down OSCOUT, not connected
     lmk.OSCIN_BUF_TO_OSCOUT_EN = 0  # Don't need this buffer
 
-#     # SYNC setup
-#     lmk.PLL2_EN_BUF_SYNC_TOP = 1    # Use SYNC on outputs 8 to 15
-#     lmk.PLL2_EN_BUF_SYNC_BOTTOM = 0 #  but not 0 to 7
+    # SYNC setup
+    lmk.PLL2_EN_BUF_SYNC_TOP = 1    # Use SYNC on outputs 8 to 15
+    lmk.PLL2_EN_BUF_SYNC_BOTTOM = 0 #  but not 0 to 7
 
     # Configuration of PLL2
     lmk.PLL2_DBL_EN_INV = 1         # Doubles reference clock
@@ -152,10 +152,10 @@ def setup_sync(lmk, enable_sync_pin):
     else:
         lmk.EN_SYNC_PIN_FUNC = 0        # Disable SYNC from input pin
 
-    set_sync_enable(lmk, 0,  1)
-    set_sync_enable(lmk, 2,  1)
-    set_sync_enable(lmk, 4,  1)
-    set_sync_enable(lmk, 6,  1)
+    set_sync_enable(lmk, 0,  0)
+    set_sync_enable(lmk, 2,  0)
+    set_sync_enable(lmk, 4,  0)
+    set_sync_enable(lmk, 6,  0)
     set_sync_enable(lmk, 8,  1)
     set_sync_enable(lmk, 10, 1)
     set_sync_enable(lmk, 12, 1)     # Only goes to GDDR, must leave alone

@@ -27,18 +27,22 @@ def step_delay(address, amount):
     else:
         up_down_n = 1
     sg.DELAY._write_fields_wo(
-        ADDRESS = address, DELAY = amount - 1, UP_DOWN_N = up_down_n)
+        ADDRESS = address, DELAY = amount - 1, UP_DOWN_N = up_down_n,
+        ENABLE_WRITE = 1)
 
-def set_delay(address, amount):
-    assert is_bitslip_address(address)
-    sg.DELAY._write_fields_wo(ADDRESS = address, DELAY = amount)
+def set_delay(address, target):
+    if is_bitslip_address(address):
+        sg.DELAY._write_fields_wo(
+            ADDRESS = address, DELAY = target, ENABLE_WRITE = 1)
+    else:
+        step_delay(address, target - read_delay(address))
 
 def read_delay(address):
-    sg.DELAY._write_fields_wo(ADDRESS = address, NO_WRITE = 1)
+    sg.DELAY._write_fields_wo(ADDRESS = address, ENABLE_WRITE = 0)
     return sg.DELAY.DELAY
 
 def byteslip(address):
-    sg.DELAY._write_fields_wo(ADDRESS = address, BYTESLIP = 1)
+    sg.DELAY._write_fields_wo(ADDRESS = address, BYTESLIP = 1, ENABLE_WRITE = 1)
 
 
 # __all__ = ['sg', 'step_delay', 'set_delay', 'read_delay', 'byteslip']

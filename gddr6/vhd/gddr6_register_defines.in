@@ -70,23 +70,57 @@
         # field is used
         .BYTESLIP
 
+    # The EXCHANGE registers are used to exchange up to 64 ticks of data with
+    # the SG GDDR6 memory.  Buffers containing CA commands and DQ data to write
+    # are first loaded by writing to the DQ and CA registers: up to 16 writes to
+    # DQ are needed to load a full line, and CA must be written after loading
+    # any DQ data.  An exchange is then triggered by writing to
+    # COMMAND.EXCHANGE: all the data is sent and any data returned is captured
+    # at the same time ready for subsequent readout.
+    #   The last CA command in the exchange remains written to the CA bus on
+    # completion of any exchange.
     !!EXCHANGE
+        # Write individual bits to trigger the corresponding action
         COMMAND     WP
+            # This must be written to reset the exchange write counter before
+            # loading any new data into the exchange buffers.
             .START_WRITE
+            # This should be written after an exchange to reset the readout
+            # counter and before performing any reads.  This command and
+            # .EXCHANGE can safely be written together.
             .START_READ
+            # Write this to advance the readout counter to the next row of
+            # captured output.
             .STEP_READ
+            # After loading the CA and DQ exchange buffers write to this to
+            # perform a complete exchange transaction.
             .EXCHANGE
 
+        # Writing to this register configures the CA bus output and advances the
+        # write counter.  This register must be writte *after* any required DQ
+        # data has been written.
         CA          W
+            # Rising edge bits of CA command
             .RISING     10
+            # Falling edge bits of CA command
             .FALLING    10
             # Special overrides for CA3, normally set to 0
             .CA3        4
-            # Command enable
+            # Command enable, current set for both rising and falling edge
             .CKE_N      2
             # DQ tristate control
             .OUTPUT_ENABLE
 
+        # Write to the register up to 16 times to fill the DQ output buffer from
+        # low order bits to high order bits.  Further writes will overwrite
+        # previous values.  Write to CA to advance to the next output line.
+        #    Read from this register up to 16 times to read the DQ input buffer
+        # after completing an exchange.  Advance to the next row by writing to
+        # COMMAND.STEP_READ.
         DQ          RW
+        # Read from this register 2 times to read the EDC input for the current
+        # input line.
         EDC_IN      R
+        # Read from this register 2 times to read the EDC output for the current
+        # input line.
         EDC_OUT     R

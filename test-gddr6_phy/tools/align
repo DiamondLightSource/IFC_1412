@@ -66,27 +66,11 @@ def find_first_zeros(data):
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 
 load_test_pattern()
-# data = exchange()
-# print_data(data[11:15])
-# data = exchange()
-# print_data(data)
 
-# print(find_first_zero(data[:, 0]))
-
-# for n in range(4):
-#     data = exchange()
-#     print(to_string(find_first_zeros(data)))
-
-# Reset the ODELAYS
-sg.CONFIG.RESET_DQ_IDELAY = 1
-sg.CONFIG.RESET_DQ_IDELAY = 0
-
-# Because we can't read bitslip delays reset them here
+# Reset the bitslip delays
 for n in range(64):
     set_delay(0x80 + n, 0)
 
-# Alas, we can't reset byteslips reliably without a complete reset of the
-# bitslice array
 
 data = exchange()
 zeros = find_first_zeros(data)
