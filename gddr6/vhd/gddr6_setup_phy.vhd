@@ -34,7 +34,7 @@ entity gddr6_setup_phy is
         ctrl_ca_i : in vector_array(0 to 1)(9 downto 0);
         ctrl_ca3_i : in std_ulogic_vector(0 to 3);
         -- Clock enable, held low during normal operation
-        ctrl_cke_n_i : in std_ulogic_vector(0 to 1);
+        ctrl_cke_n_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- DQ
@@ -91,7 +91,7 @@ architecture arch of gddr6_setup_phy is
 
     signal setup_ca : vector_array(0 to 1)(9 downto 0);
     signal setup_ca3 : std_ulogic_vector(0 to 3);
-    signal setup_cke_n : std_ulogic_vector(0 to 1);
+    signal setup_cke_n : std_ulogic;
     signal setup_output_enable : std_ulogic;
     signal setup_data_in : std_ulogic_vector(511 downto 0);
     signal setup_data_out : std_ulogic_vector(511 downto 0);
@@ -100,7 +100,7 @@ architecture arch of gddr6_setup_phy is
 
     signal phy_ca : vector_array(0 to 1)(9 downto 0);
     signal phy_ca3 : std_ulogic_vector(0 to 3);
-    signal phy_cke_n : std_ulogic_vector(0 to 1);
+    signal phy_cke_n : std_ulogic;
     signal phy_output_enable : std_ulogic := '0';
     signal phy_data_in : std_ulogic_vector(511 downto 0);
     signal phy_data_out : std_ulogic_vector(511 downto 0);

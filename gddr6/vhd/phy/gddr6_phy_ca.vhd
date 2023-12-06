@@ -11,8 +11,12 @@ use work.support.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_ca is
+    generic (
+        REFCLK_FREQUENCY : real
+    );
     port (
         ck_clk_i : in std_ulogic;
+        ck_clk_delay_i : in std_ulogic;
 
         -- Internal resets for IO components
         bitslice_reset_i : in std_ulogic;
@@ -25,13 +29,8 @@ entity gddr6_phy_ca is
         -- The second tick of bit 3 can be overridded by or-ing in ca3_i so that
         -- this can act as a chip select
         ca3_i : in std_ulogic_vector(0 to 3);
-        cke_n_i : in std_ulogic_vector(0 to 1);
+        cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
-
-        -- Delay control
-        delay_inc_i : in std_ulogic;
-        delay_ce_i : in std_ulogic_vector(15 downto 0);
-        delay_o : out vector_array(15 downto 0)(8 downto 0);
 
         -- Pins driven out
         io_sg_resets_n_o : out std_ulogic_vector(0 to 1);
@@ -45,8 +44,13 @@ end;
 architecture arch of gddr6_phy_ca is
     -- So that the outputs can be uniformly generated gather
     -- CA, CA3, CABI into a single 15 element vector
-    signal ca_in : vector_array(0 to 1)(15 downto 0);
-    signal ca_out : std_ulogic_vector(15 downto 0);
+    signal ca_in : vector_array(0 to 1)(14 downto 0);
+    signal ca_out : std_ulogic_vector(14 downto 0);
+    -- Output signals registered for output
+    signal d1 : std_ulogic_vector(14 downto 0) := (others => '1');
+    signal d2 : std_ulogic_vector(14 downto 0);
+    -- CKEn needs to straddle two ticks to align its centre with the rising edge
+    signal cke_n_in : std_ulogic := '0';
 
     -- Special treatment of CA3: in the second tick of a command CA3 can be
     -- used as a chip select.
@@ -64,8 +68,9 @@ architecture arch of gddr6_phy_ca is
     end;
 
 begin
-    -- Gather all the incoming CA outputs into a single array
-    -- We perform the optional address bus inversion at this point
+    -- Gather all the incoming CA outputs into a single array, rising edge part
+    -- of command in ca_i(0) and falling edge in ca_i(1).
+    -- Also perform optional address bus inversion at this point
     gen_ca_in : for i in 0 to 1 generate
         signal invert_bits : std_ulogic;
     begin
@@ -79,10 +84,39 @@ begin
             -- Optional bus inversion
             10 => not invert_bits,
             -- Outputs to CA3 per channel and device
-            14 downto 11 => invert_bits xor ca3_in(i, ca_i(i)(3), ca3_i),
-            -- Channel enable
-            15 => cke_n_i(i)
+            14 downto 11 => invert_bits xor ca3_in(i, ca_i(i)(3), ca3_i)
         );
+    end generate;
+
+    process (ck_clk_i) begin
+        if rising_edge(ck_clk_i) then
+            -- Register CA data before sending to avoid timing problems in
+            -- transition to shifted output clock
+            d1 <= ca_in(0);
+            d2 <= ca_in(1);
+            -- Remember CKE_n for output shaping
+            cke_n_in <= cke_n_i;
+        end if;
+    end process;
+
+    -- Generate ODDR for all CA outputs.  We use the delayed clock to generate
+    -- the output data so that we can align the centre of the CA data valid
+    -- eye with the centre of CK.  This is much easier than using an ODELAY!
+    gen_out : for i in 0 to 14 generate
+        -- Need to skip entry #3
+        if_ca3 : if i = 3 generate
+            ca_out(i) <= '0';
+        else generate
+            oddr : ODDRE1 generic map (
+                SRVAL => '1'
+            ) port map (
+                SR => bitslice_reset_i,
+                C => ck_clk_delay_i,
+                D1 => d1(i),
+                D2 => d2(i),
+                Q => ca_out(i)
+            );
+        end generate;
     end generate;
 
     -- Redistribute the generated outputs as required to output pins, matching
@@ -90,53 +124,20 @@ begin
     io_ca_o <= ca_out(9 downto 0);
     io_cabi_n_o <= ca_out(10);
     io_ca3_o <= ca_out(14 downto 11);
-    io_cke_n_o <= ca_out(15);
 
 
-    -- Generate ODDR and ODELAY for all CA outputs
-    gen_out : for i in 0 to 15 generate
-        signal data_out : std_ulogic;
-    begin
-        -- Need to skip entry #3
-        if_ca3 : if i = 3 generate
-            delay_o(i) <= 9X"000";
-            ca_out(i) <= '0';
-        else generate
-            oddr : ODDRE1 generic map (
-                SRVAL => '1'
-            ) port map (
-                SR => bitslice_reset_i,
-                C => ck_clk_i,
-                D1 => ca_in(0)(i),
-                D2 => ca_in(1)(i),
-                Q => data_out
-            );
-
-            odelay : ODELAYE3 generic map (
-                DELAY_FORMAT => "COUNT",
-                DELAY_VALUE => 0,
-                DELAY_TYPE => "VAR_LOAD",
-                UPDATE_MODE => "ASYNC"
-            ) port map (
-                ODATAIN => data_out,
-                DATAOUT => ca_out(i),
-                -- Delay control
-                CLK => ck_clk_i,
-                CE => delay_ce_i(i),
-                INC => delay_inc_i,
-                RST => bitslice_reset_i,
-                EN_VTC => '0',
-                -- Unused pins
-                LOAD => '0',
-                CNTVALUEIN => 9X"000",
-                CNTVALUEOUT => delay_o(i),
-                CASC_RETURN => '0',
-                CASC_IN => '0',
-                CASC_OUT => open
-            );
-        end generate;
-    end generate;
-
+    -- Special treatment for CKE_n: this is changed on the falling edge of CK
+    -- and will be sampled on the rising edge.  We therefore assign the new
+    -- value to D2 and the value from the last tick to D1.
+    cken_oddr : ODDRE1 generic map (
+        SRVAL => '1'
+    ) port map (
+        SR => bitslice_reset_i,
+        C => ck_clk_i,
+        D1 => cke_n_in,
+        D2 => cke_n_i,
+        Q => io_cke_n_o
+    );
 
     -- Register SG reset signal
     gen_resets : for i in 0 to 1 generate

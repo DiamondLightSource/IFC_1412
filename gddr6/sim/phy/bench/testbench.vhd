@@ -38,7 +38,7 @@ architecture arch of testbench is
 
     signal ca_in : vector_array(0 to 1)(9 downto 0);
     signal ca3_in : std_ulogic_vector(0 to 3);
-    signal cke_n_in : std_ulogic_vector(0 to 1);
+    signal cke_n_in : std_ulogic;
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -267,7 +267,7 @@ begin
 
         ca_in <= (others => (others => '1'));
         ca3_in <= X"0";
-        cke_n_in <= "11";
+        cke_n_in <= '1';
         data_in <= (others => '1');
         output_enable_in <= '0';
 
@@ -299,9 +299,7 @@ begin
 
 
         -- Test pattern for CA
-        cke_n_in <= "10";
-        clk_wait;
-        cke_n_in <= "00";
+        cke_n_in <= '0';
         ca_in <= (0 => 10X"155", 1 => 10X"2AA");
         clk_wait;
         ca_in <= (10X"000", 10X"000");
@@ -309,9 +307,7 @@ begin
         clk_wait;
         ca_in <= (10X"000", 10X"000");
         ca3_in <= X"0";
-        cke_n_in <= "01";
-        clk_wait;
-        cke_n_in <= "11";
+        cke_n_in <= '1';
 
         phy_setup.edc_t <= '1';
 

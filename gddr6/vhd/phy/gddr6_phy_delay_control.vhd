@@ -19,11 +19,7 @@ entity gddr6_phy_delay_control is
 
         -- Delay controls and readbacks
         delay_control_o : out delay_control_t;
-        delay_readbacks_i : in delay_readbacks_t;
-
-        -- CA control
-        ca_tx_delay_ce_o : out std_ulogic_vector(15 downto 0);
-        delay_ca_tx_i : in vector_array(15 downto 0)(8 downto 0)
+        delay_readbacks_i : in delay_readbacks_t
     );
 end;
 
@@ -68,11 +64,7 @@ begin
     --   11011aaa    Control ODELAY for DBI bit aaa
     --   11100aaa    Control IDELAY for EDC bit aaa
     --   11101xxx    (unassigned)
-    --   1111cccc    Control ODELAY for CA bit selected by cccc:
-    --               0..9        CA[cccc] (cccc = 3 is ignored)
-    --               10          CABI_N
-    --               11..14      CA3[cccc-11]
-    --               15          CKE_N
+    --   1111xxxx    (unassigned)
     delay_control_o <= (
         up_down_n => delay_up_down_n,
         -- CE for IDELAY and ODELAY following the address map above
@@ -95,7 +87,6 @@ begin
         bitslip_delay => bitslip_delay,
         bitslip_strobe => bitslip_strobe
     );
-    ca_tx_delay_ce_o <= ce_out(2#1111_1111# downto 2#1111_0000#);   -- 1111_xxxx
 
     -- Use the same mapping for readbacks (no bitslip or byteslip readback)
     delays_in <= (
@@ -105,8 +96,7 @@ begin
         2#1101_0111# downto 2#1101_0000# => rb_i.dbi_rx_delay,     -- 1101_0xxx
         2#1101_1111# downto 2#1101_1000# => rb_i.dbi_tx_delay,     -- 1101_1xxx
         2#1110_0111# downto 2#1110_0000# => rb_i.edc_rx_delay,     -- 1110_0xxx
-        2#1110_1111# downto 2#1110_1000# => (others => '-'),
-        2#1111_1111# downto 2#1111_0000# => delay_ca_tx_i          -- 1111_xxxx
+        2#1111_1111# downto 2#1110_1000# => (others => '-')
     );
 
 

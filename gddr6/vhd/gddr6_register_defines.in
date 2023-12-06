@@ -52,11 +52,7 @@
         #   11011aaa    Control ODELAY for DBI bit aaa
         #   11100aaa    Control IDELAY for EDC bit aaa
         #   11101xxx    (unassigned)
-        #   1111cccc    Control ODELAY for CA bit selected by cccc:
-        #               0..9        CA[cccc] (cccc = 3 is ignored)
-        #               10          CABI_N
-        #               11..14      CA3[cccc-11]
-        #               15          CKE_N
+        #   1111xxxx    (unassigned)
         .ADDRESS        8
         # For bitslip this selects the bitslip delay to be written, for
         # other delays this defines the number of delay steps in the
@@ -106,8 +102,8 @@
             .FALLING    10
             # Special overrides for CA3, normally set to 0
             .CA3        4
-            # Command enable, current set for both rising and falling edge
-            .CKE_N      2
+            # Command enable, sampled on rising edge of command
+            .CKE_N
             # DQ tristate control
             .OUTPUT_ENABLE
 

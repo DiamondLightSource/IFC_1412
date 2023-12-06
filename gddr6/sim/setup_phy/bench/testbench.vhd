@@ -53,7 +53,7 @@ architecture arch of testbench is
 
     signal ctrl_ca : vector_array(0 to 1)(9 downto 0);
     signal ctrl_ca3 : std_ulogic_vector(0 to 3);
-    signal ctrl_cke_n : std_ulogic_vector(0 to 1);
+    signal ctrl_cke_n : std_ulogic;
     signal ctrl_data_in : std_ulogic_vector(511 downto 0);
     signal ctrl_data_out : std_ulogic_vector(511 downto 0);
     signal ctrl_output_enable : std_ulogic;
@@ -192,13 +192,13 @@ begin
             rising : std_ulogic_vector(9 downto 0) := 10X"3FF";
             falling : std_ulogic_vector(9 downto 0) := 10X"3FF";
             ca3 : std_ulogic_vector(3 downto 0) := X"0";
-            cke_n : std_ulogic_vector(1 downto 0) := "11") is
+            cke_n : std_ulogic := '1') is
         begin
             write_reg(GDDR6_CA_REG, (
                 GDDR6_CA_RISING_BITS => rising,
                 GDDR6_CA_FALLING_BITS => falling,
                 GDDR6_CA_CA3_BITS => ca3,
-                GDDR6_CA_CKE_N_BITS => cke_n,
+                GDDR6_CA_CKE_N_BIT => cke_n,
                 GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
@@ -247,7 +247,7 @@ begin
         write_strobe <= (others => '0');
         read_strobe <= (others => '0');
 
-        clk_wait(5);
+        clk_wait(50);
         read_reg(GDDR6_STATUS_REG);
 
         -- Now take CK out of reset, set RX bitslip
@@ -273,12 +273,8 @@ begin
 
         -- Simple exchange to check CA
         start_write;
-        write_ca(cke_n => "01");
-        write_ca(cke_n => "00", rising => 10X"155", falling => 10X"2AA");
-        write_ca(
-            cke_n => "10", rising => 10X"000", falling => 10X"000",
-            ca3 => X"5");
-        write_ca(cke_n => "11");
+        write_ca(cke_n => '0', rising => 10X"155", falling => 10X"2AA");
+        write_ca;
         do_exchange;
 
 

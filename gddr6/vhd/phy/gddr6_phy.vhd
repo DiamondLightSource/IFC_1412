@@ -69,7 +69,7 @@ entity gddr6_phy is
         ca_i : in vector_array(0 to 1)(9 downto 0);
         ca3_i : in std_ulogic_vector(0 to 3);
         -- Clock enable, held low during normal operation
-        cke_n_i : in std_ulogic_vector(0 to 1);
+        cke_n_i : in std_ulogic;
 
         -- --------------------------------------------------------------------
         -- DQ
@@ -124,7 +124,7 @@ end;
 architecture arch of gddr6_phy is
     -- Have tried 300 MHz, but cannot get timing closure of BITSLICE IOs!
     constant CK_FREQUENCY : real := 250.0;
-    constant REFCLK_FREQUENCY : real := 4.0 * CK_FREQUENCY;
+    constant REFCLK_FREQUENCY : real := 8.0 * CK_FREQUENCY;
 
     -- Pads with IO buffers
     -- Clocks and reset
@@ -161,6 +161,7 @@ architecture arch of gddr6_phy is
     -- Other clocks, resets, controls
     signal phy_clk : std_ulogic_vector(0 to 1);
     signal riu_clk : std_ulogic;
+    signal ck_clk_delay : std_ulogic;
     signal bitslice_reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
@@ -170,10 +171,6 @@ architecture arch of gddr6_phy is
     -- Delay controls and readbacks
     signal delay_control : delay_control_t;
     signal delay_readbacks : delay_readbacks_t;
-
-    -- CA delays (might not be needed)
-    signal ca_tx_delay_ce : std_ulogic_vector(15 downto 0);
-    signal delay_ca_tx : vector_array(15 downto 0)(8 downto 0);
 
 begin
     -- Map pads to IO buffers and gather related signals
@@ -237,6 +234,7 @@ begin
         phy_clk_o => phy_clk,
         ck_clk_o => ck_clk,
         riu_clk_o => riu_clk,
+        ck_clk_delay_o => ck_clk_delay,
 
         ck_reset_i => ck_reset_i,
         ck_clk_ok_o => ck_clk_ok_o,
@@ -251,20 +249,19 @@ begin
 
 
     -- CA generation
-    ca : entity work.gddr6_phy_ca port map (
+    ca : entity work.gddr6_phy_ca generic map (
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+    ) port map (
         ck_clk_i => ck_clk,
+        ck_clk_delay_i => ck_clk_delay,
+
         bitslice_reset_i => bitslice_reset,
         sg_resets_n_i => phy_setup_i.sg_resets_n,
-
         enable_cabi_i => phy_setup_i.enable_cabi,
 
         ca_i => ca_i,
         ca3_i => ca3_i,
         cke_n_i => cke_n_i,
-
-        delay_inc_i => delay_control.up_down_n,
-        delay_ce_i => ca_tx_delay_ce,
-        delay_o => delay_ca_tx,
 
         io_sg_resets_n_o => io_sg_resets_n_out,
         io_ca_o => io_ca_out,
@@ -330,10 +327,7 @@ begin
         setup_o => setup_delay_o,
 
         delay_control_o => delay_control,
-        delay_readbacks_i => delay_readbacks,
-
-        ca_tx_delay_ce_o => ca_tx_delay_ce,
-        delay_ca_tx_i => delay_ca_tx
+        delay_readbacks_i => delay_readbacks
     );
 
 

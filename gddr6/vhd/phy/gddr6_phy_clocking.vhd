@@ -19,6 +19,8 @@ entity gddr6_phy_clocking is
         -- Dedicated clock for bitslice RIU.  This is needed for the bitslice
         -- control, but cannot run at full CK clock speed
         riu_clk_o : out std_ulogic;
+        -- Special clock for delaying CA output
+        ck_clk_delay_o : out std_ulogic;
 
         -- Resets and clock status
         ck_reset_i : in std_ulogic;
@@ -40,8 +42,12 @@ end;
 
 architecture arch of gddr6_phy_clocking is
     signal io_ck_in : std_ulogic;
-    signal ck_clock_out : std_ulogic_vector(0 to 1);
-    signal riu_clock_out : std_ulogic_vector(0 to 1);
+    signal mmcm_clkfbout : std_ulogic;
+    signal mmcm_clkfbin : std_ulogic;
+    signal ck_clk_out : std_ulogic;
+    signal riu_clk_out : std_ulogic;
+    signal ck_clk_delay_out : std_ulogic;
+    signal mmcm_locked : std_ulogic;
     signal pll_locked : std_ulogic_vector(0 to 1);
     signal unlock_detect : std_ulogic;
 
@@ -73,27 +79,53 @@ architecture arch of gddr6_phy_clocking is
     attribute DONT_TOUCH of io_ck_in : signal is "YES";
 
 begin
-    bufg_in : BUFG port map(
+    bufg_in : BUFG port map (
         I => io_ck_i,
         O => io_ck_in
     );
 
+    bufg_clkfb : BUFG port map (
+        I => mmcm_clkfbout,
+        O => mmcm_clkfbin
+    );
+
+    -- We need to run ck_clk in phase with CK; apparently this cannot be done
+    -- with a PLL and so use an MMCM to generate our clocks.  We'll still need
+    -- PLLs for the high speed bitslice output clocks.
+    mmcm : MMCME3_BASE generic map (
+        CLKFBOUT_MULT_F => 4.0,     -- Input clock at 250 MHz, run VCO at 1GHz
+        CLKIN1_PERIOD => 1000.0 / CK_FREQUENCY,
+        CLKOUT0_DIVIDE_F => 4.0,    -- ck_clk at 250 MHz
+        CLKOUT1_DIVIDE => 8,        -- riu_clk at 125 MHz
+        -- CK clock delayed by advanced by 135 degrees.  This allows us to
+        -- align the CA output eye with the centre of the CK clock
+        CLKOUT2_DIVIDE => 4,
+        CLKOUT2_PHASE => -135.0
+    ) port map (
+        CLKIN1 => io_ck_in,
+        CLKOUT0 => ck_clk_out,
+        CLKOUT1 => riu_clk_out,
+        CLKOUT2 => ck_clk_delay_out,
+        CLKFBOUT => mmcm_clkfbout,
+        CLKFBIN => mmcm_clkfbin,
+        LOCKED => mmcm_locked,
+        PWRDWN => '0',
+        RST => ck_reset_i
+    );
+
+
+    -- Generate the high speed bitslice output clocks
     gen_plls : for i in 0 to 1 generate
         signal clkfb : std_ulogic;
     begin
         -- Input clock is 250, the PLL runs at 1 GHz
         pll : PLLE3_BASE generic map (
-            CLKFBOUT_MULT => 4,
-            CLKFBOUT_PHASE => 0.0,
+            CLKFBOUT_MULT => 4,         -- Input at 250 MHz, VCO at 1 GHz
             CLKIN_PERIOD => 1000.0 / CK_FREQUENCY,
-            CLKOUT0_DIVIDE => 4,
-            CLKOUT1_DIVIDE => 8,
-            CLKOUTPHY_MODE => "VCO_2X" -- 2 or 2.4 GHz on CLKOUTPHY
+            CLKOUTPHY_MODE => "VCO_2X"  -- 2 GHz on CLKOUTPHY
         ) port map (
             CLKIN => io_ck_in,
             CLKOUTPHY => phy_clk_o(i),
-            CLKOUT0 => ck_clock_out(i),
-            CLKOUT1 => riu_clock_out(i),
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
             LOCKED => pll_locked(i),
@@ -111,7 +143,7 @@ begin
     --    It looks like the safest way to do this is to take an unguarded copy
     -- of the clock and use this through a synchroniser.
     raw_bufg : BUFG port map (
-        I => riu_clock_out(0),
+        I => riu_clk_out,
         O => raw_clk
     );
 
@@ -120,21 +152,28 @@ begin
     ) port map (
         clk_i => raw_clk,
         reset_i => ck_reset_i,
-        bit_i => vector_and(pll_locked),
+        bit_i => mmcm_locked,
         bit_o => clk_enable
     );
 
     -- Enable the global clocks once we're out of reset and the PLL is locked
     ck_bufg : BUFGCE port map (
-        I => ck_clock_out(0),
+        I => ck_clk_out,
         O => ck_clk,
         CE => clk_enable
     );
 
     riu_bufg : BUFGCE port map (
-        I => riu_clock_out(0),
+        I => riu_clk_out,
         O => riu_clk,
         CE => clk_enable
+    );
+
+    -- This clock is not qualified, doesn't really need to be, there is no
+    -- persistent state downstream, and meeting timing here is too challenging!
+    ck_delay_bufg : BUFG port map (
+        I => ck_clk_delay_out,
+        O => ck_clk_delay_o
     );
 
 
@@ -175,10 +214,13 @@ begin
             case reset_state is
                 when RESET_START =>
                     -- Wait a few ticks before we do anything.  Note that this
-                    -- event will not occur until the PLL is out of reset, as
+                    -- event will not occur until the MMCM is out of reset, as
                     -- the clock is qualified by clk_enable.
-                    wait_counter <= wait_counter - 1;
-                    if wait_counter = 0 then
+                    if wait_counter > 0 then
+                        wait_counter <= wait_counter - 1;
+                    elsif vector_and(pll_locked) then
+                        -- In case the PLLs are late coming into lock wait for
+                        -- them as well
                         reset_state <= RESET_RELEASE;
                     end if;
                 when RESET_RELEASE =>
@@ -213,8 +255,8 @@ begin
     end process;
 
     -- Detect PLL unlock and generate single pulse on resumption of lock
-    process (ck_clk, pll_locked) begin
-        if not vector_and(pll_locked) then
+    process (ck_clk, mmcm_locked) begin
+        if not mmcm_locked then
             unlock_detect <= '1';
         elsif rising_edge(ck_clk) then
             unlock_detect <= '0';
@@ -223,6 +265,5 @@ begin
     end process;
 
     -- Ensure we report CK not ok if we lose valid CK at any time
-    ck_clk_ok_o <=
-        to_std_ulogic(reset_state = RESET_DONE) and vector_and(pll_locked);
+    ck_clk_ok_o <= to_std_ulogic(reset_state = RESET_DONE) and mmcm_locked;
 end;
