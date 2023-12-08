@@ -206,7 +206,7 @@ begin
                 GDDR6_CA_RISING_BITS => 10X"3FF",
                 GDDR6_CA_FALLING_BITS => 10X"3FF",
                 GDDR6_CA_CA3_BITS => X"0",
-                GDDR6_CA_CKE_N_BITS => "11",
+                GDDR6_CA_CKE_N_BIT => '1',
                 GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
@@ -248,13 +248,13 @@ begin
             rising : std_ulogic_vector(9 downto 0) := 10X"3FF";
             falling : std_ulogic_vector(9 downto 0) := 10X"3FF";
             ca3 : std_ulogic_vector(3 downto 0) := X"0";
-            cke_n : std_ulogic_vector(1 downto 0) := "11") is
+            cke_n : std_ulogic := '1') is
         begin
             write_gddr6_reg(GDDR6_CA_REG, (
                 GDDR6_CA_RISING_BITS => rising,
                 GDDR6_CA_FALLING_BITS => falling,
                 GDDR6_CA_CA3_BITS => ca3,
-                GDDR6_CA_CKE_N_BITS => cke_n,
+                GDDR6_CA_CKE_N_BIT => cke_n,
                 GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
                 others => '0'));
         end;
@@ -306,7 +306,7 @@ begin
 
         -- Pull CKE_n low and hold NOP command
         start_write;
-        write_ca(cke_n => "00");
+        write_ca(cke_n => '0');
         do_exchange;
 
         -- Wait for t_INIT2 + t_INIT3 (faked)
@@ -318,19 +318,19 @@ begin
         start_write;
         write_ca(
             rising => 10B"10_1111_0100", falling => 10B"10_1111_0100",
-            cke_n => "00");
+            cke_n => '0');
         write_ca(
             rising => 10B"10_1111_0100", falling => 10B"10_1111_0100",
-            cke_n => "00");
-        write_ca(cke_n => "00");
+            cke_n => '0');
+        write_ca(cke_n => '0');
         do_exchange;
 
         clk_wait(10);
 
         -- Write a test pattern
         start_write;
-        write_ca(rising => 10X"296", falling => 10X"25A", cke_n => "11");
-        write_ca(cke_n => "00");
+        write_ca(rising => 10X"296", falling => 10X"25A", cke_n => '1');
+        write_ca(cke_n => '0');
         do_exchange;
 
 --         -- Perform a complete exchange

@@ -31,6 +31,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_file_rw.vhd \
     $common_vhd/register/register_read_block.vhd \
     $common_vhd/register/register_status.vhd \
+    $vhd_dir/gddr6_defs.vhd \
     built_dir/gddr6_register_defines.vhd \
     $vhd_dir/setup/gddr6_setup_control.vhd \
     $vhd_dir/setup/gddr6_setup_buffers.vhd \

@@ -320,6 +320,11 @@ begin
         ck_clock_running <= true;
         read_reg(GDDR6_STATUS_REG);
 
+        -- Need to reset the PHY
+        write_reg(GDDR6_CONFIG_REG, (others => '0'));
+        write_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
+            others => '0'));
 
         wait;
     end process;

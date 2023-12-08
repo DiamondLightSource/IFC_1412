@@ -1,4 +1,15 @@
 BUILT += top_entity.vhd
 BUILT += test_gddr6_phy.vhd.dummy
 
+BUILT += register_defines.vhd
+BUILT += gddr6_register_defines.vhd
+
+# This allows the GDDR6 register range to be included as part of the
+# register_defines build
+REG_INCLUDES_register += $(GDDR6_DIR)/gddr6_register_defines.in
+
+# Path to gddr6 files
+export GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
+VPATH += $(GDDR6_DIR)
+
 # vim: set filetype=make:

@@ -10,7 +10,6 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
-    built_dir/gddr6_register_defines.vhd \
     $common_vhd/util/sync_reset.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/sync_pulse.vhd \
@@ -61,6 +60,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
     $vhd_dir/phy/gddr6_phy_delay_control.vhd \
     $vhd_dir/phy/gddr6_phy.vhd \
+    built_dir/gddr6_register_defines.vhd \
     $vhd_dir/setup/gddr6_setup_control.vhd \
     $vhd_dir/setup/gddr6_setup_buffers.vhd \
     $vhd_dir/setup/gddr6_setup_exchange.vhd \
