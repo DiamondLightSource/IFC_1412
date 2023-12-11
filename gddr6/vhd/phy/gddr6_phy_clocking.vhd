@@ -41,6 +41,10 @@ entity gddr6_phy_clocking is
 end;
 
 architecture arch of gddr6_phy_clocking is
+    -- Advance CK clock by 135 degrees to help align the CA output eye with the
+    -- the centre of the CK clock
+    constant CA_PHASE_SHIFT : real := -135.0;
+
     signal io_ck_in : std_ulogic;
     signal mmcm_clkfbout : std_ulogic;
     signal mmcm_clkfbin : std_ulogic;
@@ -97,10 +101,8 @@ begin
         CLKIN1_PERIOD => 1000.0 / CK_FREQUENCY,
         CLKOUT0_DIVIDE_F => 4.0,    -- ck_clk at 250 MHz
         CLKOUT1_DIVIDE => 8,        -- riu_clk at 125 MHz
-        -- CK clock delayed by advanced by 135 degrees.  This allows us to
-        -- align the CA output eye with the centre of the CK clock
-        CLKOUT2_DIVIDE => 4,
-        CLKOUT2_PHASE => -135.0
+        CLKOUT2_DIVIDE => 4,        -- ck_clk_delay for ODDR clocking
+        CLKOUT2_PHASE => CA_PHASE_SHIFT
     ) port map (
         CLKIN1 => io_ck_in,
         CLKOUT0 => ck_clk_out,
