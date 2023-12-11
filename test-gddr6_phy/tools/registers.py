@@ -14,6 +14,16 @@ regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
 sg = regs.SYS.GDDR6
 
 
+def write_lmk(reg, value):
+    regs.SYS.LMK04616._write_fields_wo(
+        ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
+
+def read_lmk(reg):
+    regs.SYS.LMK04616._write_fields_wo(ADDRESS = reg, R_WN = 1, SELECT = 0)
+    return regs.SYS.LMK04616.DATA
+
+
+
 def is_bitslip_address(address):
     return (address & 0xC0) == 0x80 or (address & 0xF0) == 0xC0
 
