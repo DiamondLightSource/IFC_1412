@@ -258,6 +258,7 @@ begin
         bitslice_reset_i => bitslice_reset,
         sg_resets_n_i => phy_setup_i.sg_resets_n,
         enable_cabi_i => phy_setup_i.enable_cabi,
+        fudge_sticky_ca6_i => phy_setup_i.fudge_sticky_ca6,
 
         ca_i => ca_i,
         ca3_i => ca3_i,

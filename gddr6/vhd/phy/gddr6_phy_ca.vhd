@@ -32,6 +32,10 @@ entity gddr6_phy_ca is
         cke_n_i : in std_ulogic;
         enable_cabi_i : in std_ulogic;
 
+        -- Special fudge for prototype board, must be removed.  Used to work
+        -- around sticky CA6 bit.
+        fudge_sticky_ca6_i : in std_ulogic;
+
         -- Pins driven out
         io_sg_resets_n_o : out std_ulogic_vector(0 to 1);
         io_ca_o : out std_ulogic_vector(9 downto 0);   -- Pin 3 is ignored
@@ -74,7 +78,14 @@ begin
     gen_ca_in : for i in 0 to 1 generate
         signal invert_bits : std_ulogic;
     begin
-        invert_bits <= enable_cabi_i and compute_bus_inversion(ca_i(i));
+--         invert_bits <= enable_cabi_i and compute_bus_inversion(ca_i(i));
+        -- The unpleasantness below is used to work around the fact that CA6 is
+        -- stuck high in the DLS prototype board.  This code MUST be removed
+        -- for the next hardware revision.
+        invert_bits <=
+            '0' when not enable_cabi_i else
+            compute_bus_inversion(ca_i(i)) when not fudge_sticky_ca6_i else
+            not ca_i(i)(6);
         ca_in(i) <= (
             -- Outputs to CAL
             2 downto 0 => invert_bits xor ca_i(i)(2 downto 0),

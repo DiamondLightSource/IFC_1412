@@ -194,7 +194,12 @@ begin
                 edc_delay =>
                     unsigned(ck_config_bits(GDDR6_CONFIG_EDC_DELAY_BITS)),
                 reset_fifo =>
-                    reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS))
+                    reverse(ck_config_bits(GDDR6_CONFIG_RESET_FIFO_BITS)),
+
+                -- Special fudge for prototype board, must be removed.  Used to
+                -- work around sticky CA6 bit.
+                fudge_sticky_ca6 =>
+                    ck_config_bits(GDDR6_CONFIG_FUDGE_STICKY_CA6_BIT)
             );
 
             enable_controller_o <=
