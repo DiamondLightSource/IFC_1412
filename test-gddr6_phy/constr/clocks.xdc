@@ -27,3 +27,5 @@ set_false_path -from \
 # Max delay constraint
 set_max_delay 4 -datapath_only \
     -from [get_cells -hierarchical -filter { max_delay_from == "TRUE" }]
+
+# vim: set filetype=tcl:

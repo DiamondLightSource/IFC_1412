@@ -41,9 +41,9 @@ entity gddr6_phy_clocking is
 end;
 
 architecture arch of gddr6_phy_clocking is
-    -- Advance CK clock by 135 degrees to help align the CA output eye with the
-    -- the centre of the CK clock
-    constant CA_PHASE_SHIFT : real := -135.0;
+    -- Advance CK clock to help align the CA output eye with the centre of the
+    -- CK clock
+    constant CA_PHASE_SHIFT : real := -90.0;
 
     signal io_ck_in : std_ulogic;
     signal mmcm_clkfbout : std_ulogic;
