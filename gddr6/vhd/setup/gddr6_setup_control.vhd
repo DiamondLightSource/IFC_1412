@@ -184,7 +184,7 @@ begin
             phy_setup_o <= (
                 sg_resets_n =>
                     reverse(ck_config_bits(GDDR6_CONFIG_SG_RESET_N_BITS)),
-                edc_t => ck_config_bits(GDDR6_CONFIG_EDC_T_BIT),
+                edc_tri => ck_config_bits(GDDR6_CONFIG_EDC_T_BIT),
                 enable_cabi =>
                     ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT),
                 enable_dbi =>

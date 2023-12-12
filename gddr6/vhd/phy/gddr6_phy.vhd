@@ -298,7 +298,7 @@ begin
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
         edc_i => '1',           -- Configures memory for x1 mode during reset
-        edc_t_i => phy_setup_i.edc_t,
+        edc_t_i => phy_setup_i.edc_tri,
 
         delay_control_i => delay_control,
         delay_readbacks_o => delay_readbacks,

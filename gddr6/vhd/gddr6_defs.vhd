@@ -69,7 +69,7 @@ package gddr6_defs is
         -- be computed correctly
         edc_delay : unsigned(4 downto 0);
         -- Must be held low during SG reset, high during normal operation
-        edc_t : std_ulogic;
+        edc_tri : std_ulogic;
 
         -- Special fudge for prototype board, must be removed.  Used to work
         -- around sticky CA6 bit.
