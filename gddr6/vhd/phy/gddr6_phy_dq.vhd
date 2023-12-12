@@ -291,9 +291,11 @@ begin
         data_out_i => bitslip_data_out,
         dbi_n_out_i => bitslip_dbi_n_out,
 
-        edc_out_o => edc_out_o
+        edc_out_o => edc_out_o,
+
+        edc_in_i => bitslip_edc_in,
+        edc_in_o => edc_in_o
     );
-    edc_in_o <= bitslip_edc_in;
 
 
     -- FIFO management and reset
