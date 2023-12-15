@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+
+# WCK training
+
+import time
+import numpy
+
+from registers import sg
+
+from gddr6_lib.commands import *
+from gddr6_lib import exchange
+from gddr6_lib.display import *
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+
+# For the prototype card we need the sticky CA6 workaround
+sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG.FUDGE_STICKY_CA6 = 1
+
+exchange = exchange._Exchange(sg)
+set_ca = exchange.set_ca
+
+set_ca(INIT_MR10_WCK2CK)
+set_ca(INIT_MR10)
+
+# MR10_BASE  = 0b00_0_0_00_00_0000
+# MR10_TRAIN = 0b00_0_1_00_00_0000
+# 
+# phase_shift = 0
+# phase_step = 0b00_0_0_01_01_0000
+# 
+# def step_train(train, shift = 0):
+#     phase_shift = (shift << 4) | (shift << 6)
+#     command = MR10_BASE | phase_shift
+#     if train:
+#         command |= MR10_TRAIN
+#     exchange.reset()
+#     exchange.command(MRS(10, command))
+#     exchange.delay(30)
+#     exchange.exchange()
+#     edc_in, _ = exchange.read_edc()
+#     print(edc_in[:,0])
+# 
+# step_train(True, 0)
+# step_train(False, 0)
+
+# exchange.reset()
+# exchange.command(INIT_MR10_WCK2CK | phase_shift)
+# exchange.delay(30)
+# exchange.exchange()
+# edc_in, _ = exchange.read_edc()
+# print(edc_in[:,0])
+# 
+# exchange.reset()
+# exchange.command(INIT_MR10 | phase_shift)
+# exchange.delay(30)
+# exchange.exchange()
+# edc_in, _ = exchange.read_edc()
+# print(edc_in[:,0])
+
+
+# exchange.command(INIT_MR10_WCK2CK)
+# exchange.delay(20)
+# exchange.command(INIT_MR10)
+# exchange.delay(20)
+# data = exchange.run()
+# edc_in, edc_out = exchange.read_edc()
+# 
+# print_condensed_data_edc(data, edc_in, edc_out)

@@ -6,21 +6,8 @@ import time
 
 from registers import sg
 
-
-# Configuration settings for SG1 and SG2
-SG1_CA = 0b111_1_00_00_00       # SG1: all inputs high impedance
-SG2_CA = 0b111_1_11_11_11       # SG2: CK @ 60 Ohm, CA @ 120 Ohm
-NOP = (0b11_11111111, 0b11_11111111)
-
-
-# Set CA to requested value
-def set_ca(value, cke_n):
-    sg.COMMAND._write_fields_wo(START_WRITE = 1)
-    sg.CA._write_fields_wo(
-        RISING = value[0], FALLING = value[0],
-        CA3 = 0, CKE_N = cke_n, OUTPUT_ENABLE = 0)
-    sg.COMMAND._write_fields_wo(EXCHANGE = 1)
-
+from gddr6_lib.commands import *
+from gddr6_lib.exchange import _Exchange, Stream
 
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 
@@ -33,16 +20,54 @@ if sg.CONFIG.SG_RESET_N != 3:
 # During reset need to ensure data is sent as requested
 sg.CONFIG.ENABLE_CABI = 0
 
+exchange = _Exchange(sg)
+set_ca = exchange.set_ca
+
+
 time.sleep(0.01)
-set_ca((SG1_CA, SG1_CA), 1)
+set_ca(RESET_SG1_CA, 1)
 sg.CONFIG.SG_RESET_N = 1
 
 time.sleep(0.01)
-set_ca((SG2_CA, SG2_CA), 1)
+set_ca(RESET_SG2_CA, 1)
 sg.CONFIG.SG_RESET_N = 3
 
 # Now allow EDC_T to be driven by SG RAM
 sg.CONFIG.EDC_T = 1
 
 # Complete initialisation by sending NOP and pulling CKEn low
+time.sleep(0.01)
 set_ca(NOP, 0)
+
+
+# Go straight into Mode Register configuration
+def send_init_command(command):
+    if exchange.capacity() < 10:
+        exchange.exchange()
+        exchange.reset()
+    exchange.command(command)
+    exchange.delay(9)
+
+stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
+
+sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG.FUDGE_STICKY_CA6 = 1
+
+exchange.reset()
+stream.command(INIT_MR0)
+stream.command(INIT_MR1)
+stream.command(INIT_MR2)
+stream.command(INIT_MR3)
+stream.command(INIT_MR4)
+stream.command(INIT_MR5)
+stream.command(INIT_MR6_B0_VREF)
+stream.command(INIT_MR6_B1_VREF)
+stream.command(INIT_MR6_B0_TXEQ)
+stream.command(INIT_MR6_B1_TXEQ)
+stream.command(INIT_MR7)
+stream.command(INIT_MR8)
+stream.command(INIT_MR9_B0_DEF)
+stream.command(INIT_MR9_B1_DEF)
+stream.command(INIT_MR10)
+stream.command(INIT_MR12)
+exchange.exchange()

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Read Vendor IDs and temperatures
+
 import time
 import numpy
 
@@ -9,19 +11,16 @@ from gddr6_lib.commands import *
 from gddr6_lib import exchange
 from gddr6_lib.display import *
 
-
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
 
-
-# At the moment we need CABI
+# For the prototype card we need the sticky CA6 workaround
 sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
 exchange = exchange._Exchange(sg)
 
-
 # Read the Vendor ID registers
-# exchange = Exchange()
 exchange.command(VENDOR_ID1)
 exchange.delay(2)
 exchange.command(VENDOR_ID2)
@@ -29,21 +28,22 @@ exchange.delay(2)
 exchange.command(READ_TEMPS)
 exchange.delay(2)
 exchange.command(VENDOR_OFF)
-exchange.delay(20)
+exchange.delay(15)
 data = exchange.run()
 
-print_condensed_data(data)
+print_condensed_data(data, offset = 13)
 
 ID1, id1_good = condense_data(data[15])
+ID2, id2_good = condense_data(data[18])
+temps, t_good = condense_data(data[21])
+
 assert id1_good.all(), 'Bad ID1 reading'
 assert (ID1[0] == ID1).all(), 'Inconsistent ID1'
-ID2, id2_good = condense_data(data[18])
 assert id2_good.all(), 'Bad ID2 reading'
 assert (ID2[0] == ID2).all(), 'Inconsistent ID2'
-temps, t_good = condense_data(data[21])
 assert t_good.all(), 'Bad temperature reading'
 assert (temps & 0xFF == temps >> 8).all(), 'Inconstent temperature readings'
 
 print(
-    'ID1: %04X, ID2: %04X' % (ID1[0], ID2[0]),
-    ', Temperatures:', 2 * (temps & 0xFF) - 40, 'degrees')
+    'ID1: %04X, ID2: %04X,' % (ID1[0], ID2[0]),
+    'Temperatures:', 2 * (temps & 0xFF) - 40, 'degrees')

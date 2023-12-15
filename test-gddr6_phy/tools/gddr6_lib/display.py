@@ -36,19 +36,19 @@ def condense_edc(edc):
     return (values, good)
 
 
-def print_condensed_data(data):
-    for n, dq in enumerate(data):
+def print_condensed_data(data, offset = 0):
+    for n, dq in enumerate(data[offset:]):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
             result.append(''.join(map(condense_byte, selection)))
         values, good = condense_data(dq)
-        print('%2d:' % n, ' '.join(result), ' ',
+        print('%2d:' % (n + offset), ' '.join(result), ' ',
             ' '.join(['%04X' % v if g else '----'
                 for v, g in zip(values, good)]))
 
-def print_condensed_data_edc(data, edc_in, edc_out):
-    for n, (dq, ei, eo) in enumerate(zip(data, edc_in, edc_out)):
+def print_condensed_data_edc(data, edc_in, edc_out, offset = 0):
+    for n, (dq, ei, eo) in enumerate(zip(data[offset:], edc_in, edc_out)):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
@@ -56,7 +56,7 @@ def print_condensed_data_edc(data, edc_in, edc_out):
         data, data_good = condense_data(dq)
         e_in, e_in_good = condense_edc(ei)
         e_out, e_out_good = condense_edc(eo)
-        print('%2d:' % n, ' '.join(result), ' ',
+        print('%2d:' % (n + offset), ' '.join(result), ' ',
             ' '.join(['%04X' % v if g else '----'
                 for v, g in zip(data, data_good)]), ' '
             '%02X' % e_in if e_in_good else ' --',

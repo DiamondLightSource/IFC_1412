@@ -1,0 +1,191 @@
+#!/usr/bin/env python
+
+# Read training
+
+import argparse
+import time
+import numpy
+
+from registers import sg, set_delay
+
+from gddr6_lib.commands import *
+from gddr6_lib.exchange import _Exchange, Stream
+from gddr6_lib.display import *
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', '--load', action = 'store_true')
+parser.add_argument('-s', '--sweep', default = 0, type = int)
+parser.add_argument('-c', '--check', action = 'store_true')
+parser.add_argument('read_count', default = 6, type = int, nargs = '?')
+args = parser.parse_args()
+
+
+
+# For the prototype card we need the sticky CA6 workaround
+sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG.FUDGE_STICKY_CA6 = 1
+
+# Want to disable DBI for reception
+sg.CONFIG.ENABLE_DBI = 0
+# Also want to capture DBI
+sg.CONFIG.CAPTURE_DBI = 1
+
+exchange = _Exchange(sg)
+stream = Stream(exchange, 4)    # tLTLTR is minimum LDFF interval
+
+test_patterns = [0, 0x5500, 0x5555, 0x5555, 0x5555, 0x5555]
+# test_patterns = [0, 0x1100, 0x2222, 0x3333, 0x4444, 0x5555]
+
+def load_pattern(pattern):
+    for b in range(16):
+        bits = 0x3FF if (pattern >> b) & 1 else 0
+        stream.command(LDFF(b, bits))
+
+# Loads the given test pattern array
+def load_patterns(test_patterns):
+    exchange.reset()
+    for pattern in test_patterns:
+        load_pattern(pattern)
+    exchange.exchange()
+
+# Read test pattern
+def read_test(count):
+    exchange.reset()
+    exchange.command(PREab)
+    exchange.delay(4)
+    exchange.command(REFab)
+    exchange.delay(4)
+    for i in range(count):
+        exchange.command(RDTR)
+        exchange.delay(1)
+    exchange.delay(24)
+    exchange.exchange()
+    data = exchange.run()
+    edc_in, edc_out = exchange.read_edc()
+    return (data, edc_in, edc_out)
+
+
+if args.load:
+    # First load our test pattern if required
+    load_patterns(test_patterns)
+
+data, edc_in, edc_out = read_test(args.read_count)
+
+print_condensed_data_edc(data, edc_in, edc_out, offset = 29)
+
+def print_bits(bytes):
+    print(' '.join(f'{byte:08b}' for byte in bytes))
+
+print('Data:')
+for ix in range(0, 16):
+    print_bits(data[30:-2, ix])
+print('EDC:')
+for ix in range(8):
+    print_bits(edc_in[32:, ix])
+print('DBI:')
+for ix in range(8):
+    print_bits(edc_out[30:-2, ix])
+
+
+def show_match(match):
+    # Convert array of booleans into a string of 0 or 1
+    show = ''.join('1' if m else '0' for m in match)
+    # Split the string into four groups of 16 and two of 8 for ease of display
+    splits = [0, 16, 32, 48, 64, 72, 80]
+    return ' '.join(show[l:r] for l, r in zip(splits[:-1], splits[1:]))
+
+
+def match_data(data, edc_in, edc_out):
+    data = numpy.concatenate((data, edc_in, edc_out), axis = 1)
+    pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
+    return (data == pattern[:, None]).all(0)
+
+print(show_match(match_data(data[31:-3], edc_in[33:-1], edc_out[31:-3])))
+
+
+DQ_IDELAY_BASE   = 0b00_000000
+DBI_IDELAY_BASE  = 0b11010_000
+EDC_IDELAY_BASE  = 0b11100_000
+
+# This array must match the data sequence: DQ, EDC, DBI
+DELAY_ADDRESSES = numpy.concatenate((
+    DQ_IDELAY_BASE + numpy.arange(64),
+    EDC_IDELAY_BASE + numpy.arange(8),
+    DBI_IDELAY_BASE + numpy.arange(8)))
+
+def set_idelays(delays):
+    # Ensure a constant behaves like an array
+    delays = delays + numpy.zeros(80, dtype = numpy.int64)
+    for a, d in zip(DELAY_ADDRESSES, delays):
+        set_delay(a, d)
+#     for n in range(64):
+#         set_delay(DQ_IDELAY_BASE + n, delay)
+#     for n in range(8):
+#         set_delay(DBI_IDELAY_BASE + n, delay)
+#         set_delay(EDC_IDELAY_BASE + n, delay)
+
+def sweep_delays(max_delay):
+    matches = numpy.zeros((args.sweep, 80), dtype = numpy.bool)
+    for delay in range(max_delay):
+        set_idelays(delay)
+        data, edc_in, edc_out = read_test(args.read_count)
+        matches[delay] = match_data(data[31:-3], edc_in[33:-1], edc_out[31:-3])
+    return matches
+
+matches = sweep_delays(args.sweep)
+# for d, match in enumerate(matches):
+#     print(f'{d:3d}: {show_match(match)}')
+# assert matches.any(0).all(), 'No match found'
+
+
+# Returns a list of intervals as a list of tuples    (length, mid-point)
+def find_intervals(scan):
+    # This is kind of tricksy: we convert the array of bools scan into integers,
+    # and then use diff() and where() to find the start and end of the window,
+    # which is defined by a contiguous block of True.
+    diffs = numpy.diff(numpy.int8(numpy.concatenate(([0], scan, [0]))))
+    starts = numpy.where(diffs == 1)[0]
+    ends = numpy.where(diffs == -1)[0]
+    return [
+        (end - start, (start + end) // 2)
+        for start, end in zip(starts, ends)]
+
+def find_longest_interval(intervals):
+    best = intervals[0]
+    for interval in intervals[1:]:
+        if interval[0] > best[0]:
+            best = interval
+    return best
+
+def find_eyes(matches):
+    best = [
+        find_longest_interval(find_intervals(scan))
+        for scan in matches.T]
+    lengths = numpy.array([l for l, _ in best])
+    centres = [c for _, c in best]
+    return (centres, min(lengths))
+
+
+if matches.any(0).all():
+    delays, min_window = find_eyes(matches)
+    print('Minimum window:', min_window)
+    set_idelays(delays)
+elif args.sweep:
+    print('Not enough data eyes found')
+
+
+def check_read_data():
+    # Run scan repeatedly until killed or there is an error
+    data, edc_in, edc_out = read_test(args.read_count)
+    matches = match_data(data[31:-3], edc_in[33:-1], edc_out[31:-3])
+    assert matches.all(), 'Match error: %s' % matches
+
+if args.check:
+    i = 0
+    while True:
+        check_read_data()
+        i += 1
+        print(i)

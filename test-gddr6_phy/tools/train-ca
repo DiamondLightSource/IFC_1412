@@ -11,36 +11,40 @@ from gddr6_lib.commands import *
 from gddr6_lib import exchange
 from gddr6_lib.display import *
 
-
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
 
-exchange = exchange._Exchange(sg)
+# For the prototype card we need the sticky CA6 workaround
+sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
-
-# First test with CABI off
-sg.CONFIG.ENABLE_CABI = 0
+# Capture DBI: CA8 comes in on edc_out, CA9 on edc_in
 sg.CONFIG.CAPTURE_DBI = 1
+
+exchange = exchange._Exchange(sg)
 
 
 # Some CAT patterns
 PATTERN1 = (0x155, 0x2AA)
 PATTERN2 = (0x2AA, 0x155)
+ZEROS = (0x3FF, 0)
 ZEROS = (0, 0)
 
 exchange.command(CAT_PASS1)
-exchange.delay(10)
-# exchange.command(PATTERN1)
+# exchange.delay(10)
+# Technically we should wait tMRD = 10 tCK before issuing any CAT commands, but
+# it seems we can get away with just 2 ticks.
+exchange.delay(2)
+exchange.command(PATTERN1, 1)           # Expect 5555 00 FF
+exchange.delay(2)
+exchange.command(PATTERN2, 1)           # Expect AAAA FF 00
+exchange.delay(2)
 exchange.command(PATTERN1, 1)
+exchange.command(CAT_PASS2, 1)
 exchange.delay(2)
-exchange.command(PATTERN2, 1)
+exchange.command(PATTERN2, 1)           # Expect 5555 00 FF
 exchange.delay(2)
-exchange.command(PATTERN1, 1)
-exchange.delay(2)
-exchange.command(PATTERN2, 1)
-exchange.delay(1)
-exchange.command(ZEROS)
-exchange.command(ZEROS, 1)
+exchange.command(ZEROS, 1)              # Expect 0000 00 00
 exchange.delay(2)
 exchange.command(NOP, 1)
 exchange.command(CAT_EXIT, 1)
@@ -48,4 +52,4 @@ exchange.delay(15)
 data = exchange.run()
 edc_in, edc_out = exchange.read_edc()
 
-print_condensed_data_edc(data, edc_in, edc_out)
+print_condensed_data_edc(data, edc_in, edc_out, offset = 16)

@@ -8,6 +8,8 @@ from .commands import NOP
 
 
 class _Exchange:
+    MAX_COMMANDS = 64
+
     _instance = [None]
 
     def __init__(self, sg):
@@ -26,9 +28,11 @@ class _Exchange:
         self.count = 0
         self.exchanged = False
 
+    def capacity(self):
+        return self.MAX_COMMANDS - self.count
 
     def command(self, command, cke_n = 0, ca3 = 0, oe = 0):
-        assert self.count < 64, 'Command buffer is full'
+        assert self.count < self.MAX_COMMANDS, 'Command buffer is full'
         assert not self.exchanged, 'Must reset before refilling'
         self.sg.CA._write_fields_wo(
             RISING = command[0], FALLING = command[1],
@@ -74,7 +78,21 @@ class _Exchange:
 
 
     # Simply sets the CA output state by running a single command
-    def set_ca(self, command, cke_n):
+    def set_ca(self, command, cke_n = 0):
         self.reset()
         self.command(command, cke_n)
         self.exchange()
+
+
+# Used to send a stream of commands with a mandatory inter-command spacing
+class Stream:
+    def __init__(self, exchange, delay):
+        self.exchange = exchange
+        self.delay = delay
+
+    def command(self, command):
+        if self.exchange.capacity() < self.delay:
+            self.exchange.exchange()
+            self.exchange.reset()
+        self.exchange.command(command)
+        self.exchange.delay(self.delay - 1)
