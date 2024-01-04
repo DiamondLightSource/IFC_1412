@@ -79,10 +79,6 @@ begin
         dbi_rx_vtc => vtc_out(2#1101_0111# downto 2#1101_0000#),    -- 1101_0xxx
         dbi_tx_vtc => vtc_out(2#1101_1111# downto 2#1101_1000#),    -- 1101_1xxx
         edc_rx_vtc => vtc_out(2#1110_0111# downto 2#1110_0000#),    -- 1110_0xxx
-        -- Byteslips use similar addresses on the low part
-        dq_rx_byteslip =>  bs_out(2#0011_1111# downto 2#0000_0000#), -- 0xx_xxxx
-        dbi_rx_byteslip => bs_out(2#0100_0111# downto 2#0100_0000#), -- 100_0xxx
-        edc_rx_byteslip => bs_out(2#0100_1111# downto 2#0100_1000#), -- 100_1xxx
         -- Bitslip control isn't decoded at this level
         bitslip_delay => bitslip_delay,
         bitslip_strobe => bitslip_strobe
@@ -122,28 +118,24 @@ begin
     process (clk_i)
         variable do_write : std_ulogic;
         variable is_bitslip : std_ulogic;
-        variable is_byteslip : std_ulogic;
         variable do_vtc : std_ulogic;
         variable do_capture : boolean;
-        variable byteslip_address : natural;
         variable bitslip_address : natural;
 
     begin
         if rising_edge(clk_i) then
-            -- Decode writes requiring special treatment: bitslip and byteslip
+            -- Decode writes requiring special treatment: bitslip
             -- can complete immediately without triggering the state machine
             do_write := write_strobe_in and setup_i.enable_write;
-            -- Byteslip is a special operation and overrides anything else
-            is_byteslip := do_write and setup_i.byteslip;
             -- The address range 10xx_xxxx and 1100_xxxx is under bitslice
             -- control and doesn't use VTC handshaking.  Conditional assignment
             -- avoids evaluating comparison when invalid.
             is_bitslip := to_std_ulogic(
                     setup_i.address(7 downto 6) = "10" or
                     setup_i.address(7 downto 4) = "1100")
-                when do_write and not is_byteslip else '0';
-            -- Trigger VTC unless we're doing a bitslip or byteslip write
-            do_vtc := write_strobe_in and not is_bitslip and not is_byteslip;
+                when do_write and else '0';
+            -- Trigger VTC unless we're doing a bitslip
+            do_vtc := write_strobe_in and not is_bitslip;
 
             if write_strobe_in then
                 -- Capture control parameters so we can acknowledge the request
@@ -207,15 +199,11 @@ begin
                 vtc_out, to_integer(address),
                 to_std_ulogic(write_state = WRITE_IDLE), '1');
 
-            -- The bitslip and byteslip strobes happen at the point of the write
+            -- The bitslip and strobe happens at the point of the write
             -- request, so the current address needs to be used.  In each case
             -- the address is assigned separately here to avoid simulation
             -- complaints when setup_i.address is invalid (only valid when
             -- do_write is valid).
-            byteslip_address :=
-                to_integer(setup_i.address) when is_byteslip else 0;
-            compute_strobe(bs_out, byteslip_address, is_byteslip, '0');
-
             bitslip_address :=
                 to_integer(setup_i.address(6 downto 0)) when is_bitslip else 0;
             compute_strobe(bitslip_strobe, bitslip_address, is_bitslip, '0');

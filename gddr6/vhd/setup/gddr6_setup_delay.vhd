@@ -65,7 +65,6 @@ begin
         address => unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS)),
         delay => unsigned(write_data(GDDR6_DELAY_DELAY_BITS)),
         up_down_n => write_data(GDDR6_DELAY_UP_DOWN_N_BIT),
-        byteslip => write_data(GDDR6_DELAY_BYTESLIP_BIT),
         enable_write => write_data(GDDR6_DELAY_ENABLE_WRITE_BIT),
         write_strobe => write_strobe,
         read_strobe => read_strobe

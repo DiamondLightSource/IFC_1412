@@ -90,7 +90,6 @@ architecture arch of gddr6_phy_dq is
     signal slice_tri_delay_ce : vector_array(0 to 7)(0 to 1);
     signal slice_rx_delay_ce : vector_array(0 to 7)(0 to 11);
     signal slice_tx_delay_ce : vector_array(0 to 7)(0 to 11);
-    signal slice_rx_byteslip : vector_array(0 to 7)(0 to 11);
     -- Delay readbacks
     signal slice_tri_delay : vector_array_array(0 to 7)(0 to 1)(8 downto 0);
     signal slice_rx_delay : vector_array_array(0 to 7)(0 to 11)(8 downto 0);
@@ -154,7 +153,6 @@ begin
             tri_delay_ce_i => slice_tri_delay_ce(i),
             rx_delay_ce_i => slice_rx_delay_ce(i),
             tx_delay_ce_i => slice_tx_delay_ce(i),
-            rx_byteslip_i => slice_rx_byteslip(i),
             tri_delay_o => slice_tri_delay(i),
             tx_delay_o => slice_tx_delay(i),
             rx_delay_o => slice_rx_delay(i),
@@ -207,7 +205,6 @@ begin
         -- Delay control
         slice_rx_delay_ce_o => slice_rx_delay_ce,
         slice_tx_delay_ce_o => slice_tx_delay_ce,
-        slice_rx_byteslip_o => slice_rx_byteslip,
         -- Delay readbacks
         slice_rx_delay_i => slice_rx_delay,
         slice_tx_delay_i => slice_tx_delay,

@@ -66,9 +66,6 @@
         .UP_DOWN_N
         # If this is not set only .ADDRESS is used to read back without writing
         .ENABLE_WRITE
-        # If this bit is set this is a byteslip write and only the .ADDRESS
-        # field is used
-        .BYTESLIP
 
     # The EXCHANGE registers are used to exchange up to 64 ticks of data with
     # the SG GDDR6 memory.  Buffers containing CA commands and DQ data to write

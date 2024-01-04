@@ -31,9 +31,6 @@ package gddr6_defs is
         delay : unsigned(8 downto 0);
         -- For IDELAY and ODELAY controls direction of stepping
         up_down_n : std_ulogic;
-        -- Selecting write of byteslip.  This only affects DQ, DBI, EDC inputs,
-        -- and all other fields are ignored.
-        byteslip : std_ulogic;
         -- Set this to enable writing the delay, otherwise only the readback is
         -- updated (where appropriate).
         enable_write : std_ulogic;

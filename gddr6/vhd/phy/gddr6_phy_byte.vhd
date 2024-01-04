@@ -51,7 +51,6 @@ entity gddr6_phy_byte is
         tri_delay_ce_i : in std_ulogic_vector(0 to 1);
         rx_delay_ce_i : in std_ulogic_vector(0 to 11);
         tx_delay_ce_i : in std_ulogic_vector(0 to 11);
-        rx_byteslip_i : in std_ulogic_vector(0 to 11);
         -- Delay readbacks
         tri_delay_o : out vector_array(0 to 1)(8 downto 0);
         tx_delay_o : out vector_array(0 to 11)(8 downto 0);
@@ -140,7 +139,6 @@ begin
             tri_delay_ce_i => tri_delay_ce_i(i),
             rx_delay_ce_i => rx_delay_ce_i(BITSLICE_RANGE),
             tx_delay_ce_i => tx_delay_ce_i(BITSLICE_RANGE),
-            rx_byteslip_i => rx_byteslip_i(BITSLICE_RANGE),
             tri_delay_o => tri_delay_o(i),
             tx_delay_o => tx_delay_o(BITSLICE_RANGE),
             rx_delay_o => rx_delay_o(BITSLICE_RANGE),

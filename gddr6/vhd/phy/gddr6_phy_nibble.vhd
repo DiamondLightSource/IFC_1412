@@ -59,7 +59,6 @@ entity gddr6_phy_nibble is
         tri_delay_ce_i : in std_ulogic;
         rx_delay_ce_i : in std_ulogic_vector(0 to 5);
         tx_delay_ce_i : in std_ulogic_vector(0 to 5);
-        rx_byteslip_i : in std_ulogic_vector(0 to 5);
         -- Delay readbacks
         tri_delay_o : out std_ulogic_vector(8 downto 0);
         tx_delay_o : out vector_array(0 to 5)(8 downto 0);
@@ -245,7 +244,7 @@ begin
                 DATAIN => pad_in_i(i),
                 FIFO_EMPTY => fifo_empty_o(i),
                 FIFO_RD_CLK => ck_clk_i,
-                FIFO_RD_EN => fifo_rd_en_i and not rx_byteslip_i(i),
+                FIFO_RD_EN => fifo_rd_en_i,
                 Q => data_o(i),
 
                 FIFO_WRCLK_OUT => open,

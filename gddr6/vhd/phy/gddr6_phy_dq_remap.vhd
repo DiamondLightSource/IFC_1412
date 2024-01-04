@@ -27,7 +27,6 @@ entity gddr6_phy_dq_remap is
         -- Delay controls
         slice_rx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
         slice_tx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
-        slice_rx_byteslip_o : out vector_array(0 to 7)(0 to 11);
         -- Delay readbacks
         slice_rx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
         slice_tx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
@@ -85,7 +84,6 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dq_rx_ce(i);
         slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dq_tx_ce(i);
-        slice_rx_byteslip_o(byte)(slice) <= delay_control_i.dq_rx_byteslip(i);
         dq_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dq_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
         -- VTC control
@@ -108,7 +106,6 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_rx_ce(i);
         slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_tx_ce(i);
-        slice_rx_byteslip_o(byte)(slice) <= delay_control_i.dbi_rx_byteslip(i);
         dbi_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dbi_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
         -- VTC control
@@ -131,7 +128,6 @@ begin
         -- Delay control and readback
         slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.edc_rx_ce(i);
         slice_tx_delay_ce_o(byte)(slice) <= '0';
-        slice_rx_byteslip_o(byte)(slice) <= delay_control_i.edc_rx_byteslip(i);
         edc_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         -- VTC control
         slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.edc_rx_vtc(i);
@@ -147,7 +143,6 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
-        slice_rx_byteslip_o(byte)(slice) <= '0';
         slice_enable_rx_vtc_o(byte)(slice) <= '1';
         slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
@@ -161,7 +156,6 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
-        slice_rx_byteslip_o(byte)(slice) <= '0';
         slice_enable_rx_vtc_o(byte)(slice) <= '1';
         slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
@@ -177,7 +171,6 @@ begin
                 slice_data_o(byte)(slice) <= X"00";
                 slice_rx_delay_ce_o(byte)(slice) <= '0';
                 slice_tx_delay_ce_o(byte)(slice) <= '0';
-                slice_rx_byteslip_o(byte)(slice) <= '0';
                 slice_enable_rx_vtc_o(byte)(slice) <= '1';
                 slice_enable_tx_vtc_o(byte)(slice) <= '1';
             end generate;
