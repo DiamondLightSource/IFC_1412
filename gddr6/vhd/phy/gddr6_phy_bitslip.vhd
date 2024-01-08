@@ -1,8 +1,7 @@
 -- Implements bit level phase shift on raw data stream
 
 -- This processing is used to compensate for WCK phase discrepancies relative
--- to CK.  If WCK can be started synchronously it may be possible to eliminate
--- this fairly costly processing.
+-- to CK.
 --    The name "bitslip" is something of a historical misnomer arising from
 -- true bitslip functionality provided by earlier generations of SERDES devices;
 -- the code here is a simple select 8 from 15 sliding shift register.
@@ -20,33 +19,36 @@ entity gddr6_phy_bitslip is
         -- Control interface.  Each bit needs a separate control, and a shift of
         -- up to 7 bits can be selected
         delay_i : in unsigned(2 downto 0);
-        -- The bits are addressed as follows:
-        --  63..0  => Selects DQ input
-        --  71..64 => Selectes DBI input
-        --  79..72 => Selects EDC input
-        delay_strobe_i : in std_ulogic_vector(79 downto 0);
+        -- Strobes for setting delay above
+        dq_strobe_i : in std_ulogic_vector(63 downto 0);
+        dbi_n_strobe_i : in std_ulogic_vector(7 downto 0);
+
+        -- Bitslip readbacks
+        delay_o : out unsigned_array(71 downto 0)(2 downto 0);
 
         -- Interface to bitslice
-        slice_dq_i : in vector_array(63 downto 0)(7 downto 0);
-        slice_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        slice_edc_i : in vector_array(7 downto 0)(7 downto 0);
+        dq_i : in vector_array(63 downto 0)(7 downto 0);
+        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
 
         -- Corrected data
-        fixed_dq_o : out vector_array(63 downto 0)(7 downto 0);
-        fixed_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        fixed_edc_o : out vector_array(7 downto 0)(7 downto 0)
+        dq_o : out vector_array(63 downto 0)(7 downto 0);
+        dbi_n_o : out vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
 architecture arch of gddr6_phy_bitslip is
-    subtype BIT_ARRAY_RANGE is natural range 79 downto 0;
+    -- Sub address decoding
+    subtype DQ_RANGE is natural range 63 downto 0;
+    subtype DBI_RANGE is natural range 71 downto 64;
+    subtype BIT_ARRAY_RANGE is natural range 71 downto 0;
+
     signal bitslip : unsigned_array(BIT_ARRAY_RANGE)(2 downto 0)
         := (others => (others => '0'));
     signal bit_arrays_in : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
     signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(15 downto 0);
     signal bit_arrays_out : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
 
-    signal delay_strobe_in : std_ulogic_vector(79 downto 0);
+    signal delay_strobe_in : std_ulogic_vector(BIT_ARRAY_RANGE);
     signal delay_in : unsigned(2 downto 0);
 
 begin
@@ -54,22 +56,23 @@ begin
     process (clk_i) begin
         if rising_edge(clk_i) then
             -- Allow for more placement optimisation by pipelining this write
-            delay_strobe_in <= delay_strobe_i;
+            delay_strobe_in(DQ_RANGE) <= dq_strobe_i;
+            delay_strobe_in(DBI_RANGE) <= dbi_n_strobe_i;
             delay_in <= delay_i;
 
-            for i in 0 to 79 loop
+            for i in BIT_ARRAY_RANGE loop
                 if delay_strobe_in(i) then
                     bitslip(i) <= delay_in;
                 end if;
             end loop;
         end if;
     end process;
+    delay_o <= bitslip;
 
-    -- Map incoming bits
+    -- Map incoming bits, matches delay_strobe_in map above
     bit_arrays_in <= (
-        63 downto 0 => slice_dq_i,
-        71 downto 64 => slice_dbi_n_i,
-        79 downto 72 => slice_edc_i
+        DQ_RANGE => dq_i,
+        DBI_RANGE => dbi_n_i
     );
 
     -- Process all bits
@@ -93,7 +96,6 @@ begin
     end generate;
 
     -- Finally map shifted bit arrays out
-    fixed_dq_o <= bit_arrays_out(63 downto 0);
-    fixed_dbi_n_o <= bit_arrays_out(71 downto 64);
-    fixed_edc_o <= bit_arrays_out(79 downto 72);
+    dq_o <= bit_arrays_out(DQ_RANGE);
+    dbi_n_o <= bit_arrays_out(DBI_RANGE);
 end;

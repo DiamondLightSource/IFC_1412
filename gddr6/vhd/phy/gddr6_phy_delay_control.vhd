@@ -16,84 +16,129 @@ entity gddr6_phy_delay_control is
         -- Control interface from registers
         setup_i : in setup_delay_t;
         setup_o : out setup_delay_result_t;
+        -- Hack from config interface
+        disable_vtc_i : in std_ulogic;
 
         -- Delay controls and readbacks
         delay_control_o : out delay_control_t;
-        delay_readbacks_i : in delay_readbacks_t
+        delay_i : in delay_readbacks_t;
+        bitslip_i : in unsigned_array(71 downto 0)(2 downto 0)
     );
 end;
 
 architecture arch of gddr6_phy_delay_control is
-    -- Strobe arrays for output
-    signal ce_out : std_ulogic_vector(255 downto 0) := (others => '0');
-    signal vtc_out : std_ulogic_vector(255 downto 0) := (others => '1');
-    signal bs_out : std_ulogic_vector(255 downto 0) := (others => '0');
-    signal bitslip_strobe : std_ulogic_vector(79 downto 0) := (others => '0');
+    -- Target and address decoding
+    constant TARGET_IDELAY : natural := 0;
+    constant TARGET_ODELAY : natural := 1;
+    constant TARGET_OBITSLIP : natural := 3;
+    -- Sub address decoding
+    subtype DQ_RANGE is natural range 63 downto 0;
+    subtype DBI_RANGE is natural range 71 downto 64;
+    subtype EDC_RANGE is natural range 79 downto 72;
 
-    signal delays_in : vector_array(255 downto 0)(8 downto 0);
+    -- Strobe arrays for output indexed by target type
+    signal ce_out : vector_array(0 to 3)(79 downto 0)
+        := (others => (others => '0'));
+    signal vtc_out : vector_array(0 to 3)(79 downto 0)
+        := (others => (others => '1'));
+    signal bitslip_strobe : std_ulogic_vector(71 downto 0) := (others => '0');
 
+    -- Incoming delays
+    signal bitslip_in : vector_array(71 downto 0)(8 downto 0);
+    signal delays_in : vector_array_array(3 downto 0)(127 downto 0)(8 downto 0);
+
+    -- Read and write control
     signal write_strobe_in : std_ulogic;
     signal write_ack : std_ulogic;
     signal read_ack : std_ulogic;
     signal delay_out : unsigned(8 downto 0);
+
+    -- Captured incoming request
+    signal address : natural range 0 to 79; -- I suppose 127 would be honest!
+    signal target : natural range 0 to 3;
+    signal up_down_n : std_ulogic := '0';
     signal bitslip_delay : unsigned(2 downto 0);
 
-    signal delay_count : unsigned(8 downto 0);
-    signal address : unsigned(7 downto 0) := (others => '0');
-    signal delay_up_down_n : std_ulogic := '0';
+    -- Strobe controls
+    signal enable_vtc : std_ulogic := '1';
+    signal enable_bitslip : std_ulogic := '0';
 
+    -- Relatively complex state machine to handle VTC handshake when accessing
+    -- IDELAY and ODELAY settings, separate path for bitslip control, and an
+    -- extra runout delay for readbacks.  The state machine operates thus:
+    --
+    --        +------------------------------------------------------+
+    --        v                                                      |
+    --      IDLE -----> WAIT_START ---> DELAY ----> WAIT_END -----> END
+    --        |                         |  ^                         ^
+    --        |                         v  |                         |
+    --        |                         DWELL                        |
+    --        |                                                      |
+    --        +-------> RUNOUT --------------------------------------+
+    --
+    -- The WAT_START and WAIT_END states are needed for VTC handshaking, and the
+    -- DWELL state is needed to separate CE strobes (this is incredibly poorly
+    -- documented in UG571).
     type write_state_t is (
-        WRITE_IDLE, WRITE_WAIT_START, WRITE_DELAY, WRITE_WAIT_END);
+        WRITE_IDLE, WRITE_WAIT_START, WRITE_DELAY, WRITE_DWELL,
+        WRITE_WAIT_END, WRITE_RUNOUT, WRITE_END);
     signal write_state : write_state_t := WRITE_IDLE;
-    constant WAIT_VTC_COUNT : natural := 10;
-    signal wait_counter : natural range 0 to WAIT_VTC_COUNT;
 
-    -- Shorthand alias just to help table layout below
-    alias rb_i : delay_readbacks_t is delay_readbacks_i;
+    -- State machine counters
+    signal delay_counter : unsigned(8 downto 0);
+    signal wait_counter : unsigned(3 downto 0);
+    constant WAIT_VTC_COUNT : unsigned(3 downto 0) := to_unsigned(10, 4);
+    signal dwell_counter : unsigned(2 downto 0);
+    constant DWELL_COUNT : unsigned(2 downto 0) := to_unsigned(4, 3);
+    signal runout_counter : unsigned(1 downto 0);
+    constant RUNOUT_COUNT : unsigned(1 downto 0) := to_unsigned(3, 2);
+
 
 begin
-    -- Map output strobes according to addressing.  The bitslice looks after
-    -- itself and just takes an address
-    -- The address map is as follows:
-    --   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
-    --   01aaaaaa    Control ODELAY for DQ bit selected by aaaaaaa
-    --   10aaaaaa    Set bitslip input for selected DQ bit
-    --   11000aaa    Set bitslip input for DBI bit aaa
-    --   11001aaa    Set bitslip input for EDC bit aaa
-    --   11010aaa    Control IDELAY for DBI bit aaa
-    --   11011aaa    Control ODELAY for DBI bit aaa
-    --   11100aaa    Control IDELAY for EDC bit aaa
-    --   11101xxx    (unassigned)
-    --   1111xxxx    (unassigned)
+    -- Map output strobes according to addressing
     delay_control_o <= (
-        up_down_n => delay_up_down_n,
-        -- CE for IDELAY and ODELAY following the address map above
-        dq_rx_ce =>   ce_out (2#0011_1111# downto 2#0000_0000#),    -- 00xx_xxxx
-        dq_tx_ce =>   ce_out (2#0111_1111# downto 2#0100_0000#),    -- 01xx_xxxx
-        dbi_rx_ce =>  ce_out (2#1101_0111# downto 2#1101_0000#),    -- 1101_0xxx
-        dbi_tx_ce =>  ce_out (2#1101_1111# downto 2#1101_1000#),    -- 1101_1xxx
-        edc_rx_ce =>  ce_out (2#1110_0111# downto 2#1110_0000#),    -- 1110_0xxx
-        -- VTC uses the same address mapping as CE
-        dq_rx_vtc =>  vtc_out(2#0011_1111# downto 2#0000_0000#),    -- 00xx_xxxx
-        dq_tx_vtc =>  vtc_out(2#0111_1111# downto 2#0100_0000#),    -- 01xx_xxxx
-        dbi_rx_vtc => vtc_out(2#1101_0111# downto 2#1101_0000#),    -- 1101_0xxx
-        dbi_tx_vtc => vtc_out(2#1101_1111# downto 2#1101_1000#),    -- 1101_1xxx
-        edc_rx_vtc => vtc_out(2#1110_0111# downto 2#1110_0000#),    -- 1110_0xxx
-        -- Bitslip control isn't decoded at this level
+        up_down_n => up_down_n,
         bitslip_delay => bitslip_delay,
-        bitslip_strobe => bitslip_strobe
+
+        -- CE for IDELAY and ODELAY following the address map above
+        dq_rx_ce =>   ce_out(TARGET_IDELAY)(DQ_RANGE),
+        dq_tx_ce =>   ce_out(TARGET_ODELAY)(DQ_RANGE),
+        dbi_rx_ce =>  ce_out(TARGET_IDELAY)(DBI_RANGE),
+        dbi_tx_ce =>  ce_out(TARGET_ODELAY)(DBI_RANGE),
+        edc_rx_ce =>  ce_out(TARGET_IDELAY)(EDC_RANGE),
+        -- VTC uses the same address mapping as CE
+        dq_rx_vtc =>  vtc_out(TARGET_IDELAY)(DQ_RANGE),
+        dq_tx_vtc =>  vtc_out(TARGET_ODELAY)(DQ_RANGE),
+        dbi_rx_vtc => vtc_out(TARGET_IDELAY)(DBI_RANGE),
+        dbi_tx_vtc => vtc_out(TARGET_ODELAY)(DBI_RANGE),
+        edc_rx_vtc => vtc_out(TARGET_IDELAY)(EDC_RANGE),
+        -- Bitslip strobe mapping
+        dq_tx_bitslip  => bitslip_strobe(DQ_RANGE),
+        dbi_tx_bitslip => bitslip_strobe(DBI_RANGE)
     );
 
-    -- Use the same mapping for readbacks (no bitslip or byteslip readback)
+    -- Map the readbacks
     delays_in <= (
-        2#0011_1111# downto 2#0000_0000# => rb_i.dq_rx_delay,      -- 00xx_xxxx
-        2#0111_1111# downto 2#0100_0000# => rb_i.dq_tx_delay,      -- 01xx_xxxx
-        2#1100_1111# downto 2#1000_0000# => (others => '-'),
-        2#1101_0111# downto 2#1101_0000# => rb_i.dbi_rx_delay,     -- 1101_0xxx
-        2#1101_1111# downto 2#1101_1000# => rb_i.dbi_tx_delay,     -- 1101_1xxx
-        2#1110_0111# downto 2#1110_0000# => rb_i.edc_rx_delay,     -- 1110_0xxx
-        2#1111_1111# downto 2#1110_1000# => (others => '-')
+        TARGET_IDELAY => (
+            DQ_RANGE  => delay_i.dq_rx_delay,
+            DBI_RANGE => delay_i.dbi_rx_delay,
+            EDC_RANGE => delay_i.edc_rx_delay,
+            others => (others => '0')),
+        TARGET_ODELAY => (
+            DQ_RANGE  => delay_i.dq_tx_delay,
+            DBI_RANGE => delay_i.dbi_tx_delay,
+            others => (others => '0')),
+        TARGET_OBITSLIP => (
+            DQ_RANGE  => bitslip_in(DQ_RANGE),
+            DBI_RANGE => bitslip_in(DBI_RANGE),
+            others => (others => '0')),
+        others => (others => (others => '0'))
     );
+
+    -- Resize bitslip_i to match other readbacks
+    gen_bitslip_in : for n in bitslip_in'RANGE generate
+        bitslip_in(n) <= std_ulogic_vector(resize(bitslip_i(n), 9));
+    end generate;
 
 
     -- This helper allows us to overlap processing and acknowledge
@@ -116,103 +161,120 @@ begin
 
 
     process (clk_i)
-        variable do_write : std_ulogic;
-        variable is_bitslip : std_ulogic;
-        variable do_vtc : std_ulogic;
-        variable do_capture : boolean;
-        variable bitslip_address : natural;
+        -- Uses selected address and target to generate selected strobe
+        procedure compute_strobe(
+            signal strobes : out vector_array;
+            value : std_ulogic; initial : std_ulogic) is
+        begin
+            for t in strobes'RANGE loop
+                for a in strobes'ELEMENT'RANGE loop
+                    if t = target and a = address then
+                        strobes(t)(a) <= value;
+                    else
+                        strobes(t)(a) <= initial;
+                    end if;
+                end loop;
+            end loop;
+        end;
+
+        procedure count_delay(
+            signal counter : inout unsigned; next_state : write_state_t) is
+        begin
+            if counter > 0 then
+                counter <= counter - 1;
+            else
+                write_state <= next_state;
+            end if;
+        end;
 
     begin
         if rising_edge(clk_i) then
-            -- Decode writes requiring special treatment: bitslip
-            -- can complete immediately without triggering the state machine
-            do_write := write_strobe_in and setup_i.enable_write;
-            -- The address range 10xx_xxxx and 1100_xxxx is under bitslice
-            -- control and doesn't use VTC handshaking.  Conditional assignment
-            -- avoids evaluating comparison when invalid.
-            is_bitslip := to_std_ulogic(
-                    setup_i.address(7 downto 6) = "10" or
-                    setup_i.address(7 downto 4) = "1100")
-                when do_write and else '0';
-            -- Trigger VTC unless we're doing a bitslip
-            do_vtc := write_strobe_in and not is_bitslip;
-
-            if write_strobe_in then
-                -- Capture control parameters so we can acknowledge the request
-                -- and carry on processing
-                delay_count <= setup_i.delay;
-                address <= setup_i.address;
-                delay_up_down_n <= setup_i.up_down_n;
-                bitslip_delay <= setup_i.delay(2 downto 0);
-            end if;
-
-            -- The write state machine goes through the following steps:
-            --  * Wait 10 ticks with VTC low
-            --  * Perform action, either reset for one tick, or delay for
-            --    delay_count ticks
-            --  * Wait a further 10 ticks before going idle
             case write_state is
                 when WRITE_IDLE =>
-                    -- Wait for start of VTC sequence
-                    if do_vtc then
-                        wait_counter <= WAIT_VTC_COUNT;
-                        if do_write then
-                            -- For writing need to go through full process
-                            write_state <= WRITE_WAIT_START;
-                        else
-                            -- For reading can bypass initial read and action
-                            write_state <= WRITE_WAIT_END;
-                        end if;
+                    wait_counter <= WAIT_VTC_COUNT;
+                    runout_counter <= RUNOUT_COUNT;
+
+                    if write_strobe_in then
+                        -- Capture all incoming state
+                        address <= to_integer(setup_i.address);
+                        target <= to_integer(setup_i.target);
+                        up_down_n <= setup_i.up_down_n;
+                        delay_counter <= setup_i.delay;
+                        bitslip_delay <= setup_i.delay(2 downto 0);
+
+                        -- Transition into the appropriate state depending on
+                        -- selected target and on whether writing is enabled
+                        case to_integer(setup_i.target) is
+                            when TARGET_IDELAY | TARGET_ODELAY =>
+                                enable_vtc <= '0';
+                                if setup_i.enable_write then
+                                    write_state <= WRITE_WAIT_START;
+                                else
+                                    write_state <= WRITE_WAIT_END;
+                                end if;
+
+                            when TARGET_OBITSLIP =>
+                                if setup_i.enable_write then
+                                    enable_bitslip <= '1';
+                                    write_state <= WRITE_RUNOUT;
+                                else
+                                    write_state <= WRITE_END;
+                                end if;
+
+                            when others =>
+                                -- No action required
+                        end case;
                     end if;
+
                 when WRITE_WAIT_START =>
                     -- Wait for initial delay before doing write
-                    if wait_counter > 0 then
-                        wait_counter <= wait_counter - 1;
-                    else
-                        wait_counter <= WAIT_VTC_COUNT;
-                        write_state <= WRITE_DELAY;
-                    end if;
+                    count_delay(wait_counter, WRITE_DELAY);
+
                 when WRITE_DELAY =>
-                    -- Hold in WRITE_DELAY state for request duration
-                    if delay_count > 0 then
-                        delay_count <= delay_count - 1;
-                    else
-                        write_state <= WRITE_WAIT_END;
+                    -- Hold in WRITE_DELAY state for requested duration, insert
+                    -- WRITE_DWELL states between ticks
+                    wait_counter <= WAIT_VTC_COUNT;
+                    dwell_counter <= DWELL_COUNT;
+                    if delay_counter > 0 then
+                        write_state <= WRITE_DWELL;
                     end if;
+                    count_delay(delay_counter, WRITE_WAIT_END);
+
+                when WRITE_DWELL =>
+                    -- Insert 5 tick delay between CE strobes
+                    count_delay(dwell_counter, WRITE_DELAY);
+
                 when WRITE_WAIT_END =>
                     -- Finally wait again before asserting VTC
-                    if wait_counter > 0 then
-                        wait_counter <= wait_counter - 1;
-                    else
-                        write_state <= WRITE_IDLE;
-                    end if;
+                    count_delay(wait_counter, WRITE_END);
+
+                when WRITE_RUNOUT =>
+                    -- Extra delay needed so that bitslip readback is valid
+                    enable_bitslip <= '0';
+                    count_delay(runout_counter, WRITE_END);
+
+                when WRITE_END =>
+                    -- On completion ensure VTC back to normal and update the
+                    -- readback.  For a read-only action this is all we do!
+                    enable_vtc <= '1';
+                    delay_out <= unsigned(delays_in(target)(address));
+                    write_state <= WRITE_IDLE;
             end case;
-            do_capture := write_state = WRITE_WAIT_END and wait_counter = 0;
 
 
-            -- Enable CE while in WRITE_DELAY state
+            -- Generate the three control strobes.
+            --
+            -- Delay clock enable during delay slewing
             compute_strobe(
-                ce_out, to_integer(address),
-                to_std_ulogic(write_state = WRITE_DELAY), '0');
-            -- Disable VTC while not WRITE_IDLE, otherwise leave enabled
-            compute_strobe(
-                vtc_out, to_integer(address),
-                to_std_ulogic(write_state = WRITE_IDLE), '1');
-
-            -- The bitslip and strobe happens at the point of the write
-            -- request, so the current address needs to be used.  In each case
-            -- the address is assigned separately here to avoid simulation
-            -- complaints when setup_i.address is invalid (only valid when
-            -- do_write is valid).
-            bitslip_address :=
-                to_integer(setup_i.address(6 downto 0)) when is_bitslip else 0;
-            compute_strobe(bitslip_strobe, bitslip_address, is_bitslip, '0');
-
-
-            -- Decode incoming delays from given address
-            if do_capture then
-                delay_out <= unsigned(delays_in(to_integer(address)));
+                ce_out, to_std_ulogic(write_state = WRITE_DELAY), '0');
+            -- Disable VTC during delay operation unless fully disabled
+            if disable_vtc_i then
+                vtc_out <= (others => (others => '0'));
+            else
+                compute_strobe(vtc_out, enable_vtc, '1');
             end if;
+            -- Bitslip strobe to write selected bitslip
+            compute_strobe(bitslip_strobe, address, enable_bitslip, '0');
         end if;
     end process;
 

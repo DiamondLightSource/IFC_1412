@@ -52,9 +52,9 @@ architecture arch of testbench is
     signal setup_delay_out : setup_delay_result_t;
     constant SETUP_DELAY_IDLE : setup_delay_t := (
         address => (others => 'U'),
+        target => (others => 'U'),
         delay => (others => 'U'),
         up_down_n => 'U',
-        byteslip => 'U',
         enable_write => 'U',
         write_strobe => '0',
         read_strobe => '0'
@@ -90,6 +90,10 @@ architecture arch of testbench is
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
     signal ck_valid : std_ulogic;
+
+    constant T_IDELAY : natural := 0;
+    constant T_ODELAY : natural := 1;
+    constant T_OBITSLIP : natural := 3;
 
 begin
     phy : entity work.gddr6_phy port map (
@@ -175,16 +179,16 @@ begin
 
         -- Writes selected delay to selected address
         procedure write_delay(
-            address : natural; delay : natural;
-            up_down_n : std_ulogic := '1'; byteslip : std_ulogic := '0')
+            target : natural; address : natural; delay : natural;
+            up_down_n : std_ulogic := '1')
         is
             variable plus_minus : string(1 to 1);
         begin
             setup_delay_in <= (
-                address => to_unsigned(address, 8),
+                address => to_unsigned(address, 7),
+                target => to_unsigned(target, 2),
                 delay => to_unsigned(delay, 9),
                 up_down_n => up_down_n,
-                byteslip => byteslip,
                 enable_write => '1',
                 write_strobe => '1',
                 read_strobe => '0'
@@ -195,9 +199,11 @@ begin
                 exit when setup_delay_out.write_ack;
             end loop;
             setup_delay_in <= SETUP_DELAY_IDLE;
-            plus_minus := "*" when byteslip else "+" when up_down_n else "-";
+            plus_minus := "+" when up_down_n else "-";
             write(
-                "delay[" & to_string(to_unsigned(address, 8)) &
+                "delay[" &
+                to_string(to_unsigned(target, 2)) & ":" &
+                to_string(to_unsigned(address, 7)) &
                 "] <= " & plus_minus & to_hstring(to_unsigned(delay, 9)));
         end;
 
@@ -206,9 +212,9 @@ begin
         begin
             setup_delay_in <= (
                 address => (others => 'U'),
+                target => (others => 'U'),
                 delay => (others => 'U'),
                 up_down_n => 'U',
-                byteslip => 'U',
                 enable_write => 'U',
                 write_strobe => '0',
                 read_strobe => '1'
@@ -224,14 +230,16 @@ begin
 
         -- Performs a dummy write to select the address to read followed by a
         -- direct readback
-        procedure read_delay(address : natural) is
+        procedure read_delay(target : natural; address : natural) is
         begin
-            write("read " & to_string(to_unsigned(address, 8)));
+            write("read " &
+                to_string(to_unsigned(target, 2)) & ":" &
+                to_string(to_unsigned(address, 7)));
             setup_delay_in <= (
-                address => to_unsigned(address, 8),
+                address => to_unsigned(address, 7),
+                target => to_unsigned(target, 2),
                 delay => (others => 'U'),
                 up_down_n => '0',   -- Must be valid for ODELAY
-                byteslip => 'U',
                 enable_write => '0',
                 write_strobe => '1',
                 read_strobe => '0'
@@ -243,11 +251,6 @@ begin
             end loop;
             setup_delay_in <= SETUP_DELAY_IDLE;
             readback_delay;
-        end;
-
-        procedure byteslip(address : natural) is
-        begin
-            write_delay(address, 0, '0', '1');
         end;
 
     begin
@@ -262,7 +265,9 @@ begin
             enable_dbi => '0',
             capture_dbi => '0',
             edc_delay => 5X"00",
-            edc_t => '0'
+            edc_tri => '0',
+            fudge_sticky_ca6 => '0',
+            disable_vtc => '0'
         );
 
         ca_in <= (others => (others => '1'));
@@ -309,27 +314,25 @@ begin
         ca3_in <= X"0";
         cke_n_in <= '1';
 
-        phy_setup.edc_t <= '1';
+        phy_setup.edc_tri <= '1';
 
-        write_delay(2#1111_0000#, 5);       -- CA TX 0 += 6
-        write_delay(2#1000_0001#, 7);       -- DQ Bitslip 1 = 7
-        write_delay(2#0000_0010#, 6);       -- DQ RX 2 += 7
+        write_delay(T_OBITSLIP, 1, 7);      -- DQ Bitslip 1 = 7
         readback_delay;
-        write_delay(2#0100_0010#, 12);      -- DQ TX 2 += 13
+        read_delay(T_IDELAY, 2);            -- Starts equal to 8 (initial cal?)
+        write_delay(T_IDELAY, 2, 6);        -- DQ RX 2 += 7
+        readback_delay;
+        write_delay(T_ODELAY, 2, 12);       -- DQ TX 2 += 13
         readback_delay;
         clk_wait;
-        write_delay(2#0100_0011#, 9);       -- DQ TX 3 += 10
+        write_delay(T_ODELAY, 3, 9);        -- DQ TX 3 += 10
         readback_delay;
-        write_delay(2#0100_0011#, 9, '0');  -- DQ TX 3 -= 10
+        write_delay(T_ODELAY, 3, 9, '0');   -- DQ TX 3 -= 10
         readback_delay;
 
-        byteslip(2#0000_0010#);             -- DQ RX 2 byteslip
-
-        read_delay(2#1111_0000#);           -- Should be 7
-        read_delay(2#1000_0001#);           -- Should be X (no bitslip read)
-        read_delay(2#0000_0010#);           -- Should be 7
-        read_delay(2#0100_0010#);           -- Should be 13 (00D)
-        read_delay(2#0100_0011#);           -- Should be 0
+        read_delay(T_OBITSLIP, 1);          -- Should be 7
+        read_delay(T_IDELAY, 2);            -- Now expect 15 (8 + 7)
+        read_delay(T_ODELAY, 2);            -- Should be 13 (00D)
+        read_delay(T_ODELAY, 3);            -- Should be 0
 
         clk_wait;
         output_enable_in <= '1';

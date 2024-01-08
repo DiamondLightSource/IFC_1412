@@ -16,21 +16,19 @@ package gddr6_phy_defs is
         -- DQ TX
         dq_tx_vtc : std_ulogic_vector(63 downto 0);
         dq_tx_ce : std_ulogic_vector(63 downto 0);
+        dq_tx_bitslip : std_ulogic_vector(63 downto 0);
         -- DBI RX
         dbi_rx_vtc : std_ulogic_vector(7 downto 0);
         dbi_rx_ce : std_ulogic_vector(7 downto 0);
         -- DBI TX
         dbi_tx_vtc : std_ulogic_vector(7 downto 0);
         dbi_tx_ce : std_ulogic_vector(7 downto 0);
+        dbi_tx_bitslip : std_ulogic_vector(7 downto 0);
         -- EDC
         edc_rx_vtc : std_ulogic_vector(7 downto 0);
         edc_rx_ce : std_ulogic_vector(7 downto 0);
-        -- Bitslip, the bits are addressed as follows:
-        --  63..0  => Selects DQ input
-        --  71..64 => Selectes DBI input
-        --  79..72 => Selects EDC input
+        -- Delay associated by bitslip strobes above
         bitslip_delay : unsigned(2 downto 0);
-        bitslip_strobe : std_ulogic_vector(79 downto 0);
     end record;
 
     -- Delay readbacks from _dq to _delay_control

@@ -30,6 +30,9 @@
             # around sticky CA6 bit.
             .FUDGE_STICKY_CA6
 
+            # Hack to disable VTC
+            .DISABLE_VTC
+
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
             # will be effectively ignored
@@ -47,17 +50,18 @@
     # returns current delay for selected output
     DELAY           RW
         # The address map is as follows:
-        #   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
-        #   01aaaaaa    Control ODELAY for DQ bit selected by aaaaaaa
-        #   10aaaaaa    Set bitslip input for selected DQ bit
-        #   11000aaa    Set bitslip input for DBI bit aaa
-        #   11001aaa    Set bitslip input for EDC bit aaa
-        #   11010aaa    Control IDELAY for DBI bit aaa
-        #   11011aaa    Control ODELAY for DBI bit aaa
-        #   11100aaa    Control IDELAY for EDC bit aaa
-        #   11101xxx    (unassigned)
-        #   1111xxxx    (unassigned)
-        .ADDRESS        8
+        #   0aaaaaa    Control DQ bit selected by aaaaaaa
+        #   1000aaa    Control DBI bit selected by aaa
+        #   1001aaa    Control EDC bit selected by aaa (input only)
+        #   111xxxx    (unassigned)
+        .ADDRESS        7
+        # Target selection:
+        #   00         Control or read IDELAY
+        #   01         Control or read ODELAY
+        #   10         (unassigned)
+        #   11         Control or read output BITSLIP
+        .TARGET         2
+
         # For bitslip this selects the bitslip delay to be written, for
         # other delays this defines the number of delay steps in the
         # selected direction.

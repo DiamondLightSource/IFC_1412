@@ -63,6 +63,7 @@ begin
 
     setup_delay_o <= (
         address => unsigned(write_data(GDDR6_DELAY_ADDRESS_BITS)),
+        target => unsigned(write_data(GDDR6_DELAY_TARGET_BITS)),
         delay => unsigned(write_data(GDDR6_DELAY_DELAY_BITS)),
         up_down_n => write_data(GDDR6_DELAY_UP_DOWN_N_BIT),
         enable_write => write_data(GDDR6_DELAY_ENABLE_WRITE_BIT),

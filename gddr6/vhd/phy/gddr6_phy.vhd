@@ -171,6 +171,7 @@ architecture arch of gddr6_phy is
     -- Delay controls and readbacks
     signal delay_control : delay_control_t;
     signal delay_readbacks : delay_readbacks_t;
+    signal bitslip_readbacks : unsigned_array(71 downto 0)(2 downto 0);
 
 begin
     -- Map pads to IO buffers and gather related signals
@@ -302,6 +303,7 @@ begin
 
         delay_control_i => delay_control,
         delay_readbacks_o => delay_readbacks,
+        bitslip_delay_o => bitslip_readbacks,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,
@@ -326,9 +328,11 @@ begin
 
         setup_i => setup_delay_i,
         setup_o => setup_delay_o,
+        disable_vtc_i => phy_setup_i.disable_vtc,
 
         delay_control_o => delay_control,
-        delay_readbacks_i => delay_readbacks
+        delay_i => delay_readbacks,
+        bitslip_i => bitslip_readbacks
     );
 
 

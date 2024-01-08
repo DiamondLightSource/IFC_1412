@@ -58,6 +58,6 @@ add wave -group "Phy" /phy/*
 add wave -group "Bench" sim:*
 
 
-run 3.5 us
+run 4.5 us
 
 # vim: set filetype=tcl:

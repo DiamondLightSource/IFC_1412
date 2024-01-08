@@ -10,21 +10,18 @@ package gddr6_defs is
     -- Controls for setting delays
     type setup_delay_t is record
         -- The address map is as follows:
-        --   00aaaaaa    Control IDELAY for DQ bit selected by aaaaaaa
-        --   01aaaaaa    Control ODELAY for DQ bit selected by aaaaaaa
-        --   10aaaaaa    Set bitslip input for selected DQ bit
-        --   11000aaa    Set bitslip input for DBI bit aaa
-        --   11001aaa    Set bitslip input for EDC bit aaa
-        --   11010aaa    Control IDELAY for DBI bit aaa
-        --   11011aaa    Control ODELAY for DBI bit aaa
-        --   11100aaa    Control IDELAY for EDC bit aaa
-        --   11101xxx    (unassigned)
-        --   1111cccc    Control ODELAY for CA bit selected by cccc:
-        --               0..9        CA[cccc] (cccc = 3 is ignored)
-        --               10          CABI_N
-        --               11..14      CA3[cccc-11]
-        --               15          CKE_N
-        address : unsigned(7 downto 0);
+        --   0aaaaaa    Control DQ bit selected by aaaaaaa
+        --   1000aaa    Control DBI bit selected by aaa
+        --   1001aaa    Control EDC bit selected by aaa (input only)
+        --   111xxxx    (unassigned)
+        address : unsigned(6 downto 0);
+        -- Target selection:
+        --   00         Control or read IDELAY
+        --   01         Control or read ODELAY
+        --   10         (unassigned)
+        --   11         Control or read output BITSLIP
+        target : unsigned(1 downto 0);
+
         -- Delay to be written.  For IDELAY and ODELAY settings the delay is
         -- stepped by the selected amount rather than updated, for bitslip the
         -- delay is written directly (from delay[0:2]).
@@ -34,6 +31,7 @@ package gddr6_defs is
         -- Set this to enable writing the delay, otherwise only the readback is
         -- updated (where appropriate).
         enable_write : std_ulogic;
+
         -- Strobes for read and write.
         write_strobe : std_ulogic;
         read_strobe : std_ulogic;
@@ -71,6 +69,8 @@ package gddr6_defs is
         -- Special fudge for prototype board, must be removed.  Used to work
         -- around sticky CA6 bit.
         fudge_sticky_ca6 : std_ulogic;
+        -- Hack to disable VTC
+        disable_vtc : std_ulogic;
     end record;
 
     -- Readbacks from PHY

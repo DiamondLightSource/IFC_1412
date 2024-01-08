@@ -232,10 +232,12 @@ begin
         end;
 
         procedure write_delay(
-            address : natural; delay : natural; write : std_ulogic := '1') is
+            target : natural; address : natural; delay : natural;
+            write : std_ulogic := '1') is
         begin
             write_reg(GDDR6_DELAY_REG, (
-                GDDR6_DELAY_ADDRESS_BITS => to_std_ulogic_vector_u(address, 8),
+                GDDR6_DELAY_ADDRESS_BITS => to_std_ulogic_vector_u(address, 7),
+                GDDR6_DELAY_TARGET_BITS => to_std_ulogic_vector_u(target, 2),
                 GDDR6_DELAY_DELAY_BITS => to_std_ulogic_vector_u(delay, 9),
                 GDDR6_DELAY_ENABLE_WRITE_BIT => write,
                 others => '0'));
@@ -300,9 +302,9 @@ begin
         -- Perform exchange
         do_exchange;
 
-        write_delay(2#0000_0010#, 10);
-        write_delay(2#0100_0010#, 20);
-        write_delay(2#0000_0010#, 0, '0');
+        write_delay(0, 2, 10);
+        write_delay(1, 2, 20);
+        write_delay(0, 2, 0, '0');
         read_reg(GDDR6_DELAY_REG);
 
         -- Read and print results

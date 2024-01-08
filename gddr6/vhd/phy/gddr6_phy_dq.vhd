@@ -45,6 +45,7 @@ entity gddr6_phy_dq is
         delay_control_i : in delay_control_t;
         -- Delay readbacks
         delay_readbacks_o : out delay_readbacks_t;
+        bitslip_delay_o : out unsigned_array(71 downto 0)(2 downto 0);
 
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);
@@ -243,20 +244,21 @@ begin
         clk_i => ck_clk_i,
 
         delay_i => delay_control_i.bitslip_delay,
-        delay_strobe_i => delay_control_i.bitslip_strobe,
+        dq_strobe_i => delay_control_i.dq_tx_bitslip,
+        dbi_n_strobe_i => delay_control_i.dbi_tx_bitslip,
+        delay_o => bitslip_delay_o,
 
-        slice_dq_i => bank_data_in,
-        slice_dbi_n_i => bank_dbi_n_in,
-        slice_edc_i => bank_edc_in,
+        dq_i => bitslip_data_out,
+        dbi_n_i => bitslip_dbi_n_out,
 
-        fixed_dq_o => bitslip_data_in,
-        fixed_dbi_n_o => bitslip_dbi_n_in,
-        fixed_edc_o => bitslip_edc_in
+        dq_o => bank_data_out,
+        dbi_n_o => bank_dbi_n_out
     );
 
-    -- We shouldn't need bitslip for outgoing data
-    bank_data_out <= bitslip_data_out;
-    bank_dbi_n_out <= bitslip_dbi_n_out;
+    -- Looks like we need bitslip on TX but not RX data.  A bit surprising...
+    bitslip_data_in <= bank_data_in;
+    bitslip_dbi_n_in <= bank_dbi_n_in;
+    bitslip_edc_in <= bank_edc_in;
 
 
     -- Finally flatten the data across 8 ticks.  At this point we also apply
