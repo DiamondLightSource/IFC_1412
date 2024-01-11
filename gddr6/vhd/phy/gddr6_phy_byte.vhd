@@ -48,11 +48,9 @@ entity gddr6_phy_byte is
         enable_rx_vtc_i : in std_ulogic_vector(0 to 11);
         -- Delay control
         delay_up_down_n_i : in std_ulogic;
-        tri_delay_ce_i : in std_ulogic_vector(0 to 1);
         rx_delay_ce_i : in std_ulogic_vector(0 to 11);
         tx_delay_ce_i : in std_ulogic_vector(0 to 11);
         -- Delay readbacks
-        tri_delay_o : out vector_array(0 to 1)(8 downto 0);
         tx_delay_o : out vector_array(0 to 11)(8 downto 0);
         rx_delay_o : out vector_array(0 to 11)(8 downto 0);
 
@@ -136,10 +134,8 @@ begin
             enable_rx_vtc_i => enable_rx_vtc_i(BITSLICE_RANGE),
 
             delay_up_down_n_i => delay_up_down_n_i,
-            tri_delay_ce_i => tri_delay_ce_i(i),
             rx_delay_ce_i => rx_delay_ce_i(BITSLICE_RANGE),
             tx_delay_ce_i => tx_delay_ce_i(BITSLICE_RANGE),
-            tri_delay_o => tri_delay_o(i),
             tx_delay_o => tx_delay_o(BITSLICE_RANGE),
             rx_delay_o => rx_delay_o(BITSLICE_RANGE),
 

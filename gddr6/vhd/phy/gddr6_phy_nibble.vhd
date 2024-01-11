@@ -56,11 +56,9 @@ entity gddr6_phy_nibble is
         enable_rx_vtc_i : in std_ulogic_vector(0 to 5);
         -- Delay control
         delay_up_down_n_i : in std_ulogic;
-        tri_delay_ce_i : in std_ulogic;
         rx_delay_ce_i : in std_ulogic_vector(0 to 5);
         tx_delay_ce_i : in std_ulogic_vector(0 to 5);
         -- Delay readbacks
-        tri_delay_o : out std_ulogic_vector(8 downto 0);
         tx_delay_o : out vector_array(0 to 5)(8 downto 0);
         rx_delay_o : out vector_array(0 to 5)(8 downto 0);
 
@@ -194,11 +192,11 @@ begin
         BIT_CTRL_OUT => tx_bit_ctrl_in_tri,
         -- Delay
         CLK => ck_clk_i,
-        CE => tri_delay_ce_i,
-        INC => delay_up_down_n_i,
+        CE => '0',
+        INC => '0',
         LOAD => '0',
         CNTVALUEIN => (others => '0'),
-        CNTVALUEOUT => tri_delay_o
+        CNTVALUEOUT => open
     );
 
 

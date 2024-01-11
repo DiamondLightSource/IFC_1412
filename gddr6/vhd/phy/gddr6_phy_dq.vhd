@@ -88,11 +88,9 @@ architecture arch of gddr6_phy_dq is
     signal slice_enable_rx_vtc : vector_array(0 to 7)(0 to 11);
     signal slice_enable_tx_vtc : vector_array(0 to 7)(0 to 11);
     -- Delay control
-    signal slice_tri_delay_ce : vector_array(0 to 7)(0 to 1);
     signal slice_rx_delay_ce : vector_array(0 to 7)(0 to 11);
     signal slice_tx_delay_ce : vector_array(0 to 7)(0 to 11);
     -- Delay readbacks
-    signal slice_tri_delay : vector_array_array(0 to 7)(0 to 1)(8 downto 0);
     signal slice_rx_delay : vector_array_array(0 to 7)(0 to 11)(8 downto 0);
     signal slice_tx_delay : vector_array_array(0 to 7)(0 to 11)(8 downto 0);
     -- Data interface
@@ -151,10 +149,8 @@ begin
             enable_rx_vtc_i => slice_enable_rx_vtc(i),
 
             delay_up_down_n_i => delay_control_i.up_down_n,
-            tri_delay_ce_i => slice_tri_delay_ce(i),
             rx_delay_ce_i => slice_rx_delay_ce(i),
             tx_delay_ce_i => slice_tx_delay_ce(i),
-            tri_delay_o => slice_tri_delay(i),
             tx_delay_o => slice_tx_delay(i),
             rx_delay_o => slice_rx_delay(i),
 
@@ -314,9 +310,6 @@ begin
             end loop;
         end if;
     end process;
-
-    -- TRI output delays are not controlled at present
-    slice_tri_delay_ce <= (others => (others => '0'));
 
     -- Gather statuses needed for resets
     dly_ready_o <= and slice_dly_ready;
