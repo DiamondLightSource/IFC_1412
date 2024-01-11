@@ -1,26 +1,77 @@
 #!/usr/bin/env python
 
-from registers import read_delay
+import sys
+import argparse
+import time
+import itertools
 
-print('DQ RX IDELAY')
-for n in range(0, 64, 16):
-    print('%2d' % n, end = ': ')
-    for i in range(16):
-        print(' %3d' % read_delay(n + i), end = '')
+from registers import read_idelay, read_odelay, read_obitslip
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-t', '--timestamp', action = 'store_true')
+parser.add_argument('-i', '--idelays', action = 'store_true')
+parser.add_argument('-o', '--odelays', action = 'store_true')
+parser.add_argument('interval', nargs = '?', type = float)
+args = parser.parse_args()
+
+
+def pretty_print_delays():
+    print('DQ RX IDELAY')
+    for n in range(0, 64, 16):
+        print('%2d' % n, end = ': ')
+        for i in range(16):
+            print(' %3d' % read_idelay(n + i), end = '')
+        print()
+    print('DQ TX ODELAY')
+    for n in range(0, 64, 16):
+        print('%2d' % n, end = ': ')
+        for i in range(16):
+            print(' %3d' % read_odelay(n + i), end = '')
+        print()
+    print('DBI IDELAY/ODELAY')
+    print('    ', end = '')
+    for i in range(8):
+        print(' %3d' % read_idelay(64 + i), end = '')
+    for i in range(8):
+        print(' %3d' % read_odelay(64 + i), end = '')
     print()
-print('DQ TX ODELAY')
-for n in range(0, 64, 16):
-    print('%2d' % n, end = ': ')
-    for i in range(16):
-        print(' %3d' % read_delay(64 + n + i), end = '')
+    print('EDC IDELAY')
+    print('    ', end = '')
+    for i in range(8):
+        print(' %3d' % read_idelay(72 + i), end = '')
     print()
-print('DBI IDELAY/ODELAY')
-print('    ', end = '')
-for i in range(16):
-    print(' %3d' % read_delay(208 + i), end = '')
-print()
-print('EDC IDELAY')
-print('    ', end = '')
-for i in range(8):
-    print(' %3d' % read_delay(224 + i), end = '')
-print()
+    print('OBITSLIP')
+    print(' 0:  ', end = '')
+    for n in range(32):
+        print('', read_obitslip(n), end = '')
+    print()
+    print('32:  ', end = '')
+    for n in range(32, 64):
+        print('', read_obitslip(n), end = '')
+    print()
+    print('64:  ', end = '')
+    for n in range(64, 72):
+        print('', read_obitslip(n), end = '')
+    print()
+
+
+def get_idelays():
+    return [read_idelay(n) for n in range(80)]
+
+def get_odelays():
+    return [read_odelay(n) for n in range(72)]
+
+def log_delays(args):
+    while True:
+        if args.timestamp:
+            print(time.time(), end = ' ')
+        delays = get_idelays() + get_odelays()
+        print(' '.join(map(str, delays)))
+        time.sleep(args.interval)
+
+
+if args.interval:
+    log_delays(args)
+
+else:
+    pretty_print_delays()

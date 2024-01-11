@@ -50,9 +50,16 @@ def send_init_command(command):
 
 stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
 
+
+# For the prototype card we need the sticky CA6 workaround
 sg.CONFIG.ENABLE_CABI = 1
 sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
+# Disable VTC as an experiment
+sg.CONFIG.DISABLE_VTC = 1
+
+
+# Initialise all the MR registers
 exchange.reset()
 stream.command(INIT_MR0)
 stream.command(INIT_MR1)
@@ -70,4 +77,16 @@ stream.command(INIT_MR9_B0_DEF)
 stream.command(INIT_MR9_B1_DEF)
 stream.command(INIT_MR10)
 stream.command(INIT_MR12)
+exchange.exchange()
+
+# Finally perform WCK training
+exchange.reset()
+exchange.command(INIT_MR10_WCK2CK)
+exchange.command(NOP)
+exchange.exchange()
+
+# The delay between exchanges should be enough to complete this
+exchange.reset()
+exchange.command(INIT_MR10)
+exchange.command(NOP)
 exchange.exchange()

@@ -154,10 +154,8 @@ INIT_MR10_WCK2CK = MRS(10, 0b00_0_1_00_00_0000)
 INIT_MR12 = MRS(12, 0b0000000000_1_0)
 
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Other miscellaneous commands
-
 
 # Loads 10 bits of data into the selected burst of the read FIFO
 def LDFF(burst, data):
@@ -178,3 +176,10 @@ PREab = (0b10_1111_1111, 0b00_1110_1111)
 
 # Refresh all banks
 REFab = (0b10_1111_1111, 0b01_1111_1111)
+
+# Activate selected bank with the specified row
+def ACT(bank, row):
+    ACT_PREFIX_R = 0b0_0_0000_0000
+    rising = ACT_PREFIX_R | (((row >> 14) & 1) << 8) | (row & 0xF)
+    falling = (row >> 4) & 0x3FF
+    return (rising, falling)

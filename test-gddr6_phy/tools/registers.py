@@ -23,12 +23,12 @@ def read_lmk(reg):
     return regs.SYS.LMK04616.DATA
 
 
+TARGET_IDELAY = 0
+TARGET_ODELAY = 1
+TARGET_OBITSLIP = 3
 
-def is_bitslip_address(address):
-    return (address & 0xC0) == 0x80 or (address & 0xF0) == 0xC0
 
-def step_delay(address, amount):
-    assert not is_bitslip_address(address)
+def step_delay(target, address, amount):
     if amount == 0:
         return
     elif amount < 0:
@@ -37,22 +37,39 @@ def step_delay(address, amount):
     else:
         up_down_n = 1
     sg.DELAY._write_fields_wo(
-        ADDRESS = address, DELAY = amount - 1, UP_DOWN_N = up_down_n,
+        ADDRESS = address, TARGET = target,
+        DELAY = amount - 1, UP_DOWN_N = up_down_n,
         ENABLE_WRITE = 1)
 
-def set_delay(address, target):
-    if is_bitslip_address(address):
-        sg.DELAY._write_fields_wo(
-            ADDRESS = address, DELAY = target, ENABLE_WRITE = 1)
-    else:
-        step_delay(address, target - read_delay(address))
 
-def read_delay(address):
-    sg.DELAY._write_fields_wo(ADDRESS = address, ENABLE_WRITE = 0)
+def read_delay(target, address):
+    sg.DELAY._write_fields_wo(
+        ADDRESS = address, TARGET = target, ENABLE_WRITE = 0)
     return sg.DELAY.DELAY
 
-def byteslip(address):
-    sg.DELAY._write_fields_wo(ADDRESS = address, BYTESLIP = 1, ENABLE_WRITE = 1)
+
+def read_idelay(address):
+    return read_delay(TARGET_IDELAY, address)
+
+def read_odelay(address):
+    return read_delay(TARGET_ODELAY, address)
+
+def read_obitslip(address):
+    return read_delay(TARGET_OBITSLIP, address)
+
+def set_idelay(address, delay):
+    step_delay(TARGET_IDELAY, address, delay - read_idelay(address))
+
+def set_odelay(address, delay):
+    step_delay(TARGET_ODELAY, address, delay - read_odelay(address))
+
+def set_obitslip(address, delay):
+    sg.DELAY._write_fields_wo(
+        ADDRESS = address, TARGET = TARGET_OBITSLIP,
+        DELAY = delay, ENABLE_WRITE = 1)
+
+def last_delay():
+    return sg.DELAY.DELAY
 
 
 # __all__ = ['sg', 'step_delay', 'set_delay', 'read_delay', 'byteslip']
