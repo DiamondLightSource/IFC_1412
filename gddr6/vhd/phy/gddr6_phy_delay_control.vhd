@@ -20,9 +20,10 @@ entity gddr6_phy_delay_control is
         disable_vtc_i : in std_ulogic;
 
         -- Delay controls and readbacks
-        delay_control_o : out delay_control_t;
-        delay_i : in delay_readbacks_t;
-        bitslip_i : in unsigned_array(71 downto 0)(2 downto 0)
+        bitslice_control_o : out bitslice_delay_control_t;
+        bitslice_delays_i : in bitslice_delay_readbacks_t;
+        bitslip_control_o : out bitslip_delay_control_t;
+        bitslip_delays_i : in bitslip_delay_readbacks_t
     );
 end;
 
@@ -40,7 +41,6 @@ architecture arch of gddr6_phy_delay_control is
     signal bitslip_strobe : std_ulogic_vector(71 downto 0) := (others => '0');
 
     -- Incoming delays
-    signal bitslip_in : vector_array(71 downto 0)(8 downto 0);
     signal delays_in : vector_array_array(3 downto 0)(127 downto 0)(8 downto 0);
 
     -- Read and write control
@@ -90,11 +90,21 @@ architecture arch of gddr6_phy_delay_control is
     constant RUNOUT_COUNT : unsigned(1 downto 0) := to_unsigned(3, 2);
 
 
+    -- Used to convert 3 bit bitslip values to common delay readback format
+    function resize(delays : unsigned_array) return vector_array
+    is
+        variable result : vector_array(delays'RANGE)(8 downto 0);
+    begin
+        for n in delays'RANGE loop
+            result(n) := std_ulogic_vector(resize(delays(n), 9));
+        end loop;
+        return result;
+    end;
+
 begin
     -- Map output strobes according to addressing
-    delay_control_o <= (
+    bitslice_control_o <= (
         up_down_n => up_down_n,
-        bitslip_delay => bitslip_delay,
 
         -- CE for IDELAY and ODELAY following the address map above
         dq_rx_ce =>   ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
@@ -107,34 +117,32 @@ begin
         dq_tx_vtc =>  vtc_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
         dbi_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
         dbi_tx_vtc => vtc_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
-        edc_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_EDC_RANGE),
-        -- Bitslip strobe mapping
-        dq_tx_bitslip  => bitslip_strobe(DELAY_DQ_RANGE),
-        dbi_tx_bitslip => bitslip_strobe(DELAY_DBI_RANGE)
+        edc_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
+    );
+
+    bitslip_control_o <= (
+        dq_tx_strobe  => bitslip_strobe(DELAY_DQ_RANGE),
+        dbi_tx_strobe => bitslip_strobe(DELAY_DBI_RANGE),
+        delay => bitslip_delay
     );
 
     -- Map the readbacks
     delays_in <= (
         TARGET_IDELAY => (
-            DELAY_DQ_RANGE  => delay_i.dq_rx_delay,
-            DELAY_DBI_RANGE => delay_i.dbi_rx_delay,
-            DELAY_EDC_RANGE => delay_i.edc_rx_delay,
+            DELAY_DQ_RANGE  => bitslice_delays_i.dq_rx_delay,
+            DELAY_DBI_RANGE => bitslice_delays_i.dbi_rx_delay,
+            DELAY_EDC_RANGE => bitslice_delays_i.edc_rx_delay,
             others => (others => '0')),
         TARGET_ODELAY => (
-            DELAY_DQ_RANGE  => delay_i.dq_tx_delay,
-            DELAY_DBI_RANGE => delay_i.dbi_tx_delay,
+            DELAY_DQ_RANGE  => bitslice_delays_i.dq_tx_delay,
+            DELAY_DBI_RANGE => bitslice_delays_i.dbi_tx_delay,
             others => (others => '0')),
         TARGET_OBITSLIP => (
-            DELAY_DQ_RANGE  => bitslip_in(DELAY_DQ_RANGE),
-            DELAY_DBI_RANGE => bitslip_in(DELAY_DBI_RANGE),
+            DELAY_DQ_RANGE  => resize(bitslip_delays_i.dq_tx_delay),
+            DELAY_DBI_RANGE => resize(bitslip_delays_i.dbi_tx_delay),
             others => (others => '0')),
         others => (others => (others => '0'))
     );
-
-    -- Resize bitslip_i to match other readbacks
-    gen_bitslip_in : for n in bitslip_in'RANGE generate
-        bitslip_in(n) <= std_ulogic_vector(resize(bitslip_i(n), 9));
-    end generate;
 
 
     -- This helper allows us to overlap processing and acknowledge

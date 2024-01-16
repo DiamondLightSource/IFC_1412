@@ -21,8 +21,8 @@ entity gddr6_phy_dq is
         enable_dbi_i : in std_ulogic;               -- Data Bus Inversion
         train_dbi_i : in std_ulogic;                -- Enable DBI training
         -- RX/TX DELAY controls
-        delay_control_i : in delay_control_t;
-        bitslip_delay_o : out unsigned_array(71 downto 0)(2 downto 0);
+        delay_control_i : in bitslip_delay_control_t;
+        delay_readbacks_o : out bitslip_delay_readbacks_t;
 
         -- Unaligned raw data from bitslices
         raw_data_o : out vector_array(63 downto 0)(7 downto 0);
@@ -50,15 +50,20 @@ architecture arch of gddr6_phy_dq is
     signal bitslip_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal bitslip_edc_in : vector_array(7 downto 0)(7 downto 0);
 
+    -- Delay readbacks
+    signal dq_tx_delay : unsigned_array(63 downto 0)(2 downto 0);
+    signal dbi_tx_delay : unsigned_array(7 downto 0)(2 downto 0);
+
 begin
     -- Apply bitslip correction to raw data
     bitslip_out : entity work.gddr6_phy_bitslip port map (
         clk_i => clk_i,
 
-        delay_i => delay_control_i.bitslip_delay,
-        delay_o => bitslip_delay_o,
-        strobe_i(DELAY_DQ_RANGE) => delay_control_i.dq_tx_bitslip,
-        strobe_i(DELAY_DBI_RANGE) => delay_control_i.dbi_tx_bitslip,
+        delay_i => delay_control_i.delay,
+        delay_o(DELAY_DQ_RANGE) => dq_tx_delay,
+        delay_o(DELAY_DBI_RANGE) => dbi_tx_delay,
+        strobe_i(DELAY_DQ_RANGE) => delay_control_i.dq_tx_strobe,
+        strobe_i(DELAY_DBI_RANGE) => delay_control_i.dbi_tx_strobe,
 
         data_i(DELAY_DQ_RANGE) => bitslip_data_out,
         data_i(DELAY_DBI_RANGE) => bitslip_dbi_n_out,
@@ -70,6 +75,11 @@ begin
     bitslip_data_in <= raw_data_i;
     bitslip_dbi_n_in <= raw_dbi_n_i;
     bitslip_edc_in <= raw_edc_i;
+
+    delay_readbacks_o <= (
+        dq_tx_delay => dq_tx_delay,
+        dbi_tx_delay => dbi_tx_delay
+    );
 
 
     -- Finally flatten the data across 8 ticks.  At this point we also apply

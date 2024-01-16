@@ -39,9 +39,9 @@ entity gddr6_phy_bitslices is
         edc_t_i : in std_ulogic;    -- Output only enabled during config
 
         -- RX/TX DELAY controls
-        delay_control_i : in delay_control_t;
+        delay_control_i : in bitslice_delay_control_t;
         -- Delay readbacks
-        delay_readbacks_o : out delay_readbacks_t;
+        delay_readbacks_o : out bitslice_delay_readbacks_t;
 
         -- IO ports
         io_dq_o : out std_ulogic_vector(63 downto 0);

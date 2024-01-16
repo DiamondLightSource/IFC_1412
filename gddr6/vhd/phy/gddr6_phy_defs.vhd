@@ -13,7 +13,7 @@ package gddr6_phy_defs is
     subtype DELAY_EDC_RANGE is natural range 79 downto 72;
 
     -- Controls from _delay_control to _dq and _dq_remap
-    type delay_control_t is record
+    type bitslice_delay_control_t is record
         up_down_n : std_ulogic;
         -- DQ RX
         dq_rx_vtc : std_ulogic_vector(63 downto 0);
@@ -21,28 +21,38 @@ package gddr6_phy_defs is
         -- DQ TX
         dq_tx_vtc : std_ulogic_vector(63 downto 0);
         dq_tx_ce : std_ulogic_vector(63 downto 0);
-        dq_tx_bitslip : std_ulogic_vector(63 downto 0);
         -- DBI RX
         dbi_rx_vtc : std_ulogic_vector(7 downto 0);
         dbi_rx_ce : std_ulogic_vector(7 downto 0);
         -- DBI TX
         dbi_tx_vtc : std_ulogic_vector(7 downto 0);
         dbi_tx_ce : std_ulogic_vector(7 downto 0);
-        dbi_tx_bitslip : std_ulogic_vector(7 downto 0);
         -- EDC
         edc_rx_vtc : std_ulogic_vector(7 downto 0);
         edc_rx_ce : std_ulogic_vector(7 downto 0);
-        -- Delay associated by bitslip strobes above
-        bitslip_delay : unsigned(2 downto 0);
     end record;
 
     -- Delay readbacks from _dq to _delay_control
-    type delay_readbacks_t is record
+    type bitslice_delay_readbacks_t is record
         dq_rx_delay : vector_array(63 downto 0)(8 downto 0);
         dq_tx_delay : vector_array(63 downto 0)(8 downto 0);
         dbi_rx_delay : vector_array(7 downto 0)(8 downto 0);
         dbi_tx_delay : vector_array(7 downto 0)(8 downto 0);
         edc_rx_delay : vector_array(7 downto 0)(8 downto 0);
+    end record;
+
+    -- Controls over bitslip delay
+    type bitslip_delay_control_t is record
+        -- Strobes for setting delay
+        dq_tx_strobe : std_ulogic_vector(63 downto 0);
+        dbi_tx_strobe : std_ulogic_vector(7 downto 0);
+        -- Delay set by strobes above
+        delay : unsigned(2 downto 0);
+    end record;
+
+    type bitslip_delay_readbacks_t is record
+        dq_tx_delay : unsigned_array(63 downto 0)(2 downto 0);
+        dbi_tx_delay : unsigned_array(7 downto 0)(2 downto 0);
     end record;
 
 

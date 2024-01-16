@@ -181,9 +181,10 @@ architecture arch of gddr6_phy is
     signal raw_edc_in : vector_array(7 downto 0)(7 downto 0);
 
     -- Delay controls and readbacks
-    signal delay_control : delay_control_t;
-    signal delay_readbacks : delay_readbacks_t;
-    signal bitslip_readbacks : unsigned_array(71 downto 0)(2 downto 0);
+    signal bitslice_delay_control : bitslice_delay_control_t;
+    signal bitslice_delay_readbacks : bitslice_delay_readbacks_t;
+    signal bitslip_delay_control : bitslip_delay_control_t;
+    signal bitslip_delay_readbacks : bitslip_delay_readbacks_t;
 
 begin
     -- Map pads to IO buffers and gather related signals
@@ -310,8 +311,8 @@ begin
         edc_i => '1',           -- Configure memory for x1 mode during reset
         edc_t_i => phy_setup_i.edc_tri,
 
-        delay_control_i => delay_control,
-        delay_readbacks_o => delay_readbacks,
+        delay_control_i => bitslice_delay_control,
+        delay_readbacks_o => bitslice_delay_readbacks,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,
@@ -339,8 +340,8 @@ begin
         edc_delay_i => phy_setup_i.edc_delay,
         enable_dbi_i => phy_setup_i.enable_dbi,
         train_dbi_i => phy_setup_i.train_dbi,
-        delay_control_i => delay_control,
-        bitslip_delay_o => bitslip_readbacks,
+        delay_control_i => bitslip_delay_control,
+        delay_readbacks_o => bitslip_delay_readbacks,
 
         raw_data_o => raw_data_out,
         raw_data_i => raw_data_in,
@@ -358,6 +359,7 @@ begin
     );
 
 
+    -- Delay generation
     delay : entity work.gddr6_phy_delay_control port map (
         clk_i => ck_clk,
 
@@ -365,9 +367,10 @@ begin
         setup_o => setup_delay_o,
         disable_vtc_i => phy_setup_i.disable_vtc,
 
-        delay_control_o => delay_control,
-        delay_i => delay_readbacks,
-        bitslip_i => bitslip_readbacks
+        bitslice_control_o => bitslice_delay_control,
+        bitslice_delays_i => bitslice_delay_readbacks,
+        bitslip_control_o => bitslip_delay_control,
+        bitslip_delays_i => bitslip_delay_readbacks
     );
 
 
