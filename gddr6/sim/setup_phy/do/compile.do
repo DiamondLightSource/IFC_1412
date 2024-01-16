@@ -52,9 +52,10 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_ca.vhd \
     $vhd_dir/phy/gddr6_phy_nibble.vhd \
     $vhd_dir/phy/gddr6_phy_byte.vhd \
+    $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
+    $vhd_dir/phy/gddr6_phy_bitslices.vhd \
     $vhd_dir/phy/gddr6_phy_map_dbi.vhd \
     $vhd_dir/phy/gddr6_phy_bitslip.vhd \
-    $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
     $vhd_dir/phy/gddr6_phy_crc_core.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
@@ -80,8 +81,8 @@ add wave -group "PHY IO" test/phy/io/*
 add wave -group "PHY Clocking" test/phy/clocking/*
 add wave -group "PHY CA" test/phy/ca/*
 add wave -group "PHY Nibble(0)(0)" \
-    test/phy/dq/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
-add wave -group "PHY Byte(0)" test/phy/dq/gen_bytes(0)/byte/*
+    test/phy/bitslices/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
+add wave -group "PHY Byte(0)" test/phy/bitslices/gen_bytes(0)/byte/*
 add wave -group "PHY DBI" test/phy/dq/dbi/*
 add wave -group "PHY Bitslip" test/phy/dq/bitslip/*
 add wave -group "PHY CRC" test/phy/dq/crc/*

@@ -15,13 +15,14 @@
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
 --          ODELAYE1
---      gddr6_phy_dq                DQ bus generation
+--      gddr6_phy_bitslices         Bitslice generation
 --          gddr6_phy_byte              Generates a pair of nibbles
 --              gddr6_phy_nibble            Generates complete IO nibble
 --                  BITSLICE_CONTROL
 --                  TX_BITSLICE_TRI
 --                  RXTX_BITSLICE
 --          gddr6_phy_dq_remap          Maps signals to bitslices
+--      gddr6_phy_dq                DQ bus generation
 --          gddr6_phy_bitslip           WCK data phase correction
 --          gddr6_phy_map_dbi           Byte remapping and DBI correction
 --          gddr6_phy_crc               CRC calculation on data on the wire
@@ -172,6 +173,13 @@ architecture arch of gddr6_phy is
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_control : std_ulogic;
 
+    -- Signals to/from bitslices before alignment and processing
+    signal raw_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal raw_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal raw_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
+    signal raw_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
+    signal raw_edc_in : vector_array(7 downto 0)(7 downto 0);
+
     -- Delay controls and readbacks
     signal delay_control : delay_control_t;
     signal delay_readbacks : delay_readbacks_t;
@@ -277,8 +285,8 @@ begin
     );
 
 
-    -- Data receive and transmit
-    dq : entity work.gddr6_phy_dq generic map (
+    -- Bitslices.  This does the heavy lifting of bitslice generation
+    bitslices : entity work.gddr6_phy_bitslices generic map (
         REFCLK_FREQUENCY => REFCLK_FREQUENCY
     ) port map (
         phy_clk_i => phy_clk,       -- Fast data transmit clock from PLL
@@ -287,30 +295,24 @@ begin
         riu_clk_i => riu_clk,       -- Internal bitslice and delay control clock
 
         bitslice_reset_i => bitslice_reset,
-        dly_ready_o => dly_ready,
-        vtc_ready_o => vtc_ready,
         enable_control_vtc_i => enable_control_vtc,
         enable_bitslice_control_i => enable_bitslice_control,
+        dly_ready_o => dly_ready,
+        vtc_ready_o => vtc_ready,
         reset_fifo_i => phy_setup_i.reset_fifo,
         fifo_ok_o => fifo_ok,
-        edc_delay_i => phy_setup_i.edc_delay,
-        enable_dbi_i => phy_setup_i.enable_dbi,
-        train_dbi_i => phy_setup_i.train_dbi,
 
-        data_o => data_o,
-        data_i => data_i,
         output_enable_i => output_enable_i,
-        dbi_n_i => dbi_n_i,
-        dbi_n_o => dbi_n_o,
-        edc_in_o => edc_in_o,
-        edc_out_o => edc_out_o,
-
-        edc_i => '1',           -- Configures memory for x1 mode during reset
+        data_i => raw_data_out,
+        data_o => raw_data_in,
+        dbi_n_i => raw_dbi_n_out,
+        dbi_n_o => raw_dbi_n_in,
+        edc_o => raw_edc_in,
+        edc_i => '1',           -- Configure memory for x1 mode during reset
         edc_t_i => phy_setup_i.edc_tri,
 
         delay_control_i => delay_control,
         delay_readbacks_o => delay_readbacks,
-        bitslip_delay_o => bitslip_readbacks,
 
         io_dq_o => io_dq_out,
         io_dq_i => io_dq_in,
@@ -324,10 +326,37 @@ begin
 
         bitslice_patch_i => bitslice_patch
     );
-
     -- Pin SG12_CK occupies the space for bitslice 2:0 which we have to
     -- instantiate, this link helps to locate the bitslice.
     bitslice_patch <= (0 => io_ck_in);
+
+
+    -- Align data to and from bitslices
+    dq : entity work.gddr6_phy_dq generic map (
+        REFCLK_FREQUENCY => REFCLK_FREQUENCY
+    ) port map (
+        clk_i => ck_clk,
+
+        edc_delay_i => phy_setup_i.edc_delay,
+        enable_dbi_i => phy_setup_i.enable_dbi,
+        train_dbi_i => phy_setup_i.train_dbi,
+        delay_control_i => delay_control,
+        bitslip_delay_o => bitslip_readbacks,
+
+        raw_data_o => raw_data_out,
+        raw_data_i => raw_data_in,
+        raw_dbi_n_o => raw_dbi_n_out,
+        raw_dbi_n_i => raw_dbi_n_in,
+        raw_edc_i => raw_edc_in,
+
+        output_enable_i => output_enable_i,
+        data_o => data_o,
+        data_i => data_i,
+        dbi_n_o => dbi_n_o,
+        dbi_n_i => dbi_n_i,
+        edc_in_o => edc_in_o,
+        edc_out_o => edc_out_o
+    );
 
 
     delay : entity work.gddr6_phy_delay_control port map (

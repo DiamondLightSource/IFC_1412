@@ -30,6 +30,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_nibble.vhd \
     $vhd_dir/phy/gddr6_phy_byte.vhd \
     $vhd_dir/phy/gddr6_phy_dq_remap.vhd \
+    $vhd_dir/phy/gddr6_phy_bitslices.vhd \
     $vhd_dir/phy/gddr6_phy_bitslip.vhd \
     $vhd_dir/phy/gddr6_phy_map_dbi.vhd \
     $vhd_dir/phy/gddr6_phy_crc_core.vhd \
@@ -48,8 +49,9 @@ view wave
 add wave -group "IO" /phy/io/*
 add wave -group "Clocking" /phy/clocking/*
 add wave -group "CA" /phy/ca/*
-add wave -group "DQ Nibble(0)" /phy/dq/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
-add wave -group "Map Slices" /phy/dq/map_slices/*
+add wave -group "DQ Nibble(0)" \
+    /phy/bitslices/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
+add wave -group "Map Slices" /phy/bitslices/map_slices/*
 add wave -group "Bitslip" /phy/dq/bitslip/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
