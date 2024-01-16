@@ -34,6 +34,8 @@ entity gddr6_setup is
         phy_output_enable_o : out std_ulogic;
         phy_data_o : out std_ulogic_vector(511 downto 0);
         phy_data_i : in std_ulogic_vector(511 downto 0);
+        phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+        phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0);
 
@@ -52,6 +54,7 @@ end;
 
 architecture arch of gddr6_setup is
     signal ck_clk_ok : std_ulogic;
+    signal capture_edc_out : std_ulogic;
 
 begin
     sync_ck_ok : entity work.sync_bit port map (
@@ -77,6 +80,7 @@ begin
         phy_setup_o => phy_setup_o,
         phy_status_i => phy_status_i,
 
+        capture_edc_out_o => capture_edc_out,
         enable_controller_o => enable_controller_o
     );
 
@@ -110,12 +114,16 @@ begin
         read_data_o => read_data_o(GDDR6_EXCHANGE_REGS),
         read_ack_o => read_ack_o(GDDR6_EXCHANGE_REGS),
 
+        capture_edc_out_i => capture_edc_out,
+
         phy_ca_o => phy_ca_o,
         phy_ca3_o => phy_ca3_o,
         phy_cke_n_o => phy_cke_n_o,
         phy_output_enable_o => phy_output_enable_o,
         phy_data_o => phy_data_o,
         phy_data_i => phy_data_i,
+        phy_dbi_n_o => phy_dbi_n_o,
+        phy_dbi_n_i => phy_dbi_n_i,
         phy_edc_in_i => phy_edc_in_i,
         phy_edc_out_i => phy_edc_out_i
     );

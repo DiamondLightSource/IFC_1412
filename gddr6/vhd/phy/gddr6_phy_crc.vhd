@@ -10,7 +10,6 @@ entity gddr6_phy_crc is
     port (
         clk_i : in std_ulogic;
 
-        capture_dbi_i : in std_ulogic;
         edc_delay_i : in unsigned(4 downto 0);
 
         output_enable_i : in std_ulogic;
@@ -19,10 +18,7 @@ entity gddr6_phy_crc is
         data_out_i : in vector_array(63 downto 0)(7 downto 0);
         dbi_n_out_i : in vector_array(7 downto 0)(7 downto 0);
 
-        edc_out_o : out vector_array(7 downto 0)(7 downto 0);
-
-        edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        edc_in_o : out vector_array(7 downto 0)(7 downto 0)
+        edc_out_o : out vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
@@ -85,17 +81,11 @@ begin
 
             -- Select CRC data to process.  If output_enable_i is set then use
             -- outgoing data, otherwise use incoming data.
-            if capture_dbi_i then
-                edc_out_o <= dbi_n_in_i;
-            elsif output_enable_delay then
+            if output_enable_delay then
                 edc_out_o <= edc_out_delay;
             else
                 edc_out_o <= edc_in;
             end if;
-
-            -- Aligned edc_in_o with edc_out_o.  This is only significant when
-            -- using capture_dbi_i, but may help to reduce surprises
-            edc_in_o <= edc_in_i;
         end if;
     end process;
 end;

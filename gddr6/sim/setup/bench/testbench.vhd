@@ -33,6 +33,8 @@ architecture arch of testbench is
     signal phy_output_enable_out : std_ulogic;
     signal phy_data_out : std_ulogic_vector(511 downto 0);
     signal phy_data_in : std_ulogic_vector(511 downto 0);
+    signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
+    signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_out_in : vector_array(7 downto 0)(7 downto 0);
 
@@ -68,6 +70,8 @@ begin
         phy_output_enable_o => phy_output_enable_out,
         phy_data_o => phy_data_out,
         phy_data_i => phy_data_in,
+        phy_dbi_n_o => phy_dbi_n_out,
+        phy_dbi_n_i => phy_dbi_n_in,
         phy_edc_in_i => phy_edc_in_in,
         phy_edc_out_i => phy_edc_out_in,
 
@@ -191,6 +195,10 @@ begin
         read_strobe_in <= (others => '0');
 
         clk_wait(5);
+        write_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
+            others => '0'));
+
         start_write;
         write_data_word(X"01234567");
         write_ca(10X"123", 10X"056", X"0", '0', '0');

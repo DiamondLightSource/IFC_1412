@@ -20,8 +20,12 @@
             # controller.
             .ENABLE_CONTROL
 
-            # Set to enable capture of DBI to EDC_OUT
-            .CAPTURE_DBI
+            # Enable DBI training.  In this case data written to DBI is written
+            # instead of the true DBI calculation.  .ENABLE_DBI should be reset
+            # to ensure valid data is sent and received
+            .DBI_TRAINING
+            # Set to enable capture of EDC_OUT to DBI
+            .CAPTURE_EDC_OUT
             # Configures delay on data out to CRC, must be setup correctly
             # during training
             .EDC_DELAY      5
@@ -119,9 +123,11 @@
         # after completing an exchange.  Advance to the next row by writing to
         # COMMAND.STEP_READ.
         DQ          RW
+        # Read from this register 2 times to read the DBI input or the EDC
+        # output for the current input line, depending on the setting of
+        # .CAPTURE_EDC_OUT.  Write to the register up to 2 times to configure
+        # DBI training data when .DBI_TRAINING is set.
+        DBI         RW
         # Read from this register 2 times to read the EDC input for the current
         # input line.
-        EDC_IN      R
-        # Read from this register 2 times to read the EDC output for the current
-        # input line.
-        EDC_OUT     R
+        EDC         R

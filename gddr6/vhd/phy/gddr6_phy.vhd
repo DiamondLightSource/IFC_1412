@@ -80,11 +80,15 @@ entity gddr6_phy is
         -- Due to an extra delay in the BITSLICE output stages output_enable_i
         -- must be presented 1 CK tick earlier than data_i.
         output_enable_i : in std_ulogic;
+        -- DBI training support.  Input dbi_n_i is ignored unless
+        -- phy_setup_i.train_dbi is set
+        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
+        dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one
         -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
-        -- calculated value, either for incoming data or for outgoing data, as
-        -- selected by output_enable_i, unless capture_dbi_i is set.
+        -- calculated value, either for incoming data or for outgoing data as
+        -- selected by output_enable_i.
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
 
@@ -289,15 +293,18 @@ begin
         enable_bitslice_control_i => enable_bitslice_control,
         reset_fifo_i => phy_setup_i.reset_fifo,
         fifo_ok_o => fifo_ok,
-        capture_dbi_i => phy_setup_i.capture_dbi,
         edc_delay_i => phy_setup_i.edc_delay,
         enable_dbi_i => phy_setup_i.enable_dbi,
+        train_dbi_i => phy_setup_i.train_dbi,
 
         data_o => data_o,
         data_i => data_i,
         output_enable_i => output_enable_i,
+        dbi_n_i => dbi_n_i,
+        dbi_n_o => dbi_n_o,
         edc_in_o => edc_in_o,
         edc_out_o => edc_out_o,
+
         edc_i => '1',           -- Configures memory for x1 mode during reset
         edc_t_i => phy_setup_i.edc_tri,
 

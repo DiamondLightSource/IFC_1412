@@ -28,14 +28,16 @@ entity gddr6_phy_dq is
         vtc_ready_o : out std_ulogic;               -- Calibration done (async)
         reset_fifo_i : in std_ulogic_vector(0 to 1);
         fifo_ok_o : out std_ulogic_vector(0 to 1);
-        capture_dbi_i : in std_ulogic;              -- Select edc_out_o source
         edc_delay_i : in unsigned(4 downto 0);      -- Alignment of EDC sources
         enable_dbi_i : in std_ulogic;               -- Data Bus Inversion
+        train_dbi_i : in std_ulogic;                -- Enable DBI training
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
         data_o : out std_ulogic_vector(511 downto 0);
         data_i : in std_ulogic_vector(511 downto 0);
         output_enable_i : in std_ulogic;
+        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
+        dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
         edc_out_o : out vector_array(7 downto 0)(7 downto 0);
         edc_i : in std_ulogic;      -- Config value only
@@ -263,11 +265,14 @@ begin
         clk_i => ck_clk_i,
 
         enable_dbi_i => enable_dbi_i,
-
         bank_data_i => bitslip_data_in,
         bank_data_o => bitslip_data_out,
         bank_dbi_n_i => bitslip_dbi_n_in,
         bank_dbi_n_o => bitslip_dbi_n_out,
+
+        enable_training_i => train_dbi_i,
+        train_dbi_n_i => dbi_n_i,
+        train_dbi_n_o => dbi_n_o,
 
         data_i => data_i,
         data_o => data_o
@@ -277,7 +282,6 @@ begin
     crc : entity work.gddr6_phy_crc port map (
         clk_i => ck_clk_i,
 
-        capture_dbi_i => capture_dbi_i,
         edc_delay_i => edc_delay_i,
 
         output_enable_i => output_enable_i,
@@ -286,11 +290,9 @@ begin
         data_out_i => bitslip_data_out,
         dbi_n_out_i => bitslip_dbi_n_out,
 
-        edc_out_o => edc_out_o,
-
-        edc_in_i => bitslip_edc_in,
-        edc_in_o => edc_in_o
+        edc_out_o => edc_out_o
     );
+    edc_in_o <= bitslip_edc_in;
 
 
     -- FIFO management and reset

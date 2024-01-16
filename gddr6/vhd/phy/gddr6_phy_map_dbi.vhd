@@ -19,6 +19,11 @@ entity gddr6_phy_map_dbi is
         bank_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         bank_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
 
+        -- DBI training support
+        enable_training_i : in std_ulogic;
+        train_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
+        train_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+
         -- Flattened and DBI processed signals leaving PHY layer
         data_o : out std_ulogic_vector(511 downto 0);
         data_i : in std_ulogic_vector(511 downto 0)
@@ -68,8 +73,8 @@ begin
         gen_ticks : for tick in 0 to 7 generate
             invert_bits_out(lanes)(tick) <=
                 enable_dbi_in and invert_bits(bank_data_in, lanes, tick);
-            bank_dbi_n_out(lanes)(tick) <= not invert_bits_out(lanes)(tick);
         end generate;
+        bank_dbi_n_out(lanes) <= not invert_bits_out(lanes);
     end generate;
 
 
@@ -94,7 +99,13 @@ begin
 
             data_o <= data_in;
             bank_data_o <= bank_data_out;
-            bank_dbi_n_o <= bank_dbi_n_out;
+            if enable_training_i then
+                bank_dbi_n_o <= train_dbi_n_i;
+            else
+                bank_dbi_n_o <= bank_dbi_n_out;
+            end if;
+
+            train_dbi_n_o <= bank_dbi_n_i;
         end if;
     end process;
 end;

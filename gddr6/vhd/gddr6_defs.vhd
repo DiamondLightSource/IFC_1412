@@ -58,8 +58,9 @@ package gddr6_defs is
         -- Data bus inversion enables for CA and DQ interfaces
         enable_cabi : std_ulogic;
         enable_dbi : std_ulogic;
-        -- If this flag is set then DBI is captured as edc_out_o
-        capture_dbi : std_ulogic;
+        -- If this is set then dbi_n_i is used to train DBI output.  In this
+        -- enable_dbi should not be set.
+        train_dbi : std_ulogic;
         -- This delay is used to align data_o with data_i so that edc_out_o can
         -- be computed correctly
         edc_delay : unsigned(4 downto 0);

@@ -104,6 +104,8 @@ architecture arch of gddr6_setup_phy is
     signal phy_output_enable : std_ulogic := '0';
     signal phy_data_in : std_ulogic_vector(511 downto 0);
     signal phy_data_out : std_ulogic_vector(511 downto 0);
+    signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
+    signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -136,6 +138,8 @@ begin
         phy_output_enable_o => setup_output_enable,
         phy_data_o => setup_data_out,
         phy_data_i => setup_data_in,
+        phy_dbi_n_i => phy_dbi_n_in,
+        phy_dbi_n_o => phy_dbi_n_out,
         phy_edc_in_i => setup_edc_in,
         phy_edc_out_i => setup_edc_out,
 
@@ -167,6 +171,8 @@ begin
         data_i => phy_data_out,
         data_o => phy_data_in,
         output_enable_i => phy_output_enable,
+        dbi_n_i => phy_dbi_n_out,
+        dbi_n_o => phy_dbi_n_in,
         edc_in_o => phy_edc_in,
         edc_out_o => phy_edc_out,
 

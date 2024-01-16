@@ -23,6 +23,8 @@ entity gddr6_setup_exchange is
         read_data_o : out reg_data_array_t(GDDR6_EXCHANGE_REGS);
         read_ack_o : out std_ulogic_vector(GDDR6_EXCHANGE_REGS);
 
+        capture_edc_out_i : in std_ulogic;
+
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out vector_array(0 to 1)(9 downto 0);
         phy_ca3_o : out std_ulogic_vector(0 to 3);
@@ -30,6 +32,8 @@ entity gddr6_setup_exchange is
         phy_output_enable_o : out std_ulogic;
         phy_data_o : out std_ulogic_vector(511 downto 0);
         phy_data_i : in std_ulogic_vector(511 downto 0);
+        phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+        phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0)
     );
@@ -41,6 +45,8 @@ architecture arch of gddr6_setup_exchange is
     signal ca_bits : reg_data_t;
     signal write_dq_strobe : std_ulogic;
     signal write_dq_ack : std_ulogic;
+    signal write_dbi_strobe : std_ulogic;
+    signal write_dbi_ack : std_ulogic;
 
     signal start_write : std_ulogic;
     signal start_read : std_ulogic;
@@ -52,13 +58,16 @@ architecture arch of gddr6_setup_exchange is
     signal exchange_count : unsigned(5 downto 0);
 
     signal write_address : unsigned(5 downto 0);
-    signal write_word_address : natural range 0 to 15;
-    signal write_data_strobe : std_ulogic_vector(0 to 15);
-
     signal read_address : unsigned(5 downto 0) := (others => '0');
+
+    signal write_dq_address : natural range 0 to 15;
+    signal write_dq_buf_strobe : std_ulogic_vector(0 to 15);
+    signal write_dbi_address : natural range 0 to 1;
+    signal write_dbi_buf_strobe : std_ulogic_vector(0 to 1);
+
     signal read_dq_data : reg_data_array_t(0 to 15);
-    signal read_edc_in_data : reg_data_array_t(0 to 1);
-    signal read_edc_out_data : reg_data_array_t(0 to 1);
+    signal read_dbi_data : reg_data_array_t(0 to 1);
+    signal read_edc_data : reg_data_array_t(0 to 1);
 
 begin
     -- COMMAND
@@ -93,27 +102,28 @@ begin
     write_ack_o(GDDR6_DQ_REG) <= write_dq_ack;
 
 
-    -- EDC_IN
-    read_edc_in : entity work.register_read_block port map (
+    -- DBI
+    read_dbi : entity work.register_read_block port map (
         clk_i => reg_clk_i,
-        read_strobe_i => read_strobe_i(GDDR6_EDC_IN_REG),
-        read_data_o => read_data_o(GDDR6_EDC_IN_REG),
-        read_ack_o => read_ack_o(GDDR6_EDC_IN_REG),
+        read_strobe_i => read_strobe_i(GDDR6_DBI_REG),
+        read_data_o => read_data_o(GDDR6_DBI_REG),
+        read_ack_o => read_ack_o(GDDR6_DBI_REG),
         read_start_i => step_read,
-        registers_i => read_edc_in_data
+        registers_i => read_dbi_data
     );
-    write_ack_o(GDDR6_EDC_IN_REG) <= '1';
+    write_dbi_strobe <= write_strobe_i(GDDR6_DBI_REG);
+    write_ack_o(GDDR6_DBI_REG) <= write_dbi_ack;
 
-    -- EDC_OUT
-    read_edc_out : entity work.register_read_block port map (
+    -- EDC
+    read_edc : entity work.register_read_block port map (
         clk_i => reg_clk_i,
-        read_strobe_i => read_strobe_i(GDDR6_EDC_OUT_REG),
-        read_data_o => read_data_o(GDDR6_EDC_OUT_REG),
-        read_ack_o => read_ack_o(GDDR6_EDC_OUT_REG),
+        read_strobe_i => read_strobe_i(GDDR6_EDC_REG),
+        read_data_o => read_data_o(GDDR6_EDC_REG),
+        read_ack_o => read_ack_o(GDDR6_EDC_REG),
         read_start_i => step_read,
-        registers_i => read_edc_out_data
+        registers_i => read_edc_data
     );
-    write_ack_o(GDDR6_EDC_OUT_REG) <= '1';
+    write_ack_o(GDDR6_EDC_REG) <= '1';
 
 
     -- Decode of command bits
@@ -133,17 +143,28 @@ begin
             -- Write address management and strobe generation
             if start_write then
                 write_address <= (others => '0');
-                write_word_address <= 0;
             elsif write_ca_strobe then
                 exchange_count <= write_address;
                 write_address <= write_address + 1;
-                write_word_address <= 0;
+            end if;
+
+            if start_write or write_ca_strobe then
+                write_dq_address <= 0;
             elsif write_dq_strobe then
-                write_word_address <= write_word_address + 1;
+                write_dq_address <= write_dq_address + 1;
             end if;
             compute_strobe(
-                write_data_strobe, write_word_address, write_dq_strobe);
+                write_dq_buf_strobe, write_dq_address, write_dq_strobe);
             write_dq_ack <= write_dq_strobe;
+
+            if start_write or write_ca_strobe then
+                write_dbi_address <= 0;
+            elsif write_dbi_strobe then
+                write_dbi_address <= write_dbi_address + 1;
+            end if;
+            compute_strobe(
+                write_dbi_buf_strobe, write_dbi_address, write_dbi_strobe);
+            write_dbi_ack <= write_dbi_strobe;
 
             -- Read address
             if start_read then
@@ -164,8 +185,10 @@ begin
         exchange_ack_o => exchange_ack,
         exchange_count_i => exchange_count,
 
+        write_address_i => write_address,
+        read_address_i => read_address,
+
         write_ca_strobe_i => write_ca_strobe,
-        write_ca_address_i => write_address,
         write_ca_i => (
             0 => ca_bits(GDDR6_CA_RISING_BITS),
             1 => ca_bits(GDDR6_CA_FALLING_BITS)),
@@ -173,14 +196,17 @@ begin
         write_cke_n_i => ca_bits(GDDR6_CA_CKE_N_BIT),
         write_output_enable_i => ca_bits(GDDR6_CA_OUTPUT_ENABLE_BIT),
 
-        write_data_strobe_i => write_data_strobe,
-        write_data_address_i => write_address,
+        write_data_strobe_i => write_dq_buf_strobe,
         write_data_i => (others => write_data_i(GDDR6_DQ_REG)),
 
-        read_data_address_i => read_address,
+        write_dbi_strobe_i => write_dbi_buf_strobe,
+        write_dbi_i => (others => write_data_i(GDDR6_DBI_REG)),
+
         reg_data_array_t(read_data_o) => read_dq_data,
-        reg_data_array_t(read_edc_in_o) => read_edc_in_data,
-        reg_data_array_t(read_edc_out_o) => read_edc_out_data,
+        reg_data_array_t(read_dbi_o) => read_dbi_data,
+        reg_data_array_t(read_edc_o) => read_edc_data,
+
+        capture_edc_out_i => capture_edc_out_i,
 
         phy_ca_o => phy_ca_o,
         phy_ca3_o => phy_ca3_o,
@@ -188,6 +214,8 @@ begin
         phy_output_enable_o => phy_output_enable_o,
         phy_data_o => phy_data_o,
         phy_data_i => phy_data_i,
+        phy_dbi_n_o => phy_dbi_n_o,
+        phy_dbi_n_i => phy_dbi_n_i,
         phy_edc_in_i => phy_edc_in_i,
         phy_edc_out_i => phy_edc_out_i
     );

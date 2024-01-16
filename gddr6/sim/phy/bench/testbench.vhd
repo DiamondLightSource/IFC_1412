@@ -46,6 +46,8 @@ architecture arch of testbench is
     signal data_out : std_ulogic_vector(511 downto 0);
     signal edc_out : std_ulogic_vector(63 downto 0);
     signal output_enable_in : std_ulogic := '0';
+    signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
+    signal dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_t_in : std_ulogic := '0';
 
     signal setup_delay_in : setup_delay_t;
@@ -114,6 +116,8 @@ begin
         data_i => data_in,
         data_o => data_out,
         output_enable_i => output_enable_in,
+        dbi_n_i => dbi_n_in,
+        dbi_n_o => dbi_n_out,
         edc_in_o => edc_in_out,
         edc_out_o => edc_out_out,
 
@@ -263,7 +267,7 @@ begin
             sg_resets_n => "00",
             enable_cabi => '0',
             enable_dbi => '0',
-            capture_dbi => '0',
+            train_dbi => '0',
             edc_delay => 5X"00",
             edc_tri => '0',
             fudge_sticky_ca6 => '0',

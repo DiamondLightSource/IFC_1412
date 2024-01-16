@@ -29,6 +29,9 @@ entity gddr6_setup_control is
         phy_setup_o : out phy_setup_t;
         phy_status_i : in phy_status_t;
 
+        -- Local configuration
+        capture_edc_out_o : out std_ulogic;
+
         -- Controller enable
         enable_controller_o : out std_ulogic := '0'
     );
@@ -189,8 +192,8 @@ begin
                     ck_config_bits(GDDR6_CONFIG_ENABLE_CABI_BIT),
                 enable_dbi =>
                     ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT),
-                capture_dbi =>
-                    ck_config_bits(GDDR6_CONFIG_CAPTURE_DBI_BIT),
+                train_dbi =>
+                    ck_config_bits(GDDR6_CONFIG_DBI_TRAINING_BIT),
                 edc_delay =>
                     unsigned(ck_config_bits(GDDR6_CONFIG_EDC_DELAY_BITS)),
                 reset_fifo =>
@@ -203,6 +206,8 @@ begin
                 disable_vtc =>
                     ck_config_bits(GDDR6_CONFIG_DISABLE_VTC_BIT)
             );
+            capture_edc_out_o <=
+                ck_config_bits(GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT);
 
             enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);

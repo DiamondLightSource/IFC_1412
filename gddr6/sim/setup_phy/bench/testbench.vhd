@@ -221,8 +221,8 @@ begin
             variable edc_out : reg_data_t;
         begin
             read_reg_result(GDDR6_DQ_REG, dq, true);
-            read_reg_result(GDDR6_EDC_IN_REG, edc_in, true);
-            read_reg_result(GDDR6_EDC_OUT_REG, edc_out, true);
+            read_reg_result(GDDR6_DBI_REG, edc_out, true);
+            read_reg_result(GDDR6_EDC_REG, edc_in, true);
             write(to_string(n) & ": " &
                 to_hstring(dq) & " " & to_hstring(edc_in) & " " &
                 to_hstring(edc_out));
@@ -256,6 +256,7 @@ begin
         write_reg(GDDR6_CONFIG_REG, (
             GDDR6_CONFIG_CK_RESET_N_BIT => '1',
             GDDR6_CONFIG_SG_RESET_N_BITS => "01",
+            GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT => '1',
             others => '0'));
 
         -- Wait for locked status
@@ -270,6 +271,7 @@ begin
             GDDR6_CONFIG_CK_RESET_N_BIT => '1',
             GDDR6_CONFIG_SG_RESET_N_BITS => "01",
             GDDR6_CONFIG_EDC_T_BIT => '1',
+            GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT => '1',
             others => '0'));
 
 
@@ -321,12 +323,6 @@ begin
         -- Restart clock and try reading again
         ck_clock_running <= true;
         read_reg(GDDR6_STATUS_REG);
-
-        -- Need to reset the PHY
-        write_reg(GDDR6_CONFIG_REG, (others => '0'));
-        write_reg(GDDR6_CONFIG_REG, (
-            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
-            others => '0'));
 
         wait;
     end process;
