@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 use work.gddr6_phy_defs.all;
 
-entity gddr6_phy_map_dbi is
+entity gddr6_phy_dbi is
     port (
         clk_i : in std_ulogic;
 
@@ -30,7 +30,7 @@ entity gddr6_phy_map_dbi is
     );
 end;
 
-architecture arch of gddr6_phy_map_dbi is
+architecture arch of gddr6_phy_dbi is
     signal enable_dbi_in : std_ulogic;
 
     -- Data path from DRAM: bank_data_i -> data_in => data_o

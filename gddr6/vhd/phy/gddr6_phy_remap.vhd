@@ -9,7 +9,7 @@ use work.support.all;
 use work.gddr6_config_defs.all;
 use work.gddr6_phy_defs.all;
 
-entity gddr6_phy_dq_remap is
+entity gddr6_phy_remap is
     port (
         -- Capture clocks to bitslices
         wck_i : in std_ulogic_vector(0 to 1);
@@ -59,7 +59,7 @@ entity gddr6_phy_dq_remap is
     );
 end;
 
-architecture arch of gddr6_phy_dq_remap is
+architecture arch of gddr6_phy_remap is
     signal dq_rx_delay : vector_array(63 downto 0)(8 downto 0);
     signal dq_tx_delay : vector_array(63 downto 0)(8 downto 0);
     signal dbi_rx_delay : vector_array(7 downto 0)(8 downto 0);

@@ -167,7 +167,7 @@ begin
 
 
     -- Map between byte and slices and all the various signals of interest
-    map_slices : entity work.gddr6_phy_dq_remap port map (
+    map_slices : entity work.gddr6_phy_remap port map (
         -- Clocks
         wck_i => wck_i,
 

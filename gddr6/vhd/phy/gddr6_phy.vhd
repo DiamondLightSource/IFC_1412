@@ -21,10 +21,10 @@
 --                  BITSLICE_CONTROL
 --                  TX_BITSLICE_TRI
 --                  RXTX_BITSLICE
---          gddr6_phy_dq_remap          Maps signals to bitslices
+--          gddr6_phy_remap             Maps signals to bitslices
 --      gddr6_phy_dq                DQ bus generation
 --          gddr6_phy_bitslip           WCK data phase correction
---          gddr6_phy_map_dbi           Byte remapping and DBI correction
+--          gddr6_phy_dbi               DBI computation and capture
 --          gddr6_phy_crc               CRC calculation on data on the wire
 --              gddr6_phy_crc_core          CRC calculation
 --      gddr6_phy_delay_control     Control of delay interface
