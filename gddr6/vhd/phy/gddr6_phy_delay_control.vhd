@@ -31,10 +31,6 @@ architecture arch of gddr6_phy_delay_control is
     constant TARGET_IDELAY : natural := 0;
     constant TARGET_ODELAY : natural := 1;
     constant TARGET_OBITSLIP : natural := 3;
-    -- Sub address decoding
-    subtype DQ_RANGE is natural range 63 downto 0;
-    subtype DBI_RANGE is natural range 71 downto 64;
-    subtype EDC_RANGE is natural range 79 downto 72;
 
     -- Strobe arrays for output indexed by target type
     signal ce_out : vector_array(0 to 3)(79 downto 0)
@@ -101,36 +97,36 @@ begin
         bitslip_delay => bitslip_delay,
 
         -- CE for IDELAY and ODELAY following the address map above
-        dq_rx_ce =>   ce_out(TARGET_IDELAY)(DQ_RANGE),
-        dq_tx_ce =>   ce_out(TARGET_ODELAY)(DQ_RANGE),
-        dbi_rx_ce =>  ce_out(TARGET_IDELAY)(DBI_RANGE),
-        dbi_tx_ce =>  ce_out(TARGET_ODELAY)(DBI_RANGE),
-        edc_rx_ce =>  ce_out(TARGET_IDELAY)(EDC_RANGE),
+        dq_rx_ce =>   ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
+        dq_tx_ce =>   ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
+        dbi_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
+        dbi_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
+        edc_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE),
         -- VTC uses the same address mapping as CE
-        dq_rx_vtc =>  vtc_out(TARGET_IDELAY)(DQ_RANGE),
-        dq_tx_vtc =>  vtc_out(TARGET_ODELAY)(DQ_RANGE),
-        dbi_rx_vtc => vtc_out(TARGET_IDELAY)(DBI_RANGE),
-        dbi_tx_vtc => vtc_out(TARGET_ODELAY)(DBI_RANGE),
-        edc_rx_vtc => vtc_out(TARGET_IDELAY)(EDC_RANGE),
+        dq_rx_vtc =>  vtc_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
+        dq_tx_vtc =>  vtc_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
+        dbi_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
+        dbi_tx_vtc => vtc_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
+        edc_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_EDC_RANGE),
         -- Bitslip strobe mapping
-        dq_tx_bitslip  => bitslip_strobe(DQ_RANGE),
-        dbi_tx_bitslip => bitslip_strobe(DBI_RANGE)
+        dq_tx_bitslip  => bitslip_strobe(DELAY_DQ_RANGE),
+        dbi_tx_bitslip => bitslip_strobe(DELAY_DBI_RANGE)
     );
 
     -- Map the readbacks
     delays_in <= (
         TARGET_IDELAY => (
-            DQ_RANGE  => delay_i.dq_rx_delay,
-            DBI_RANGE => delay_i.dbi_rx_delay,
-            EDC_RANGE => delay_i.edc_rx_delay,
+            DELAY_DQ_RANGE  => delay_i.dq_rx_delay,
+            DELAY_DBI_RANGE => delay_i.dbi_rx_delay,
+            DELAY_EDC_RANGE => delay_i.edc_rx_delay,
             others => (others => '0')),
         TARGET_ODELAY => (
-            DQ_RANGE  => delay_i.dq_tx_delay,
-            DBI_RANGE => delay_i.dbi_tx_delay,
+            DELAY_DQ_RANGE  => delay_i.dq_tx_delay,
+            DELAY_DBI_RANGE => delay_i.dbi_tx_delay,
             others => (others => '0')),
         TARGET_OBITSLIP => (
-            DQ_RANGE  => bitslip_in(DQ_RANGE),
-            DBI_RANGE => bitslip_in(DBI_RANGE),
+            DELAY_DQ_RANGE  => bitslip_in(DELAY_DQ_RANGE),
+            DELAY_DBI_RANGE => bitslip_in(DELAY_DBI_RANGE),
             others => (others => '0')),
         others => (others => (others => '0'))
     );

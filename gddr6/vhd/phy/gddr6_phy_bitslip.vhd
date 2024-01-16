@@ -16,37 +16,25 @@ entity gddr6_phy_bitslip is
     port (
         clk_i : in std_ulogic;
 
-        -- Control interface.  Each bit needs a separate control, and a shift of
-        -- up to 7 bits can be selected
+        -- Delay to set
         delay_i : in unsigned(2 downto 0);
-        -- Strobes for setting delay above
-        dq_strobe_i : in std_ulogic_vector(63 downto 0);
-        dbi_n_strobe_i : in std_ulogic_vector(7 downto 0);
+        -- Strobe to configure individual delay
+        strobe_i : in std_ulogic_vector;
+        -- Delay readbacks
+        delay_o : out unsigned_array(open)(2 downto 0);
 
-        -- Bitslip readbacks
-        delay_o : out unsigned_array(71 downto 0)(2 downto 0);
-
-        -- Interface to bitslice
-        dq_i : in vector_array(63 downto 0)(7 downto 0);
-        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-
-        -- Corrected data
-        dq_o : out vector_array(63 downto 0)(7 downto 0);
-        dbi_n_o : out vector_array(7 downto 0)(7 downto 0)
+        -- Data in and out
+        data_i : in vector_array(open)(7 downto 0);
+        data_o : out vector_array(open)(7 downto 0)
     );
 end;
 
 architecture arch of gddr6_phy_bitslip is
-    -- Sub address decoding
-    subtype DQ_RANGE is natural range 63 downto 0;
-    subtype DBI_RANGE is natural range 71 downto 64;
-    subtype BIT_ARRAY_RANGE is natural range 71 downto 0;
+    subtype BIT_ARRAY_RANGE is natural range strobe_i'RANGE;
 
     signal bitslip : unsigned_array(BIT_ARRAY_RANGE)(2 downto 0)
         := (others => (others => '0'));
-    signal bit_arrays_in : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
     signal bit_arrays : vector_array(BIT_ARRAY_RANGE)(15 downto 0);
-    signal bit_arrays_out : vector_array(BIT_ARRAY_RANGE)(7 downto 0);
 
     signal delay_strobe_in : std_ulogic_vector(BIT_ARRAY_RANGE);
     signal delay_in : unsigned(2 downto 0);
@@ -56,8 +44,7 @@ begin
     process (clk_i) begin
         if rising_edge(clk_i) then
             -- Allow for more placement optimisation by pipelining this write
-            delay_strobe_in(DQ_RANGE) <= dq_strobe_i;
-            delay_strobe_in(DBI_RANGE) <= dbi_n_strobe_i;
+            delay_strobe_in <= strobe_i;
             delay_in <= delay_i;
 
             for i in BIT_ARRAY_RANGE loop
@@ -69,16 +56,11 @@ begin
     end process;
     delay_o <= bitslip;
 
-    -- Map incoming bits, matches delay_strobe_in map above
-    bit_arrays_in <= (
-        DQ_RANGE => dq_i,
-        DBI_RANGE => dbi_n_i
-    );
 
     -- Process all bits
     gen_bits : for bit in BIT_ARRAY_RANGE generate
         -- The first byte is just a copy of the original data
-        bit_arrays(bit)(15 downto 8) <= bit_arrays_in(bit);
+        bit_arrays(bit)(15 downto 8) <= data_i(bit);
 
         process (clk_i)
             variable shift : natural range 0 to 7;
@@ -89,13 +71,8 @@ begin
 
                 -- Select desired output
                 shift := to_integer(bitslip(bit));
-                bit_arrays_out(bit) <=
-                    bit_arrays(bit)(15 - shift downto 8 - shift);
+                data_o(bit) <= bit_arrays(bit)(15 - shift downto 8 - shift);
             end if;
         end process;
     end generate;
-
-    -- Finally map shifted bit arrays out
-    dq_o <= bit_arrays_out(DQ_RANGE);
-    dbi_n_o <= bit_arrays_out(DBI_RANGE);
 end;

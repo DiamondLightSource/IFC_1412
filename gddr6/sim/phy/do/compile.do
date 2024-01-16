@@ -52,7 +52,7 @@ add wave -group "CA" /phy/ca/*
 add wave -group "DQ Nibble(0)" \
     /phy/bitslices/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
 add wave -group "Map Slices" /phy/bitslices/map_slices/*
-add wave -group "Bitslip" /phy/dq/bitslip/*
+add wave -group "Bitslip" /phy/dq/bitslip_out/*
 add wave -group "CRC" /phy/dq/crc/*
 add wave -group "DQ" /phy/dq/*
 add wave -group "Delay" /phy/delay/*

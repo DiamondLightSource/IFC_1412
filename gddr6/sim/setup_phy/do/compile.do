@@ -84,7 +84,7 @@ add wave -group "PHY Nibble(0)(0)" \
     test/phy/bitslices/gen_bytes(0)/byte/gen_nibble(0)/nibble/*
 add wave -group "PHY Byte(0)" test/phy/bitslices/gen_bytes(0)/byte/*
 add wave -group "PHY DBI" test/phy/dq/dbi/*
-add wave -group "PHY Bitslip" test/phy/dq/bitslip/*
+add wave -group "PHY Bitslip" test/phy/dq/bitslip_out/*
 add wave -group "PHY CRC" test/phy/dq/crc/*
 add wave -group "PHY DQ" test/phy/dq/*
 add wave -group "PHY Delay" test/phy/delay/*

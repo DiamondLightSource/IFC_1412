@@ -7,6 +7,11 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 package gddr6_phy_defs is
+    -- Sub address decoding for delays
+    subtype DELAY_DQ_RANGE is natural range 63 downto 0;
+    subtype DELAY_DBI_RANGE is natural range 71 downto 64;
+    subtype DELAY_EDC_RANGE is natural range 79 downto 72;
+
     -- Controls from _delay_control to _dq and _dq_remap
     type delay_control_t is record
         up_down_n : std_ulogic;

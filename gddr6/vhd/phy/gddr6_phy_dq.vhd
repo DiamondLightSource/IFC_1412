@@ -52,19 +52,18 @@ architecture arch of gddr6_phy_dq is
 
 begin
     -- Apply bitslip correction to raw data
-    bitslip : entity work.gddr6_phy_bitslip port map (
+    bitslip_out : entity work.gddr6_phy_bitslip port map (
         clk_i => clk_i,
 
         delay_i => delay_control_i.bitslip_delay,
-        dq_strobe_i => delay_control_i.dq_tx_bitslip,
-        dbi_n_strobe_i => delay_control_i.dbi_tx_bitslip,
         delay_o => bitslip_delay_o,
+        strobe_i(DELAY_DQ_RANGE) => delay_control_i.dq_tx_bitslip,
+        strobe_i(DELAY_DBI_RANGE) => delay_control_i.dbi_tx_bitslip,
 
-        dq_i => bitslip_data_out,
-        dbi_n_i => bitslip_dbi_n_out,
-
-        dq_o => raw_data_o,
-        dbi_n_o => raw_dbi_n_o
+        data_i(DELAY_DQ_RANGE) => bitslip_data_out,
+        data_i(DELAY_DBI_RANGE) => bitslip_dbi_n_out,
+        data_o(DELAY_DQ_RANGE) => raw_data_o,
+        data_o(DELAY_DBI_RANGE) => raw_dbi_n_o
     );
 
     -- Looks like we need bitslip on TX but not RX data.  A bit surprising...
