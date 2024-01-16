@@ -88,17 +88,18 @@ begin
         clk_i => clk_i,
 
         enable_dbi_i => enable_dbi_i,
-        bank_data_i => bitslip_data_in,
-        bank_data_o => bitslip_data_out,
-        bank_dbi_n_i => bitslip_dbi_n_in,
-        bank_dbi_n_o => bitslip_dbi_n_out,
+
+        data_out_i => data_i,
+        dbi_n_out_o => bitslip_dbi_n_out,
+        data_out_o => bitslip_data_out,
+
+        data_in_i => bitslip_data_in,
+        dbi_n_in_i => bitslip_dbi_n_in,
+        data_in_o => data_o,
 
         enable_training_i => train_dbi_i,
         train_dbi_n_i => dbi_n_i,
-        train_dbi_n_o => dbi_n_o,
-
-        data_i => data_i,
-        data_o => data_o
+        train_dbi_n_o => dbi_n_o
     );
 
 
