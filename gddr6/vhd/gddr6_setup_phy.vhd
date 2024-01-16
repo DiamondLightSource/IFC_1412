@@ -40,8 +40,8 @@ entity gddr6_setup_phy is
         -- DQ
         -- Data is transferred in a burst of 128 bytes over two ticks, and so is
         -- organised here as an array of 64 bytes, or 512 bits.
-        ctrl_data_i : in std_ulogic_vector(511 downto 0);
-        ctrl_data_o : out std_ulogic_vector(511 downto 0);
+        ctrl_data_i : in vector_array(63 downto 0)(7 downto 0);
+        ctrl_data_o : out vector_array(63 downto 0)(7 downto 0);
         ctrl_output_enable_i : in std_ulogic;
         -- Two calculations are presented on the EDC pins here.  edc_in_o is the
         -- value received from the memory, each 8-bit value is the CRC for one
@@ -93,8 +93,8 @@ architecture arch of gddr6_setup_phy is
     signal setup_ca3 : std_ulogic_vector(0 to 3);
     signal setup_cke_n : std_ulogic;
     signal setup_output_enable : std_ulogic;
-    signal setup_data_in : std_ulogic_vector(511 downto 0);
-    signal setup_data_out : std_ulogic_vector(511 downto 0);
+    signal setup_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal setup_data_out : vector_array(63 downto 0)(7 downto 0);
     signal setup_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal setup_edc_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -102,8 +102,8 @@ architecture arch of gddr6_setup_phy is
     signal phy_ca3 : std_ulogic_vector(0 to 3);
     signal phy_cke_n : std_ulogic;
     signal phy_output_enable : std_ulogic := '0';
-    signal phy_data_in : std_ulogic_vector(511 downto 0);
-    signal phy_data_out : std_ulogic_vector(511 downto 0);
+    signal phy_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal phy_data_out : vector_array(63 downto 0)(7 downto 0);
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);

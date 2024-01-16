@@ -31,8 +31,8 @@ architecture arch of testbench is
     signal phy_ca3_out : std_ulogic_vector(0 to 3);
     signal phy_cke_n_out : std_ulogic;
     signal phy_output_enable_out : std_ulogic;
-    signal phy_data_out : std_ulogic_vector(511 downto 0);
-    signal phy_data_in : std_ulogic_vector(511 downto 0);
+    signal phy_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal phy_data_in : vector_array(63 downto 0)(7 downto 0);
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in_in : vector_array(7 downto 0)(7 downto 0);
@@ -87,7 +87,7 @@ begin
     process (ck_clk_in) begin
         if rising_edge(ck_clk_in) then
             if phy_output_enable_out then
-                phy_data_in <= (others => '1');
+                phy_data_in <= (others => (others => '1'));
             else
                 phy_data_in <= phy_data_out;
             end if;

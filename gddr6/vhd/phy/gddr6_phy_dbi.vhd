@@ -1,4 +1,4 @@
--- Perform data remapping and DBI correction if required
+-- Perform any required DBI processing
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -25,8 +25,8 @@ entity gddr6_phy_dbi is
         train_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- Flattened and DBI processed signals leaving PHY layer
-        data_o : out std_ulogic_vector(511 downto 0);
-        data_i : in std_ulogic_vector(511 downto 0)
+        data_o : out vector_array(63 downto 0)(7 downto 0);
+        data_i : in vector_array(63 downto 0)(7 downto 0)
     );
 end;
 
@@ -34,7 +34,7 @@ architecture arch of gddr6_phy_dbi is
     signal enable_dbi_in : std_ulogic;
 
     -- Data path from DRAM: bank_data_i -> data_in => data_o
-    signal data_in : std_ulogic_vector(511 downto 0);
+    signal data_in : vector_array(63 downto 0)(7 downto 0);
     -- Data path to DRAM: data_i -> bank_data_out => bank_data_o
     signal bank_data_out : vector_array(63 downto 0)(7 downto 0);
     signal bank_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
@@ -81,13 +81,11 @@ begin
     -- Gather bytes across banks, each lane contains data for one byte,
     -- corresponding to one IO line
     gen_bytes : for lane in 0 to 63 generate
-        subtype BYTE_RANGE is natural range 8 * lane + 7 downto 8 * lane;
-    begin
         -- Data from bitslice
-        data_in(BYTE_RANGE) <= invert_bits_in(lane/8)  xor bank_data_i(lane);
+        data_in(lane) <= invert_bits_in(lane/8)  xor bank_data_i(lane);
 
         -- Data to bitslice
-        bank_data_in(lane) <= data_i(BYTE_RANGE);
+        bank_data_in(lane) <= data_i(lane);
         bank_data_out(lane) <= invert_bits_out(lane/8) xor bank_data_in(lane);
     end generate;
 

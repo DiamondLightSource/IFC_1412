@@ -76,8 +76,8 @@ entity gddr6_phy is
         -- DQ
         -- Data is transferred in a burst of 128 bytes over two ticks, and so is
         -- organised here as an array of 64 bytes, or 512 bits.
-        data_i : in std_ulogic_vector(511 downto 0);
-        data_o : out std_ulogic_vector(511 downto 0);
+        data_i : in vector_array(63 downto 0)(7 downto 0);
+        data_o : out vector_array(63 downto 0)(7 downto 0);
         -- Due to an extra delay in the BITSLICE output stages output_enable_i
         -- must be presented 1 CK tick earlier than data_i.
         output_enable_i : in std_ulogic;

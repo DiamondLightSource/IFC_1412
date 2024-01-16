@@ -42,8 +42,9 @@ architecture arch of testbench is
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
     signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
 
-    signal data_in : std_ulogic_vector(511 downto 0) := (others => '0');
-    signal data_out : std_ulogic_vector(511 downto 0);
+    signal data_in : vector_array(63 downto 0)(7 downto 0)
+        := (others => (others => '0'));
+    signal data_out : vector_array(63 downto 0)(7 downto 0);
     signal edc_out : std_ulogic_vector(63 downto 0);
     signal output_enable_in : std_ulogic := '0';
     signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
@@ -276,7 +277,7 @@ begin
         ca_in <= (others => (others => '1'));
         ca3_in <= X"0";
         cke_n_in <= '1';
-        data_in <= (others => '1');
+        data_in <= (others => (others => '1'));
         output_enable_in <= '0';
 
         wait for 50 ns;
@@ -291,18 +292,18 @@ begin
         --  ck  |   |   |   |   |   |   |   |
         --  d    FF  00  00  FF  00  00  FF
         --  oe   0   0   1   1   1   0   0
-        data_in <= (8 => '1', others => '0');
+        data_in <= (others => (others => '0'));
         clk_wait;
         output_enable_in <= '1';
         clk_wait;
         clk_wait;
-        data_in <= (8 => '0', others => '1');
+        data_in <= (others => (others => '1'));
         clk_wait;
-        data_in <= (8 => '1', others => '0');
+        data_in <= (others => (others => '0'));
         clk_wait;
         output_enable_in <= '0';
         clk_wait;
-        data_in <= (8 => '0', others => '1');
+        data_in <= (others => (others => '1'));
         clk_wait;
 
 
@@ -341,9 +342,9 @@ begin
         output_enable_in <= '1';
         clk_wait;
         output_enable_in <= '0';
-        data_in <= (others => '0');
+        data_in <= (others => (others => '0'));
         clk_wait;
-        data_in <= (others => '1');
+        data_in <= (others => (others => '1'));
 
         wait;
     end process;

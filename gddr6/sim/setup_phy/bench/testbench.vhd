@@ -54,8 +54,8 @@ architecture arch of testbench is
     signal ctrl_ca : vector_array(0 to 1)(9 downto 0);
     signal ctrl_ca3 : std_ulogic_vector(0 to 3);
     signal ctrl_cke_n : std_ulogic;
-    signal ctrl_data_in : std_ulogic_vector(511 downto 0);
-    signal ctrl_data_out : std_ulogic_vector(511 downto 0);
+    signal ctrl_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal ctrl_data_out : vector_array(63 downto 0)(7 downto 0);
     signal ctrl_output_enable : std_ulogic;
     signal ctrl_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal ctrl_edc_out : vector_array(7 downto 0)(7 downto 0);

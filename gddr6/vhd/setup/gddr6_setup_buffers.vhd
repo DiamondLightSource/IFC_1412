@@ -49,8 +49,8 @@ entity gddr6_setup_buffers is
         phy_ca3_o : out std_ulogic_vector(0 to 3);
         phy_cke_n_o : out std_ulogic;
         phy_output_enable_o : out std_ulogic;
-        phy_data_o : out std_ulogic_vector(511 downto 0);
-        phy_data_i : in std_ulogic_vector(511 downto 0);
+        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
+        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
@@ -65,6 +65,29 @@ architecture arch of gddr6_setup_buffers is
     signal exchange_address : unsigned(5 downto 0) := (others => '0');
     signal exchange_active : std_ulogic := '0';
     signal dbi_capture_data : vector_array(7 downto 0)(7 downto 0);
+
+
+    function to_std_ulogic_vector(value : vector_array(3 downto 0))
+        return std_ulogic_vector
+    is
+        variable result : std_ulogic_vector(31 downto 0);
+    begin
+        for byte in 0 to 3 loop
+            result(8*byte + 7 downto 8*byte) := value(byte);
+        end loop;
+        return result;
+    end;
+
+    function to_vector_array(
+        value : std_ulogic_vector(31 downto 0)) return vector_array
+    is
+        variable result : vector_array(3 downto 0)(7 downto 0);
+    begin
+        for byte in 0 to 3 loop
+            result(byte) := value(8*byte + 7 downto 8*byte);
+        end loop;
+        return result;
+    end;
 
 begin
     -- CA buffer
@@ -96,7 +119,7 @@ begin
 
     -- DQ buffers for in and out data
     gen_dq : for word in 0 to 15 generate
-        subtype WORD_RANGE is natural range 32*word + 31 downto 32*word;
+        subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
     begin
         data_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
@@ -111,7 +134,7 @@ begin
             read_clk_i => ck_clk_i,
             read_strobe_i => exchange_active,
             read_addr_i => exchange_address,
-            read_data_o => phy_data_o(WORD_RANGE)
+            to_vector_array(read_data_o) => phy_data_o(BYTE_RANGE)
         );
 
         data_in : entity work.memory_array_dual generic map (
@@ -122,7 +145,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => phy_data_i(WORD_RANGE),
+            write_data_i => to_std_ulogic_vector(phy_data_i(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,
@@ -134,6 +157,8 @@ begin
     -- EDC buffers
     dbi_capture_data <= phy_edc_out_i when capture_edc_out_i else phy_dbi_n_i;
     gen_dbi : for word in 0 to 1 generate
+        subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
+    begin
         dbi_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
@@ -147,10 +172,7 @@ begin
             read_clk_i => ck_clk_i,
             read_strobe_i => exchange_active,
             read_addr_i => exchange_address,
-            read_data_o(7 downto 0)   => phy_dbi_n_o(4*word),
-            read_data_o(15 downto 8)  => phy_dbi_n_o(4*word + 1),
-            read_data_o(23 downto 16) => phy_dbi_n_o(4*word + 2),
-            read_data_o(31 downto 24) => phy_dbi_n_o(4*word + 3)
+            to_vector_array(read_data_o) => phy_dbi_n_o(BYTE_RANGE)
         );
 
         dbi_in : entity work.memory_array_dual generic map (
@@ -161,11 +183,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => (
-                7 downto 0   => dbi_capture_data(4*word),
-                15 downto 8  => dbi_capture_data(4*word + 1),
-                23 downto 16 => dbi_capture_data(4*word + 2),
-                31 downto 24 => dbi_capture_data(4*word + 3)),
+            write_data_i => to_std_ulogic_vector(dbi_capture_data(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,
@@ -176,6 +194,8 @@ begin
 
     -- EDC buffers, read only
     gen_edc : for word in 0 to 1 generate
+        subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
+    begin
         edc : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
@@ -184,11 +204,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => (
-                7 downto 0   => phy_edc_out_i(4*word),
-                15 downto 8  => phy_edc_out_i(4*word + 1),
-                23 downto 16 => phy_edc_out_i(4*word + 2),
-                31 downto 24 => phy_edc_out_i(4*word + 3)),
+            write_data_i => to_std_ulogic_vector(phy_edc_out_i(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,

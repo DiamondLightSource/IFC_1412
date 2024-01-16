@@ -30,8 +30,8 @@ entity gddr6_setup_exchange is
         phy_ca3_o : out std_ulogic_vector(0 to 3);
         phy_cke_n_o : out std_ulogic;
         phy_output_enable_o : out std_ulogic;
-        phy_data_o : out std_ulogic_vector(511 downto 0);
-        phy_data_i : in std_ulogic_vector(511 downto 0);
+        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
+        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
