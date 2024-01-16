@@ -14,8 +14,6 @@
             .ENABLE_CABI
             # Enable bit inversion on DQ input and output
             .ENABLE_DBI
-            # Hold high to hold RX FIFO in reset
-            .RESET_FIFO     2
             # Set this to hand control over the memory interface to the memory
             # controller.
             .ENABLE_CONTROL

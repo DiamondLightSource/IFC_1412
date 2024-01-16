@@ -299,7 +299,6 @@ begin
         enable_bitslice_control_i => enable_bitslice_control,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
-        reset_fifo_i => phy_setup_i.reset_fifo,
         fifo_ok_o => fifo_ok,
 
         output_enable_i => output_enable_i,

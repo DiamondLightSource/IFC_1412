@@ -50,8 +50,6 @@ package gddr6_defs is
 
     -- Configuration settings for PHY
     type phy_setup_t is record
-        -- Can be used to hold the RX FIFO in reset
-        reset_fifo : std_ulogic_vector(0 to 1);
         -- Directly driven resets to the two GDDR6 devices.  Should be held low
         -- until ca_i has been properly set for configuration options.
         sg_resets_n : std_ulogic_vector(0 to 1);

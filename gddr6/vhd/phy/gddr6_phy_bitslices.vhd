@@ -26,7 +26,6 @@ entity gddr6_phy_bitslices is
         enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;               -- Delay ready (async)
         vtc_ready_o : out std_ulogic;               -- Calibration done (async)
-        reset_fifo_i : in std_ulogic_vector(0 to 1);
         fifo_ok_o : out std_ulogic_vector(0 to 1);
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
@@ -222,7 +221,7 @@ begin
     process (ck_clk_i) begin
         if rising_edge(ck_clk_i) then
             for io in 0 to 1 loop
-                if bitslice_reset_i or reset_fifo_i(io) then
+                if bitslice_reset_i then
                     fifo_enable(io) <= '0';
                 else
                     -- Enable FIFO following UG571 v1.14 p213

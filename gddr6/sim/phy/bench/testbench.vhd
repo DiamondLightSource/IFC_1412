@@ -263,7 +263,6 @@ begin
         ck_valid <= '1';
         ck_reset_in <= '1';
         phy_setup <= (
-            reset_fifo => "00",
             sg_resets_n => "00",
             enable_cabi => '0',
             enable_dbi => '0',
