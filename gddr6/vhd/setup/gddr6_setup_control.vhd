@@ -15,7 +15,7 @@ entity gddr6_setup_control is
         ck_clk_i : in std_ulogic;       -- CK clock
         ck_clk_ok_i : in std_ulogic;    -- CK and RIU clocks ok
         reg_clk_i : in std_ulogic;      -- Register clock
-        ck_reset_o : out std_ulogic := '0';
+        ck_reset_o : out std_ulogic := '1';
 
         -- Register interface for data access
         write_strobe_i : in std_ulogic_vector(GDDR6_CONTROL_REGS);
