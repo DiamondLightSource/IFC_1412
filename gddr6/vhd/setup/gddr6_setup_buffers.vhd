@@ -159,7 +159,8 @@ begin
     end generate;
 
 
-    -- EDC buffers
+    -- DBI buffers.  Writeable for DBI write training, captures either incoming
+    -- DBI or computed EDC
     dbi_capture_data <= phy_edc_out_i when capture_edc_out_i else phy_dbi_n_i;
     gen_dbi : for word in 0 to 1 generate
         subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
@@ -197,7 +198,7 @@ begin
     end generate;
 
 
-    -- EDC buffers, read only
+    -- EDC buffers, read only.  Captures EDC from memory
     gen_edc : for word in 0 to 1 generate
         subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
     begin
@@ -209,7 +210,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => to_std_ulogic_vector(phy_edc_out_i(BYTE_RANGE)),
+            write_data_i => to_std_ulogic_vector(phy_edc_in_i(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,
