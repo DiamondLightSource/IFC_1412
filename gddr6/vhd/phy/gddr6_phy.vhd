@@ -10,11 +10,12 @@
 --          iobuf_array
 --      gddr6_phy_clocking          Top level clocking and control
 --          BUFG
+--          MMCME3_BASE
 --          PLLE3_BASE
+--          BUFGCE
 --          sync_bit
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
---          ODELAYE1
 --      gddr6_phy_bitslices         Bitslice generation
 --          gddr6_phy_byte              Generates a pair of nibbles
 --              gddr6_phy_nibble            Generates complete IO nibble
@@ -27,6 +28,7 @@
 --          gddr6_phy_dbi               DBI computation and capture
 --          gddr6_phy_crc               CRC calculation on data on the wire
 --              gddr6_phy_crc_core          CRC calculation
+--              short_delay                 Align read and write CRC calculation
 --      gddr6_phy_delay_control     Control of delay interface
 
 library ieee;
@@ -44,7 +46,8 @@ entity gddr6_phy is
         -- are held in reset until CK is good.  This signal is asynchronous
         ck_reset_i : in std_ulogic;
         -- This is asserted on completion of reset synchronously with ck_clk_o
-        -- but is driven low directly in response to ck_reset_i.
+        -- but is driven low directly in response to ck_reset_i, and can be
+        -- driven low asynchronously if CK is lost.
         ck_clk_ok_o : out std_ulogic;
 
         -- Clock from CK input.  All controls on this interface are synchronous
@@ -152,9 +155,7 @@ architecture arch of gddr6_phy is
     signal io_edc_out : std_ulogic_vector(7 downto 0);
     signal io_edc_t_out : std_ulogic_vector(7 downto 0);
 
-    signal bitslice_patch : std_ulogic_vector(0 to 0);
-
-    -- A clock for use elsewhere cannot be assigned, only associated, as
+    -- A clock for use elsewhere should not be assigned, only aliased, as
     -- assigning produces a VHDL Delta cycle difference on the assigned clock,
     -- resulting in skewed clocks in simulation.
     alias ck_clk : std_ulogic is ck_clk_o;
@@ -324,11 +325,10 @@ begin
         io_edc_o => io_edc_out,
         io_edc_t_o => io_edc_t_out,
 
-        bitslice_patch_i => bitslice_patch
+        -- Pin SG12_CK occupies the space for bitslice 2:0 which we have to
+        -- instantiate, this link helps to locate the bitslice.
+        bitslice_patch_i => (0 => io_ck_in)
     );
-    -- Pin SG12_CK occupies the space for bitslice 2:0 which we have to
-    -- instantiate, this link helps to locate the bitslice.
-    bitslice_patch <= (0 => io_ck_in);
 
 
     -- Align data to and from bitslices

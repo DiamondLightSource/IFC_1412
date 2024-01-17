@@ -18,7 +18,7 @@ entity gddr6_phy_bitslices is
         phy_clk_i : in std_ulogic_vector(0 to 1);   -- Dedicated TX clock
         wck_i : in std_ulogic_vector(0 to 1);       -- RX data clocks
         ck_clk_i : in std_ulogic;                   -- General CK/data clock
-        riu_clk_i : in std_ulogic;                  -- Delay control clock
+        riu_clk_i : in std_ulogic;                  -- RIU clock for startup
 
         -- Resets and control
         bitslice_reset_i : in std_ulogic;           -- Bitslice reset
