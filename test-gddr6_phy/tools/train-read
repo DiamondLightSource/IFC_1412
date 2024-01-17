@@ -38,7 +38,7 @@ sg.CONFIG.CAPTURE_DBI = 1
 exchange = _Exchange(sg)
 stream = Stream(exchange, 4)    # tLTLTR is minimum LDFF interval
 
-test_patterns = [0x00AA, 0x5500, 0x5555, 0x5555, 0x5555, 0x5555]
+test_patterns = [0x00AA, 0x5500, 0x33CC, 0x5555, 0x5555, 0x5555]
 
 
 def load_pattern(pattern):

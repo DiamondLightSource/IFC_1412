@@ -19,6 +19,8 @@ if sg.CONFIG.SG_RESET_N != 3:
 
 # During reset need to ensure data is sent as requested
 sg.CONFIG.ENABLE_CABI = 0
+# Perform reset with EDC driven high
+sg.CONFIG.EDC_T = 0
 
 exchange = _Exchange(sg)
 set_ca = exchange.set_ca
