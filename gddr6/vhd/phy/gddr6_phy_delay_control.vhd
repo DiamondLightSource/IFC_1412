@@ -126,24 +126,6 @@ begin
         delay => bitslip_delay
     );
 
-    -- Map the readbacks
-    delays_in <= (
-        TARGET_IDELAY => (
-            DELAY_DQ_RANGE  => bitslice_delays_i.dq_rx_delay,
-            DELAY_DBI_RANGE => bitslice_delays_i.dbi_rx_delay,
-            DELAY_EDC_RANGE => bitslice_delays_i.edc_rx_delay,
-            others => (others => '0')),
-        TARGET_ODELAY => (
-            DELAY_DQ_RANGE  => bitslice_delays_i.dq_tx_delay,
-            DELAY_DBI_RANGE => bitslice_delays_i.dbi_tx_delay,
-            others => (others => '0')),
-        TARGET_OBITSLIP => (
-            DELAY_DQ_RANGE  => resize(bitslip_delays_i.dq_tx_delay),
-            DELAY_DBI_RANGE => resize(bitslip_delays_i.dbi_tx_delay),
-            others => (others => '0')),
-        others => (others => (others => '0'))
-    );
-
 
     -- This helper allows us to overlap processing and acknowledge
     write_strobe_ack : entity work.strobe_ack port map (
@@ -279,6 +261,25 @@ begin
             end if;
             -- Bitslip strobe to write selected bitslip
             compute_strobe(bitslip_strobe, address, enable_bitslip, '0');
+
+
+            -- Map and register the readbacks
+            delays_in <= (
+                TARGET_IDELAY => (
+                    DELAY_DQ_RANGE  => bitslice_delays_i.dq_rx_delay,
+                    DELAY_DBI_RANGE => bitslice_delays_i.dbi_rx_delay,
+                    DELAY_EDC_RANGE => bitslice_delays_i.edc_rx_delay,
+                    others => (others => '0')),
+                TARGET_ODELAY => (
+                    DELAY_DQ_RANGE  => bitslice_delays_i.dq_tx_delay,
+                    DELAY_DBI_RANGE => bitslice_delays_i.dbi_tx_delay,
+                    others => (others => '0')),
+                TARGET_OBITSLIP => (
+                    DELAY_DQ_RANGE  => resize(bitslip_delays_i.dq_tx_delay),
+                    DELAY_DBI_RANGE => resize(bitslip_delays_i.dbi_tx_delay),
+                    others => (others => '0')),
+                others => (others => (others => '0'))
+            );
         end if;
     end process;
 
