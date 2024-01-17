@@ -157,7 +157,7 @@ begin
         ctrl_ca_i => (others => (others => '0')),
         ctrl_ca3_i => (others => '0'),
         ctrl_cke_n_i => '0',
-        ctrl_data_i => (others => '0'),
+        ctrl_data_i => (others => (others => '0')),
         ctrl_data_o => open,
         ctrl_output_enable_i => '0',
         ctrl_edc_in_o => open,

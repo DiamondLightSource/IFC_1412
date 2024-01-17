@@ -56,9 +56,10 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/phy/gddr6_phy_ca.vhd \
     $gddr6_dir/phy/gddr6_phy_nibble.vhd \
     $gddr6_dir/phy/gddr6_phy_byte.vhd \
-    $gddr6_dir/phy/gddr6_phy_map_dbi.vhd \
+    $gddr6_dir/phy/gddr6_phy_remap.vhd \
+    $gddr6_dir/phy/gddr6_phy_bitslices.vhd \
+    $gddr6_dir/phy/gddr6_phy_dbi.vhd \
     $gddr6_dir/phy/gddr6_phy_bitslip.vhd \
-    $gddr6_dir/phy/gddr6_phy_dq_remap.vhd \
     $gddr6_dir/phy/gddr6_phy_crc_core.vhd \
     $gddr6_dir/phy/gddr6_phy_crc.vhd \
     $gddr6_dir/phy/gddr6_phy_dq.vhd \

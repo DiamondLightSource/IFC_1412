@@ -217,8 +217,8 @@ begin
             variable edc_out : reg_data_t;
         begin
             read_gddr6_reg_result(GDDR6_DQ_REG, dq, true);
-            read_gddr6_reg_result(GDDR6_EDC_IN_REG, edc_in, true);
-            read_gddr6_reg_result(GDDR6_EDC_OUT_REG, edc_out, true);
+            read_gddr6_reg_result(GDDR6_DBI_REG, edc_in, true);
+            read_gddr6_reg_result(GDDR6_EDC_REG, edc_out, true);
             write(
                 to_hstring(dq) & " " & to_hstring(edc_in) & " " &
                 to_hstring(edc_out));
