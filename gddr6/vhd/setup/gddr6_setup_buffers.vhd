@@ -67,13 +67,18 @@ architecture arch of gddr6_setup_buffers is
     signal dbi_capture_data : vector_array(7 downto 0)(7 downto 0);
 
 
-    function to_std_ulogic_vector(value : vector_array(3 downto 0))
+    function to_std_ulogic_vector(value : vector_array)
         return std_ulogic_vector
     is
+        -- Reassign value to a known range to simplify the loop below.  ModelSim
+        -- allows me to implicitly do this assignment in the argument
+        -- declaration above, but this doesn't work for Vivado.
+        variable value_in : vector_array(3 downto 0)(7 downto 0);
         variable result : std_ulogic_vector(31 downto 0);
     begin
+        value_in := value;
         for byte in 0 to 3 loop
-            result(8*byte + 7 downto 8*byte) := value(byte);
+            result(8*byte + 7 downto 8*byte) := value_in(byte);
         end loop;
         return result;
     end;
