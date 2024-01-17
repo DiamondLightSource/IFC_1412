@@ -92,8 +92,8 @@ load_exchange()
 
 def write_test():
     data = exchange.run()
-    edc_in, edc_out = exchange.read_edc()
-    return (data, edc_in, edc_out)
+    dbi = exchange.read_dbi()
+    return (data, dbi)
 
 if args.set_bitslip is not None:
     for n in range(64):
@@ -107,9 +107,9 @@ if args.reset_odelay:
         set_odelay(n, 0)
 
 
-data, edc_in, edc_out = write_test()
+data, dbi = write_test()
 if args.exchange:
-    print_condensed_data_edc(data, edc_in, edc_out)
+    print_condensed_data_dbi(data, dbi)
 
 def print_bits(offset, bytes):
     print('%2d' % offset, ' '.join(f'{byte:08b}'[::-1] for byte in bytes))
@@ -153,7 +153,7 @@ def sweep_delays(max_delay):
     for delay in range(max_delay):
         for pin in pin_range:
             set_odelay(pin, delay)
-        data, edc_in, edc_out = write_test()
+        data, dbi = write_test()
         matches[delay] = match_data(data)
     return matches
 
@@ -214,7 +214,7 @@ def count_offset(byte):
 
 if args.find_bitslip:
     # Search for best bitslip
-    data, _, _ = write_test()
+    data, _ = write_test()
     last_column = data[data_offset + 11]
     offsets = [count_offset(b) for b in last_column]
     print(offsets)
@@ -256,5 +256,5 @@ elif args.scan:
 
 
 if args.validate:
-    data, _, _ = write_test()
+    data, _ = write_test()
     print(show_match(match_data(data)))

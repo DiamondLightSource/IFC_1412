@@ -20,8 +20,8 @@ print(
     'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
     ', Status =', regs.SYS.STATUS.LMK_STATUS)
 
-# Now take CK out of reset
-sg.CONFIG.CK_RESET_N = 1
-time.sleep(0.1)
-print(sg.STATUS)
+# # Now take CK out of reset
+# sg.CONFIG.CK_RESET_N = 1
+# time.sleep(0.1)
+# print(sg.STATUS)
 print(sg.STATUS)

@@ -359,7 +359,7 @@ begin
     );
 
 
-    -- Delay generation
+    -- Delay control
     delay : entity work.gddr6_phy_delay_control port map (
         clk_i => ck_clk,
 

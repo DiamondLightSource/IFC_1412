@@ -32,8 +32,8 @@ sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
 # Want to disable DBI for reception
 sg.CONFIG.ENABLE_DBI = 0
-# Also want to capture DBI
-sg.CONFIG.CAPTURE_DBI = 1
+# Ensure DBI register captures DBI
+sg.CONFIG.CAPTURE_EDC_OUT = 0
 
 exchange = _Exchange(sg)
 stream = Stream(exchange, 4)    # tLTLTR is minimum LDFF interval
@@ -66,18 +66,18 @@ def read_test():
     exchange.delay(24)
     exchange.exchange()
     data = exchange.run()
-    edc_in, edc_out = exchange.read_edc()
-    return (data, edc_in, edc_out)
+    dbi, edc = exchange.read_dbi_edc()
+    return (data, dbi, edc)
 
 
 if not args.no_load:
     # First load our test pattern if required
     load_patterns(test_patterns)
 
-data, edc_in, edc_out = read_test()
+data, dbi, edc = read_test()
 
 if args.exchange:
-    print_condensed_data_edc(data, edc_in, edc_out, offset = 28)
+    print_condensed_data_edc(data, dbi, edc, offset = 28)
 
 def print_bits(bytes):
     print(' '.join(f'{byte:08b}' for byte in bytes))
@@ -90,19 +90,25 @@ def show_channel(data, channel):
         ix = n + 16 * channel
         print_bits(ix, data[:, ix])
 
+def extend(range):
+    return numpy.s_[range.start-1 : range.stop + 1]
+
 
 
 data_offset = 30
+dq_range = numpy.s_[data_offset:data_offset + 12]
+dbi_range = numpy.s_[data_offset-1:data_offset - 1 + 12]
+edc_range = numpy.s_[data_offset+1:data_offset + 1 + 12]
+
+
 print('Data:')
-# for ix in range(0, 16):
-#     print_bits(data[29:-3, ix])
-show_channel(data[29:-3], args.channel)
-print('EDC:')
-for ix in range(8):
-    print_bits(ix, edc_in[31:-1, ix])
+show_channel(data[extend(dq_range)], args.channel)
 print('DBI:')
 for ix in range(8):
-    print_bits(ix, edc_out[29:-3, ix])
+    print_bits(ix, dbi[extend(dbi_range), ix])
+print('EDC:')
+for ix in range(8):
+    print_bits(ix, edc[extend(edc_range), ix])
 
 
 def show_match(match):
@@ -113,26 +119,16 @@ def show_match(match):
     return ' '.join(show[l:r] for l, r in zip(splits[:-1], splits[1:]))
 
 
-def match_data(data, edc_in, edc_out):
-    data = data[data_offset : data_offset + 12]
-    edc_in = edc_in[data_offset + 2 : data_offset + 2 + 12]
-    edc_out = edc_out[data_offset : data_offset + 12]
-    data = numpy.concatenate((data, edc_out, edc_in), axis = 1)
+def match_data(data, dbi, edc):
+    data = data[dq_range]
+    dbi = dbi[dbi_range]
+    edc = edc[edc_range]
+    data = numpy.concatenate((data, dbi, edc), axis = 1)
     pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
     return (data == pattern[:, None]).all(0)
 
-print(show_match(match_data(data, edc_in, edc_out)))
+print(show_match(match_data(data, dbi, edc)))
 
-
-# DQ_IDELAY_BASE   = 0b00_000000
-# DBI_IDELAY_BASE  = 0b11010_000
-# EDC_IDELAY_BASE  = 0b11100_000
-# 
-# # This array must match the data sequence: DQ, EDC, DBI
-# DELAY_ADDRESSES = numpy.concatenate((
-#     DQ_IDELAY_BASE + numpy.arange(64),
-#     EDC_IDELAY_BASE + numpy.arange(8),
-#     DBI_IDELAY_BASE + numpy.arange(8)))
 
 def set_idelays(delays):
     # Ensure a constant behaves like an array
@@ -145,8 +141,8 @@ def sweep_delays(max_delay):
     matches = numpy.zeros((max_delay, 80), dtype = numpy.bool)
     for delay in range(max_delay):
         set_idelays(delay)
-        data, edc_in, edc_out = read_test()
-        matches[delay] = match_data(data, edc_in, edc_out)
+        data, dbi, edc = read_test()
+        matches[delay] = match_data(data, dbi, edc)
     return matches
 
 
@@ -193,13 +189,13 @@ if args.sweep:
 
 def check_read_data():
     # Run scan repeatedly until killed or there is an error
-    data, edc_in, edc_out = read_test()
-    matches = match_data(data, edc_in, edc_out)
+    data, dbi, edc = read_test()
+    matches = match_data(data, dbi, edc)
     assert matches.all(), 'Match error: %s' % matches
 
 if args.validate:
-    data, edc_in, edc_out = read_test()
-    print(show_match(match_data(data, edc_in, edc_out)))
+    data, dbi, edc = read_test()
+    print(show_match(match_data(data, dbi, edc)))
 
 if args.check:
     i = 0

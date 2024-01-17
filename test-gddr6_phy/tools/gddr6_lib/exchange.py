@@ -60,17 +60,27 @@ class _Exchange:
             self.sg.COMMAND._write_fields_wo(STEP_READ = 1)
         return data.view('uint8')
 
-    def read_edc(self):
+    def read_dbi(self):
         assert self.exchanged, 'No data to read'
         self.sg.COMMAND._write_fields_wo(START_READ = 1)
-        edc_in = numpy.empty((self.count, 2), dtype = numpy.uint32)
-        edc_out = numpy.empty((self.count, 2), dtype = numpy.uint32)
+        dbi = numpy.empty((self.count, 2), dtype = numpy.uint32)
         for i in range(self.count):
             for j in range(2):
-                edc_in[i, j] = self.sg.EDC_IN._value
-                edc_out[i, j] = self.sg.EDC_OUT._value
+                dbi[i, j] = self.sg.DBI._value
             self.sg.COMMAND._write_fields_wo(STEP_READ = 1)
-        return (edc_in.view('uint8'), edc_out.view('uint8'))
+        return dbi.view('uint8')
+
+    def read_dbi_edc(self):
+        assert self.exchanged, 'No data to read'
+        self.sg.COMMAND._write_fields_wo(START_READ = 1)
+        dbi = numpy.empty((self.count, 2), dtype = numpy.uint32)
+        edc = numpy.empty((self.count, 2), dtype = numpy.uint32)
+        for i in range(self.count):
+            for j in range(2):
+                dbi[i, j] = self.sg.DBI._value
+                edc[i, j] = self.sg.EDC._value
+            self.sg.COMMAND._write_fields_wo(STEP_READ = 1)
+        return (dbi.view('uint8'), edc.view('uint8'))
 
     def run(self):
         self.exchange()
