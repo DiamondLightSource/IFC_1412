@@ -49,6 +49,7 @@ architecture arch of gddr6_phy_clocking is
     signal mmcm_clkfbout : std_ulogic;
     signal mmcm_clkfbin : std_ulogic;
     signal ck_clk_out : std_ulogic;
+    signal ck_clk_pllin : std_ulogic;
     signal riu_clk_out : std_ulogic;
     signal ck_clk_delay_out : std_ulogic;
     signal mmcm_locked : std_ulogic;
@@ -70,17 +71,6 @@ architecture arch of gddr6_phy_clocking is
     signal reset_state : reset_state_t := RESET_START;
     signal wait_counter : unsigned(5 downto 0);
     signal enable_pll_clk : std_ulogic := '0';
-
-    -- Mark io_ck_in for SAME_CMT_COLUMN distribution so that this can drive
-    -- both IO PLLs using the vertical clocking backbone.  This is equivalent to
-    -- the following entry in the constraints file:
-    --
-    --  set_property CLOCK_DEDICATED_ROUTE SAME_CMT_COLUMN \
-    --      [get_nets -of [get_pins path/to/bufg_in/O]]
-    attribute CLOCK_DEDICATED_ROUTE : string;
-    attribute CLOCK_DEDICATED_ROUTE of io_ck_in : signal is "SAME_CMT_COLUMN";
-    attribute DONT_TOUCH : string;
-    attribute DONT_TOUCH of io_ck_in : signal is "YES";
 
 begin
     bufg_in : BUFG port map (
@@ -116,6 +106,11 @@ begin
     );
 
 
+    bufg_pll_ckin : BUFG port map (
+        I => ck_clk_out,
+        O => ck_clk_pllin
+    );
+
     -- Generate the high speed bitslice output clocks
     gen_plls : for i in 0 to 1 generate
         signal clkfb : std_ulogic;
@@ -126,7 +121,7 @@ begin
             CLKIN_PERIOD => 1000.0 / CK_FREQUENCY,
             CLKOUTPHY_MODE => "VCO_2X"  -- 2 GHz on CLKOUTPHY
         ) port map (
-            CLKIN => io_ck_in,
+            CLKIN => ck_clk_pllin,
             CLKOUTPHY => phy_clk_o(i),
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
