@@ -95,6 +95,8 @@ architecture arch of gddr6_setup_phy is
     signal setup_output_enable : std_ulogic;
     signal setup_data_in : vector_array(63 downto 0)(7 downto 0);
     signal setup_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal setup_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
+    signal setup_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal setup_edc_in : vector_array(7 downto 0)(7 downto 0);
     signal setup_edc_out : vector_array(7 downto 0)(7 downto 0);
 
@@ -138,8 +140,8 @@ begin
         phy_output_enable_o => setup_output_enable,
         phy_data_o => setup_data_out,
         phy_data_i => setup_data_in,
-        phy_dbi_n_i => phy_dbi_n_in,
-        phy_dbi_n_o => phy_dbi_n_out,
+        phy_dbi_n_i => setup_dbi_n_in,
+        phy_dbi_n_o => setup_dbi_n_out,
         phy_edc_in_i => setup_edc_in,
         phy_edc_out_i => setup_edc_out,
 
@@ -230,6 +232,10 @@ begin
             setup_data_in <= phy_data_in;
             setup_edc_in <= phy_edc_in;
             setup_edc_out <= phy_edc_out;
+            -- These two delays are only used during training, but ensure that
+            -- DBI and DQ data are aligned
+            phy_dbi_n_out <= setup_dbi_n_out;
+            setup_dbi_n_in <= phy_dbi_n_in;
         end if;
     end process;
 end;
