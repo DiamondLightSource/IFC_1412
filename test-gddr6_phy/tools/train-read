@@ -96,16 +96,15 @@ def extend(range):
 
 
 data_offset = 30
-dq_range = numpy.s_[data_offset:data_offset + 12]
-dbi_range = numpy.s_[data_offset-1:data_offset - 1 + 12]
+data_range = numpy.s_[data_offset:data_offset + 12]
 edc_range = numpy.s_[data_offset+1:data_offset + 1 + 12]
 
 
 print('Data:')
-show_channel(data[extend(dq_range)], args.channel)
+show_channel(data[extend(data_range)], args.channel)
 print('DBI:')
 for ix in range(8):
-    print_bits(ix, dbi[extend(dbi_range), ix])
+    print_bits(ix, dbi[extend(data_range), ix])
 print('EDC:')
 for ix in range(8):
     print_bits(ix, edc[extend(edc_range), ix])
@@ -120,8 +119,8 @@ def show_match(match):
 
 
 def match_data(data, dbi, edc):
-    data = data[dq_range]
-    dbi = dbi[dbi_range]
+    data = data[data_range]
+    dbi = dbi[data_range]
     edc = edc[edc_range]
     data = numpy.concatenate((data, dbi, edc), axis = 1)
     pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')

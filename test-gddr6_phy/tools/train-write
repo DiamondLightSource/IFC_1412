@@ -32,6 +32,7 @@ parser.add_argument('-v', '--validate', action = 'store_true')
 args = parser.parse_args()
 
 
+sg.CONFIG.DBI_TRAINING = 1
 
 
 exchange = _Exchange(sg)
@@ -41,8 +42,11 @@ test_patterns = [0xFF00, 0xCC3C, 0x5500, 0x5555, 0xA555, 0x0000]
 
 
 def write_dq(byte):
+    pattern = byte | (byte << 8) | (byte << 16) | (byte << 24)
     for _ in range(16):
-        sg.DQ._value = byte | (byte << 8) | (byte << 16) | (byte << 24)
+        sg.DQ._value = pattern
+    for _ in range(2):
+        sg.DBI._value = pattern
 
 
 # Iterator to generate DQ pattern at the correct place.  Returns appropriate
@@ -96,14 +100,14 @@ def write_test():
     return (data, dbi)
 
 if args.set_bitslip is not None:
-    for n in range(64):
+    for n in range(72):
         set_obitslip(n, args.set_bitslip)
 elif args.reset_bitslip:
-    for n in range(64):
+    for n in range(72):
         set_obitslip(n, 0)
 
 if args.reset_odelay:
-    for n in range(64):
+    for n in range(72):
         set_odelay(n, 0)
 
 
@@ -119,13 +123,25 @@ def show_channel(data, channel):
         ix = n + 16 * channel
         print_bits(ix, data[:, ix])
 
+def show_data(data, dbi, name, offset, channel):
+    data_range = numpy.s_[offset-1:offset+13]
+    print('Data %s:' % name)
+    for n in range(0, 16):
+        ix = n + 16 * channel
+        print_bits(ix, data[data_range, ix])
+    print('DBI %s:' % name)
+    for n in range(8):
+        print_bits(n, dbi[data_range, n])
+
 
 if args.data_out:
-    print('Data Out:')
-    show_channel(data[16:30], args.channel)
+    show_data(data, dbi, 'Out', 17, args.channel)
 
-print('Data In:')
-show_channel(data[32:46], args.channel)
+data_offset = 33
+data_range = numpy.s_[data_offset:data_offset+12]
+
+show_data(data, dbi, 'In', data_offset, args.channel)
+
 
 
 
@@ -136,25 +152,23 @@ def show_match(match):
     splits = [0, 16, 32, 48, 64, 72, 80]
     return ' '.join(show[l:r] for l, r in zip(splits[:-1], splits[1:]))
 
-def match_data(data):
-    data = data[data_offset : data_offset + 12]
+def match_data(data, dbi):
+    data = numpy.concatenate((data, dbi), axis = 1)
+    data = data[data_range]
     pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
     return (data == pattern[:, None]).all(0)
 
-data_offset = 33
-print(show_match(match_data(data)))
+print(show_match(match_data(data, dbi)))
 
 
-pin_range = range(64)
-# pin_range = range(8)
 
 def sweep_delays(max_delay):
-    matches = numpy.zeros((max_delay, 64), dtype = numpy.bool)
+    matches = numpy.zeros((max_delay, 72), dtype = numpy.bool)
     for delay in range(max_delay):
-        for pin in pin_range:
+        for pin in range(72):
             set_odelay(pin, delay)
         data, dbi = write_test()
-        matches[delay] = match_data(data)
+        matches[delay] = match_data(data, dbi)
     return matches
 
 
@@ -214,7 +228,8 @@ def count_offset(byte):
 
 if args.find_bitslip:
     # Search for best bitslip
-    data, _ = write_test()
+    data, dbi = write_test()
+    data = numpy.concatenate((data, dbi), axis = 1)
     last_column = data[data_offset + 11]
     offsets = [count_offset(b) for b in last_column]
     print(offsets)
@@ -224,12 +239,12 @@ if args.find_bitslip:
 
 if args.scan_bitslips:
     bitslips = list(range(8))
-    odelays = numpy.zeros((len(bitslips), 64), dtype = numpy.int64)
-    windows = numpy.zeros((len(bitslips), 64), dtype = numpy.int64)
+    odelays = numpy.zeros((len(bitslips), 72), dtype = numpy.int64)
+    windows = numpy.zeros((len(bitslips), 72), dtype = numpy.int64)
 
     for ix, bitslip in enumerate(bitslips):
         print('bitslip', bitslip)
-        for pin in pin_range:
+        for pin in range(72):
             set_obitslip(pin, bitslip)
         matches = sweep_delays(500)
         odelays[ix], windows[ix] = find_eyes(matches)
@@ -240,7 +255,7 @@ if args.scan_bitslips:
 
     print(numpy.argmax(windows, axis = 0))
 
-    for pin in pin_range:
+    for pin in range(72):
         ix = numpy.argmax(windows[:, pin])
         bitslip = bitslips[ix]
         set_obitslip(pin, bitslip)
@@ -251,10 +266,10 @@ elif args.scan:
     odelays, windows = find_eyes(matches)
     print(odelays)
     print(windows)
-    for pin in pin_range:
+    for pin in range(72):
         set_odelay(pin, odelays[pin])
 
 
 if args.validate:
-    data, _ = write_test()
-    print(show_match(match_data(data)))
+    data, dbi = write_test()
+    print(show_match(match_data(data, dbi)))
