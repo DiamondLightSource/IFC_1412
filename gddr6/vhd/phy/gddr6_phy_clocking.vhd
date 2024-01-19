@@ -114,6 +114,7 @@ begin
     -- Generate the high speed bitslice output clocks
     gen_plls : for i in 0 to 1 generate
         signal clkfb : std_ulogic;
+        signal locked : std_ulogic;
     begin
         -- Input clock is 250, the PLL runs at 1 GHz
         pll : PLLE3_BASE generic map (
@@ -125,10 +126,17 @@ begin
             CLKOUTPHY => phy_clk_o(i),
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
-            LOCKED => pll_locked(i),
+            LOCKED => locked,
             CLKOUTPHYEN => enable_pll_clk,
             PWRDWN => '0',
             RST => ck_reset_i
+        );
+
+        sync : entity work.sync_bit port map (
+            clk_i => riu_clk,
+            reset_i => ck_reset_i,
+            bit_i => locked,
+            bit_o => pll_locked(i)
         );
     end generate;
 

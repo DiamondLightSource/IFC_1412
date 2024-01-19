@@ -48,7 +48,6 @@ entity gddr6_phy_nibble is
         vtc_ready_o : out std_ulogic;
         -- Slice controls including output enable
         tbyte_in_i : in std_ulogic_vector(3 downto 0);
-        phy_rden_i : in std_ulogic_vector(3 downto 0);
 
         -- VTC enables
         enable_tri_vtc_i : in std_ulogic;
@@ -106,7 +105,8 @@ begin
         EN_OTHER_NCLK => choose(LOWER_NIBBLE, "FALSE", "TRUE"),
         EN_CLK_TO_EXT_NORTH => choose(CLK_TO_NORTH, "ENABLE", "DISABLE"),
         EN_CLK_TO_EXT_SOUTH => choose(CLK_TO_SOUTH, "ENABLE", "DISABLE"),
-        -- Required when using TBYTE_IN via TX_BITSLICE_TRI
+        -- Required when using TBYTE_IN via TX_BITSLICE_TRI, at least according
+        -- to UG571 pp290 and 293 (v1.14).
         TX_GATING => "ENABLE"
     ) port map (
         DLY_RDY => dly_ready_o,
@@ -140,7 +140,7 @@ begin
         -- No special PHY control
         PHY_RDCS0 => "0000",
         PHY_RDCS1 => "0000",
-        PHY_RDEN => phy_rden_i,
+        PHY_RDEN => "1111",
         PHY_WRCS0 => "0000",
         PHY_WRCS1 => "0000",
 
