@@ -26,6 +26,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_defs.vhd \
     $vhd_dir/phy/gddr6_phy_io.vhd \
     $vhd_dir/phy/gddr6_phy_clocking.vhd \
+    $vhd_dir/phy/gddr6_phy_reset.vhd \
     $vhd_dir/phy/gddr6_phy_ca.vhd \
     $vhd_dir/phy/gddr6_phy_nibble.vhd \
     $vhd_dir/phy/gddr6_phy_byte.vhd \
@@ -48,6 +49,7 @@ view wave
 
 add wave -group "IO" /phy/io/*
 add wave -group "Clocking" /phy/clocking/*
+add wave -group "Reset" /phy/reset/*
 add wave -group "CA" /phy/ca/*
 add wave -group "DQ Nibble(0)" \
     /phy/bitslices/gen_bytes(0)/byte/gen_nibble(0)/nibble/*

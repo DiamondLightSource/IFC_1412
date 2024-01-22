@@ -41,8 +41,7 @@
             .CK_OK
             # Set if CK not OK event seen since last read
             .CK_OK_EVENT
-            # Set if a CK unlock event has been seen since last read
-            .CK_UNLOCK_EVENT
+            -
             # Set if PHY read FIFO is properly synchronised
             .FIFO_OK        2
             # Set if FIFO not OK event seen since last read

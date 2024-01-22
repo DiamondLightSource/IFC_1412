@@ -214,7 +214,6 @@ begin
                 GDDR6_STATUS_FIFO_OK_BITS => reverse(phy_status_i.fifo_ok),
                 others => '0');
             ck_event_bits <= (
-                GDDR6_STATUS_CK_UNLOCK_EVENT_BIT => phy_status_i.ck_unlock,
                 GDDR6_STATUS_FIFO_OK_EVENT_BITS => not phy_status_i.fifo_ok,
                 others => '0');
         end if;

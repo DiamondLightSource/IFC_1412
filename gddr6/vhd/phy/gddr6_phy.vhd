@@ -14,6 +14,8 @@
 --          PLLE3_BASE
 --          BUFGCE
 --          sync_bit
+--      gddr_phy_reset              Manage bitslice reset state machine
+--          sync_bit
 --      gddr6_phy_ca                CA generation
 --          ODDRE1
 --      gddr6_phy_bitslices         Bitslice generation
@@ -159,20 +161,23 @@ architecture arch of gddr6_phy is
     -- assigning produces a VHDL Delta cycle difference on the assigned clock,
     -- resulting in skewed clocks in simulation.
     alias ck_clk : std_ulogic is ck_clk_o;
-
-    -- Status readbacks
-    signal ck_unlock : std_ulogic;
-    signal fifo_ok : std_ulogic_vector(0 to 1);
-
-    -- Other clocks, resets, controls
+    -- Clock generation signals
     signal phy_clk : std_ulogic_vector(0 to 1);
     signal riu_clk : std_ulogic;
     signal ck_clk_delay : std_ulogic;
+
+    -- Bitslice reset signals
+    signal enable_pll_phy : std_ulogic;
+    signal pll_locked : std_ulogic;
+    signal mmcm_locked : std_ulogic;
     signal bitslice_reset : std_ulogic;
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
     signal enable_bitslice_control : std_ulogic;
+
+    -- Status readbacks
+    signal fifo_ok : std_ulogic_vector(0 to 1);
 
     -- Signals to/from bitslices before alignment and processing
     signal raw_data_out : vector_array(63 downto 0)(7 downto 0);
@@ -240,24 +245,38 @@ begin
     );
 
 
-    -- Clocks and resets
+    -- Clocks generation
     clocking : entity work.gddr6_phy_clocking generic map (
         CK_FREQUENCY => CK_FREQUENCY
     ) port map (
+        ck_reset_i => ck_reset_i,
         io_ck_i => io_ck_in,
 
-        phy_clk_o => phy_clk,
         ck_clk_o => ck_clk,
-        riu_clk_o => riu_clk,
         ck_clk_delay_o => ck_clk_delay,
+        phy_clk_o => phy_clk,
+        riu_clk_o => riu_clk,
+
+        enable_pll_phy_i => enable_pll_phy,
+
+        pll_locked_o => pll_locked,
+        mmcm_locked_o => mmcm_locked
+    );
+
+
+    -- Bitslice reset
+    reset : entity work.gddr6_phy_reset port map (
+        clk_i => riu_clk,
+        ck_clk_ok_o => ck_clk_ok_o,
+
+        pll_locked_i => pll_locked,
+        mmcm_locked_i => mmcm_locked,
 
         ck_reset_i => ck_reset_i,
-        ck_clk_ok_o => ck_clk_ok_o,
-        ck_unlock_o => ck_unlock,
-
-        bitslice_reset_o => bitslice_reset,
         dly_ready_i => dly_ready,
         vtc_ready_i => vtc_ready,
+        enable_pll_phy_o => enable_pll_phy,
+        bitslice_reset_o => bitslice_reset,
         enable_control_vtc_o => enable_control_vtc,
         enable_bitslice_control_o => enable_bitslice_control
     );
@@ -376,7 +395,6 @@ begin
 
     -- Status readbacks
     phy_status_o <= (
-        ck_unlock => ck_unlock,
         fifo_ok => fifo_ok
     );
 end;

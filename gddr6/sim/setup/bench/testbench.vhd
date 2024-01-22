@@ -95,7 +95,6 @@ begin
     end process;
 
     phy_status_in <= (
-        ck_unlock => '0',
         fifo_ok => "11"
     );
     setup_delay_in <= (

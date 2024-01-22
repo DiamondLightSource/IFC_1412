@@ -49,6 +49,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_defs.vhd \
     $vhd_dir/phy/gddr6_phy_io.vhd \
     $vhd_dir/phy/gddr6_phy_clocking.vhd \
+    $vhd_dir/phy/gddr6_phy_reset.vhd \
     $vhd_dir/phy/gddr6_phy_ca.vhd \
     $vhd_dir/phy/gddr6_phy_nibble.vhd \
     $vhd_dir/phy/gddr6_phy_byte.vhd \

@@ -74,9 +74,6 @@ package gddr6_defs is
 
     -- Readbacks from PHY
     type phy_status_t is record
-        -- This is asserted for one tick immediately after relocking if the CK
-        -- PLL unlocks.
-        ck_unlock : std_ulogic;
         -- This indicates that FIFO reset has been successful, and will go low
         -- if FIFO underflow or overflow is detected.
         fifo_ok : std_ulogic_vector(0 to 1);

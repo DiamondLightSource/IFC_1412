@@ -1,4 +1,4 @@
--- Clocking and resets
+-- Clock generation
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -14,29 +14,27 @@ entity gddr6_phy_clocking is
         CK_FREQUENCY : real
     );
     port (
-        -- Main clock and reset control.  Hold in reset until CK input valid
+        -- Asynchronous reset.  Must be asserted until io_ck_i is valid
+        ck_reset_i : in std_ulogic;
+        -- Clock in from SG12_CK
+        io_ck_i : in std_ulogic;
+
+        -- Application clock
         ck_clk_o : out std_ulogic;
-        -- Dedicated clock for bitslice RIU.  This is needed for the bitslice
-        -- control, but cannot run at full CK clock speed
-        riu_clk_o : out std_ulogic;
         -- Special clock for delaying CA output
         ck_clk_delay_o : out std_ulogic;
-
-        -- Resets and clock status
-        ck_reset_i : in std_ulogic;
-        ck_clk_ok_o : out std_ulogic;
-        ck_unlock_o : out std_ulogic := '0';
-
-        -- Clock in from SG12_CK and TX clock out to bitslices
-        io_ck_i : in std_ulogic;
+        -- Dedicated clocks to bitslice outputs
         phy_clk_o : out std_ulogic_vector(0 to 1);
+        -- Dedicated bitslice reset configuration clock
+        riu_clk_o : out std_ulogic;
 
-        -- Reset control and management
-        bitslice_reset_o : out std_ulogic;     -- Bitslice reset
-        dly_ready_i : in std_ulogic;           -- Delay ready (async)
-        vtc_ready_i : in std_ulogic;           -- Calibration done (async)
-        enable_control_vtc_o : out std_ulogic;
-        enable_bitslice_control_o : out std_ulogic
+        -- Set to enable the PLL PHY clocks
+        enable_pll_phy_i : in std_ulogic;
+
+        -- Set when PLL is locked, synchronous to CK clock
+        pll_locked_o : out std_ulogic;
+        -- Set when MMCM is locked, asynchronous.  Used to detect CK dropout
+        mmcm_locked_o : out std_ulogic
     );
 end;
 
@@ -45,6 +43,7 @@ architecture arch of gddr6_phy_clocking is
     -- CK clock
     constant CA_PHASE_SHIFT : real := -90.0;
 
+    -- Input clock and MMCM
     signal io_ck_in : std_ulogic;
     signal mmcm_clkfbout : std_ulogic;
     signal mmcm_clkfbin : std_ulogic;
@@ -52,34 +51,21 @@ architecture arch of gddr6_phy_clocking is
     signal riu_clk_out : std_ulogic;
     signal ck_clk_delay_out : std_ulogic;
     signal mmcm_locked : std_ulogic;
-    signal pll_locked : std_ulogic_vector(0 to 1);
-    signal unlock_detect : std_ulogic;
 
+    -- PLL
+    signal pll_locked : std_ulogic_vector(0 to 1);
+
+    -- Clock enable control and output clocks
     signal clk_enable : std_ulogic;
     signal raw_clk : std_ulogic;
     -- Assigning clocks
     alias ck_clk : std_ulogic is ck_clk_o;
     alias riu_clk : std_ulogic is riu_clk_o;
 
-    signal reset_sync : std_ulogic;
-    signal dly_ready_in : std_ulogic;
-    signal vtc_ready_in : std_ulogic;
-    type reset_state_t is (
-        RESET_START, RESET_RELEASE, RESET_WAIT_PLL, RESET_WAIT_DLY_RDY,
-        RESET_WAIT_VTC_RDY, RESET_DONE);
-    signal reset_state : reset_state_t := RESET_START;
-    signal wait_counter : unsigned(5 downto 0);
-    signal enable_pll_clk : std_ulogic := '0';
-
 begin
     bufg_in : BUFG port map (
         I => io_ck_i,
         O => io_ck_in
-    );
-
-    bufg_clkfb : BUFG port map (
-        I => mmcm_clkfbout,
-        O => mmcm_clkfbin
     );
 
     -- We need to run ck_clk in phase with CK; apparently this cannot be done
@@ -102,6 +88,12 @@ begin
         LOCKED => mmcm_locked,
         PWRDWN => '0',
         RST => ck_reset_i
+    );
+    mmcm_locked_o <= mmcm_locked;
+
+    bufg_clkfb : BUFG port map (
+        I => mmcm_clkfbout,
+        O => mmcm_clkfbin
     );
 
 
@@ -126,7 +118,7 @@ begin
             CLKFBOUT => clkfb,
             CLKFBIN => clkfb,
             LOCKED => locked,
-            CLKOUTPHYEN => enable_pll_clk,
+            CLKOUTPHYEN => enable_pll_phy_i,
             PWRDWN => '0',
             RST => ck_reset_i
         );
@@ -138,6 +130,7 @@ begin
             bit_o => pll_locked(i)
         );
     end generate;
+    pll_locked_o <= vector_and(pll_locked);
 
 
     -- Controlling the master BUFG is a little tricky: we want to enable the
@@ -179,95 +172,4 @@ begin
         I => ck_clk_delay_out,
         O => ck_clk_delay_o
     );
-
-
-    -- Synchronise reset with clock for the remaining processing
-    sync_reset : entity work.sync_bit generic map (
-        INITIAL => '1'
-    ) port map (
-        clk_i => riu_clk,
-        reset_i => ck_reset_i,
-        bit_i => '0',
-        bit_o => reset_sync
-    );
-
-    sync_dly_ready : entity work.sync_bit port map (
-        clk_i => riu_clk,
-        bit_i => dly_ready_i,
-        bit_o => dly_ready_in
-    );
-
-    sync_vtc_ready : entity work.sync_bit port map (
-        clk_i => riu_clk,
-        bit_i => vtc_ready_i,
-        bit_o => vtc_ready_in
-    );
-
-
-    -- Generate reset sequence.  This follows the reset process documented in
-    -- UG571 starting on p296 of v1.14.
-    process (riu_clk, reset_sync) begin
-        if reset_sync then
-            reset_state <= RESET_START;
-            enable_control_vtc_o <= '0';
-            bitslice_reset_o <= '1';
-            enable_pll_clk <= '0';
-            enable_bitslice_control_o <= '0';
-            wait_counter <= 6X"0F";
-        elsif rising_edge(riu_clk) then
-            case reset_state is
-                when RESET_START =>
-                    -- Wait a few ticks before we do anything.  Note that this
-                    -- event will not occur until the MMCM is out of reset, as
-                    -- the clock is qualified by clk_enable.
-                    if wait_counter > 0 then
-                        wait_counter <= wait_counter - 1;
-                    elsif vector_and(pll_locked) then
-                        -- In case the PLLs are late coming into lock wait for
-                        -- them as well
-                        reset_state <= RESET_RELEASE;
-                    end if;
-                when RESET_RELEASE =>
-                    -- Release bitslice resets and start counting before
-                    -- enabling the high speed clock
-                    bitslice_reset_o <= '0';
-                    wait_counter <= 6X"3F";     -- 63 ticks
-                    reset_state <= RESET_WAIT_PLL;
-                when RESET_WAIT_PLL =>
-                    -- Wait 64 clocks for PLL to be good
-                    wait_counter <= wait_counter - 1;
-                    if wait_counter = 0 then
-                        reset_state <= RESET_WAIT_DLY_RDY;
-                    end if;
-                when RESET_WAIT_DLY_RDY =>
-                    -- Enable the pll clock to slices and wait for DLY_RDY
-                    enable_pll_clk <= '1';
-                    if dly_ready_in then
-                        reset_state <= RESET_WAIT_VTC_RDY;
-                    end if;
-                when RESET_WAIT_VTC_RDY =>
-                    -- Wait for VTC_RDY
-                    enable_control_vtc_o <= '1';
-                    if vtc_ready_in then
-                        reset_state <= RESET_DONE;
-                    end if;
-                when RESET_DONE =>
-                    -- We stay in this state unless another reset occurs
-                    enable_bitslice_control_o <= '1';
-            end case;
-        end if;
-    end process;
-
-    -- Detect PLL unlock and generate single pulse on resumption of lock
-    process (ck_clk, mmcm_locked) begin
-        if not mmcm_locked then
-            unlock_detect <= '1';
-        elsif rising_edge(ck_clk) then
-            unlock_detect <= '0';
-            ck_unlock_o <= unlock_detect;
-        end if;
-    end process;
-
-    -- Ensure we report CK not ok if we lose valid CK at any time
-    ck_clk_ok_o <= to_std_ulogic(reset_state = RESET_DONE) and mmcm_locked;
 end;
