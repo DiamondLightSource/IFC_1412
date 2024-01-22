@@ -15,20 +15,10 @@ package gddr6_phy_defs is
     -- Controls from _delay_control to _dq and _dq_remap
     type bitslice_delay_control_t is record
         up_down_n : std_ulogic;
-        -- DQ RX
-        dq_rx_vtc : std_ulogic_vector(63 downto 0);
         dq_rx_ce : std_ulogic_vector(63 downto 0);
-        -- DQ TX
-        dq_tx_vtc : std_ulogic_vector(63 downto 0);
         dq_tx_ce : std_ulogic_vector(63 downto 0);
-        -- DBI RX
-        dbi_rx_vtc : std_ulogic_vector(7 downto 0);
         dbi_rx_ce : std_ulogic_vector(7 downto 0);
-        -- DBI TX
-        dbi_tx_vtc : std_ulogic_vector(7 downto 0);
         dbi_tx_ce : std_ulogic_vector(7 downto 0);
-        -- EDC
-        edc_rx_vtc : std_ulogic_vector(7 downto 0);
         edc_rx_ce : std_ulogic_vector(7 downto 0);
     end record;
 

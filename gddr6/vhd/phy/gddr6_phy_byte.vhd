@@ -38,14 +38,11 @@ entity gddr6_phy_byte is
         -- Resets and controls
         bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
+        enable_bitslice_vtc_i : in std_ulogic;
         enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
 
-        -- VTC enables
-        enable_tri_vtc_i : in std_ulogic_vector(0 to 1);
-        enable_tx_vtc_i : in std_ulogic_vector(0 to 11);
-        enable_rx_vtc_i : in std_ulogic_vector(0 to 11);
         -- Delay control
         delay_up_down_n_i : in std_ulogic;
         rx_delay_ce_i : in std_ulogic_vector(0 to 11);
@@ -123,13 +120,10 @@ begin
 
             bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
+            enable_bitslice_vtc_i => enable_bitslice_vtc_i,
             dly_ready_o => dly_ready(i),
             vtc_ready_o => vtc_ready(i),
             tbyte_in_i => tbyte_in,
-
-            enable_tri_vtc_i => enable_tri_vtc_i(i),
-            enable_tx_vtc_i => enable_tx_vtc_i(BITSLICE_RANGE),
-            enable_rx_vtc_i => enable_rx_vtc_i(BITSLICE_RANGE),
 
             delay_up_down_n_i => delay_up_down_n_i,
             rx_delay_ce_i => rx_delay_ce_i(BITSLICE_RANGE),

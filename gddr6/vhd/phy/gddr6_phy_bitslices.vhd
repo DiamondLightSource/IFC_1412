@@ -23,6 +23,7 @@ entity gddr6_phy_bitslices is
         -- Resets and control
         bitslice_reset_i : in std_ulogic;           -- Bitslice reset
         enable_control_vtc_i : in std_ulogic;
+        enable_bitslice_vtc_i : in std_ulogic;
         enable_bitslice_control_i : in std_ulogic;
         dly_ready_o : out std_ulogic;               -- Delay ready (async)
         vtc_ready_o : out std_ulogic;               -- Calibration done (async)
@@ -79,10 +80,6 @@ architecture arch of gddr6_phy_bitslices is
 
     -- Signals organised by slice ready for remapping
     --
-    -- VTC enables
-    signal slice_enable_tri_vtc : vector_array(0 to 7)(0 to 1);
-    signal slice_enable_rx_vtc : vector_array(0 to 7)(0 to 11);
-    signal slice_enable_tx_vtc : vector_array(0 to 7)(0 to 11);
     -- Delay control
     signal slice_rx_delay_ce : vector_array(0 to 7)(0 to 11);
     signal slice_tx_delay_ce : vector_array(0 to 7)(0 to 11);
@@ -122,13 +119,10 @@ begin
 
             bitslice_reset_i => bitslice_reset_i,
             enable_control_vtc_i => enable_control_vtc_i,
+            enable_bitslice_vtc_i => enable_bitslice_vtc_i,
             enable_bitslice_control_i => enable_bitslice_control_i,
             dly_ready_o => slice_dly_ready(i),
             vtc_ready_o => slice_vtc_ready(i),
-
-            enable_tri_vtc_i => slice_enable_tri_vtc(i),
-            enable_tx_vtc_i => slice_enable_tx_vtc(i),
-            enable_rx_vtc_i => slice_enable_rx_vtc(i),
 
             delay_up_down_n_i => delay_control_i.up_down_n,
             rx_delay_ce_i => slice_rx_delay_ce(i),
@@ -177,10 +171,6 @@ begin
         slice_pad_in_o => slice_pad_in,
         slice_pad_out_i => slice_pad_out,
         slice_pad_t_out_i => slice_pad_t_out,
-        -- VTC controls
-        slice_enable_tri_vtc_o => slice_enable_tri_vtc,
-        slice_enable_rx_vtc_o => slice_enable_rx_vtc,
-        slice_enable_tx_vtc_o => slice_enable_tx_vtc,
         -- Delay control
         slice_rx_delay_ce_o => slice_rx_delay_ce,
         slice_tx_delay_ce_o => slice_tx_delay_ce,

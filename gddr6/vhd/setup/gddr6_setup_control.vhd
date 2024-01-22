@@ -200,9 +200,7 @@ begin
                 -- Special fudge for prototype board, must be removed.  Used to
                 -- work around sticky CA6 bit.
                 fudge_sticky_ca6 =>
-                    ck_config_bits(GDDR6_CONFIG_FUDGE_STICKY_CA6_BIT),
-                disable_vtc =>
-                    ck_config_bits(GDDR6_CONFIG_DISABLE_VTC_BIT)
+                    ck_config_bits(GDDR6_CONFIG_FUDGE_STICKY_CA6_BIT)
             );
             capture_edc_out_o <=
                 ck_config_bits(GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT);

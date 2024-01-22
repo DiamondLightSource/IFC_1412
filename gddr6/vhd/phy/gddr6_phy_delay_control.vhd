@@ -16,8 +16,6 @@ entity gddr6_phy_delay_control is
         -- Control interface from registers
         setup_i : in setup_delay_t;
         setup_o : out setup_delay_result_t;
-        -- Hack from config interface
-        disable_vtc_i : in std_ulogic;
 
         -- Delay controls and readbacks
         bitslice_control_o : out bitslice_delay_control_t;
@@ -36,8 +34,6 @@ architecture arch of gddr6_phy_delay_control is
     -- Strobe arrays for output indexed by target type
     signal ce_out : vector_array(0 to 3)(79 downto 0)
         := (others => (others => '0'));
-    signal vtc_out : vector_array(0 to 3)(79 downto 0)
-        := (others => (others => '1'));
     signal bitslip_strobe : std_ulogic_vector(71 downto 0) := (others => '0');
 
     -- Incoming delays
@@ -56,7 +52,6 @@ architecture arch of gddr6_phy_delay_control is
     signal bitslip_delay : unsigned(2 downto 0);
 
     -- Strobe controls
-    signal enable_vtc : std_ulogic := '1';
     signal enable_bitslip : std_ulogic := '0';
 
     -- Relatively complex state machine to handle VTC handshake when accessing
@@ -111,13 +106,7 @@ begin
         dq_tx_ce =>   ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
         dbi_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
         dbi_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
-        edc_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE),
-        -- VTC uses the same address mapping as CE
-        dq_rx_vtc =>  vtc_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
-        dq_tx_vtc =>  vtc_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
-        dbi_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
-        dbi_tx_vtc => vtc_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
-        edc_rx_vtc => vtc_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
+        edc_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
     );
 
     bitslip_control_o <= (
@@ -192,7 +181,6 @@ begin
                         -- selected target and on whether writing is enabled
                         case to_integer(setup_i.target) is
                             when TARGET_IDELAY | TARGET_ODELAY =>
-                                enable_vtc <= '0';
                                 if setup_i.enable_write then
                                     write_state <= WRITE_WAIT_START;
                                 else
@@ -242,7 +230,6 @@ begin
                 when WRITE_END =>
                     -- On completion ensure VTC back to normal and update the
                     -- readback.  For a read-only action this is all we do!
-                    enable_vtc <= '1';
                     delay_out <= unsigned(delays_in(target)(address));
                     write_state <= WRITE_IDLE;
             end case;
@@ -253,12 +240,6 @@ begin
             -- Delay clock enable during delay slewing
             compute_strobe(
                 ce_out, to_std_ulogic(write_state = WRITE_DELAY), '0');
-            -- Disable VTC during delay operation unless fully disabled
-            if disable_vtc_i then
-                vtc_out <= (others => (others => '0'));
-            else
-                compute_strobe(vtc_out, enable_vtc, '1');
-            end if;
             -- Bitslip strobe to write selected bitslip
             compute_strobe(bitslip_strobe, address, enable_bitslip, '0');
 

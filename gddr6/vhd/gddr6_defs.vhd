@@ -68,8 +68,6 @@ package gddr6_defs is
         -- Special fudge for prototype board, must be removed.  Used to work
         -- around sticky CA6 bit.
         fudge_sticky_ca6 : std_ulogic;
-        -- Hack to disable VTC
-        disable_vtc : std_ulogic;
     end record;
 
     -- Readbacks from PHY

@@ -44,15 +44,12 @@ entity gddr6_phy_nibble is
         -- Resets and controls
         bitslice_reset_i : in std_ulogic;
         enable_control_vtc_i : in std_ulogic;
+        enable_bitslice_vtc_i : in std_ulogic;
         dly_ready_o : out std_ulogic;
         vtc_ready_o : out std_ulogic;
         -- Slice controls including output enable
         tbyte_in_i : in std_ulogic_vector(3 downto 0);
 
-        -- VTC enables
-        enable_tri_vtc_i : in std_ulogic;
-        enable_tx_vtc_i : in std_ulogic_vector(0 to 5);
-        enable_rx_vtc_i : in std_ulogic_vector(0 to 5);
         -- Delay control
         delay_up_down_n_i : in std_ulogic;
         rx_delay_ce_i : in std_ulogic_vector(0 to 5);
@@ -184,7 +181,7 @@ begin
         DELAY_TYPE => "VAR_LOAD"
     ) port map (
         TRI_OUT => tri_out_to_tbyte,
-        EN_VTC => enable_tri_vtc_i,
+        EN_VTC => enable_bitslice_vtc_i,
         RST => bitslice_reset_i,
         RST_DLY => bitslice_reset_i,
         -- Control interface
@@ -255,8 +252,8 @@ begin
                 T => t,
                 TBYTE_IN => tri_out_to_tbyte,
 
-                RX_EN_VTC => enable_rx_vtc_i(i),
-                TX_EN_VTC => enable_tx_vtc_i(i),
+                RX_EN_VTC => enable_bitslice_vtc_i,
+                TX_EN_VTC => enable_bitslice_vtc_i,
                 RX_RST => bitslice_reset_i,
                 TX_RST => bitslice_reset_i,
 

@@ -174,6 +174,7 @@ architecture arch of gddr6_phy is
     signal dly_ready : std_ulogic;
     signal vtc_ready : std_ulogic;
     signal enable_control_vtc : std_ulogic;
+    signal enable_bitslice_vtc : std_ulogic;
     signal enable_bitslice_control : std_ulogic;
 
     -- Status readbacks
@@ -278,6 +279,7 @@ begin
         enable_pll_phy_o => enable_pll_phy,
         bitslice_reset_o => bitslice_reset,
         enable_control_vtc_o => enable_control_vtc,
+        enable_bitslice_vtc_o => enable_bitslice_vtc,
         enable_bitslice_control_o => enable_bitslice_control
     );
 
@@ -317,6 +319,7 @@ begin
 
         bitslice_reset_i => bitslice_reset,
         enable_control_vtc_i => enable_control_vtc,
+        enable_bitslice_vtc_i => enable_bitslice_vtc,
         enable_bitslice_control_i => enable_bitslice_control,
         dly_ready_o => dly_ready,
         vtc_ready_o => vtc_ready,
@@ -384,7 +387,6 @@ begin
 
         setup_i => setup_delay_i,
         setup_o => setup_delay_o,
-        disable_vtc_i => phy_setup_i.disable_vtc,
 
         bitslice_control_o => bitslice_delay_control,
         bitslice_delays_i => bitslice_delay_readbacks,

@@ -20,10 +20,6 @@ entity gddr6_phy_remap is
         slice_pad_in_o : out vector_array(0 to 7)(0 to 11);
         slice_pad_out_i : in vector_array(0 to 7)(0 to 11);
         slice_pad_t_out_i : in vector_array(0 to 7)(0 to 11);
-        -- VTC controls
-        slice_enable_tri_vtc_o : out vector_array(0 to 7)(0 to 1);
-        slice_enable_rx_vtc_o : out vector_array(0 to 7)(0 to 11);
-        slice_enable_tx_vtc_o : out vector_array(0 to 7)(0 to 11);
         -- Delay controls
         slice_rx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
         slice_tx_delay_ce_o : out vector_array(0 to 7)(0 to 11);
@@ -86,9 +82,6 @@ begin
         slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dq_tx_ce(i);
         dq_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dq_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
-        -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.dq_rx_vtc(i);
-        slice_enable_tx_vtc_o(byte)(slice) <= delay_control_i.dq_tx_vtc(i);
     end generate;
 
     -- DBI
@@ -108,9 +101,6 @@ begin
         slice_tx_delay_ce_o(byte)(slice) <= delay_control_i.dbi_tx_ce(i);
         dbi_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
         dbi_tx_delay(i) <= slice_tx_delay_i(byte)(slice);
-        -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.dbi_rx_vtc(i);
-        slice_enable_tx_vtc_o(byte)(slice) <= delay_control_i.dbi_tx_vtc(i);
     end generate;
 
     -- EDC (input only)
@@ -129,9 +119,6 @@ begin
         slice_rx_delay_ce_o(byte)(slice) <= delay_control_i.edc_rx_ce(i);
         slice_tx_delay_ce_o(byte)(slice) <= '0';
         edc_rx_delay(i) <= slice_rx_delay_i(byte)(slice);
-        -- VTC control
-        slice_enable_rx_vtc_o(byte)(slice) <= delay_control_i.edc_rx_vtc(i);
-        slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
 
     -- WCK (clock only, input only)
@@ -143,8 +130,6 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
-        slice_enable_rx_vtc_o(byte)(slice) <= '1';
-        slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
 
     -- PATCH: link component signal to patch bitslice
@@ -156,8 +141,6 @@ begin
         slice_data_o(byte)(slice) <= X"00";
         slice_rx_delay_ce_o(byte)(slice) <= '0';
         slice_tx_delay_ce_o(byte)(slice) <= '0';
-        slice_enable_rx_vtc_o(byte)(slice) <= '1';
-        slice_enable_tx_vtc_o(byte)(slice) <= '1';
     end generate;
 
     -- Finally fill in suitable empty markers for unused entries.  This is
@@ -171,14 +154,9 @@ begin
                 slice_data_o(byte)(slice) <= X"00";
                 slice_rx_delay_ce_o(byte)(slice) <= '0';
                 slice_tx_delay_ce_o(byte)(slice) <= '0';
-                slice_enable_rx_vtc_o(byte)(slice) <= '1';
-                slice_enable_tx_vtc_o(byte)(slice) <= '1';
             end generate;
         end generate;
     end generate;
-
-    -- TRI control not supported
-    slice_enable_tri_vtc_o <= (others => (others => '1'));
 
     delay_readbacks_o <= (
         dq_rx_delay => dq_rx_delay,

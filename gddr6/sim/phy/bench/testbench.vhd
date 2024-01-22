@@ -270,8 +270,7 @@ begin
             train_dbi => '0',
             edc_delay => 5X"00",
             edc_tri => '0',
-            fudge_sticky_ca6 => '0',
-            disable_vtc => '0'
+            fudge_sticky_ca6 => '0'
         );
 
         ca_in <= (others => (others => '1'));

@@ -57,9 +57,6 @@ stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
 sg.CONFIG.ENABLE_CABI = 1
 sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
-# Disable VTC as an experiment
-sg.CONFIG.DISABLE_VTC = 1
-
 
 # Initialise all the MR registers
 exchange.reset()

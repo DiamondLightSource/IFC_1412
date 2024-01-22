@@ -26,6 +26,7 @@ entity gddr6_phy_reset is
         enable_pll_phy_o : out std_ulogic;
         bitslice_reset_o : out std_ulogic;  -- Bitslice reset
         enable_control_vtc_o : out std_ulogic;
+        enable_bitslice_vtc_o : out std_ulogic;
         enable_bitslice_control_o : out std_ulogic
     );
 end;
@@ -72,6 +73,7 @@ begin
         if reset_sync then
             reset_state <= RESET_START;
             enable_control_vtc_o <= '0';
+            enable_bitslice_vtc_o <= '1';
             bitslice_reset_o <= '1';
             enable_pll_phy_o <= '0';
             enable_bitslice_control_o <= '0';
@@ -116,6 +118,8 @@ begin
                 when RESET_DONE =>
                     -- We stay in this state unless another reset occurs
                     enable_bitslice_control_o <= '1';
+                    -- Now turn bitslice VTC off for the remainder of operation
+                    enable_bitslice_vtc_o <= '0';
             end case;
         end if;
     end process;
