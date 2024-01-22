@@ -26,11 +26,10 @@ print(config)
 print(status)
 
 if status.CK_OK:
-    print('CK %s, FIFO %s, Events: %s, %s, %s' % (
+    print('CK %s, FIFO %s, Events: %s, %s' % (
         colour('locked', COLOUR_OK),
         choose(status.FIFO_OK == 3, 'ok', 'desync'),
         colour('CK not ok') if status.CK_OK_EVENT else '-',
-        colour('CK unlock') if status.CK_UNLOCK_EVENT else '-',
         colour('FIFO unlock') if status.FIFO_OK_EVENT else '-'))
 else:
     print(colour('CK unlocked'))

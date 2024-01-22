@@ -6,7 +6,7 @@ import argparse
 import time
 import numpy
 
-from registers import sg, set_odelay, set_obitslip
+from registers import *
 
 from gddr6_lib.commands import *
 from gddr6_lib.exchange import _Exchange
@@ -271,5 +271,6 @@ elif args.scan:
 
 
 if args.validate:
+    read_odelay(0)      # Read back an odelay to synchronise with setting
     data, dbi = write_test()
     print(show_match(match_data(data, dbi)))

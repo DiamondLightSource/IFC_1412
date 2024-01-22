@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+cd "$(dirname "$0")"  &&
+
+./reset-ck  &&
+./reset-sg  &&
+./read-vid  &&
+./train-read -sv  &&
+./train-write -B3 -sv
