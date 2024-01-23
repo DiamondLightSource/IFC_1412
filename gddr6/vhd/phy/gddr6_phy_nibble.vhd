@@ -178,7 +178,7 @@ begin
     bitslice_tri : TX_BITSLICE_TRI generic map (
         DATA_WIDTH => 8,
         DELAY_FORMAT => "TIME",
-        DELAY_TYPE => "VAR_LOAD"
+        DELAY_TYPE => "FIXED"
     ) port map (
         TRI_OUT => tri_out_to_tbyte,
         EN_VTC => enable_bitslice_vtc_i,
@@ -228,8 +228,8 @@ begin
                 TX_DELAY_VALUE => INITIAL_DELAY,
                 RX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
                 TX_REFCLK_FREQUENCY => REFCLK_FREQUENCY,
-                RX_DELAY_TYPE => "VAR_LOAD",
-                TX_DELAY_TYPE => "VAR_LOAD",
+                RX_DELAY_TYPE => "VARIABLE",
+                TX_DELAY_TYPE => "VARIABLE",
                 RX_UPDATE_MODE => "ASYNC",
                 TX_UPDATE_MODE => "ASYNC",
                 ENABLE_PRE_EMPHASIS => "TRUE",
