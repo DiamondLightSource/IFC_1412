@@ -54,35 +54,28 @@ architecture arch of gddr6_phy_delay_control is
     -- Strobe controls
     signal enable_bitslip : std_ulogic := '0';
 
-    -- Relatively complex state machine to handle VTC handshake when accessing
-    -- IDELAY and ODELAY settings, separate path for bitslip control, and an
-    -- extra runout delay for readbacks.  The state machine operates thus:
+    -- State machine for writing delays:
     --
-    --        +------------------------------------------------------+
-    --        v                                                      |
-    --      IDLE -----> WAIT_START ---> DELAY ----> WAIT_END -----> END
-    --        |                         |  ^                         ^
-    --        |                         v  |                         |
-    --        |                         DWELL                        |
-    --        |                                                      |
-    --        +-------> RUNOUT --------------------------------------+
+    --        /-------------------------------------\
+    --        v                                     |
+    --      IDLE -----> DELAY -----> RUNOUT -----> END
+    --        |         |  ^           ^            ^
+    --        |         v  |           |            |
+    --        |         DWELL          |            |
+    --        \------------------------/------------/
     --
-    -- The WAT_START and WAIT_END states are needed for VTC handshaking, and the
-    -- DWELL state is needed to separate CE strobes (this is incredibly poorly
-    -- documented in UG571).
+    -- The DWELL state is needed to separate CE strobes (this is incredibly
+    -- poorly documented in UG571).
     type write_state_t is (
-        WRITE_IDLE, WRITE_WAIT_START, WRITE_DELAY, WRITE_DWELL,
-        WRITE_WAIT_END, WRITE_RUNOUT, WRITE_END);
+        WRITE_IDLE, WRITE_DELAY, WRITE_DWELL, WRITE_RUNOUT, WRITE_END);
     signal write_state : write_state_t := WRITE_IDLE;
 
     -- State machine counters
     signal delay_counter : unsigned(8 downto 0);
-    signal wait_counter : unsigned(3 downto 0);
-    constant WAIT_VTC_COUNT : unsigned(3 downto 0) := to_unsigned(10, 4);
-    signal dwell_counter : unsigned(2 downto 0);
     constant DWELL_COUNT : unsigned(2 downto 0) := to_unsigned(4, 3);
-    signal runout_counter : unsigned(1 downto 0);
+    signal dwell_counter : unsigned(2 downto 0);
     constant RUNOUT_COUNT : unsigned(1 downto 0) := to_unsigned(3, 2);
+    signal runout_counter : unsigned(1 downto 0);
 
 
     -- Used to convert 3 bit bitslip values to common delay readback format
@@ -166,7 +159,6 @@ begin
         if rising_edge(clk_i) then
             case write_state is
                 when WRITE_IDLE =>
-                    wait_counter <= WAIT_VTC_COUNT;
                     runout_counter <= RUNOUT_COUNT;
 
                     if write_strobe_in then
@@ -182,9 +174,9 @@ begin
                         case to_integer(setup_i.target) is
                             when TARGET_IDELAY | TARGET_ODELAY =>
                                 if setup_i.enable_write then
-                                    write_state <= WRITE_WAIT_START;
+                                    write_state <= WRITE_DELAY;
                                 else
-                                    write_state <= WRITE_WAIT_END;
+                                    write_state <= WRITE_END;
                                 end if;
 
                             when TARGET_OBITSLIP =>
@@ -200,49 +192,39 @@ begin
                         end case;
                     end if;
 
-                when WRITE_WAIT_START =>
-                    -- Wait for initial delay before doing write
-                    count_delay(wait_counter, WRITE_DELAY);
-
                 when WRITE_DELAY =>
                     -- Hold in WRITE_DELAY state for requested duration, insert
                     -- WRITE_DWELL states between ticks
-                    wait_counter <= WAIT_VTC_COUNT;
                     dwell_counter <= DWELL_COUNT;
                     if delay_counter > 0 then
                         write_state <= WRITE_DWELL;
                     end if;
-                    count_delay(delay_counter, WRITE_WAIT_END);
+                    count_delay(delay_counter, WRITE_RUNOUT);
 
                 when WRITE_DWELL =>
                     -- Insert 5 tick delay between CE strobes
                     count_delay(dwell_counter, WRITE_DELAY);
 
-                when WRITE_WAIT_END =>
-                    -- Finally wait again before asserting VTC
-                    count_delay(wait_counter, WRITE_END);
-
                 when WRITE_RUNOUT =>
-                    -- Extra delay needed so that bitslip readback is valid
+                    -- Extra delay needed so that readbacks are valid
                     enable_bitslip <= '0';
                     count_delay(runout_counter, WRITE_END);
 
                 when WRITE_END =>
-                    -- On completion ensure VTC back to normal and update the
-                    -- readback.  For a read-only action this is all we do!
+                    -- On completion update the readback.  For a read-only
+                    -- action this is all we do!
                     delay_out <= unsigned(delays_in(target)(address));
                     write_state <= WRITE_IDLE;
             end case;
 
 
-            -- Generate the three control strobes.
+            -- Generate the control strobes.
             --
             -- Delay clock enable during delay slewing
             compute_strobe(
                 ce_out, to_std_ulogic(write_state = WRITE_DELAY), '0');
             -- Bitslip strobe to write selected bitslip
             compute_strobe(bitslip_strobe, address, enable_bitslip, '0');
-
 
             -- Map and register the readbacks
             delays_in <= (
