@@ -194,8 +194,6 @@ begin
                     ck_config_bits(GDDR6_CONFIG_ENABLE_DBI_BIT),
                 train_dbi =>
                     ck_config_bits(GDDR6_CONFIG_DBI_TRAINING_BIT),
-                edc_delay =>
-                    unsigned(ck_config_bits(GDDR6_CONFIG_EDC_DELAY_BITS)),
 
                 -- Special fudge for prototype board, must be removed.  Used to
                 -- work around sticky CA6 bit.

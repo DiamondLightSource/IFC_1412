@@ -17,7 +17,6 @@ entity gddr6_phy_dq is
         clk_i : in std_ulogic;
 
         -- Controls
-        edc_delay_i : in unsigned(4 downto 0);      -- Alignment of EDC sources
         enable_dbi_i : in std_ulogic;               -- Data Bus Inversion
         train_dbi_i : in std_ulogic;                -- Enable DBI training
         -- RX/TX DELAY controls
@@ -32,13 +31,15 @@ entity gddr6_phy_dq is
         raw_edc_i : in vector_array(7 downto 0)(7 downto 0);
 
         -- Data interface, all values for a single CA tick
-        output_enable_i : in std_ulogic;
         data_o : out vector_array(63 downto 0)(7 downto 0);
         data_i : in vector_array(63 downto 0)(7 downto 0);
         dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+
+        -- EDC outputs
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_out_o : out vector_array(7 downto 0)(7 downto 0)
+        edc_write_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_read_o : out vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
@@ -102,19 +103,22 @@ begin
     );
 
 
-    -- Compute CRC on data passing over the wire
-    crc : entity work.gddr6_phy_crc port map (
+    -- Separate CRC calculations for incoming and outgoing data, but only one of
+    -- them is useful at any time
+    write_crc : entity work.gddr6_phy_crc port map (
         clk_i => clk_i,
-
-        edc_delay_i => edc_delay_i,
-
-        output_enable_i => output_enable_i,
-        data_in_i => data_in,
-        dbi_n_in_i => dbi_n_in,
-        data_out_i => data_out,
-        dbi_n_out_i => dbi_n_out,
-
-        edc_out_o => edc_out_o
+        data_i => data_out,
+        dbi_n_i => dbi_n_out,
+        edc_o => edc_write_o
     );
+
+    read_crc : entity work.gddr6_phy_crc port map (
+        clk_i => clk_i,
+        data_i => data_in,
+        dbi_n_i => dbi_n_in,
+        edc_o => edc_read_o
+    );
+
+    -- Just pass EDC from memory straight through
     edc_in_o <= edc_in;
 end;

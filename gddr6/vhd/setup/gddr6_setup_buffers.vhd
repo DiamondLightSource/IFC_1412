@@ -29,6 +29,7 @@ entity gddr6_setup_buffers is
         write_ca3_i : in std_ulogic_vector(0 to 3);
         write_cke_n_i : in std_ulogic;
         write_output_enable_i : in std_ulogic;
+        write_edc_select_i : in std_ulogic;
 
         -- Data loading and readback interface on reg_clk_i
         write_data_strobe_i : in std_ulogic_vector(0 to 15);
@@ -54,7 +55,8 @@ entity gddr6_setup_buffers is
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0)
+        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
+        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
@@ -64,6 +66,8 @@ architecture arch of gddr6_setup_buffers is
     signal exchange_ack : std_ulogic := '0';
     signal exchange_address : unsigned(5 downto 0) := (others => '0');
     signal exchange_active : std_ulogic := '0';
+
+    signal edc_select : std_ulogic;
     signal dbi_capture_data : vector_array(7 downto 0)(7 downto 0);
 
 
@@ -98,7 +102,7 @@ begin
     -- CA buffer
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
-        DATA_BITS => 26,
+        DATA_BITS => 27,
         INITIAL => (25 => '0', others => '1'),
         MARK_FALSE_PATH => true
     ) port map (
@@ -110,6 +114,7 @@ begin
         write_data_i(23 downto 20) => write_ca3_i,
         write_data_i(24) => write_cke_n_i,
         write_data_i(25) => write_output_enable_i,
+        write_data_i(26) => write_edc_select_i,
 
         read_clk_i => ck_clk_i,
         read_strobe_i => exchange_active,
@@ -118,7 +123,8 @@ begin
         read_data_o(19 downto 10) => phy_ca_o(1),
         read_data_o(23 downto 20) => phy_ca3_o,
         read_data_o(24) => phy_cke_n_o,
-        read_data_o(25) => phy_output_enable_o
+        read_data_o(25) => phy_output_enable_o,
+        read_data_o(26) => edc_select
     );
 
 
@@ -161,7 +167,10 @@ begin
 
     -- DBI buffers.  Writeable for DBI write training, captures either incoming
     -- DBI or computed EDC
-    dbi_capture_data <= phy_edc_out_i when capture_edc_out_i else phy_dbi_n_i;
+    dbi_capture_data <=
+        phy_dbi_n_i when not capture_edc_out_i else
+        phy_edc_write_i when edc_select else
+        phy_edc_read_i;
     gen_dbi : for word in 0 to 1 generate
         subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
     begin

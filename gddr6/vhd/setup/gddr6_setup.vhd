@@ -37,7 +37,8 @@ entity gddr6_setup is
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0);
+        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
+        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0);
 
         -- PHY configuration and status
         phy_setup_o : out phy_setup_t;
@@ -125,6 +126,7 @@ begin
         phy_dbi_n_o => phy_dbi_n_o,
         phy_dbi_n_i => phy_dbi_n_i,
         phy_edc_in_i => phy_edc_in_i,
-        phy_edc_out_i => phy_edc_out_i
+        phy_edc_write_i => phy_edc_write_i,
+        phy_edc_read_i => phy_edc_read_i
     );
 end;

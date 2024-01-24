@@ -59,9 +59,6 @@ package gddr6_defs is
         -- If this is set then dbi_n_i is used to train DBI output.  In this
         -- enable_dbi should not be set.
         train_dbi : std_ulogic;
-        -- This delay is used to align data_o with data_i so that edc_out_o can
-        -- be computed correctly
-        edc_delay : unsigned(4 downto 0);
         -- Must be held low during SG reset, high during normal operation
         edc_tri : std_ulogic;
 

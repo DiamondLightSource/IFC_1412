@@ -24,9 +24,6 @@
             .DBI_TRAINING
             # Set to enable capture of EDC_OUT to DBI
             .CAPTURE_EDC_OUT
-            # Configures delay on data out to CRC, must be setup correctly
-            # during training
-            .EDC_DELAY      5
 
             # Special fudge for prototype board, must be removed.  Used to work
             # around sticky CA6 bit.
@@ -38,7 +35,6 @@
             .CK_OK
             # Set if CK not OK event seen since last read
             .CK_OK_EVENT
-            -
             # Set if PHY read FIFO is properly synchronised
             .FIFO_OK        2
             # Set if FIFO not OK event seen since last read
@@ -109,6 +105,9 @@
             .CKE_N
             # DQ tristate control
             .OUTPUT_ENABLE
+            # Select EDC out capture option when CONFIG.CAPTURE_EDC_OUT is set.
+            # Set to 0 to capture EDC from incoming data, 1 from outgoing data
+            .EDC_SELECT
 
         # Write to the register up to 16 times to fill the DQ output buffer from
         # low order bits to high order bits.  Further writes will overwrite

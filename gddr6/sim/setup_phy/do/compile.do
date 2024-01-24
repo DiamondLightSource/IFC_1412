@@ -57,7 +57,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/phy/gddr6_phy_bitslices.vhd \
     $vhd_dir/phy/gddr6_phy_dbi.vhd \
     $vhd_dir/phy/gddr6_phy_bitslip.vhd \
-    $vhd_dir/phy/gddr6_phy_crc_core.vhd \
+    $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/phy/gddr6_phy_dq.vhd \
     $vhd_dir/phy/gddr6_phy_delay_control.vhd \
@@ -86,7 +86,7 @@ add wave -group "PHY Nibble(0)(0)" \
 add wave -group "PHY Byte(0)" test/phy/bitslices/gen_bytes(0)/byte/*
 add wave -group "PHY DBI" test/phy/dq/dbi/*
 add wave -group "PHY Bitslip" test/phy/dq/bitslip_out/*
-add wave -group "PHY CRC" test/phy/dq/crc/*
+add wave -group "PHY Write CRC" test/phy/dq/write_crc/*
 add wave -group "PHY DQ" test/phy/dq/*
 add wave -group "PHY Delay" test/phy/delay/*
 add wave -group "PHY" test/phy/*

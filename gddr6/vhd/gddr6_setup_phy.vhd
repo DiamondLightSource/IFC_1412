@@ -49,7 +49,8 @@ entity gddr6_setup_phy is
         -- calculated value, either for incoming data or for outgoing data, as
         -- selected by output_enable_i.
         ctrl_edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        ctrl_edc_out_o : out vector_array(7 downto 0)(7 downto 0);
+        ctrl_edc_write_o : out vector_array(7 downto 0)(7 downto 0);
+        ctrl_edc_read_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -98,7 +99,8 @@ architecture arch of gddr6_setup_phy is
     signal setup_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal setup_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal setup_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal setup_edc_out : vector_array(7 downto 0)(7 downto 0);
+    signal setup_edc_write : vector_array(7 downto 0)(7 downto 0);
+    signal setup_edc_read : vector_array(7 downto 0)(7 downto 0);
 
     signal phy_ca : vector_array(0 to 1)(9 downto 0);
     signal phy_ca3 : std_ulogic_vector(0 to 3);
@@ -109,7 +111,8 @@ architecture arch of gddr6_setup_phy is
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_out : vector_array(7 downto 0)(7 downto 0);
+    signal phy_edc_write : vector_array(7 downto 0)(7 downto 0);
+    signal phy_edc_read : vector_array(7 downto 0)(7 downto 0);
 
     signal setup_delay : setup_delay_t;
     signal setup_delay_result : setup_delay_result_t;
@@ -143,7 +146,8 @@ begin
         phy_dbi_n_i => setup_dbi_n_in,
         phy_dbi_n_o => setup_dbi_n_out,
         phy_edc_in_i => setup_edc_in,
-        phy_edc_out_i => setup_edc_out,
+        phy_edc_write_i => setup_edc_write,
+        phy_edc_read_i => setup_edc_read,
 
         setup_delay_o => setup_delay,
         setup_delay_i => setup_delay_result,
@@ -176,7 +180,8 @@ begin
         dbi_n_i => phy_dbi_n_out,
         dbi_n_o => phy_dbi_n_in,
         edc_in_o => phy_edc_in,
-        edc_out_o => phy_edc_out,
+        edc_write_o => phy_edc_write,
+        edc_read_o => phy_edc_read,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
@@ -228,10 +233,12 @@ begin
             end if;
             ctrl_data_o <= phy_data_in;
             ctrl_edc_in_o <= phy_edc_in;
-            ctrl_edc_out_o <= phy_edc_out;
+            ctrl_edc_write_o <= phy_edc_write;
+            ctrl_edc_read_o <= phy_edc_read;
             setup_data_in <= phy_data_in;
             setup_edc_in <= phy_edc_in;
-            setup_edc_out <= phy_edc_out;
+            setup_edc_write <= phy_edc_write;
+            setup_edc_read <= phy_edc_read;
             -- These two delays are only used during training, but ensure that
             -- DBI and DQ data are aligned
             phy_dbi_n_out <= setup_dbi_n_out;

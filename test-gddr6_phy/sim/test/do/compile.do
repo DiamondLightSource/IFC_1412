@@ -61,7 +61,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/phy/gddr6_phy_bitslices.vhd \
     $gddr6_dir/phy/gddr6_phy_dbi.vhd \
     $gddr6_dir/phy/gddr6_phy_bitslip.vhd \
-    $gddr6_dir/phy/gddr6_phy_crc_core.vhd \
     $gddr6_dir/phy/gddr6_phy_crc.vhd \
     $gddr6_dir/phy/gddr6_phy_dq.vhd \
     $gddr6_dir/phy/gddr6_phy_delay_control.vhd \

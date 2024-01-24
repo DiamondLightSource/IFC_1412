@@ -40,12 +40,12 @@ architecture arch of testbench is
     signal ca3_in : std_ulogic_vector(0 to 3);
     signal cke_n_in : std_ulogic;
     signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
-    signal edc_out_out : vector_array(7 downto 0)(7 downto 0);
+    signal edc_write_out : vector_array(7 downto 0)(7 downto 0);
+    signal edc_read_out : vector_array(7 downto 0)(7 downto 0);
 
     signal data_in : vector_array(63 downto 0)(7 downto 0)
         := (others => (others => '0'));
     signal data_out : vector_array(63 downto 0)(7 downto 0);
-    signal edc_out : std_ulogic_vector(63 downto 0);
     signal output_enable_in : std_ulogic := '0';
     signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal dbi_n_out : vector_array(7 downto 0)(7 downto 0);
@@ -120,7 +120,8 @@ begin
         dbi_n_i => dbi_n_in,
         dbi_n_o => dbi_n_out,
         edc_in_o => edc_in_out,
-        edc_out_o => edc_out_out,
+        edc_write_o => edc_write_out,
+        edc_read_o => edc_read_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -268,7 +269,6 @@ begin
             enable_cabi => '0',
             enable_dbi => '0',
             train_dbi => '0',
-            edc_delay => 5X"00",
             edc_tri => '0',
             fudge_sticky_ca6 => '0'
         );

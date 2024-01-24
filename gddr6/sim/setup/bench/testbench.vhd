@@ -36,7 +36,8 @@ architecture arch of testbench is
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_edc_in_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_out_in : vector_array(7 downto 0)(7 downto 0);
+    signal phy_edc_write_in : vector_array(7 downto 0)(7 downto 0);
+    signal phy_edc_read_in : vector_array(7 downto 0)(7 downto 0);
 
     signal phy_setup_out : phy_setup_t;
     signal phy_status_in : phy_status_t;
@@ -73,7 +74,8 @@ begin
         phy_dbi_n_o => phy_dbi_n_out,
         phy_dbi_n_i => phy_dbi_n_in,
         phy_edc_in_i => phy_edc_in_in,
-        phy_edc_out_i => phy_edc_out_in,
+        phy_edc_write_i => phy_edc_write_in,
+        phy_edc_read_i => phy_edc_read_in,
 
         phy_setup_o => phy_setup_out,
         phy_status_i => phy_status_in,

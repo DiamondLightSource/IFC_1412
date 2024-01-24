@@ -35,7 +35,8 @@ entity gddr6_setup_exchange is
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_out_i : in vector_array(7 downto 0)(7 downto 0)
+        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
+        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0)
     );
 end;
 
@@ -195,6 +196,7 @@ begin
         write_ca3_i => reverse(ca_bits(GDDR6_CA_CA3_BITS)),
         write_cke_n_i => ca_bits(GDDR6_CA_CKE_N_BIT),
         write_output_enable_i => ca_bits(GDDR6_CA_OUTPUT_ENABLE_BIT),
+        write_edc_select_i => ca_bits(GDDR6_CA_EDC_SELECT_BIT),
 
         write_data_strobe_i => write_dq_buf_strobe,
         write_data_i => (others => write_data_i(GDDR6_DQ_REG)),
@@ -217,6 +219,7 @@ begin
         phy_dbi_n_o => phy_dbi_n_o,
         phy_dbi_n_i => phy_dbi_n_i,
         phy_edc_in_i => phy_edc_in_i,
-        phy_edc_out_i => phy_edc_out_i
+        phy_edc_write_i => phy_edc_write_i,
+        phy_edc_read_i => phy_edc_read_i
     );
 end;

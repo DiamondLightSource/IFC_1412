@@ -90,13 +90,11 @@ entity gddr6_phy is
         -- phy_setup_i.train_dbi is set
         dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        -- Two calculations are presented on the EDC pins here.  edc_in_o is the
-        -- value received from the memory, each 8-bit value is the CRC for one
-        -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
-        -- calculated value, either for incoming data or for outgoing data as
-        -- selected by output_enable_i.
+        -- EDC support.  edc_in_o is the code received from memory and must be
+        -- compared with edc_write_o for written data and edc_read_o for read
         edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_out_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_write_o : out vector_array(7 downto 0)(7 downto 0);
+        edc_read_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -359,7 +357,6 @@ begin
     ) port map (
         clk_i => ck_clk,
 
-        edc_delay_i => phy_setup_i.edc_delay,
         enable_dbi_i => phy_setup_i.enable_dbi,
         train_dbi_i => phy_setup_i.train_dbi,
         delay_control_i => bitslip_delay_control,
@@ -371,13 +368,13 @@ begin
         raw_dbi_n_i => raw_dbi_n_in,
         raw_edc_i => raw_edc_in,
 
-        output_enable_i => output_enable_i,
         data_o => data_o,
         data_i => data_i,
         dbi_n_o => dbi_n_o,
         dbi_n_i => dbi_n_i,
         edc_in_o => edc_in_o,
-        edc_out_o => edc_out_o
+        edc_write_o => edc_write_o,
+        edc_read_o => edc_read_o
     );
 
 

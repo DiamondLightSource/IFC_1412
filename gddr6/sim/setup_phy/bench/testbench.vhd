@@ -58,7 +58,8 @@ architecture arch of testbench is
     signal ctrl_data_out : vector_array(63 downto 0)(7 downto 0);
     signal ctrl_output_enable : std_ulogic;
     signal ctrl_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal ctrl_edc_out : vector_array(7 downto 0)(7 downto 0);
+    signal ctrl_edc_write : vector_array(7 downto 0)(7 downto 0);
+    signal ctrl_edc_read : vector_array(7 downto 0)(7 downto 0);
 
     signal clk : std_ulogic := '0';
 
@@ -89,7 +90,8 @@ begin
         ctrl_data_o => ctrl_data_out,
         ctrl_output_enable_i => ctrl_output_enable,
         ctrl_edc_in_o => ctrl_edc_in,
-        ctrl_edc_out_o => ctrl_edc_out,
+        ctrl_edc_write_o => ctrl_edc_write,
+        ctrl_edc_read_o => ctrl_edc_read,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

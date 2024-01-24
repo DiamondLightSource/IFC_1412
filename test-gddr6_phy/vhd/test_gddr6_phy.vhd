@@ -161,7 +161,8 @@ begin
         ctrl_data_o => open,
         ctrl_output_enable_i => '0',
         ctrl_edc_in_o => open,
-        ctrl_edc_out_o => open,
+        ctrl_edc_write_o => open,
+        ctrl_edc_read_o => open,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
