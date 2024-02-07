@@ -28,6 +28,7 @@ architecture arch of testbench is
 
     signal request : core_request_t;
     signal request_ready : std_ulogic;
+    signal command_sent : std_ulogic := '0';
     signal lookahead : core_lookahead_t;
 
     signal edc_in : vector_array(7 downto 0)(7 downto 0);
@@ -68,6 +69,8 @@ begin
 
         request_o => request,
         request_ready_i => request_ready,
+        command_sent_i => command_sent,
+
         lookahead_o => lookahead,
 
         edc_in_i => edc_in,
@@ -124,4 +127,12 @@ begin
 
         wait;
     end process;
+
+    delay_sent : entity work.fixed_delay generic map (
+        DELAY => 4
+    ) port map (
+        clk_i => clk,
+        data_i(0) => request.valid and request_ready,
+        data_o(0) => command_sent
+    );
 end;

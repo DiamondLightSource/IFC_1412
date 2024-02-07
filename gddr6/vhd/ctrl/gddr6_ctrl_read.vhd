@@ -35,6 +35,8 @@ entity gddr6_ctrl_read is
         -- Connection to core for row management and access arbitration
         request_o : out core_request_t;
         request_ready_i : in std_ulogic;
+        command_sent_i : in std_ulogic;
+
         lookahead_o : out core_lookahead_t;
 
         -- EDC data
@@ -55,7 +57,6 @@ architecture arch of gddr6_ctrl_read is
     signal auto_precharge : std_ulogic;
 
     -- Timing signals for data and EDC
-    signal data_valid_start : std_ulogic := '0';
     signal data_valid : std_ulogic;
     signal last_data_valid : std_ulogic := '0';
     signal edc_valid : std_ulogic := '0';
@@ -64,14 +65,18 @@ architecture arch of gddr6_ctrl_read is
     signal edc_read : vector_array(7 downto 0)(7 downto 0);
 
 begin
-    -- Check if the lookahead continues the same bank
+    -- Only forward the lookahead if it opens a new bank
     lookahead_new_row <= to_std_ulogic(
         ral_address_i(ROW_RANGE) /= ra_address_i(ROW_RANGE) and
         ral_address_i(BANK_RANGE) /= ra_address_i(BANK_RANGE));
-    -- Generate auto-precharge on end of row if there is no lookahead, or if
-    -- we're done with the current row.
-    auto_precharge <= to_std_ulogic(ra_count_i = 0) and
-        (not ral_valid_i or lookahead_new_row);
+
+    -- Only generate precharge if we're reasonably confident that we're done
+    -- with this row: the column address is the last column of the row, count
+    -- is zero, and there isn't a lookahead on the same row.  This can still
+    -- misfire, but seems a reasonable hueristic.
+    auto_precharge <= to_std_ulogic(
+        ra_count_i = 0 and ra_address_i(COLUMN_RANGE) = 7X"7F" and
+        (ral_valid_i = '0' or lookahead_new_row = '1'));
 
     process (clk_i) begin
         if rising_edge(clk_i) then
@@ -103,9 +108,6 @@ begin
                 read_request.valid <= '0';
             end if;
 
-            -- Generate data valid for current tick
-            data_valid_start <= read_request.valid and request_ready_i;
-
             -- We have three values that need to be reconciled for a particular
             -- read: data in, edc_read_i computed from data in, and edc_in_i
             -- directly from SG, and we need to align the two EDC values to
@@ -131,11 +133,13 @@ begin
         end if;
     end process;
 
+    -- Use incoming acknowledgement of send the command to trigger data
+    -- transfer at the appropriate time
     delay_rd_valid : entity work.fixed_delay generic map (
         DELAY => RLmrs + PHY_INPUT_DELAY
     ) port map (
         clk_i => clk_i,
-        data_i(0) => data_valid_start,
+        data_i(0) => command_sent_i,
         data_o(0) => data_valid
     );
 

@@ -7,6 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.gddr6_ctrl_timing_defs.all;
+use work.gddr6_ctrl_core_defs.all;
 
 entity gddr6_ctrl_bank is
     port (
@@ -23,20 +24,12 @@ entity gddr6_ctrl_bank is
         allow_write_o : out std_ulogic := '0';
         allow_precharge_o : out std_ulogic := '0';
 
-        -- Actions on an active row
-        -- Do not assert more than one of write_i, read_i, precharge_i at the
-        -- same time.
-        write_i : in std_ulogic;            -- Write command
-        read_i : in std_ulogic;             -- Read command
-        precharge_i : in std_ulogic;        -- Initiates row precharge
-        -- Only assert this with write_i or read_i, the row will go inactive as
-        -- soon as allowed.
-        auto_precharge_i : in std_ulogic;   -- Auto precharge command
-
-        -- Actions on an inactive row
-        -- Do not assert refresh_i and activate_i at the same time
-        refresh_i : in std_ulogic;          -- Initiates row refresh
-        activate_i : in std_ulogic;         -- Activates with selected row
+        -- Requested action on this bank if command_valid_i set
+        command_i : in bank_command_t;
+        command_valid_i : in std_ulogic;
+        -- Only asserted with CMD_RD or CMD_WR to trigger auto precharge
+        auto_precharge_i : in std_ulogic;
+        -- Row to set for CMD_ACT
         row_i : in unsigned(13 downto 0)
     );
 end;
@@ -64,11 +57,11 @@ begin
     process (clk_i)
         procedure do_bank_idle is
         begin
-            if refresh_i then
+            if command_valid_i = '1' and command_i = CMD_REF then
                 tRFCpb_counter <= t_RFCpb - 2;
                 allow_precharge_o <= '0';
                 state <= BANK_REFRESH;
-            elsif activate_i then
+            elsif command_valid_i = '1' and command_i = CMD_ACT then
                 tRCDRD_counter <= t_RCDRD - 2;
                 tRAS_counter <= t_RAS - 2;
                 tWTP_counter <= 0;
@@ -98,6 +91,15 @@ begin
             variable do_precharge : std_ulogic;
 
         begin
+            -- Decode the command requests
+            do_write := allow_write_o and
+                command_valid_i and to_std_ulogic(command_i = CMD_WR);
+            do_read := allow_read_o and
+                command_valid_i and to_std_ulogic(command_i = CMD_RD);
+            do_precharge := allow_precharge_o and
+                command_valid_i and to_std_ulogic(command_i = CMD_PRE);
+
+
             -- The tRAS, tRCDRD, and tRCDWR timer run from entry into
             -- BANK_ACTIVE state, but tRCDWR is only one tick so is implicit
             if tRAS_counter > 0 then
@@ -109,7 +111,6 @@ begin
 
             -- When doing a write must disable write for next tick and restart
             -- the tWTP counter.
-            do_write := write_i and allow_write_o;
             if do_write then
                 tWTP_counter <= t_WTP - 2;
                 allow_write_o <= '0';
@@ -122,7 +123,6 @@ begin
 
             -- When doing a read disable read for next tick.  The tRTP counter
             -- is two ticks and so is absorbed into the allow_read_o state
-            do_read := read_i and allow_read_o;
             if do_read then
                 allow_read_o <= '0';
             else
@@ -139,7 +139,7 @@ begin
             end if;
 
             -- Trigger precharge when allowed
-            if (precharge_i or auto_precharge) and allow_precharge_o then
+            if do_precharge or (allow_precharge_o and auto_precharge) then
                 tRP_counter <= t_RP - 2;
                 active_o <= '0';
                 allow_write_o <= '0';

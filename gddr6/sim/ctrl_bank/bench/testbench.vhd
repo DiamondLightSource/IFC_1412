@@ -5,6 +5,8 @@ use std.textio.all;
 
 use work.support.all;
 
+use work.gddr6_ctrl_core_defs.all;
+
 entity testbench is
 end testbench;
 
@@ -21,17 +23,14 @@ architecture arch of testbench is
     signal allow_precharge : std_ulogic;
     signal allow_refresh : std_ulogic;
 
-    signal write_out : std_ulogic;
-    signal read : std_ulogic;
-    signal precharge : std_ulogic;
+    signal command : bank_command_t;
+    signal command_valid : std_ulogic := '0';
     signal auto_precharge : std_ulogic;
-
-    signal refresh : std_ulogic;
-    signal activate : std_ulogic;
     signal row_in : unsigned(13 downto 0);
 
-    type command_t is (NOP, ACT, WR, RD, PRE, REF, INV);
-    signal command : command_t := NOP;
+    type command_t is (NOP, ACT, WR, RD, PRE, REF);
+    signal action : command_t := NOP;
+
     signal tick_counter : natural := 0;
     signal last_counter : natural := 0;
     signal interval : natural := 0;
@@ -58,60 +57,45 @@ begin
         allow_precharge_o => allow_precharge,
         allow_refresh_o => allow_refresh,
 
-        write_i => write_out,
-        read_i => read,
-        precharge_i => precharge,
+        command_i => command,
+        command_valid_i => command_valid,
         auto_precharge_i => auto_precharge,
-
-        refresh_i => refresh,
-        activate_i => activate,
         row_i => row_in
     );
 
+
     process (all)
-        function resolve(a : command_t; b : command_t) return command_t is
-        begin
-            if a = NOP then
-                return b;
-            elsif b = NOP then
-                return a;
-            else
-                return INV;
-            end if;
-        end;
-
-        variable result : command_t;
+        variable this_action : command_t;
+        variable allowed : std_ulogic;
     begin
-        result := NOP;
-        if activate and allow_activate then
-            result := resolve(result, ACT);
+        if command_valid then
+            case command is
+                when CMD_ACT => this_action := ACT; allowed := allow_activate;
+                when CMD_WR =>  this_action := WR;  allowed := allow_write;
+                when CMD_RD =>  this_action := RD;  allowed := allow_read;
+                when CMD_PRE => this_action := PRE; allowed := allow_precharge;
+                when CMD_REF => this_action := REF; allowed := allow_refresh;
+            end case;
+            if allowed then
+                action <= this_action;
+            else
+                action <= NOP;
+            end if;
+        else
+            action <= NOP;
         end if;
-        if read and allow_read then
-            result := resolve(result, RD);
-        end if;
-        if write_out and allow_write then
-            result := resolve(result, WR);
-        end if;
-        if precharge and allow_precharge then
-            result := resolve(result, PRE);
-        end if;
-        if refresh and allow_refresh then
-            result := resolve(result, REF);
-        end if;
-        command <= result;
-
     end process;
 
     process (clk) begin
         if rising_edge(clk) then
             tick_counter <= tick_counter + 1;
-            if command /= NOP then
+            if action /= NOP then
                 interval <= tick_counter - last_counter;
                 last_counter <= tick_counter;
                 write(
-                    "@ " & integer'image(tick_counter) & " " &
-                    command_t'image(command) & " +" &
-                    integer'image(tick_counter - last_counter) &
+                    "@ " & to_string(tick_counter) & " " &
+                    to_string(action) & " +" &
+                    to_string(tick_counter - last_counter) &
                     choose(auto_precharge = '1', " auto", ""));
             end if;
         end if;
@@ -127,53 +111,50 @@ begin
         end;
 
         procedure do_handshake(
-            signal request : out std_ulogic; signal allow : in std_ulogic) is
+            request : bank_command_t; signal allow : in std_ulogic) is
         begin
-            request <= '1';
+            command <= request;
+            command_valid <= '1';
             loop
                 clk_wait;
                 exit when allow;
             end loop;
-            request <= '0';
+            command_valid <= '0';
         end;
 
         procedure do_activate(row : unsigned) is
         begin
             row_in <= row;
-            do_handshake(activate, allow_activate);
+            do_handshake(CMD_ACT, allow_activate);
         end;
 
         procedure do_precharge is
         begin
-            do_handshake(precharge, allow_precharge);
+            do_handshake(CMD_PRE, allow_precharge);
         end;
 
         procedure do_write(auto : std_ulogic := '0') is
         begin
             auto_precharge <= auto;
-            do_handshake(write_out, allow_write);
+            do_handshake(CMD_WR, allow_write);
             auto_precharge <= '0';
         end;
 
         procedure do_read(auto : std_ulogic := '0') is
         begin
             auto_precharge <= auto;
-            do_handshake(read, allow_read);
+            do_handshake(CMD_RD, allow_read);
             auto_precharge <= '0';
         end;
 
         procedure do_refresh is
         begin
-            do_handshake(refresh, allow_refresh);
+            do_handshake(CMD_REF, allow_refresh);
         end;
 
     begin
-        write_out <= '0';
-        read <= '0';
-        precharge <= '0';
         auto_precharge <= '0';
-        refresh <= '0';
-        activate <= '0';
+        command_valid <= '0';
 
         clk_wait(2);
 
