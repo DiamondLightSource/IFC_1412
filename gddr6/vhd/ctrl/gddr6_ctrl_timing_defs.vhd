@@ -47,6 +47,8 @@ package gddr6_ctrl_timing_defs is
 
     -- Write turnaround time: time from completion of write to read command
     constant t_WTR : natural := 3;      -- 2 + 4/t_CK
+    -- This is the actual WR to RD time calculated from the documentation
+    constant t_WTR_time : natural := WLmrs + 2 + t_WTR;
     -- Read turnaround time: time from read to write commands
     constant t_RTW : natural := RLmrs + 4 - WLmrs;  -- 8
 

@@ -22,7 +22,7 @@ entity gddr6_ctrl_bank is
         allow_refresh_o : out std_ulogic := '1';
         allow_read_o : out std_ulogic := '0';
         allow_write_o : out std_ulogic := '0';
-        allow_precharge_o : out std_ulogic := '0';
+        allow_precharge_o : out std_ulogic := '1';
 
         -- Requested action on this bank if command_valid_i set
         command_i : in bank_command_t;
@@ -68,6 +68,7 @@ begin
                 auto_precharge <= '0';
                 row_o <= row_i;
                 active_o <= '1';
+                allow_write_o <= '1';
                 allow_precharge_o <= '0';
                 state <= BANK_ACTIVE;
             end if;
@@ -109,27 +110,20 @@ begin
                 tRCDRD_counter <= tRCDRD_counter - 1;
             end if;
 
-            -- When doing a write must disable write for next tick and restart
-            -- the tWTP counter.
+            -- Restart tWTP counter on each write
             if do_write then
                 tWTP_counter <= t_WTP - 2;
-                allow_write_o <= '0';
-            else
-                allow_write_o <= not auto_precharge;
-                if tWTP_counter > 0 then
-                    tWTP_counter <= tWTP_counter - 1;
-                end if;
+            elsif tWTP_counter > 0 then
+                tWTP_counter <= tWTP_counter - 1;
             end if;
+            allow_write_o <= not auto_precharge;
 
-            -- When doing a read disable read for next tick.  The tRTP counter
+            -- The tRTP counter
             -- is two ticks and so is absorbed into the allow_read_o state
-            if do_read then
-                allow_read_o <= '0';
-            else
-                allow_read_o <=
-                    not auto_precharge and
-                    to_std_ulogic(tRCDRD_counter = 0);
-            end if;
+            -- We don't have time to block on next tick, but reads won't be
+            -- generated any faster
+            allow_read_o <=
+                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0);
 
             -- Register precharge if requested on read or write.  This will
             -- block subsequent operations and automatically deactive the bank
@@ -174,6 +168,30 @@ begin
                 when BANK_PRECHARGE =>
                     do_bank_precharge;
             end case;
+
+            -- Sanity checks during simulation
+            --
+            -- synthesis translate_off
+            if command_valid_i then
+                case command_i is
+                    when CMD_ACT =>
+                        assert allow_activate_o report "Invalid ACT"
+                            severity failure;
+                    when CMD_WR =>
+                        assert allow_write_o report "Invalid WR"
+                            severity failure;
+                    when CMD_RD =>
+                        assert allow_read_o report "Invalid RD"
+                            severity failure;
+                    when CMD_PRE =>
+                        assert allow_precharge_o report "Invalid PRE"
+                            severity failure;
+                    when CMD_REF =>
+                        assert allow_refresh_o report "Invalid REF"
+                            severity failure;
+                end case;
+            end if;
+            -- synthesis translate_on
         end if;
     end process;
 

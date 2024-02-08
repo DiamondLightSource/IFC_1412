@@ -30,6 +30,33 @@ package gddr6_ctrl_core_defs is
     -- This type will be separately qualified by an idle flag
     type sg_direction_t is (DIRECTION_READ, DIRECTION_WRITE);
 
+    -- Simple read/write request from arbiter
+    type rw_bank_request_t is record
+        bank : unsigned(3 downto 0);
+        row : unsigned(13 downto 0);
+        direction : sg_direction_t;
+        precharge : std_ulogic;
+        extra : std_ulogic;
+        valid : std_ulogic;
+    end record;
+
+    type bank_admin_t is record
+        command : bank_command_t;
+        bank : unsigned(3 downto 0);
+        row : unsigned(13 downto 0);
+        all_banks : std_ulogic;
+        valid : std_ulogic;
+    end record;
+
+
+    -- Constants for initialisers
+    constant invalid_core_request : core_request_t;
+    constant invalid_core_lookahead : core_lookahead_t;
+    constant invalid_bank_request : rw_bank_request_t;
+    constant invalid_admin_request : bank_admin_t;
+end;
+
+package body gddr6_ctrl_core_defs is
     constant invalid_core_request : core_request_t := (
         bank => (others => '0'),
         row => (others => '0'),
@@ -41,6 +68,23 @@ package gddr6_ctrl_core_defs is
     constant invalid_core_lookahead : core_lookahead_t := (
         bank => (others => '0'),
         row => (others => '0'),
+        valid => '0'
+    );
+
+    constant invalid_bank_request : rw_bank_request_t := (
+        bank => (others => '0'),
+        row => (others => '0'),
+        direction => DIRECTION_READ,
+        precharge => '0',
+        extra => '0',
+        valid => '0'
+    );
+
+    constant invalid_admin_request : bank_admin_t := (
+        command => CMD_ACT,
+        bank => (others => '0'),
+        row => (others => '0'),
+        all_banks => '0',
         valid => '0'
     );
 end;
