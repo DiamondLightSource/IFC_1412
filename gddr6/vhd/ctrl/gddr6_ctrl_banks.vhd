@@ -38,7 +38,7 @@ entity gddr6_ctrl_banks is
 end;
 
 architecture arch of gddr6_ctrl_banks is
-    signal bank_active : std_ulogic_vector(0 to 15);
+    signal bank_active : std_ulogic_vector(0 to 15) := (others => '0');
     signal bank_rows : unsigned_array(0 to 15)(13 downto 0);
 
     signal allow_activate : std_ulogic_vector(0 to 15);
@@ -69,8 +69,8 @@ begin
         bank_inst : entity work.gddr6_ctrl_bank port map (
             clk_i => clk_i,
 
-            active_o => bank_active(bank),
-            row_o => bank_rows(bank),
+--             active_o => bank_active(bank),
+--             row_o => bank_rows(bank),
 
             allow_activate_o => allow_activate(bank),
             allow_refresh_o => allow_refresh(bank),
@@ -81,6 +81,7 @@ begin
             command_i => bank_command,
             command_valid_i => command_valid(bank),
             auto_precharge_i => auto_precharge,
+-- remove this!
             row_i => activate_row
         );
     end generate;
@@ -164,19 +165,27 @@ begin
                     bank_command <=
                         CMD_RD when DIRECTION_READ,
                         CMD_WR when DIRECTION_WRITE;
+                compute_strobe(command_valid, request_bank, bank_valid);
+
                 auto_precharge <= rw_request_i.precharge;
-                if bank_valid then
-                    compute_strobe(command_valid, request_bank);
-                else
-                    command_valid <= (others => '0');
-                end if;
                 command_extra <= rw_request_i.extra;
                 rw_request_matches_o <= bank_valid;
+
                 rw_request_ready_o <= '1';
                 admin_ready_o <= '0';
             elsif do_admin_request then
                 bank_command <= admin_request_i.command;
                 activate_row <= admin_request_i.row;
+                if admin_request_i.command = CMD_ACT then
+                    bank_active(admin_bank) <= '1';
+                    bank_rows(admin_bank) <= admin_request_i.row;
+                elsif admin_request_i.command = CMD_PRE then
+                    if admin_request_i.all_banks then
+                        bank_active <= (others => '0');
+                    else
+                        bank_active(admin_bank) <= '0';
+                    end if;
+                end if;
                 if admin_request_i.all_banks then
                     command_valid <= (others => '1');
                 else

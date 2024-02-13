@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-package gddr6_ctrl_commands is
+package gddr6_ctrl_command_defs is
     -- SGRAM commands
     type ca_command_t is record
         ca : vector_array(0 to 1)(9 downto 0);
@@ -63,7 +63,7 @@ package gddr6_ctrl_commands is
         return ca_command_t;
 end;
 
-package body gddr6_ctrl_commands is
+package body gddr6_ctrl_command_defs is
     function SG_MRS(
         mode : std_ulogic_vector(3 downto 0);
         op : std_ulogic_vector(11 downto 0)) return ca_command_t is
