@@ -15,7 +15,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_commands.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_read.vhd

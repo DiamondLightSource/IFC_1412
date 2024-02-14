@@ -50,7 +50,7 @@ architecture arch of gddr6_ctrl_write is
         BYTE_MASK_WSM       -- Must use WSM
     );
 
-    function get_byte_mask(
+    function decode_byte_mask(
         mask : std_ulogic_vector(31 downto 0)) return byte_mask_t
     is
         variable even_bits : std_ulogic_vector(15 downto 0);

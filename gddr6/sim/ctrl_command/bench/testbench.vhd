@@ -22,19 +22,25 @@ architecture arch of testbench is
         end loop;
     end;
 
-    signal bank_status : bank_status_t := (
+    signal banks_status : banks_status_t := (
+        write_active => '0',
+        read_active => '0',
+
+        allow_activate => (others => '0'),
+        allow_read => (others => '1'),
+        allow_write => (others => '1'),
+        allow_precharge => (others => '0'),
+        allow_refresh => (others => '0'),
+        allow_precharge_all => '0',
+        allow_refresh_all => '0',
+
         active => (3 => '1', others => '0'),
-        rows => (3 => 14X"1234", others => (others => 'U')),
-        read_ready => (others => '1'),
-        write_ready => (others => '1'),
-        activate_ready => (others => '0'),
-        precharge_ready => (others => '0'),
-        refresh_ready => (others => '0')
+        row => (3 => 14X"1234", others => (others => 'U')),
+        age => (others => (others => '0'))
     );
-    signal bank_response : bank_rw_response_t;
+    signal banks_request : banks_request_t;
     signal direction : sg_direction_t;
     signal write_request : core_request_t;
-    signal write_request_extra : std_ulogic;
     signal write_request_ready : std_ulogic;
     signal write_request_sent : std_ulogic;
     signal read_request : core_request_t;
@@ -63,13 +69,12 @@ begin
     command : entity work.gddr6_ctrl_command port map (
         clk_i => clk,
 
-        bank_status_i => bank_status,
-        bank_response_o => bank_response,
+        banks_status_i => banks_status,
+        banks_request_o => banks_request,
 
         direction_i => direction,
 
         write_request_i => write_request,
-        write_request_extra_i => write_request_extra,
         write_request_ready_o => write_request_ready,
         write_request_sent_o => write_request_sent,
 
@@ -95,12 +100,13 @@ begin
     process
         procedure write_one(
             bank : unsigned; row : unsigned; column : unsigned;
-            command : ca_command_t; precharge : std_ulogic) is
+            command : ca_command_t;
+            precharge : std_ulogic; extra : boolean) is
         begin
             write_request <= (
                 bank => bank, row => row,
                 command => command, precharge => precharge,
-                valid => '1');
+                extra => to_std_ulogic(extra), valid => '1');
             loop
                 clk_wait;
                 exit when write_request_ready;
@@ -120,20 +126,17 @@ begin
                 when 2 => command := SG_WSM(bank, column, "1111");
                 when others =>
             end case;
-            write_request_extra <= to_std_ulogic(extra > 0);
-            write_one(bank, row, column, command, precharge);
+            write_one(bank, row, column, command, precharge, extra > 0);
 
             -- Send any mask commands straight after
             for n in extra downto 1 loop
                 command := SG_write_mask(X"ABCD");
-                write_request_extra <= to_std_ulogic(n > 1);
-                write_one(bank, row, column, command, precharge);
+                write_one(bank, row, column, command, precharge, n > 1);
             end loop;
         end;
 
     begin
-        write_request <= invalid_core_request;
-        write_request_extra <= '0';
+        write_request <= IDLE_CORE_REQUEST;
 
         clk_wait(5);
         write(X"3", 14X"1234", 7X"78");
@@ -157,7 +160,7 @@ begin
             read_request <= (
                 bank => bank, row => row,
                 command => SG_RD(bank, column), precharge => precharge,
-                valid => '1');
+                extra => '0', valid => '1');
             loop
                 clk_wait;
                 exit when read_request_ready;
@@ -166,7 +169,7 @@ begin
         end;
 
     begin
-        read_request <= invalid_core_request;
+        read_request <= IDLE_CORE_REQUEST;
 
         clk_wait(5);
         read(X"3", 14X"1234", 7X"78");
@@ -218,13 +221,13 @@ begin
                 when DIR_WRITE => direction <= DIR_READ;
             end case;
 
-            if open_bank_valid then
-                bank := to_integer(open_bank);
-                bank_status.active(bank) <= '1';
-                bank_status.rows(bank) <= open_bank_row;
-                bank_status.read_ready(bank) <= '1';
-                bank_status.write_ready(bank) <= '1';
-            end if;
+--             if open_bank_valid then
+--                 bank := to_integer(open_bank);
+--                 bank_status.active(bank) <= '1';
+--                 bank_status.rows(bank) <= open_bank_row;
+--                 bank_status.read_ready(bank) <= '1';
+--                 bank_status.write_ready(bank) <= '1';
+--             end if;
             tick_count <= tick_count + 1;
         end if;
     end process;

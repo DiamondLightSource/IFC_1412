@@ -14,15 +14,14 @@ entity gddr6_ctrl_command is
         clk_i : std_ulogic;
 
         -- Bank status and handshake required for validation and control
-        bank_status_i : in bank_status_t;
-        bank_response_o : out bank_rw_response_t;
+        banks_status_i : in banks_status_t;
+        banks_request_o : out banks_request_t;
 
         -- Selects between read and write requests
         direction_i : in sg_direction_t;
 
         -- Write request with handshake
         write_request_i : in core_request_t;
-        write_request_extra_i : in std_ulogic;
         write_request_ready_o : out std_ulogic;
         write_request_sent_o : out std_ulogic;
 
@@ -53,14 +52,12 @@ architecture arch of gddr6_ctrl_command is
 
     -- Incoming request registered from selected source
     signal direction_in : sg_direction_t;
-    signal request_in : core_request_t := invalid_core_request;
-    signal extra_in : std_ulogic := '0';
+    signal request_in : core_request_t := IDLE_CORE_REQUEST;
     signal request_in_ready : std_ulogic;
 
     -- Outgoing command
     signal direction_out : sg_direction_t;
-    signal request_out : core_request_t := invalid_core_request;
-    signal extra_out : std_ulogic := '0';
+    signal request_out : core_request_t := IDLE_CORE_REQUEST;
 
     signal enable_advance : std_ulogic := '1';
     signal bank_ready : std_ulogic := '0';
@@ -86,7 +83,6 @@ begin
         -- Multiplex between request_in or request out
         variable test_request : core_request_t;
         variable test_direction : sg_direction_t;
-        variable test_extra : std_ulogic;
         -- Intermediate calculations for request assessment
         variable test_bank : natural range 0 to 15;
         variable test_ready : std_ulogic;
@@ -99,7 +95,7 @@ begin
             -- Only change direction when current request has no extra data
             lock_direction :=
                 to_std_ulogic(request_direction = DIR_WRITE) and
-                write_request_i.valid and write_request_extra_i;
+                write_request_i.valid and write_request_i.extra;
             -- Also, only change direction when advancing input to avoid missing
             -- a lock condition
             if not lock_direction and request_in_ready then
@@ -109,14 +105,10 @@ begin
             -- Input multiplexer
             if request_in_ready then
                 direction_in <= request_direction;
-                case request_direction is
-                    when DIR_READ =>
-                        request_in <= read_request_i;
-                        extra_in <= '0';
-                    when DIR_WRITE =>
-                        request_in <= write_request_i;
-                        extra_in <= write_request_extra_i;
-                end case;
+                with request_direction select
+                    request_in <=
+                        read_request_i when DIR_READ,
+                        write_request_i when DIR_WRITE;
             end if;
 
             -- If data advance is blocked then we need to inspect the output
@@ -125,29 +117,27 @@ begin
             if enable_advance then
                 test_direction := direction_in;
                 test_request := request_in;
-                test_extra := extra_in;
             else
                 test_direction := direction_out;
                 test_request := request_out;
-                test_extra := extra_out;
             end if;
 
             -- Check with bank whether ready to accept this request
             test_bank := to_integer(test_request.bank);
             with test_direction select
                 test_ready :=
-                    bank_status_i.read_ready(test_bank)  when DIR_READ,
-                    bank_status_i.write_ready(test_bank) when DIR_WRITE;
+                    banks_status_i.allow_read(test_bank)  when DIR_READ,
+                    banks_status_i.allow_write(test_bank) when DIR_WRITE;
             -- Check whether the requested bank is open on the correct row
             test_matches :=
-                test_request.valid and bank_status_i.active(test_bank) and
+                test_request.valid and banks_status_i.active(test_bank) and
                 to_std_ulogic(
-                    bank_status_i.rows(test_bank) = test_request.row);
+                    banks_status_i.row(test_bank) = test_request.row);
 
             -- If the current write has extra content following then force
             -- bypass of flow control for following commands.  This is used to
             -- keep write masks associated with their original command.
-            test_force := extra_out and bank_ready;
+            test_force := request_out.extra and bank_ready;
             -- Recognise the start of a new request.
             test_new_request :=
                 test_matches and test_ready and
@@ -172,7 +162,6 @@ begin
             if enable_advance then
                 direction_out <= direction_in;
                 request_out <= request_in;
-                extra_out <= extra_in;
             end if;
 
             -- Output generation

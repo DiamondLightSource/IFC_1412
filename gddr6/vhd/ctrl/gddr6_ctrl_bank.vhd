@@ -16,6 +16,7 @@ entity gddr6_ctrl_bank is
         -- Current state
         active_o : out std_ulogic := '0';   -- Set if activated
         row_o : out unsigned(13 downto 0);  -- Selected row when activated
+        age_o : out unsigned(7 downto 0);   -- Ticks bank left idle
 
         -- Permissions, driven by state and timers
         allow_activate_o : out std_ulogic := '1';
@@ -24,21 +25,39 @@ entity gddr6_ctrl_bank is
         allow_write_o : out std_ulogic := '0';
         allow_precharge_o : out std_ulogic := '1';
 
-        -- Requested action on this bank if command_valid_i set
-        command_i : in bank_command_t;
-        command_valid_i : in std_ulogic;
-        -- Only asserted with CMD_RD or CMD_WR to trigger auto precharge
+        -- Incoming requests, will be acted on when corresponding allow is set
+        request_activate_i : in std_ulogic;
+        request_refresh_i : in std_ulogic;
+        request_read_i : in std_ulogic;
+        request_write_i : in std_ulogic;
+        request_precharge_i : in std_ulogic;
+
+        -- Read and write directions used to qualify read and write
+        read_active_i : in std_ulogic;
+        write_active_i : in std_ulogic;
+
+        -- Only asserted with read or write request to trigger auto precharge
         auto_precharge_i : in std_ulogic;
         -- Row to set for CMD_ACT
-        row_i : in unsigned(13 downto 0)
+        row_i : in unsigned(13 downto 0);
+
+        -- This flag will hold banks in extended refresh
+        refresh_all_i : in std_ulogic
     );
 end;
 
 architecture arch of gddr6_ctrl_bank is
+    constant MAX_AGE : age_o'SUBTYPE := (others => '1');
+
     type row_state_t is (BANK_IDLE, BANK_REFRESH, BANK_ACTIVE, BANK_PRECHARGE);
     signal state : row_state_t := BANK_IDLE;
 
     signal auto_precharge : std_ulogic := '0';
+
+    -- Internal permissions for read and write before qualification by active
+    -- state
+    signal allow_read : std_ulogic := '0';
+    signal allow_write : std_ulogic := '0';
 
     -- Counters for delays longer than 2 ticks
     --
@@ -57,18 +76,19 @@ begin
     process (clk_i)
         procedure do_bank_idle is
         begin
-            if command_valid_i = '1' and command_i = CMD_REF then
+            if allow_refresh_o and request_refresh_i then
                 tRFCpb_counter <= t_RFCpb - 2;
                 allow_precharge_o <= '0';
                 state <= BANK_REFRESH;
-            elsif command_valid_i = '1' and command_i = CMD_ACT then
+            elsif allow_activate_o and request_activate_i then
                 tRCDRD_counter <= t_RCDRD - 2;
                 tRAS_counter <= t_RAS - 2;
                 tWTP_counter <= 0;
                 auto_precharge <= '0';
                 row_o <= row_i;
+                age_o <= (others => '0');
                 active_o <= '1';
-                allow_write_o <= '1';
+                allow_write <= '1';
                 allow_precharge_o <= '0';
                 state <= BANK_ACTIVE;
             end if;
@@ -78,7 +98,7 @@ begin
         begin
             if tRFCpb_counter > 0 then
                 tRFCpb_counter <= tRFCpb_counter - 1;
-            else
+            elsif not refresh_all_i then
                 allow_precharge_o <= '1';
                 state <= BANK_IDLE;
             end if;
@@ -93,13 +113,18 @@ begin
 
         begin
             -- Decode the command requests
-            do_write := allow_write_o and
-                command_valid_i and to_std_ulogic(command_i = CMD_WR);
-            do_read := allow_read_o and
-                command_valid_i and to_std_ulogic(command_i = CMD_RD);
-            do_precharge := allow_precharge_o and
-                command_valid_i and to_std_ulogic(command_i = CMD_PRE);
+            do_write := allow_write_o and request_write_i;
+            do_read := allow_read_o and request_read_i;
+            do_precharge :=
+                allow_precharge_o and (request_precharge_i or auto_precharge);
 
+            if do_read or do_write or do_precharge then
+                -- We include precharge just to leave the age of an idle bank
+                -- in a well defined state to reduce confusion
+                age_o <= (others => '0');
+            elsif age_o < MAX_AGE then
+                age_o <= age_o + 1;
+            end if;
 
             -- The tRAS, tRCDRD, and tRCDWR timer run from entry into
             -- BANK_ACTIVE state, but tRCDWR is only one tick so is implicit
@@ -116,14 +141,15 @@ begin
             elsif tWTP_counter > 0 then
                 tWTP_counter <= tWTP_counter - 1;
             end if;
-            allow_write_o <= not auto_precharge;
+            allow_write <= not auto_precharge and not do_write;
 
             -- The tRTP counter
             -- is two ticks and so is absorbed into the allow_read_o state
             -- We don't have time to block on next tick, but reads won't be
             -- generated any faster
-            allow_read_o <=
-                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0);
+            allow_read <=
+                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0) and
+                not do_read;
 
             -- Register precharge if requested on read or write.  This will
             -- block subsequent operations and automatically deactive the bank
@@ -133,11 +159,11 @@ begin
             end if;
 
             -- Trigger precharge when allowed
-            if do_precharge or (allow_precharge_o and auto_precharge) then
+            if do_precharge then
                 tRP_counter <= t_RP - 2;
                 active_o <= '0';
-                allow_write_o <= '0';
-                allow_read_o <= '0';
+                allow_write <= '0';
+                allow_read <= '0';
                 allow_precharge_o <= '1';
                 state <= BANK_PRECHARGE;
             else
@@ -168,33 +194,11 @@ begin
                 when BANK_PRECHARGE =>
                     do_bank_precharge;
             end case;
-
-            -- Sanity checks during simulation
-            --
-            -- synthesis translate_off
-            if command_valid_i then
-                case command_i is
-                    when CMD_ACT =>
-                        assert allow_activate_o report "Invalid ACT"
-                            severity failure;
-                    when CMD_WR =>
-                        assert allow_write_o report "Invalid WR"
-                            severity failure;
-                    when CMD_RD =>
-                        assert allow_read_o report "Invalid RD"
-                            severity failure;
-                    when CMD_PRE =>
-                        assert allow_precharge_o report "Invalid PRE"
-                            severity failure;
-                    when CMD_REF =>
-                        assert allow_refresh_o report "Invalid REF"
-                            severity failure;
-                end case;
-            end if;
-            -- synthesis translate_on
         end if;
     end process;
 
     allow_refresh_o <= to_std_ulogic(state = BANK_IDLE);
     allow_activate_o <= to_std_ulogic(state = BANK_IDLE);
+    allow_read_o <= allow_read and not write_active_i;
+    allow_write_o <= allow_write and not read_active_i;
 end;

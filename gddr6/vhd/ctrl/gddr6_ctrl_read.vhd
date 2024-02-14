@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-use work.gddr6_ctrl_commands.all;
+use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_core_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
 
@@ -50,8 +50,8 @@ architecture arch of gddr6_ctrl_read is
     subtype BANK_RANGE is natural range 10 downto 7;
     subtype COLUMN_RANGE is natural range 6 downto 0;
 
-    signal read_request : core_request_t := invalid_core_request;
-    signal lookahead : core_lookahead_t := invalid_core_lookahead;
+    signal read_request : core_request_t := IDLE_CORE_REQUEST;
+    signal lookahead : core_lookahead_t := IDLE_CORE_LOOKAHEAD;
 
     signal lookahead_new_row : std_ulogic;
     signal auto_precharge : std_ulogic;
@@ -91,6 +91,7 @@ begin
                         ra_address_i(BANK_RANGE), ra_address_i(COLUMN_RANGE),
                         auto_precharge),
                     precharge => auto_precharge,
+                    extra => '0',
                     valid => '1'
                 );
 
