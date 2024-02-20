@@ -18,7 +18,7 @@ entity gddr6_ctrl_command is
         banks_request_o : out banks_request_t;
 
         -- Selects between read and write requests
-        direction_i : in sg_direction_t;
+        direction_i : in direction_t;
 
         -- Write request with handshake
         write_request_i : in core_request_t;
@@ -47,16 +47,16 @@ entity gddr6_ctrl_command is
 end;
 
 architecture arch of gddr6_ctrl_command is
-    signal request_direction : sg_direction_t;
+    signal request_direction : direction_t;
     signal direction_locked : std_ulogic := '0';
 
     -- Incoming request registered from selected source
-    signal direction_in : sg_direction_t;
+    signal direction_in : direction_t;
     signal request_in : core_request_t := IDLE_CORE_REQUEST;
     signal request_in_ready : std_ulogic;
 
     -- Outgoing command
-    signal direction_out : sg_direction_t;
+    signal direction_out : direction_t;
     signal request_out : core_request_t := IDLE_CORE_REQUEST;
 
     signal enable_advance : std_ulogic := '1';
@@ -82,7 +82,7 @@ begin
         variable lock_direction : std_ulogic;
         -- Multiplex between request_in or request out
         variable test_request : core_request_t;
-        variable test_direction : sg_direction_t;
+        variable test_direction : direction_t;
         -- Intermediate calculations for request assessment
         variable test_bank : natural range 0 to 15;
         variable test_ready : std_ulogic;

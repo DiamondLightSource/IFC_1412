@@ -31,9 +31,9 @@ entity gddr6_ctrl_arb is
             := (others => '0');
 
         -- Memory direction
-        direction_i : in sg_direction_t;
+        direction_i : in direction_t;
         direction_idle_i : in std_ulogic;
-        idle_priority_i : in sg_direction_t;
+        idle_priority_i : in direction_t;
 
         -- Outgoing bank activate request
         activate_bank_o : out unsigned(3 downto 0);
@@ -67,7 +67,7 @@ architecture arch of gddr6_ctrl_arb is
         ARB_ACTIVATE);      -- Request bank activation
     signal state : state_t := ARB_IDLE;
 
-    signal source : sg_direction_t := DIRECTION_WRITE;
+    signal source : direction_t := DIR_WRITE;
     signal bank_allow : std_ulogic_vector(0 to 15);
     signal request : core_request_t;
     signal request_extra : std_ulogic;
@@ -104,7 +104,7 @@ begin
         -- Update which request we service depending on the current direction
         -- state.  When the memory has no preferred direction we have to make
         -- a suitable selection.
-        impure function compute_source return sg_direction_t is
+        impure function compute_source return direction_t is
         begin
             if direction_idle_i then
                 case idle_priority_i is

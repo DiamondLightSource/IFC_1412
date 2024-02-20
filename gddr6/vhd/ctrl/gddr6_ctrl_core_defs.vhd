@@ -9,14 +9,20 @@ use work.support.all;
 use work.gddr6_ctrl_command_defs.all;
 
 package gddr6_ctrl_core_defs is
+    type direction_t is (DIR_READ, DIR_WRITE);
+
     -- This command request is presented to the core for dispatch to the phy
     type core_request_t is record
+        direction : direction_t;        -- Read/write marker
         bank : unsigned(3 downto 0);    -- Bank to read or write
         row : unsigned(13 downto 0);    -- Row to read or write
         command : ca_command_t;         -- CA command to send
         precharge : std_ulogic;         -- Command sent with auto-precharge
-        extra : std_ulogic;             -- Write mask follows this command
         valid : std_ulogic;             -- Command valid
+        -- The following two flags worth together to ensure that write mask
+        -- commands don't get detached from the write command
+        next_extra : std_ulogic;        -- Write mask follows this command
+        extra : std_ulogic;             -- This is a write mask command
     end record;
 
     -- This lookahead request can be presented to the core in time so that a
@@ -27,25 +33,32 @@ package gddr6_ctrl_core_defs is
         valid : std_ulogic;
     end record;
 
-    -- This type will be separately qualified by an idle flag
-    type sg_direction_t is (DIR_READ, DIR_WRITE);
+    type admin_command_t is (CMD_ACT, CMD_PRE, CMD_REF);
 
-    -- Request for read/write action on banks
-    type banks_request_t is record
-        read : std_ulogic_vector(0 to 15);
-        write : std_ulogic_vector(0 to 15);
-        auto_precharge : std_ulogic;
+    -- Request to check bank and row status
+    type bank_open_t is record
+        bank : unsigned(3 downto 0);
+        row : unsigned(13 downto 0);
+        valid : std_ulogic;
     end record;
+
+    -- Request for read/write action on selected bank
+    type out_request_t is record
+        direction : direction_t;
+        bank : unsigned(3 downto 0);
+        auto_precharge : std_ulogic;
+        extra : std_ulogic;
+        valid : std_ulogic;
+    end record;
+
 
     -- Request for admin command (ACT/PRE/REF/PREab/REFab)
     type banks_admin_t is record
-        activate : std_ulogic_vector(0 to 15);
-        precharge : std_ulogic_vector(0 to 15);
-        refresh : std_ulogic_vector(0 to 15);
-        precharge_all : std_ulogic;
-        refresh_all : std_ulogic;
-        -- Row for precharge operation
+        command : admin_command_t;
+        bank : unsigned(3 downto 0);
+        all_banks : std_ulogic;
         row : unsigned(13 downto 0);
+        valid : std_ulogic;
     end record;
 
     type banks_status_t is record
@@ -54,13 +67,13 @@ package gddr6_ctrl_core_defs is
         write_active : std_ulogic;
         read_active : std_ulogic;
 
-        allow_activate : std_ulogic_vector(0 to 15);
-        allow_read : std_ulogic_vector(0 to 15);
-        allow_write : std_ulogic_vector(0 to 15);
-        allow_precharge : std_ulogic_vector(0 to 15);
-        allow_refresh : std_ulogic_vector(0 to 15);
-        allow_precharge_all : std_ulogic;
-        allow_refresh_all : std_ulogic;
+--         allow_activate : std_ulogic_vector(0 to 15);
+--         allow_read : std_ulogic_vector(0 to 15);
+--         allow_write : std_ulogic_vector(0 to 15);
+--         allow_precharge : std_ulogic_vector(0 to 15);
+--         allow_refresh : std_ulogic_vector(0 to 15);
+--         allow_precharge_all : std_ulogic;
+--         allow_refresh_all : std_ulogic;
 
         active : std_ulogic_vector(0 to 15);
         row : unsigned_array(0 to 15)(13 downto 0);
@@ -69,21 +82,28 @@ package gddr6_ctrl_core_defs is
 
 
     -- Constants for initialisers
-    constant IDLE_CORE_REQUEST : core_request_t;
+    function IDLE_CORE_REQUEST(
+        direction : direction_t := DIR_READ) return core_request_t;
     constant IDLE_CORE_LOOKAHEAD : core_lookahead_t;
-    constant IDLE_BANKS_REQUEST : banks_request_t;
+    constant IDLE_OUT_REQUEST : out_request_t;
     constant IDLE_BANKS_ADMIN : banks_admin_t;
 end;
 
 package body gddr6_ctrl_core_defs is
-    constant IDLE_CORE_REQUEST : core_request_t := (
-        bank => (others => '0'),
-        row => (others => '0'),
-        command => SG_NOP,
-        precharge => '0',
-        extra => '0',
-        valid => '0'
-    );
+    function IDLE_CORE_REQUEST(
+        direction : direction_t := DIR_READ) return core_request_t is
+    begin
+        return (
+            direction => direction,
+            bank => (others => '0'),
+            row => (others => '0'),
+            command => SG_NOP,
+            precharge => '0',
+            valid => '0',
+            next_extra => '0',
+            extra => '0'
+        );
+    end;
 
     constant IDLE_CORE_LOOKAHEAD : core_lookahead_t := (
         bank => (others => '0'),
@@ -91,18 +111,19 @@ package body gddr6_ctrl_core_defs is
         valid => '0'
     );
 
-    constant IDLE_BANKS_REQUEST : banks_request_t := (
-        read => (others => '0'),
-        write => (others => '0'),
-        auto_precharge => '0'
+    constant IDLE_OUT_REQUEST : out_request_t := (
+        direction => DIR_READ,
+        bank => (others => '0'),
+        auto_precharge => '0',
+        extra => '0',
+        valid => '0'
     );
 
     constant IDLE_BANKS_ADMIN : banks_admin_t := (
-        activate => (others => '0'),
-        precharge => (others => '0'),
-        refresh => (others => '0'),
-        precharge_all => '0',
-        refresh_all => '0',
-        row => (others => '0')
+        command => CMD_ACT,
+        bank => (others => '0'),
+        all_banks => '0',
+        row => (others => '0'),
+        valid => '0'
     );
 end;

@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
-use work.gddr6_ctrl_commands.all;
+use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_core_defs.all;
 
 entity gddr6_ctrl_core is
@@ -15,15 +15,14 @@ entity gddr6_ctrl_core is
 
         -- Write request with handshake
         write_request_i : in core_request_t;
-        write_request_extra_i : in std_ulogic;
-        write_request_ready_o : out std_ulogic;
+        write_ready_o : out std_ulogic;
         -- This is strobed when the requested command is actually sent and may
         -- occur many ticks after the command has been accepted
         write_sent_o : out std_ulogic;
 
         -- Read request with handshake
         read_request_i : in core_request_t;
-        read_request_ready_o : out std_ulogic;
+        read_ready_o : out std_ulogic;
         -- Command sent acknowledge
         read_sent_o : out std_ulogic;
 
@@ -37,29 +36,50 @@ entity gddr6_ctrl_core is
 end;
 
 architecture arch of gddr6_ctrl_core is
-    type direction_t is (DIRECTION_IDLE, DIRECTION_READ, DIRECTION_WRITE);
-    type direction : direction_t := DIRECTION_IDLE;
-
-    signal request : core_request_t;
-    signal lookahead : core_request_t;
-    signal write_byte_mask : std_ulogic;
 
 begin
     banks : entity work.gddr6_ctrl_banks port map (
     );
 
+    command : entity work.gddr6_ctrl_command port map (
+        clk_i => clk_i,
 
-    refresh : entity work.gddr6_ctrl_refresh port map (
+        bank_status_i => 
+        bank_response_o => 
+
+        direction_i => 
+
+        write_request_i => write_request_i,
+        write_ready_o => write_ready_o,
+        write_sent_o => write_sent_o,
+
+        read_request_i => read_request_i,
+        read_ready_o => read_ready_o,
+        read_sent_o => read_sent_o,
+
+        admin_command_i => 
+        admin_command_valid_i => 
+        admin_command_ready_o => 
+
+        open_bank_valid_o => 
+        open_bank_o => 
+        open_bank_row_o => 
+
+        ca_command_o => 
     );
 
 
-    arb : entity work.gddr6_ctrl_arb port map (
-    );
-
-
-    process (clk_i) begin
-        if rising_edge(clk_i) then
-
-        end if;
-    end process;
+--     refresh : entity work.gddr6_ctrl_refresh port map (
+--     );
+-- 
+-- 
+--     arb : entity work.gddr6_ctrl_arb port map (
+--     );
+-- 
+-- 
+--     process (clk_i) begin
+--         if rising_edge(clk_i) then
+-- 
+--         end if;
+--     end process;
 end;

@@ -50,7 +50,7 @@ architecture arch of gddr6_ctrl_read is
     subtype BANK_RANGE is natural range 10 downto 7;
     subtype COLUMN_RANGE is natural range 6 downto 0;
 
-    signal read_request : core_request_t := IDLE_CORE_REQUEST;
+    signal read_request : core_request_t := IDLE_CORE_REQUEST(DIR_READ);
     signal lookahead : core_lookahead_t := IDLE_CORE_LOOKAHEAD;
 
     signal lookahead_new_row : std_ulogic;
@@ -85,6 +85,7 @@ begin
             -- can send a request every other tick when available.
             if ra_valid_i and (not read_request.valid or request_ready_i) then
                 read_request <= (
+                    direction => DIR_READ,
                     bank => ra_address_i(BANK_RANGE),
                     row => ra_address_i(ROW_RANGE),
                     command => SG_RD(

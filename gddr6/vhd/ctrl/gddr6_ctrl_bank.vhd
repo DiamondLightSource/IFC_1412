@@ -32,10 +32,6 @@ entity gddr6_ctrl_bank is
         request_write_i : in std_ulogic;
         request_precharge_i : in std_ulogic;
 
-        -- Read and write directions used to qualify read and write
-        read_active_i : in std_ulogic;
-        write_active_i : in std_ulogic;
-
         -- Only asserted with read or write request to trigger auto precharge
         auto_precharge_i : in std_ulogic;
         -- Row to set for CMD_ACT
@@ -199,6 +195,6 @@ begin
 
     allow_refresh_o <= to_std_ulogic(state = BANK_IDLE);
     allow_activate_o <= to_std_ulogic(state = BANK_IDLE);
-    allow_read_o <= allow_read and not write_active_i;
-    allow_write_o <= allow_write and not read_active_i;
+    allow_read_o <= allow_read;
+    allow_write_o <= allow_write;
 end;

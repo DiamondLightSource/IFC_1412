@@ -24,7 +24,9 @@ architecture arch of testbench is
     -- Interface to banks
     signal status : banks_status_t;
     signal request : banks_request_t;
+    signal request_accept : std_ulogic;
     signal admin : banks_admin_t;
+    signal admin_accept : std_ulogic;
 
     signal tick_counter : natural := 0;
 
@@ -35,6 +37,26 @@ architecture arch of testbench is
         writeline(output, linebuffer);
     end;
 
+    function name(direction : direction_t) return string is
+    begin
+        case direction is
+            when DIR_READ => return "READ";
+            when DIR_WRITE => return "WRITE";
+        end case;
+    end;
+
+    function name(command : admin_command_t; all_banks : std_ulogic)
+        return string is
+    begin
+        case command is
+            when CMD_ACT => return "ACT";
+            when CMD_PRE => return "PRE" & choose(all_banks = '1', "ab", "pb");
+            when CMD_REF => return "REF" & choose(all_banks = '1', "ab", "p2b");
+        end case;
+    end;
+
+    signal verbose : boolean := true;
+
 begin
     clk <= not clk after 2 ns;
 
@@ -42,7 +64,9 @@ begin
         clk_i => clk,
 
         request_i => request,
+        request_accept_o => request_accept,
         admin_i => admin,
+        admin_accept_o => admin_accept,
         status_o => status
     );
 
@@ -58,28 +82,33 @@ begin
     process
         procedure do_request(
             bank : natural; row : unsigned(13 downto 0);
-            direction : sg_direction_t; auto_precharge : std_ulogic := '0';
-            extra : natural := 0)
-        is
-            variable ready : std_ulogic;
+            direction : direction_t; auto_precharge : std_ulogic := '0';
+            extra : natural := 0) is
         begin
-            compute_strobe(
-                request.read, bank, to_std_ulogic(direction = DIR_READ));
-            compute_strobe(
-                request.write, bank, to_std_ulogic(direction = DIR_WRITE));
-            request.auto_precharge <= auto_precharge;
+            if verbose then
+                write("@ " & to_string(tick_counter) & "< " & name(direction));
+            end if;
+
+            request <= (
+                direction => direction,
+                bank => to_unsigned(bank, 4),
+                auto_precharge => auto_precharge,
+                lock => '0',
+                valid => '1'
+            );
             loop
                 clk_wait;
-                ready :=
-                    vector_and(not request.read or status.allow_read) and
-                    vector_and(not request.write or status.allow_write);
-                exit when ready;
+                exit when request_accept;
             end loop;
-            clk_wait(extra);
+            for n in 1 to extra loop
+                request.valid <= '0';
+                request.lock <= '1';
+                clk_wait;
+            end loop;
             request <= IDLE_BANKS_REQUEST;
 
             write("@ " & to_string(tick_counter) & " " &
-                "request " & to_string(direction) & " " &
+                name(direction) & " " &
                 to_string(bank) & " " & to_hstring(row));
         end;
 
@@ -88,11 +117,11 @@ begin
         clk_wait(2);
 
         -- Check intervals between commands
-        do_request(0, 14X"0000", DIR_WRITE);
-        do_request(0, 14X"0000", DIR_WRITE);
-        do_request(0, 14X"0000", DIR_READ);
-        do_request(0, 14X"0000", DIR_READ);
-        do_request(0, 14X"0000", DIR_WRITE);
+        do_request(2, 14X"0000", DIR_WRITE);
+        do_request(2, 14X"0001", DIR_WRITE);
+        do_request(2, 14X"0002", DIR_READ);
+        do_request(2, 14X"0003", DIR_READ);
+        do_request(2, 14X"0004", DIR_WRITE);
 
         wait;
     end process;
@@ -100,42 +129,31 @@ begin
 
     -- Generate admin requests
     process
-        type command_t is (CMD_ACT, CMD_PRE, CMD_REF, CMD_PREab, CMD_REFab);
-
         procedure do_admin(
-            command : command_t; bank : natural := 0;
-            row : unsigned(13 downto 0) := (others => '0'))
-        is
-            variable ready : std_ulogic;
+            command : admin_command_t; bank : natural := 0;
+            row : unsigned(13 downto 0) := (others => '0');
+            all_banks : std_ulogic := '0') is
         begin
-            compute_strobe(
-                admin.activate, bank, to_std_ulogic(command = CMD_ACT));
-            compute_strobe(
-                admin.precharge, bank, to_std_ulogic(command = CMD_PRE));
-            compute_strobe(
-                admin.refresh, bank, to_std_ulogic(command = CMD_REF));
-            admin.precharge_all <= to_std_ulogic(command = CMD_PREab);
-            admin.refresh_all <= to_std_ulogic(command = CMD_REFab);
-            admin.row <= row;
+            if verbose then
+                write("@ " & to_string(tick_counter) & "< " &
+                    name(command, all_banks));
+            end if;
 
+            admin <= (
+                command => command,
+                bank => to_unsigned(bank, 4),
+                all_banks => all_banks,
+                row => row,
+                valid => '1'
+            );
             loop
                 clk_wait;
-                ready :=
-                    vector_and(not admin.activate or status.allow_activate)
-                and
-                    vector_and(not admin.refresh or status.allow_refresh)
-                and
-                    vector_and(not admin.precharge or status.allow_precharge)
-                and
-                    (not admin.precharge_all or status.allow_precharge_all)
-                and
-                    (not admin.refresh_all or status.allow_refresh_all);
-                exit when ready;
+                exit when admin_accept;
             end loop;
             admin <= IDLE_BANKS_ADMIN;
 
             write("@ " & to_string(tick_counter) & " " &
-                "admin " & to_string(command) & " " &
+                name(command, all_banks) & " " &
                 to_string(bank) & " " & to_hstring(row));
         end;
 
@@ -145,11 +163,16 @@ begin
 
         -- Check intervals between commands
         do_admin(CMD_ACT, 0, 14X"0000");
-        do_admin(CMD_PRE, 0);
-        do_admin(CMD_REF, 0);
-        do_admin(CMD_ACT, 0, 14X"0000");
-        do_admin(CMD_PRE, 0);
-        do_admin(CMD_REFab, 0);
+        do_admin(CMD_ACT, 1, 14X"0001");
+        do_admin(CMD_ACT, 2, 14X"0002");
+        do_admin(CMD_REF, 3, 14X"0003");
+        do_admin(CMD_REF, 4, 14X"0004");
+        do_admin(CMD_REF, 5, 14X"0005");
+        do_admin(CMD_PRE, 2);
+        do_admin(CMD_REF, 2);
+        do_admin(CMD_ACT, 2, 14X"0006");
+        do_admin(CMD_PRE, 2);
+        do_admin(CMD_REF, all_banks => '1');
         do_admin(CMD_ACT, 1, 14X"3FFF");
 
         wait;

@@ -37,8 +37,10 @@ package gddr6_ctrl_timing_defs is
     -- Time from read to precharge
     constant t_RTP : natural := 2;
 
-    -- Minimum delay betwen ATC commands on different banks
+    -- Minimum delay between ACT or following REF commands on different banks
     constant t_RRD : natural := 2;
+    -- Timing between REF on separate banks
+    constant t_RREFD : natural := 4;
 
     -- Time for REFab to complete
     constant t_RFCab : natural := 28;   -- 110 ns

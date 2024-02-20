@@ -13,22 +13,22 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_bank.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_banks.vhd
+    $vhd_dir/ctrl/gddr6_ctrl_request.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
+    $bench_dir/decode_commands.vhd \
     $bench_dir/testbench.vhd
 
 vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "Bank(0)" banks/gen_banks(0)/bank_inst/*
-add wave -group "Banks" banks/*
+add wave -group "Request" request/*
 add wave -group "Bench" sim:*
+add wave -group "Decode" decode/*
 
 quietly set NumericStdNoWarnings 1
 
-run 500 ns
+run 200 ns
 
 # vim: set filetype=tcl:

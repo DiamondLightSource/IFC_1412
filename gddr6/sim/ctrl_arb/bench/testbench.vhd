@@ -32,9 +32,9 @@ architecture arch of testbench is
     signal bank_action_write : std_ulogic_vector(0 to 15);
     signal bank_action_auto_precharge : std_ulogic_vector(0 to 15);
 
-    signal direction : sg_direction_t;
+    signal direction : direction_t;
     signal direction_idle : std_ulogic;
-    signal idle_priority : sg_direction_t;
+    signal idle_priority : direction_t;
 
     signal activate_bank : unsigned(3 downto 0);
     signal activate_row : unsigned(13 downto 0);

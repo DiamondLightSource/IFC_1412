@@ -39,7 +39,7 @@ architecture arch of testbench is
         age => (others => (others => '0'))
     );
     signal banks_request : banks_request_t;
-    signal direction : sg_direction_t;
+    signal direction : direction_t;
     signal write_request : core_request_t;
     signal write_request_ready : std_ulogic;
     signal write_request_sent : std_ulogic;
