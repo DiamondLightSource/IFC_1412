@@ -117,7 +117,7 @@ begin
 
             -- Send any mask commands straight after
             for n in extra downto 1 loop
-                command := SG_write_mask(X"ABCD");
+                command := SG_write_mask(X"ABC" & to_std_ulogic_vector_u(n, 4));
                 write_one(bank, row, column, command, precharge, true, n > 1);
             end loop;
         end;
@@ -126,13 +126,14 @@ begin
         write_request <= IDLE_CORE_REQUEST;
 
         clk_wait(5);
-        write(X"3", 14X"1234", 7X"70");
---         clk_wait;
-        write(X"3", 14X"1234", 7X"79", extra => 1);
-        write(X"3", 14X"1234", 7X"7A", extra => 2);
-        write(X"3", 14X"1234", 7X"71");
-        write(X"3", 14X"1234", 7X"72");
-        write(X"3", 14X"1234", 7X"73");
+        write(X"3", 14X"1234", 7X"01");
+        write(X"4", 14X"1234", 7X"02", extra => 1);
+        write(X"5", 14X"1234", 7X"03", extra => 1);
+        write(X"6", 14X"1234", 7X"04", extra => 2);
+        write(X"7", 14X"1234", 7X"05", extra => 2);
+        write(X"8", 14X"1234", 7X"06");
+        write(X"9", 14X"1234", 7X"07");
+        write(X"A", 14X"1234", 7X"08");
 
         wait;
     end process;
@@ -171,8 +172,6 @@ begin
 
 
 
---     direction <= DIR_WRITE;
-
     -- Bank management
     process (clk)
         variable counter : natural := 4;
@@ -192,7 +191,6 @@ begin
         end if;
     end process;
 
---     bank_open_ok <= '1';
     -- Bank open handshake
     process begin
         bank_open_ok <= '0';
@@ -205,7 +203,6 @@ begin
         clk_wait;
     end process;
 
---     out_request_ok <= '1';
     -- Bank out handshake
     process begin
         out_request_ok <= '0';
@@ -222,7 +219,6 @@ begin
     -- Decode CA commands and print
     decode : entity work.decode_commands generic map (
         REPORT_NOP => true
---         REPORT_NOP => false
     ) port map (
         clk_i => clk,
         valid_i => command_valid,

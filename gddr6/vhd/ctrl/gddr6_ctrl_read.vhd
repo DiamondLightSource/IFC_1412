@@ -92,7 +92,7 @@ begin
                         ra_address_i(BANK_RANGE), ra_address_i(COLUMN_RANGE),
                         auto_precharge),
                     precharge => auto_precharge,
-                    extra => '0',
+                    extra => '0', next_extra => '0',
                     valid => '1'
                 );
 

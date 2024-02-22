@@ -89,6 +89,9 @@ architecture arch of gddr6_ctrl_request is
     -- out_valid replaces out_request.valid
     signal next_out_valid : std_ulogic;
 
+    -- Block a new request for exactly one tick after sending the start of the
+    -- last request.  This implements the 2-tick constraint between read or
+    -- write commands, and allows masked writes to be sent back to back.
     signal request_sent : std_ulogic := '0';
 
 begin
@@ -174,7 +177,7 @@ begin
             -- Compute output advance conditions
             out_ok <=
                 out_select_request.extra or
-                (out_request_ok_i and next_out_valid and not out_ok);
+                (out_request_ok_i and next_out_valid and not request_sent);
             if out_advance then
                 out_request <= bank_request;
                 -- Need to qualify out_request.valid: don't accept the transfer

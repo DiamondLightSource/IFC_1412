@@ -1,4 +1,4 @@
--- Simple command decoding
+-- Decodes stream of CA commands and prints the result
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -31,11 +31,9 @@ architecture arch of decode_commands is
         writeline(output, linebuffer);
     end;
 
-    function decode_command(command : ca_command_t) return string is
-        variable ca : vector_array(0 to 1)(9 downto 0);
+    function decode_command(ca : vector_array) return string is
         variable decode_bits : std_ulogic_vector(5 downto 0);
     begin
-        ca := command.ca;
         decode_bits := ca(0)(9 downto 8) & ca(1)(9 downto 6);
         case? decode_bits is
             when "1111--" | "1110--" | "1011--" =>
@@ -81,24 +79,20 @@ architecture arch of decode_commands is
         end case?;
     end;
 
-    function decode_mask(command : ca_command_t) return string is
-        variable ca : vector_array(0 to 1)(9 downto 0);
+    function decode_mask(ca : vector_array) return string is
     begin
-        ca := command.ca;
-
         if ca(0)(9 downto 8) & ca(1)(9 downto 8) = "1111" then
-            return "Mask: " & to_hstring(ca(1)(7 downto 0) & ca(0)(7 downto 0));
+            return "Mask: " &
+                to_hstring(ca(1)(7 downto 0) & ca(0)(7 downto 0));
         else
             return "Invalid mask: " &
                 to_hstring(ca(0)) & " "& to_hstring(ca(1));
         end if;
     end;
 
-    function is_simple_nop(command : ca_command_t) return boolean is
-        variable ca : vector_array(0 to 1)(9 downto 0);
+    function is_simple_nop(ca : vector_array) return boolean is
         variable decode_bits : std_ulogic_vector(3 downto 0);
     begin
-        ca := command.ca;
         decode_bits := ca(0)(9 downto 8) & ca(1)(9 downto 8);
         case? decode_bits is
             when "1111" | "1110" | "1011" =>
@@ -108,11 +102,9 @@ architecture arch of decode_commands is
         end case?;
     end;
 
-    function extra_commands(command : ca_command_t) return natural is
-        variable ca : vector_array(0 to 1)(9 downto 0);
+    function extra_commands(ca : vector_array) return natural is
         variable decode_bits : std_ulogic_vector(5 downto 0);
     begin
-        ca := command.ca;
         decode_bits := ca(0)(9 downto 8) & ca(1)(9 downto 6);
         case? decode_bits is
             when "110010" => return 1;
@@ -132,19 +124,20 @@ begin
         if rising_edge(clk_i) then
             if valid_i then
                 if mask_counter > 0 then
-                    decode := new string'(decode_mask(ca_command_i));
+                    decode := new string'(decode_mask(ca_command_i.ca));
                     mask_counter <= mask_counter - 1;
                     simple_nop := false;
                 else
-                    decode := new string'(decode_command(ca_command_i));
-                    mask_counter <= extra_commands(ca_command_i);
-                    simple_nop := is_simple_nop(ca_command_i);
+                    decode := new string'(decode_command(ca_command_i.ca));
+                    mask_counter <= extra_commands(ca_command_i.ca);
+                    simple_nop := is_simple_nop(ca_command_i.ca);
                 end if;
                 if not simple_nop or REPORT_NOP then
                     write("@ " & to_string(tick_count) & " " & decode.all);
                 end if;
             elsif mask_counter > 0 then
-                write("@ " & to_string(tick_count) & " broken mask");
+                write("@ " & to_string(tick_count) &
+                    " missing mask, count = " & to_string(mask_counter));
                 mask_counter <= 0;
             end if;
             tick_count <= tick_count + 1;

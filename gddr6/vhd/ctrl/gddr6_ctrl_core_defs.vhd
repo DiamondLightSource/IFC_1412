@@ -10,6 +10,7 @@ use work.gddr6_ctrl_command_defs.all;
 
 package gddr6_ctrl_core_defs is
     type direction_t is (DIR_READ, DIR_WRITE);
+    type admin_command_t is (CMD_ACT, CMD_PRE, CMD_REF);
 
     -- This command request is presented to the core for dispatch to the phy
     type core_request_t is record
@@ -32,8 +33,6 @@ package gddr6_ctrl_core_defs is
         row : unsigned(13 downto 0);
         valid : std_ulogic;
     end record;
-
-    type admin_command_t is (CMD_ACT, CMD_PRE, CMD_REF);
 
     -- Request to check bank and row status
     type bank_open_t is record

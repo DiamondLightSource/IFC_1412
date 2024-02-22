@@ -29,6 +29,6 @@ add wave -group "Decode" decode/*
 
 quietly set NumericStdNoWarnings 1
 
-run 200 ns
+run 350 ns
 
 # vim: set filetype=tcl:
