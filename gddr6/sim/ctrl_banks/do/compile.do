@@ -24,11 +24,13 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 view wave
 
 add wave -group "Bank(0)" banks/gen_banks(0)/bank_inst/*
+add wave -group "Bank(1)" banks/gen_banks(1)/bank_inst/*
 add wave -group "Banks" banks/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1
 
-run 500 ns
+# run 200 ns
+run 1 us
 
 # vim: set filetype=tcl:

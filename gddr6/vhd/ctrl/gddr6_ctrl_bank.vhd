@@ -137,15 +137,14 @@ begin
             elsif tWTP_counter > 0 then
                 tWTP_counter <= tWTP_counter - 1;
             end if;
-            allow_write <= not auto_precharge and not do_write;
+            allow_write <= not auto_precharge;
 
             -- The tRTP counter
             -- is two ticks and so is absorbed into the allow_read_o state
             -- We don't have time to block on next tick, but reads won't be
             -- generated any faster
             allow_read <=
-                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0) and
-                not do_read;
+                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0);
 
             -- Register precharge if requested on read or write.  This will
             -- block subsequent operations and automatically deactive the bank
@@ -165,7 +164,7 @@ begin
             else
                 allow_precharge_o <= to_std_ulogic(
                     tRAS_counter = 0 and tWTP_counter = 0) and
-                    not do_read;
+                    not do_read and not do_write;
             end if;
         end;
 

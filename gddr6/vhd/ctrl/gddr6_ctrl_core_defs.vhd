@@ -46,8 +46,10 @@ package gddr6_ctrl_core_defs is
         direction : direction_t;
         bank : unsigned(3 downto 0);
         auto_precharge : std_ulogic;
-        extra : std_ulogic;
         valid : std_ulogic;
+        -- This extra flag is mutually exclusive with valid and reserves this
+        -- time slot for any extra commands (write mask data)
+        extra : std_ulogic;
     end record;
 
 
@@ -65,15 +67,6 @@ package gddr6_ctrl_core_defs is
         -- direction
         write_active : std_ulogic;
         read_active : std_ulogic;
-
---         allow_activate : std_ulogic_vector(0 to 15);
---         allow_read : std_ulogic_vector(0 to 15);
---         allow_write : std_ulogic_vector(0 to 15);
---         allow_precharge : std_ulogic_vector(0 to 15);
---         allow_refresh : std_ulogic_vector(0 to 15);
---         allow_precharge_all : std_ulogic;
---         allow_refresh_all : std_ulogic;
-
         active : std_ulogic_vector(0 to 15);
         row : unsigned_array(0 to 15)(13 downto 0);
         age : unsigned_array(0 to 15)(7 downto 0);
@@ -84,6 +77,7 @@ package gddr6_ctrl_core_defs is
     function IDLE_CORE_REQUEST(
         direction : direction_t := DIR_READ) return core_request_t;
     constant IDLE_CORE_LOOKAHEAD : core_lookahead_t;
+    constant IDLE_OPEN_REQUEST : bank_open_t;
     constant IDLE_OUT_REQUEST : out_request_t;
     constant IDLE_BANKS_ADMIN : banks_admin_t;
 end;
@@ -110,12 +104,18 @@ package body gddr6_ctrl_core_defs is
         valid => '0'
     );
 
+    constant IDLE_OPEN_REQUEST : bank_open_t := (
+        bank => (others => '0'),
+        row => (others => '0'),
+        valid => '0'
+    );
+
     constant IDLE_OUT_REQUEST : out_request_t := (
         direction => DIR_READ,
         bank => (others => '0'),
         auto_precharge => '0',
-        extra => '0',
-        valid => '0'
+        valid => '0',
+        extra => '0'
     );
 
     constant IDLE_BANKS_ADMIN : banks_admin_t := (
