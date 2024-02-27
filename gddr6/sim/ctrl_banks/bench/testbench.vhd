@@ -352,8 +352,8 @@ begin
         expect(DIR_READ, 5);    -- tRCDRD
 
         -- Refresh of all banks
-        expect(CMD_PRE, 2);
-        expect(CMD_REF, 5);     -- tRP
+        expect(CMD_PRE, 2, all_banks => '1');
+        expect(CMD_REF, 5, all_banks => '1');     -- tRP
         expect(CMD_ACT, 29);    -- tRFCab
 
 

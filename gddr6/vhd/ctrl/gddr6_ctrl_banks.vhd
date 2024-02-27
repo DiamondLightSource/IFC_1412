@@ -40,7 +40,8 @@ architecture arch of gddr6_ctrl_banks is
     signal allow_refresh : std_ulogic_vector(0 to 15);
     signal active : std_ulogic_vector(0 to 15);
     signal row : unsigned_array(0 to 15)(13 downto 0);
-    signal age : unsigned_array(0 to 15)(7 downto 0);
+    signal young : std_ulogic_vector(0 to 15);
+    signal old : std_ulogic_vector(0 to 15);
 
     -- Interface to bank
     signal open_bank : natural range 0 to 15;
@@ -155,7 +156,8 @@ begin
 
             active_o => active(bank),
             row_o => row(bank),
-            age_o => age(bank),
+            young_o => young(bank),
+            old_o => old(bank),
 
             allow_activate_o => allow_activate(bank),
             allow_read_o => allow_read(bank),
@@ -255,6 +257,7 @@ begin
         read_active => read_active,
         active => active,
         row => row,
-        age => age
+        young => young,
+        old => old
     );
 end;

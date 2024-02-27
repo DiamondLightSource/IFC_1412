@@ -13,10 +13,14 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_bank.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_banks.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_request_mux.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_request.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
-    $bench_dir/decode_commands.vhd \
+    $bench_dir/../../common/decode_commands.vhd \
     $bench_dir/testbench.vhd
 
 vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench

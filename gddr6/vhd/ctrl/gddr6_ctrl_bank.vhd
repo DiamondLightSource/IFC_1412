@@ -16,7 +16,8 @@ entity gddr6_ctrl_bank is
         -- Current state
         active_o : out std_ulogic := '0';   -- Set if activated
         row_o : out unsigned(13 downto 0);  -- Selected row when activated
-        age_o : out unsigned(7 downto 0);   -- Ticks bank left idle
+        young_o : out std_ulogic := '0';    -- Set if young and active
+        old_o : out std_ulogic;             -- Set if old but still active
 
         -- Permissions, driven by state and timers
         allow_activate_o : out std_ulogic := '1';
@@ -43,7 +44,7 @@ entity gddr6_ctrl_bank is
 end;
 
 architecture arch of gddr6_ctrl_bank is
-    constant MAX_AGE : age_o'SUBTYPE := (others => '1');
+    signal age : unsigned(OLD_BANK_BITS downto 0) := (others => '0');
 
     type row_state_t is (BANK_IDLE, BANK_REFRESH, BANK_ACTIVE, BANK_PRECHARGE);
     signal state : row_state_t := BANK_IDLE;
@@ -82,7 +83,8 @@ begin
                 tWTP_counter <= 0;
                 auto_precharge <= '0';
                 row_o <= row_i;
-                age_o <= (others => '0');
+                age <= (others => '0');
+                young_o <= '0';
                 active_o <= '1';
                 allow_write <= '1';
                 allow_precharge_o <= '0';
@@ -117,9 +119,12 @@ begin
             if do_read or do_write or do_precharge then
                 -- We include precharge just to leave the age of an idle bank
                 -- in a well defined state to reduce confusion
-                age_o <= (others => '0');
-            elsif age_o < MAX_AGE then
-                age_o <= age_o + 1;
+                age <= (others => '0');
+                young_o <= not do_precharge;
+            elsif age(OLD_BANK_BITS) = '0' then
+                age <= age + 1;
+                young_o <=
+                    not vector_or(age(OLD_BANK_BITS downto YOUNG_BANK_BITS));
             end if;
 
             -- The tRAS, tRCDRD, and tRCDWR timer run from entry into
@@ -191,6 +196,8 @@ begin
             end case;
         end if;
     end process;
+
+    old_o <= age(OLD_BANK_BITS);
 
     allow_refresh_o <= to_std_ulogic(state = BANK_IDLE);
     allow_activate_o <= to_std_ulogic(state = BANK_IDLE);

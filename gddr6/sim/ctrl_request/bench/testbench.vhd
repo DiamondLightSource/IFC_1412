@@ -29,9 +29,12 @@ architecture arch of testbench is
 
     signal write_request : core_request_t := IDLE_CORE_REQUEST;
     signal write_request_ready : std_ulogic;
-    signal write_request_sent : std_ulogic;
     signal read_request : core_request_t := IDLE_CORE_REQUEST;
     signal read_request_ready : std_ulogic;
+    signal mux_request : core_request_t;
+    signal mux_ready : std_ulogic;
+
+    signal write_request_sent : std_ulogic;
     signal read_request_sent : std_ulogic;
     signal bank_open : bank_open_t;
     signal bank_open_ok : std_ulogic := '1';
@@ -52,17 +55,29 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    request : entity work.gddr6_ctrl_request port map (
+    request_mux : entity work.gddr6_ctrl_request_mux port map (
         clk_i => clk,
 
         direction_i => direction,
+        stall_i => refresh_stall,
 
         write_request_i => write_request,
-        write_request_ready_o => write_request_ready,
-        write_request_sent_o => write_request_sent,
+        write_ready_o => write_request_ready,
 
         read_request_i => read_request,
-        read_request_ready_o => read_request_ready,
+        read_ready_o => read_request_ready,
+
+        out_request_o => mux_request,
+        out_ready_i => mux_ready
+    );
+
+    request : entity work.gddr6_ctrl_request port map (
+        clk_i => clk,
+
+        mux_request_i => mux_request,
+        mux_ready_o => mux_ready,
+
+        write_request_sent_o => write_request_sent,
         read_request_sent_o => read_request_sent,
 
         bank_open_o => bank_open,
@@ -71,8 +86,6 @@ begin
 
         out_request_o => out_request,
         out_request_ok_i => out_request_ok,
-
-        refresh_stall_i => refresh_stall,
 
         command_o => command,
         command_valid_o => command_valid
