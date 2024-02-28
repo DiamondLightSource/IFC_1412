@@ -20,8 +20,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/../../common/decode_commands.vhd \
     $bench_dir/testbench.vhd
 
-#     $bench_dir/decode_commands.vhd \
-
 vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave

@@ -27,7 +27,10 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "Command" command/* command/requests/*
+add wave -group "Banks" command/banks/*
+add wave -group "Mux" command/request_mux/*
+add wave -group "Request" command/request/*
+add wave -group "Command" command/*
 add wave -group "Decode" decode/*
 add wave -group "Bench" sim:*
 

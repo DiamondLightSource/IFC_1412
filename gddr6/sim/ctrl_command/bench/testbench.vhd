@@ -22,36 +22,20 @@ architecture arch of testbench is
         end loop;
     end;
 
-    signal banks_status : banks_status_t := (
-        write_active => '0',
-        read_active => '0',
-
-        allow_activate => (others => '0'),
-        allow_read => (others => '1'),
-        allow_write => (others => '1'),
-        allow_precharge => (others => '0'),
-        allow_refresh => (others => '0'),
-        allow_precharge_all => '0',
-        allow_refresh_all => '0',
-
-        active => (3 => '1', others => '0'),
-        row => (3 => 14X"1234", others => (others => 'U')),
-        age => (others => (others => '0'))
-    );
-    signal banks_request : banks_request_t;
-    signal direction : direction_t;
     signal write_request : core_request_t;
     signal write_request_ready : std_ulogic;
     signal write_request_sent : std_ulogic;
     signal read_request : core_request_t;
     signal read_request_ready : std_ulogic;
     signal read_request_sent : std_ulogic;
-    signal admin_command : ca_command_t;
-    signal admin_command_valid : std_ulogic;
+    signal admin_command : banks_admin_t;
     signal admin_command_ready : std_ulogic;
-    signal open_bank_valid : std_ulogic;
-    signal open_bank : unsigned(3 downto 0);
-    signal open_bank_row : unsigned(13 downto 0);
+    signal bypass_command : ca_command_t;
+    signal bypass_valid : std_ulogic;
+    signal refresh_stall : std_ulogic;
+    signal direction : direction_t;
+    signal bank_open : bank_open_t;
+    signal banks_status : banks_status_t;
     signal ca_command : ca_command_t;
 
     procedure write(message : string := "") is
@@ -69,11 +53,6 @@ begin
     command : entity work.gddr6_ctrl_command port map (
         clk_i => clk,
 
-        banks_status_i => banks_status,
-        banks_request_o => banks_request,
-
-        direction_i => direction,
-
         write_request_i => write_request,
         write_request_ready_o => write_request_ready,
         write_request_sent_o => write_request_sent,
@@ -82,36 +61,43 @@ begin
         read_request_ready_o => read_request_ready,
         read_request_sent_o => read_request_sent,
 
-        admin_command_i => admin_command,
-        admin_command_valid_i => admin_command_valid,
-        admin_command_ready_o => admin_command_ready,
+        admin_i => admin_command,
+        admin_ready_o => admin_command_ready,
 
-        open_bank_valid_o => open_bank_valid,
-        open_bank_o => open_bank,
-        open_bank_row_o => open_bank_row,
+        bypass_command_i => bypass_command,
+        bypass_valid_i => bypass_valid,
+
+        refresh_stall_i => refresh_stall,
+        direction_i => direction,
+        bank_open_o => bank_open,
+        banks_status_o => banks_status,
 
         ca_command_o => ca_command
     );
 
---     direction <= DIR_WRITE;
+    direction <= DIR_WRITE;
+    refresh_stall <= '0';
+    bypass_valid <= '0';
 
 
     -- Write commands
     process
         procedure write_one(
             bank : unsigned; row : unsigned; column : unsigned;
-            command : ca_command_t;
-            precharge : std_ulogic; extra : boolean) is
+            command : ca_command_t; precharge : std_ulogic;
+            extra : boolean; next_extra : boolean) is
         begin
             write_request <= (
-                bank => bank, row => row,
+                direction => DIR_WRITE, bank => bank, row => row,
                 command => command, precharge => precharge,
-                extra => to_std_ulogic(extra), valid => '1');
+                extra => to_std_ulogic(extra),
+                next_extra => to_std_ulogic(next_extra),
+                valid => '1');
             loop
                 clk_wait;
                 exit when write_request_ready;
             end loop;
-            write_request.valid <= '0';
+            write_request <= IDLE_CORE_REQUEST;
         end;
 
         procedure write(
@@ -126,12 +112,12 @@ begin
                 when 2 => command := SG_WSM(bank, column, "1111");
                 when others =>
             end case;
-            write_one(bank, row, column, command, precharge, extra > 0);
+            write_one(bank, row, column, command, precharge, false, extra > 0);
 
             -- Send any mask commands straight after
             for n in extra downto 1 loop
-                command := SG_write_mask(X"ABCD");
-                write_one(bank, row, column, command, precharge, n > 1);
+                command := SG_write_mask(X"ABC" & to_std_ulogic_vector_u(n, 4));
+                write_one(bank, row, column, command, precharge, true, n > 1);
             end loop;
         end;
 
@@ -158,15 +144,16 @@ begin
             precharge : std_ulogic := '0') is
         begin
             read_request <= (
-                bank => bank, row => row,
+                direction => DIR_READ, bank => bank, row => row,
                 command => SG_RD(bank, column), precharge => precharge,
-                extra => '0', valid => '1');
+                next_extra => '0', extra => '0', valid => '1');
             loop
                 clk_wait;
                 exit when read_request_ready;
             end loop;
-            read_request.valid <= '0';
+            read_request <= IDLE_CORE_REQUEST;
         end;
+
 
     begin
         read_request <= IDLE_CORE_REQUEST;
@@ -182,60 +169,39 @@ begin
 
     -- Admin commands
     process
-        procedure admin(count : natural) is
+        procedure admin(
+            command : admin_command_t; bank : unsigned(3 downto 0);
+            row : unsigned(13 downto 0) := (others => '0');
+            all_banks : std_ulogic := '0') is
         begin
-            admin_command <= SG_ACT(X"F", to_unsigned(count, 14));
-            admin_command_valid <= '1';
+            admin_command <= (
+                command => command,
+                bank => bank,
+                all_banks => all_banks,
+                row => row,
+                valid => '1'
+            );
             loop
                 clk_wait;
                 exit when admin_command_ready;
             end loop;
-            admin_command_valid <= '0';
+            admin_command <= IDLE_BANKS_ADMIN;
         end;
 
     begin
-        admin_command_valid <= '0';
+        admin_command <= IDLE_BANKS_ADMIN;
 
---         clk_wait(5);
---         for n in 1 to 10 loop
---             admin(n);
---         end loop;
+        clk_wait(12);
+        admin(CMD_ACT, X"3", 14X"1234");
 
         wait;
-    end process;
-
---     process begin
---         direction <= DIR_WRITE;
---         clk_wait(
---         wait;
---     end process;
-
-
-    -- Bank management.  For the moment, just open the bank on request
-    process (clk)
-        variable bank : integer range 0 to 15;
-    begin
-        if rising_edge(clk) then
-            case direction is
-                when DIR_READ => direction <= DIR_WRITE;
-                when DIR_WRITE => direction <= DIR_READ;
-            end case;
-
---             if open_bank_valid then
---                 bank := to_integer(open_bank);
---                 bank_status.active(bank) <= '1';
---                 bank_status.rows(bank) <= open_bank_row;
---                 bank_status.read_ready(bank) <= '1';
---                 bank_status.write_ready(bank) <= '1';
---             end if;
-            tick_count <= tick_count + 1;
-        end if;
     end process;
 
 
     -- Decode CA commands and print
     decode : entity work.decode_commands port map (
         clk_i => clk,
-        ca_command_i => ca_command
+        ca_command_i => ca_command,
+        tick_count_o => tick_count
     );
 end;
