@@ -13,7 +13,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_request_mux.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_request.vhd
 
 vcom -64 -2008 -work xil_defaultlib \

@@ -99,7 +99,7 @@ begin
         direction => out_select_request.direction,
         bank => out_select_request.bank,
         auto_precharge => out_select_request.precharge,
-        valid => next_out_valid and not out_ok and not out_select_request.extra,
+        valid => next_out_valid and not out_select_request.extra,
         extra => out_select_request.extra
     );
 
