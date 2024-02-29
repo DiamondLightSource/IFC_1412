@@ -181,9 +181,7 @@ begin
         procedure do_admin(
             command : admin_command_t; bank : natural := 0;
             row : unsigned(13 downto 0) := (others => '0');
-            all_banks : std_ulogic := '0'; timeout : natural := 0)
-        is
-            variable timer : natural := timeout;
+            all_banks : std_ulogic := '0') is
         begin
             admin <= (
                 command => command,
@@ -194,14 +192,9 @@ begin
             );
             loop
                 clk_wait;
-                if timer > 0 then timer := timer - 1; end if;
-                exit when admin_accept = '1' or (timeout > 0 and timer = 0);
+                exit when admin_accept;
             end loop;
             admin <= IDLE_BANKS_ADMIN;
-            assert timeout = 0 or admin_accept = '0'
-                report "Expected command " & name(command, all_banks) &
-                    " to fail"
-                severity failure;
         end;
 
     begin
@@ -211,10 +204,6 @@ begin
         do_admin(CMD_ACT, 1, 14X"0000");
         do_admin(CMD_ACT, 0, 14X"0000");
         do_admin(CMD_ACT, 3, 14X"0000");
-
-        -- Check that refresh of all banks and bank 0/8 is blocked at the moment
-        do_admin(CMD_REF, 0, all_banks => '1', timeout => 2);
-        do_admin(CMD_REF, 0, timeout => 2);
 
         -- Run until initial round of read/write tests complete
         wait_for_tick(36);

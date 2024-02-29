@@ -165,12 +165,12 @@ begin
             allow_precharge_o => allow_precharge(bank),
             allow_refresh_o => allow_refresh(bank),
 
-            request_read_i => request_read and is_request_bank,
-            request_write_i => request_write and is_request_bank,
+            request_read_i => accept_read and is_request_bank,
+            request_write_i => accept_write and is_request_bank,
             request_activate_i =>
-                request_activate and to_std_ulogic(bank = admin_bank),
-            request_precharge_i => request_precharge(bank) and accept_precharge,
-            request_refresh_i => request_refresh(bank) and accept_refresh,
+                accept_activate and to_std_ulogic(bank = admin_bank),
+            request_precharge_i => accept_precharge and request_precharge(bank),
+            request_refresh_i => accept_refresh and request_refresh(bank),
 
             auto_precharge_i => out_request_i.auto_precharge,
             row_i => admin_i.row,
