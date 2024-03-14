@@ -55,9 +55,6 @@ package gddr6_ctrl_core_defs is
         bank : unsigned(3 downto 0);
         auto_precharge : std_ulogic;
         valid : std_ulogic;
-        -- This extra flag is mutually exclusive with valid and reserves this
-        -- time slot for any extra commands (write mask data)
-        extra : std_ulogic;
     end record;
 
 
@@ -124,8 +121,7 @@ package body gddr6_ctrl_core_defs is
         direction => DIR_READ,
         bank => (others => '0'),
         auto_precharge => '0',
-        valid => '0',
-        extra => '0'
+        valid => '0'
     );
 
     constant IDLE_BANKS_ADMIN : banks_admin_t := (
