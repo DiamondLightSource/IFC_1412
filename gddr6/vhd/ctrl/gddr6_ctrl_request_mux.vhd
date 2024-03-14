@@ -11,7 +11,7 @@ use work.gddr6_ctrl_core_defs.all;
 
 entity gddr6_ctrl_request_mux is
     port (
-        clk_i : std_ulogic;
+        clk_i : in std_ulogic;
 
         -- Selects between read and write requests
         direction_i : in direction_t;

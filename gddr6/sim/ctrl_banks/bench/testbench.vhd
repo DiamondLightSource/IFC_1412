@@ -25,6 +25,7 @@ architecture arch of testbench is
     signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
     signal bank_open_ok : std_ulogic;
     signal out_request : out_request_t := IDLE_OUT_REQUEST;
+    signal out_request_extra : std_ulogic := '0';
     signal out_request_ok : std_ulogic;
     signal admin : banks_admin_t;
     signal admin_accept : std_ulogic;
@@ -34,6 +35,7 @@ architecture arch of testbench is
     -- both test_open and test_out, and wait for load_test.
     signal test_open : bank_open_t;
     signal test_out : out_request_t;
+    signal test_out_extra : std_ulogic;
     signal load_test : std_ulogic;
 
     signal tick_counter : natural := 0;
@@ -83,6 +85,7 @@ begin
         bank_open_ok_o => bank_open_ok,
         out_request_i => out_request,
         out_request_ok_o => out_request_ok,
+        out_request_extra_i => out_request_extra,
         admin_i => admin,
         admin_accept_o => admin_accept,
         status_o => status
@@ -100,12 +103,13 @@ begin
                 -- Only advance out request when previous value consumed
                 if bank_open_ok and test_open.valid then
                     out_request <= test_out;
-                elsif test_out.extra then
-                    out_request.extra <= '1';
+                    out_request_extra <= test_out_extra;
+                elsif test_out_extra then
                     out_request.valid <= '0';
+                    out_request_extra <= '1';
                 else
-                    out_request.extra <= '0';
                     out_request.valid <= '0';
+                    out_request_extra <= '0';
                 end if;
             end if;
         end if;
@@ -127,7 +131,8 @@ begin
                 direction => direction,
                 bank => to_unsigned(bank, 4),
                 auto_precharge => precharge,
-                valid => '1', extra => '0');
+                valid => '1');
+            test_out_extra <= '0';
             loop
                 clk_wait;
                 exit when load_test;
@@ -135,7 +140,7 @@ begin
             test_open <= IDLE_OPEN_REQUEST;
             test_out <= IDLE_OUT_REQUEST;
             if extra > 0 then
-                test_out.extra <= '1';
+                test_out_extra <= '1';
                 loop
                     clk_wait;
                     exit when out_request_ok;
@@ -143,13 +148,14 @@ begin
                 for i in 2 to extra loop
                     clk_wait;
                 end loop;
-                test_out.extra <= '0';
+                test_out_extra <= '0';
             end if;
         end;
 
     begin
         test_open <= IDLE_OPEN_REQUEST;
         test_out <= IDLE_OUT_REQUEST;
+        test_out_extra <= '0';
         clk_wait(2);
 
         -- Start with mixing writes to multiple banks interleaved with activate
@@ -294,7 +300,7 @@ begin
         begin
             for n in 1 to count loop
                 clk_wait;
-                if not out_request.extra then
+                if not out_request_extra then
                     write("Expected extra");
                 end if;
             end loop;
@@ -401,7 +407,7 @@ begin
                 last_tick <= tick_counter;
             end if;
 
-            if out_request.extra then
+            if out_request_extra then
                 write(delta & "extra");
                 report_count := report_count + 1;
             end if;

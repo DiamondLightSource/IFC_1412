@@ -16,7 +16,7 @@ entity gddr6_ctrl_read is
         PHY_INPUT_DELAY : natural
     );
     port (
-        clk_i : std_ulogic;
+        clk_i : in std_ulogic;
 
         -- AXI interface
         -- WA Write Adddress

@@ -10,7 +10,7 @@ use work.gddr6_ctrl_defs.all;
 
 entity gddr6_ctrl_write is
     port (
-        clk_i : std_ulogic;
+        clk_i : in std_ulogic;
 
         -- WA Write Adddress
         wa_address_i : in unsigned(24 downto 0);

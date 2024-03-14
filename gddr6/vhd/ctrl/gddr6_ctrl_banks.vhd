@@ -20,6 +20,7 @@ entity gddr6_ctrl_banks is
         -- Request to perform read/write command
         out_request_i : in out_request_t;
         out_request_ok_o : out std_ulogic;
+        out_request_extra_i : in std_ulogic;
 
         -- Request to execute admin command
         admin_i : in banks_admin_t;
@@ -57,6 +58,7 @@ architecture arch of gddr6_ctrl_banks is
     signal accept_activate : std_ulogic;
     signal accept_precharge : std_ulogic;
     signal accept_refresh : std_ulogic;
+
 
     function read_write_request(
         direction : direction_t; request : out_request_t;
@@ -112,7 +114,9 @@ architecture arch of gddr6_ctrl_banks is
     -- opening and before it has been read or written.
     signal precharge_guard : std_ulogic_vector(0 to 15) := (others => '0');
 
-    -- Block admin commands during read or write commands
+    -- Block admin commands during read or write commands.  Admin commands are
+    -- requested one tick later than the corresponding read/write commands, so
+    -- we record the fact that read/write is busy here to block admin commands.
     signal block_admin : std_ulogic;
 
 begin
@@ -149,6 +153,15 @@ begin
     -- Instantiate the 16 banks
     gen_banks : for bank in 0 to 15 generate
         signal is_request_bank : std_ulogic;
+        -- Register all requests to rescue timing
+        signal request_activate_bank : std_ulogic;
+        signal request_refresh_bank : std_ulogic;
+        signal request_read_bank : std_ulogic;
+        signal request_write_bank : std_ulogic;
+        signal request_precharge_bank : std_ulogic;
+        signal auto_precharge_bank : std_ulogic;
+        signal row_bank : unsigned(13 downto 0);
+
     begin
         is_request_bank <= to_std_ulogic(request_bank = bank);
         bank_inst : entity work.gddr6_ctrl_bank port map (
@@ -165,29 +178,41 @@ begin
             allow_precharge_o => allow_precharge(bank),
             allow_refresh_o => allow_refresh(bank),
 
-            request_read_i => accept_read and is_request_bank,
-            request_write_i => accept_write and is_request_bank,
-            request_activate_i =>
-                accept_activate and to_std_ulogic(bank = admin_bank),
-            request_precharge_i => accept_precharge and request_precharge(bank),
-            request_refresh_i => accept_refresh and request_refresh(bank),
+            request_read_i => request_read_bank,
+            request_write_i => request_write_bank,
+            request_activate_i => request_activate_bank,
+            request_precharge_i => request_precharge_bank,
+            request_refresh_i => request_refresh_bank,
 
-            auto_precharge_i => out_request_i.auto_precharge,
-            row_i => admin_i.row,
+            auto_precharge_i => auto_precharge_bank,
+            row_i => row_bank,
             refresh_all_i => refresh_all
         );
+
+        process (clk_i) begin
+            if rising_edge(clk_i) then
+                request_read_bank <= accept_read and is_request_bank;
+                request_write_bank <= accept_write and is_request_bank;
+                request_activate_bank <=
+                    accept_activate and to_std_ulogic(bank = admin_bank);
+                request_precharge_bank <=
+                    accept_precharge and request_precharge(bank);
+                request_refresh_bank <=
+                    accept_refresh and request_refresh(bank);
+                auto_precharge_bank <= out_request_i.auto_precharge;
+                row_bank <= admin_i.row;
+            end if;
+        end process;
     end generate;
 
     accept_read <= request_read and allow_read(request_bank);
     accept_write <= request_write and allow_write(request_bank);
     out_request_ok_o <= accept_read or accept_write;
 
-    block_admin <= accept_read or accept_write or out_request_i.extra;
-
     accept_activate <= request_activate and allow_activate(admin_bank);
     accept_precharge <=
         vector_and(not request_precharge or allow_precharge) and
-        vector_or(request_precharge);
+        vector_or(request_precharge) and not precharge_guard(admin_bank);
     accept_refresh <=
         vector_and(not request_refresh or allow_refresh) and
         vector_or(request_refresh);
@@ -249,6 +274,9 @@ begin
                     precharge_guard(bank) <= '0';
                 end if;
             end loop;
+
+            -- Block admin commands where necessary
+            block_admin <= out_request_ok_o or out_request_extra_i;
         end if;
     end process;
 

@@ -11,7 +11,7 @@ use work.gddr6_ctrl_core_defs.all;
 
 entity gddr6_ctrl_command is
     port (
-        clk_i : std_ulogic;
+        clk_i : in std_ulogic;
 
         -- Write request and report when sent
         write_request_i : in core_request_t;
@@ -50,6 +50,7 @@ architecture arch of gddr6_ctrl_command is
     signal bank_open_ok : std_ulogic;
     signal out_request : out_request_t;
     signal out_request_ok : std_ulogic;
+    signal out_request_extra : std_ulogic;
 
     signal mux_request : core_request_t;
     signal mux_ready : std_ulogic;
@@ -71,6 +72,7 @@ begin
 
         out_request_i => out_request,
         out_request_ok_o => out_request_ok,
+        out_request_extra_i => out_request_extra,
 
         admin_i => admin_in,
         admin_accept_o => admin_ready,
@@ -109,6 +111,7 @@ begin
 
         out_request_o => out_request,
         out_request_ok_i => out_request_ok,
+        out_request_extra_o => out_request_extra,
 
         command_o => request_command,
         command_valid_o => request_command_valid
@@ -120,11 +123,18 @@ begin
         valid => bank_open_request
     );
 
+    assert
+        not admin_valid or not request_command_valid
+        report "Simultaneous admin and request commands"
+        severity failure;
+
     process (clk_i) begin
         if rising_edge(clk_i) then
             -- Buffer incoming admin command
-            if not admin_in.valid or admin_ready then
+            if not admin_in.valid then
                 admin_in <= admin_i;
+            elsif admin_ready then
+                admin_in.valid <= '0';
             end if;
 
             -- Decode the admin command
