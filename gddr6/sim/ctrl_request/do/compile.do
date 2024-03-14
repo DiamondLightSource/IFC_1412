@@ -26,7 +26,6 @@ add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1
 
-# run 350 ns
-run 100 ns
+run 700 ns
 
 # vim: set filetype=tcl:

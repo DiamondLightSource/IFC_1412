@@ -143,10 +143,12 @@ begin
             end if;
 
 
-            -- Advance bank test
+            -- Advance bank test.  We need to block the blank when the output is
+            -- still pending acceptance, or if we are in the wrong position to
+            -- advance.
             block_bank :=
                 (out_request_o.valid and not out_request_ok_i) or
-                (bank_out.valid and bank_out.extra);
+                (bank_out.valid and bank_out.extra and not enable_request_in);
             if load_test_bank then
                 load_test_bank <= not bank_test.valid;
                 bank_open_o <= bank_test;

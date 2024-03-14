@@ -124,9 +124,17 @@ begin
         write(2);
         write(2);
         write;
-        clk_wait(2);
+        write(2);
         write;
-        clk_wait(2);
+        write(1);
+        write(2);
+        write;
+        write(2);
+        write(1);
+        write;
+        clk_wait;
+        write;
+        clk_wait;
         write;
 
         clk_wait(10);
@@ -208,9 +216,18 @@ begin
         variable this_extra : natural;
         variable command_delay : natural;
 
-        variable last_tick : natural := 0;
+        variable last_tick : natural := 5;      -- Allow for initial setup
         variable last_command : natural := 0;
         variable last_extra : natural := 0;
+
+        function prefix(extra : natural) return string is
+        begin
+            if extra > 0 then
+                return " --- ";
+            else
+                return " cmd ";
+            end if;
+        end;
 
     begin
         if rising_edge(clk) then
@@ -221,7 +238,7 @@ begin
                 command_delay := tick_count - last_tick;
 
                 write("@ " & to_string(tick_count) &
-                    " cmd " & to_string(this_command) &
+                    prefix(this_extra) & to_string(this_command) &
                     ":" & to_string(this_extra) &
                     " delta " & to_string(command_delay));
 
