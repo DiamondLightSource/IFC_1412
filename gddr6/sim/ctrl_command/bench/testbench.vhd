@@ -33,7 +33,8 @@ architecture arch of testbench is
     signal bypass_command : ca_command_t;
     signal bypass_valid : std_ulogic;
     signal refresh_stall : std_ulogic;
-    signal direction : direction_t;
+    signal priority_mode : std_ulogic := '0';
+    signal priority_direction : direction_t := DIR_READ;
     signal bank_open : bank_open_t;
     signal banks_status : banks_status_t;
     signal ca_command : ca_command_t;
@@ -68,14 +69,16 @@ begin
         bypass_valid_i => bypass_valid,
 
         refresh_stall_i => refresh_stall,
-        direction_i => direction,
+        priority_mode_i => priority_mode,
+        priority_direction_i => priority_direction,
         bank_open_o => bank_open,
         banks_status_o => banks_status,
 
         ca_command_o => ca_command
     );
 
-    direction <= DIR_WRITE;
+    priority_mode <= '1';
+    priority_direction <= DIR_READ;
     refresh_stall <= '0';
     bypass_valid <= '0';
 

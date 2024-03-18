@@ -22,7 +22,10 @@ architecture arch of testbench is
         end loop;
     end;
 
-    signal direction : direction_t := DIR_READ;
+    constant POLL_BITS : natural := 4;
+
+    signal priority_mode : std_ulogic := '0';
+    signal priority_direction : direction_t := DIR_READ;
     signal stall : std_ulogic := '0';
     signal write_request : core_request_t := IDLE_CORE_REQUEST;
     signal write_ready : std_ulogic;
@@ -64,10 +67,13 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    request_mux : entity work.gddr6_ctrl_request_mux port map (
+    request_mux : entity work.gddr6_ctrl_request_mux generic map (
+        POLL_BITS => POLL_BITS
+    ) port map (
         clk_i => clk,
 
-        direction_i => direction,
+        priority_mode_i => priority_mode,
+        priority_direction_i => priority_direction,
         stall_i => stall,
 
         write_request_i => write_request,
@@ -146,14 +152,14 @@ begin
     end process;
 
 
-    -- Keep direction changing to exercise direction lock
-    process begin
-        clk_wait;
-        case direction is
-            when DIR_WRITE => direction <= DIR_READ;
-            when DIR_READ => direction <= DIR_WRITE;
-        end case;
-    end process;
+--     -- Keep direction changing to exercise direction lock
+--     process begin
+--         clk_wait;
+--         case direction is
+--             when DIR_WRITE => direction <= DIR_READ;
+--             when DIR_READ => direction <= DIR_WRITE;
+--         end case;
+--     end process;
 
     -- Delay on ready state
     process begin
@@ -174,6 +180,9 @@ begin
         clk_wait(7);
         stall <= '1';
         clk_wait(6);
+        stall <= '0';
+
+        wait;
     end process;
 
 

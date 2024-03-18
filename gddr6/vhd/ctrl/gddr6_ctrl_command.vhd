@@ -33,8 +33,9 @@ entity gddr6_ctrl_command is
 
         -- Request to pause read and writes
         refresh_stall_i : in std_ulogic;
-        -- Direction selection
-        direction_i : in direction_t;
+        -- Direction control, mode and priority default
+        priority_mode_i : in std_ulogic;
+        priority_direction_i : in direction_t;
         -- Request to open bank from read or write request
         bank_open_o : out bank_open_t;
         -- Bank status to guide open and refresh
@@ -83,7 +84,8 @@ begin
     request_mux : entity work.gddr6_ctrl_request_mux port map (
         clk_i => clk_i,
 
-        direction_i => direction_i,
+        priority_mode_i => priority_mode_i,
+        priority_direction_i => priority_direction_i,
         stall_i => refresh_stall_i,
 
         write_request_i => write_request_i,
