@@ -129,7 +129,7 @@ begin
         bank_open_i.valid and active(open_bank) and
         to_std_ulogic(row(open_bank) = bank_open_i.row) and
         -- Also guard against an accepted precharge on this bank!
-        not (accept_activate and to_std_ulogic(open_bank = admin_bank));
+        not (accept_precharge and to_std_ulogic(open_bank = admin_bank));
 
     -- Decode incoming read/write request
     request_read <=

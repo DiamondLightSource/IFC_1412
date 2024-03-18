@@ -31,6 +31,11 @@ architecture arch of testbench is
     signal admin_accept : std_ulogic;
     signal status : banks_status_t;
 
+    -- The out request needs to be delayed one tick
+    signal final_out_request : out_request_t := IDLE_OUT_REQUEST;
+    signal final_out_request_ok : std_ulogic := '0';
+    signal final_out_request_extra : std_ulogic := '0';
+
     -- Communication channel to request flow simulation.  Request must assign
     -- both test_open and test_out, and wait for load_test.
     signal test_open : bank_open_t;
@@ -40,7 +45,6 @@ architecture arch of testbench is
 
     signal tick_counter : natural := 0;
     signal last_tick : natural := 0;
-    signal verbose_banks : std_ulogic := '0';
 
     procedure write(message : string := "") is
         variable linebuffer : line;
@@ -112,6 +116,10 @@ begin
                     out_request_extra <= '0';
                 end if;
             end if;
+
+            final_out_request <= out_request;
+            final_out_request_ok <= out_request_ok;
+            final_out_request_extra <= out_request_extra;
         end if;
     end process;
 
@@ -178,6 +186,16 @@ begin
         do_request(5, 14X"2345", DIR_READ);
         do_request(5, 14X"2346", DIR_READ);
 
+        -- More checks for conflicts with precharge
+        wait_for_tick(165);
+        do_request(0, 14X"0000", DIR_READ);
+        do_request(0, 14X"0000", DIR_READ);
+        do_request(0, 14X"0000", DIR_READ);
+        do_request(0, 14X"0000", DIR_READ);
+
+
+        write("All requests sent");
+
         wait;
     end process;
 
@@ -201,6 +219,8 @@ begin
                 exit when admin_accept;
             end loop;
             admin <= IDLE_BANKS_ADMIN;
+            -- Ensure we don't try to run admin commands back to back
+            clk_wait;
         end;
 
     begin
@@ -210,6 +230,7 @@ begin
         do_admin(CMD_ACT, 1, 14X"0000");
         do_admin(CMD_ACT, 0, 14X"0000");
         do_admin(CMD_ACT, 3, 14X"0000");
+        do_admin(CMD_ACT, 6, 14X"0000");
 
         -- Run until initial round of read/write tests complete
         wait_for_tick(36);
@@ -237,6 +258,16 @@ begin
         do_admin(CMD_REF, 0, all_banks => '1');
         do_admin(CMD_ACT, 0, 14X"0000");
 
+        -- Check for conflicts with precharge
+        wait_for_tick(165);
+        do_admin(CMD_PRE, 0);
+        do_admin(CMD_ACT, 0, 14X"0000");
+        do_admin(CMD_PRE, 0);
+        do_admin(CMD_ACT, 0, 14X"0000");
+
+
+        write("All admin sent");
+
         wait;
     end process;
 
@@ -246,12 +277,17 @@ begin
         variable fail_count : natural := 0;
 
         procedure wait_ready is
+            variable ticks : natural := 0;
         begin
             loop
                 clk_wait;
+                ticks := ticks + 1;
                 exit when
-                    (out_request.valid and out_request_ok) or
+                    (final_out_request.valid and final_out_request_ok) or
                     (admin.valid and admin_accept);
+                assert ticks < 50
+                    report "Looks like we're stuck"
+                    severity failure;
             end loop;
         end;
 
@@ -259,9 +295,10 @@ begin
             variable delta : natural;
         begin
             wait_ready;
-            if out_request.valid and out_request_ok then
+            if final_out_request.valid and final_out_request_ok then
                 delta := tick_counter - last_tick;
-                if out_request.direction /= direction or delta /= delay then
+                if final_out_request.direction /= direction or delta /= delay
+                then
                     write("Expected " & name(direction) &
                         " +" & to_string(delay));
                     fail_count := fail_count + 1;
@@ -300,7 +337,7 @@ begin
         begin
             for n in 1 to count loop
                 clk_wait;
-                if not out_request_extra then
+                if not final_out_request_extra then
                     write("Expected extra");
                 end if;
             end loop;
@@ -311,9 +348,10 @@ begin
         -- four writes, two with mask data, and then read to write and write to
         -- read turnaround
         expect(CMD_ACT, 5);
-        expect(CMD_ACT, 2);     -- tRRD
-        -- The bank open check adds an unavoidable extra tick
-        expect(DIR_WRITE, 2);   -- tRCDWR + bank open check
+        expect(CMD_ACT, 2);     -- t_RRD
+        expect(CMD_ACT, 2);
+        -- The bank open check adds an unavoidable two extra ticks
+        expect(DIR_WRITE, 2);   -- t_RCDWR + bank open check
         -- Activate fits into gap
         expect(CMD_ACT);
         expect(DIR_WRITE);
@@ -321,39 +359,48 @@ begin
         expect(DIR_WRITE, 3);   -- 3 ticks after WSM
         expect_extra;
         expect(DIR_WRITE, 2);
-        expect(DIR_READ, 10);   -- tWTR_time = tWTR+2+WLmrs
+        expect(DIR_READ, 10);   -- t_WTR_time = t_WTR+2+WLmrs
         expect(DIR_READ, 2);
-        expect(DIR_WRITE, 8);   -- tRTW
+        expect(DIR_WRITE, 8);   -- t_RTW
 
         -- Now testing bank and precharge interactions
-        expect(CMD_PRE, 12);    -- tWTP
-        expect(DIR_READ, 2);
-        expect(CMD_PRE, 2);     -- tRTP
-        expect(CMD_ACT, 5);     -- tRP
-        expect(CMD_PRE, 7);     -- tRAS
+        expect(CMD_PRE, 12);    -- t_WTP
+        expect(DIR_READ, 1);
+        expect(CMD_PRE, 2);     -- t_RTP
+        expect(CMD_ACT, 5);     -- t_RP
+        expect(CMD_PRE, 7);     -- t_RAS
         expect(CMD_REF, 5);
-        expect(CMD_ACT, 14);    -- tRFCpb
-        expect(CMD_REF, 2);     -- tRRD
-        expect(CMD_REF, 4);     -- tRREFD
+        expect(CMD_ACT, 14);    -- t_RFCpb
+        expect(CMD_REF, 2);     -- t_RRD
+        expect(CMD_REF, 4);     -- t_RREFD
         expect(CMD_REF, 4);
-        expect(CMD_ACT, 4);     -- tRREFD
+        expect(CMD_ACT, 4);     -- t_RREFD
         -- Finally check read delay
-        expect(DIR_READ, 5);    -- tRCDRD
+        expect(DIR_READ, 5);    -- t_RCDRD
 
         -- Reading on successive banks
         expect(DIR_READ, 2);
-        expect(CMD_PRE, 2);     -- tRTP
-        expect(CMD_ACT, 5);     -- tRP
-        expect(DIR_READ, 5);    -- tRCDRD
+        expect(CMD_PRE, 2);     -- t_RTP
+        expect(CMD_ACT, 5);     -- t_RP
+        expect(DIR_READ, 5);    -- t_RCDRD
 
         -- Refresh of all banks
         expect(CMD_PRE, 2, all_banks => '1');
-        expect(CMD_REF, 5, all_banks => '1');     -- tRP
-        expect(CMD_ACT, 29);    -- tRFCab
+        expect(CMD_REF, 5, all_banks => '1');     -- t_RP
+        expect(CMD_ACT, 29);    -- t_RFCab
 
+        -- Precharge checks
+        expect(CMD_PRE, 13);
+        expect(CMD_ACT, 5);
+        expect(DIR_READ, 5);
+        expect(DIR_READ, 2);
+        expect(DIR_READ, 2);
+        expect(DIR_READ, 2);
+        expect(CMD_PRE, 2);
+        expect(CMD_ACT, 5);
 
         -- Check that all timing checks were satisfied
-        clk_wait;
+        clk_wait(2);
         write("Active rows: " & to_string(status.active));
         if fail_count = 0 then
             write("All ok");
@@ -373,28 +420,16 @@ begin
         end;
 
         variable report_count : natural := 0;
-        variable extend_open : std_ulogic;
-        variable report_bank : std_ulogic;
 
     begin
         if rising_edge(clk) then
-            extend_open := out_request.valid and not out_request_ok;
-            report_bank :=
-                verbose_banks and
-                bank_open.valid and bank_open_ok and not extend_open;
-            if report_bank then
-                write("bank ok " &
-                    to_hstring(bank_open.bank) & " " &
-                    to_hstring(bank_open.row));
-            end if;
-
             report_count := 0;
 
-            if out_request.valid and out_request_ok then
+            if final_out_request.valid and final_out_request_ok then
                 write(delta &
-                    name(out_request.direction) & " " &
-                    to_hstring(out_request.bank) & " " &
-                    to_string(out_request.auto_precharge));
+                    name(final_out_request.direction) & " " &
+                    to_hstring(final_out_request.bank) & " " &
+                    to_string(final_out_request.auto_precharge));
                 report_count := report_count + 1;
                 last_tick <= tick_counter;
             end if;
@@ -407,7 +442,7 @@ begin
                 last_tick <= tick_counter;
             end if;
 
-            if out_request_extra then
+            if final_out_request_extra then
                 write(delta & "extra");
                 report_count := report_count + 1;
             end if;

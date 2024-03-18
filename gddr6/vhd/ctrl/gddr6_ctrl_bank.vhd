@@ -56,35 +56,38 @@ architecture arch of gddr6_ctrl_bank is
     signal allow_read : std_ulogic := '0';
     signal allow_write : std_ulogic := '0';
 
-    -- Counters for delays longer than 2 ticks
+    -- Counters for delays longer than 2 ticks.  The actual delays here are
+    -- rather tricky to assign because it is necessary to take account of both
+    -- external delays and skews.  In particular, read/write commands are
+    -- presented one tick earlier than activate/precharge/refresh commands.
     --
-    -- ACT to RD
-    signal tRCDRD_counter : natural range 0 to t_RCDRD - 2 := 0;
-    -- ACT to PRE
-    signal tRAS_counter : natural range 0 to t_RAS - 2 := 0;
-    -- WxM to PRE
+    -- ACT to RD (5)
+    signal tRCDRD_counter : natural range 0 to t_RCDRD - 4 := 0;
+    -- ACT to PRE (7)
+    signal tRAS_counter : natural range 0 to t_RAS - 3 := 0;
+    -- WxM to PRE (12)
     signal tWTP_counter : natural range 0 to t_WTP - 2 := 0;
-    -- PRE to ACT
-    signal tRP_counter : natural range 0 to t_RP - 2 := 0;
-    -- REF to ACT
-    signal tRFCpb_counter : natural range 0 to t_RFCpb - 2 := 0;
+    -- PRE to ACT (5)
+    signal tRP_counter : natural range 0 to t_RP - 3 := 0;
+    -- REF to ACT (14)
+    signal tRFCpb_counter : natural range 0 to t_RFCpb - 3 := 0;
 
 begin
     process (clk_i)
         procedure do_bank_idle is
         begin
             if allow_refresh_o and request_refresh_i then
-                tRFCpb_counter <= t_RFCpb - 2;
+                tRFCpb_counter <= t_RFCpb - 3;
                 allow_precharge_o <= '0';
                 state <= BANK_REFRESH;
             elsif allow_activate_o and request_activate_i then
-                tRCDRD_counter <= t_RCDRD - 2;
-                tRAS_counter <= t_RAS - 2;
+                tRCDRD_counter <= t_RCDRD - 4;
+                tRAS_counter <= t_RAS - 3;
                 tWTP_counter <= 0;
                 auto_precharge <= '0';
                 row_o <= row_i;
                 age <= (others => '0');
-                young_o <= '0';
+                young_o <= '1';
                 active_o <= '1';
                 allow_write <= '1';
                 allow_precharge_o <= '0';
@@ -160,7 +163,7 @@ begin
 
             -- Trigger precharge when allowed
             if do_precharge then
-                tRP_counter <= t_RP - 2;
+                tRP_counter <= t_RP - 3;
                 active_o <= '0';
                 allow_write <= '0';
                 allow_read <= '0';
