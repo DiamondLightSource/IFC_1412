@@ -80,6 +80,13 @@ package gddr6_ctrl_core_defs is
     end record;
 
 
+    type refresh_request_t is record
+        bank : unsigned(2 downto 0);
+        all_banks : std_ulogic;
+        valid : std_ulogic;
+    end record;
+
+
     -- Constants for initialisers
     function IDLE_CORE_REQUEST(
         direction : direction_t := DIR_READ) return core_request_t;
@@ -87,6 +94,7 @@ package gddr6_ctrl_core_defs is
     constant IDLE_OPEN_REQUEST : bank_open_t;
     constant IDLE_OUT_REQUEST : out_request_t;
     constant IDLE_BANKS_ADMIN : banks_admin_t;
+    constant IDLE_REFRESH_REQUEST : refresh_request_t;
 end;
 
 package body gddr6_ctrl_core_defs is
@@ -129,6 +137,12 @@ package body gddr6_ctrl_core_defs is
         bank => (others => '0'),
         all_banks => '0',
         row => (others => '0'),
+        valid => '0'
+    );
+
+    constant IDLE_REFRESH_REQUEST : refresh_request_t := (
+        bank => (others => '0'),
+        all_banks => '0',
         valid => '0'
     );
 end;
