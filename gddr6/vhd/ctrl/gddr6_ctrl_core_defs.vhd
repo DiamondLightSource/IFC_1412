@@ -9,6 +9,14 @@ use work.support.all;
 use work.gddr6_ctrl_command_defs.all;
 
 package gddr6_ctrl_core_defs is
+    -- Address decoding for the 25 bit burst address from the AXI interface,
+    -- organised as | row | bank | column |.  This arrangement supports
+    -- consecutive accesses to columns from a single open bank, and consecutive
+    -- banks.
+    subtype ROW_RANGE is natural range 24 downto 11;
+    subtype BANK_RANGE is natural range 10 downto 7;
+    subtype COLUMN_RANGE is natural range 6 downto 0;
+
     type direction_t is (DIR_READ, DIR_WRITE);
     type admin_command_t is (CMD_ACT, CMD_PRE, CMD_REF);
 
@@ -32,14 +40,6 @@ package gddr6_ctrl_core_defs is
         -- commands don't get detached from the write command
         next_extra : std_ulogic;        -- Write mask follows this command
         extra : std_ulogic;             -- This is a write mask command
-    end record;
-
-    -- This lookahead request can be presented to the core in time so that a
-    -- following core request can be honoured immediately
-    type core_lookahead_t is record
-        bank : unsigned(3 downto 0);
-        row : unsigned(13 downto 0);
-        valid : std_ulogic;
     end record;
 
     -- Request to check bank and row status
@@ -69,7 +69,7 @@ package gddr6_ctrl_core_defs is
 
     type banks_status_t is record
         -- At most one of these is set, and blocks activity in the opposite
-        -- direction
+        -- direction until the appropriate turnaround delay has passed
         write_active : std_ulogic;
         read_active : std_ulogic;
         active : std_ulogic_vector(0 to 15);
@@ -90,7 +90,6 @@ package gddr6_ctrl_core_defs is
     -- Constants for initialisers
     function IDLE_CORE_REQUEST(
         direction : direction_t := DIR_READ) return core_request_t;
-    constant IDLE_CORE_LOOKAHEAD : core_lookahead_t;
     constant IDLE_OPEN_REQUEST : bank_open_t;
     constant IDLE_OUT_REQUEST : out_request_t;
     constant IDLE_BANKS_ADMIN : banks_admin_t;
@@ -112,12 +111,6 @@ package body gddr6_ctrl_core_defs is
             extra => '0'
         );
     end;
-
-    constant IDLE_CORE_LOOKAHEAD : core_lookahead_t := (
-        bank => (others => '0'),
-        row => (others => '0'),
-        valid => '0'
-    );
 
     constant IDLE_OPEN_REQUEST : bank_open_t := (
         bank => (others => '0'),

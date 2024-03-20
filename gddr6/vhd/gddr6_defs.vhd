@@ -7,6 +7,56 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 package gddr6_defs is
+    -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    -- Interfaces between AXI and CTRL
+
+    type axi_read_request_t is record
+        -- RA Read Adddress
+        ra_address : unsigned(24 downto 0);     -- Address to read
+        ra_count : unsigned(4 downto 0);        -- Count until lookahead address
+        ra_valid : std_ulogic;                  -- Read Address valid
+        -- RA Lookahead
+        ral_address : unsigned(24 downto 0);    -- Lookahead address
+        ral_valid : std_ulogic;                 -- Lookahead valid
+    end record;
+
+    type axi_read_response_t is record
+        -- RA Read Adddress
+        ra_ready : std_ulogic;                  -- Ready for read address
+        -- RD Read Data
+        rd_valid : std_ulogic;                  -- Returned read data valid
+        rd_ok : std_ulogic;                     -- Read data completion status
+        rd_ok_valid : std_ulogic;               -- Read completion valid
+    end record;
+
+    type axi_write_request_t is record
+        -- WA Write Adddress
+        wa_address : unsigned(24 downto 0);     -- Address to write
+        wa_byte_mask : std_ulogic_vector(127 downto 0); -- Bytes to write
+        wa_count : unsigned(4 downto 0);        -- Count until next lookahead
+        wa_valid : std_ulogic;                  -- Write address valid
+        -- WA Lookahead
+        wal_address : unsigned(24 downto 0);
+        wal_valid : std_ulogic;
+        -- WD Write Data
+        wd_data : vector_array(63 downto 0)(7 downto 0);
+    end record;
+
+    type axi_write_response_t is record
+        -- WA Write Adddress
+        wa_ready : std_ulogic;                  -- Ready for write address
+        -- WD Write Data
+        wd_hold : std_ulogic;                   -- Holds for repeated writes
+        wd_ready : std_ulogic;                  -- Write data ready to advance
+        -- WR Write Response
+        wr_ok : std_ulogic;                     -- Write completion ok
+        wr_ok_valid : std_ulogic;               -- Write completion valid
+    end record;
+
+
+    -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    -- Interfaces between SETUP and PHY
+
     -- Controls for setting delays
     type setup_delay_t is record
         -- The address map is as follows:

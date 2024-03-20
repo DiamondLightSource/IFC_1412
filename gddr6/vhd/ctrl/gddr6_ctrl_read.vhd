@@ -9,6 +9,7 @@ use work.support.all;
 use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_core_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
+use work.gddr6_defs.all;
 
 entity gddr6_ctrl_read is
     generic (
@@ -19,25 +20,15 @@ entity gddr6_ctrl_read is
         clk_i : in std_ulogic;
 
         -- AXI interface
-        -- WA Write Adddress
-        ra_address_i : in unsigned(24 downto 0);
-        ra_count_i : in unsigned(4 downto 0);
-        ra_valid_i : in std_ulogic;
-        ra_ready_o : out std_ulogic := '1';
-        -- WA Lookahead
-        ral_address_i : in unsigned(24 downto 0);
-        ral_valid_i : in std_ulogic;
-        -- RD Read Data
-        rd_valid_o : out std_ulogic := '0';
-        rd_ok_o : out std_ulogic;
-        rd_ok_valid_o : out std_ulogic := '0';
+        axi_request_i : in axi_read_request_t;
+        axi_response_o : out axi_read_response_t;
 
-        -- Connection to core for row management and access arbitration
-        request_o : out core_request_t;
-        request_ready_i : in std_ulogic;
-        command_sent_i : in std_ulogic;
-
-        lookahead_o : out core_lookahead_t;
+        -- Outgoing read request with send acknowledgement
+        read_request_o : out core_request_t := IDLE_CORE_REQUEST(DIR_READ);
+        read_ready_i : in std_ulogic;
+        read_sent_i : in std_ulogic;
+        -- Read lookahead
+        read_lookahead_o : out bank_open_t := IDLE_OPEN_REQUEST;
 
         -- EDC data
         edc_in_i : in vector_array(7 downto 0)(7 downto 0);
@@ -46,14 +37,12 @@ entity gddr6_ctrl_read is
 end;
 
 architecture arch of gddr6_ctrl_read is
-    subtype ROW_RANGE is natural range 24 downto 11;
-    subtype BANK_RANGE is natural range 10 downto 7;
-    subtype COLUMN_RANGE is natural range 6 downto 0;
+    -- Slightly arbitrary decision point for enabling lookahead
+    -- We need the new row open at least 2.5 bursts early, and
+    -- start asking one tick earlier
+    constant LOOKAHEAD_COUNT : natural := 5;
 
-    signal read_request : core_request_t := IDLE_CORE_REQUEST(DIR_READ);
-    signal lookahead : core_lookahead_t := IDLE_CORE_LOOKAHEAD;
-
-    signal lookahead_new_row : std_ulogic;
+    signal lookahead_new_bank : std_ulogic;
     signal auto_precharge : std_ulogic;
 
     -- Timing signals for data and EDC
@@ -64,50 +53,65 @@ architecture arch of gddr6_ctrl_read is
 
     signal edc_read : vector_array(7 downto 0)(7 downto 0);
 
+    -- AXI response
+    signal ra_ready_out : std_ulogic := '1';
+    signal rd_valid_out : std_ulogic := '0';
+    signal rd_ok_out : std_ulogic := '0';
+    signal rd_ok_valid_out : std_ulogic := '0';
+
 begin
     -- Only forward the lookahead if it opens a new bank
-    lookahead_new_row <= to_std_ulogic(
-        ral_address_i(ROW_RANGE) /= ra_address_i(ROW_RANGE) and
-        ral_address_i(BANK_RANGE) /= ra_address_i(BANK_RANGE));
+    lookahead_new_bank <= to_std_ulogic(
+        axi_request_i.ral_address(BANK_RANGE) /=
+        axi_request_i.ra_address(BANK_RANGE));
 
     -- Only generate precharge if we're reasonably confident that we're done
     -- with this row: the column address is the last column of the row, count
     -- is zero, and there isn't a lookahead on the same row.  This can still
     -- misfire, but seems a reasonable hueristic.
     auto_precharge <= to_std_ulogic(
-        ra_count_i = 0 and ra_address_i(COLUMN_RANGE) = 7X"7F" and
-        (ral_valid_i = '0' or lookahead_new_row = '1'));
+        axi_request_i.ra_count = 0 and
+        axi_request_i.ra_address(COLUMN_RANGE) = 7X"7F") and
+        (not axi_request_i.ral_valid or lookahead_new_bank);
 
     process (clk_i) begin
         if rising_edge(clk_i) then
             -- Prepare the read request.  This will be transmitted on the tick
-            -- we see ra_valid_i and request_ready_i.  This buffering ensures we
-            -- can send a request every other tick when available.
-            if ra_valid_i and (not read_request.valid or request_ready_i) then
-                read_request <= (
+            -- we see ra_valid and read_ready_i.  This buffering ensures
+            -- we can send a request every other tick when available.
+            if axi_request_i.ra_valid and axi_response_o.ra_ready then
+                -- Receive incoming
+                read_request_o <= (
                     direction => DIR_READ,
-                    bank => ra_address_i(BANK_RANGE),
-                    row => ra_address_i(ROW_RANGE),
+                    bank => axi_request_i.ra_address(BANK_RANGE),
+                    row => axi_request_i.ra_address(ROW_RANGE),
                     command => SG_RD(
-                        ra_address_i(BANK_RANGE), ra_address_i(COLUMN_RANGE),
+                        axi_request_i.ra_address(BANK_RANGE),
+                        axi_request_i.ra_address(COLUMN_RANGE),
                         auto_precharge),
                     precharge => auto_precharge,
                     extra => '0', next_extra => '0',
                     valid => '1'
                 );
+                ra_ready_out <= '0';
 
-                -- It is simplest to only update the lookahead when there is a
-                -- new read request, as the supporting calculations are valid
-                lookahead <= (
-                    bank => ral_address_i(BANK_RANGE),
-                    row => ral_address_i(ROW_RANGE),
-                    -- We need the new row open at least 2.5 bursts early, and
-                    -- start asking one tick earlier
-                    valid => ral_valid_i and lookahead_new_row and
-                        to_std_ulogic(ra_count_i <= 3)
+                -- Only emit the lookahead if it's opening a new row
+                read_lookahead_o <= (
+                    bank => axi_request_i.ral_address(BANK_RANGE),
+                    row => axi_request_i.ral_address(ROW_RANGE),
+                    -- It is important that lookahead go invalid between valid
+                    -- requests so that new requests can be identified
+                    valid =>
+                        axi_request_i.ral_valid and lookahead_new_bank and
+                        to_std_ulogic(
+                            0 < axi_request_i.ra_count and
+                            axi_request_i.ra_count < LOOKAHEAD_COUNT)
                 );
-            elsif request_ready_i then
-                read_request.valid <= '0';
+            elsif read_ready_i and read_request_o.valid then
+                -- Transmit outgoing
+                read_request_o.valid <= '0';
+                read_lookahead_o.valid <= '0';
+                ra_ready_out <= '1';
             end if;
 
             -- We have three values that need to be reconciled for a particular
@@ -122,16 +126,16 @@ begin
             last_edc_valid <= edc_valid;
 
             -- Data is written over two ticks
-            rd_valid_o <= data_valid or last_data_valid;
+            rd_valid_out <= data_valid or last_data_valid;
 
             -- Align edc_read with edc_in_i
             edc_read <= edc_read_i;
             if edc_valid then
-                rd_ok_o <= to_std_ulogic(edc_read = edc_in_i);
+                rd_ok_out <= to_std_ulogic(edc_read = edc_in_i);
             elsif last_edc_valid then
-                rd_ok_o <= rd_ok_o and to_std_ulogic(edc_read = edc_in_i);
+                rd_ok_out <= rd_ok_out and to_std_ulogic(edc_read = edc_in_i);
             end if;
-            rd_ok_valid_o <= last_edc_valid;
+            rd_ok_valid_out <= last_edc_valid;
         end if;
     end process;
 
@@ -141,11 +145,14 @@ begin
         DELAY => RLmrs + PHY_INPUT_DELAY
     ) port map (
         clk_i => clk_i,
-        data_i(0) => command_sent_i,
+        data_i(0) => read_sent_i,
         data_o(0) => data_valid
     );
 
-    ra_ready_o <= not read_request.valid or request_ready_i;
-    request_o <= read_request;
-    lookahead_o <= lookahead;
+    axi_response_o <= (
+        ra_ready => ra_ready_out,
+        rd_valid => rd_valid_out,
+        rd_ok => rd_ok_out,
+        rd_ok_valid => rd_ok_valid_out
+    );
 end;
