@@ -28,18 +28,28 @@ package gddr6_ctrl_core_defs is
     -- and is a candidate for immediate precharge and refresh
     constant OLD_BANK_BITS : natural := 7;
 
-    -- This command request is presented to the core for dispatch to the phy
+    -- This command request is presented to the core for dispatch to the phy.
+    -- There is a lot going on here: first of all, streams are multiplexed
+    -- together from read and writes, but command completion needs to be
+    -- notified to the appropriate requester, so direction code is used to
+    -- track the source of this command.
     type core_request_t is record
+        -- Used to associate this request with its origin
         direction : direction_t;        -- Read/write marker
+        write_advance : std_ulogic;     -- Only used for write commands
+        -- The core content of this request: bank and row (required for admin
+        -- validation) and the actual command to send
         bank : unsigned(3 downto 0);    -- Bank to read or write
         row : unsigned(13 downto 0);    -- Row to read or write
         command : ca_command_t;         -- CA command to send
-        precharge : std_ulogic;         -- Command sent with auto-precharge
-        valid : std_ulogic;             -- Command valid
+        -- We don't actually implement automatic precharge, but all the place
+        -- holders are here.  I don't think it earns its keep here
+        auto_precharge : std_ulogic;    -- Command sent with auto-precharge
         -- The following two flags worth together to ensure that write mask
         -- commands don't get detached from the write command
         next_extra : std_ulogic;        -- Write mask follows this command
         extra : std_ulogic;             -- This is a write mask command
+        valid : std_ulogic;             -- Command valid
     end record;
 
     -- Request to check bank and row status
@@ -102,13 +112,14 @@ package body gddr6_ctrl_core_defs is
     begin
         return (
             direction => direction,
+            write_advance => '0',
             bank => (others => '0'),
             row => (others => '0'),
             command => SG_NOP,
-            precharge => '0',
-            valid => '0',
+            auto_precharge => '0',
             next_extra => '0',
-            extra => '0'
+            extra => '0',
+            valid => '0'
         );
     end;
 
