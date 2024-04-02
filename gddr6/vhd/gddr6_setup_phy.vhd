@@ -28,29 +28,10 @@ entity gddr6_setup_phy is
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
         -- --------------------------------------------------------------------
-        -- CA
-        -- Bit 3 in the second tick, ca_i(1)(3), can be overridden by ca3_i.
-        -- To allow this set ca_i(1)(3) to '0', then ca3_i(n) will be used.
-        ctrl_ca_i : in vector_array(0 to 1)(9 downto 0);
-        ctrl_ca3_i : in std_ulogic_vector(0 to 3);
-        -- Clock enable, held low during normal operation
-        ctrl_cke_n_i : in std_ulogic;
-
-        -- --------------------------------------------------------------------
-        -- DQ
-        -- Data is transferred in a burst of 128 bytes over two ticks, and so is
-        -- organised here as an array of 64 bytes, or 512 bits.
-        ctrl_data_i : in vector_array(63 downto 0)(7 downto 0);
-        ctrl_data_o : out vector_array(63 downto 0)(7 downto 0);
-        ctrl_output_enable_i : in std_ulogic;
-        -- Two calculations are presented on the EDC pins here.  edc_in_o is the
-        -- value received from the memory, each 8-bit value is the CRC for one
-        -- tick of data for 8 lanes.  edc_out_o is the corresponding internally
-        -- calculated value, either for incoming data or for outgoing data, as
-        -- selected by output_enable_i.
-        ctrl_edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        ctrl_edc_write_o : out vector_array(7 downto 0)(7 downto 0);
-        ctrl_edc_read_o : out vector_array(7 downto 0)(7 downto 0);
+        -- CTRL
+        ctrl_ca_i : in phy_ca_t;
+        ctrl_dq_i : in phy_dq_out_t;
+        ctrl_dq_o : out phy_dq_in_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -90,29 +71,17 @@ architecture arch of gddr6_setup_phy is
     signal ck_clk_ok : std_ulogic;
     signal ck_reset : std_ulogic;
 
-    signal setup_ca : vector_array(0 to 1)(9 downto 0);
-    signal setup_ca3 : std_ulogic_vector(0 to 3);
-    signal setup_cke_n : std_ulogic;
-    signal setup_output_enable : std_ulogic;
-    signal setup_data_in : vector_array(63 downto 0)(7 downto 0);
-    signal setup_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal setup_ca : phy_ca_t;
+    signal setup_dq_out : phy_dq_out_t;
+    signal setup_dq_in : phy_dq_in_t;
     signal setup_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal setup_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
-    signal setup_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal setup_edc_write : vector_array(7 downto 0)(7 downto 0);
-    signal setup_edc_read : vector_array(7 downto 0)(7 downto 0);
 
-    signal phy_ca : vector_array(0 to 1)(9 downto 0);
-    signal phy_ca3 : std_ulogic_vector(0 to 3);
-    signal phy_cke_n : std_ulogic;
-    signal phy_output_enable : std_ulogic := '0';
-    signal phy_data_in : vector_array(63 downto 0)(7 downto 0);
-    signal phy_data_out : vector_array(63 downto 0)(7 downto 0);
+    signal phy_ca : phy_ca_t;
+    signal phy_dq_out : phy_dq_out_t;
+    signal phy_dq_in : phy_dq_in_t;
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_write : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_read : vector_array(7 downto 0)(7 downto 0);
 
     signal setup_delay : setup_delay_t;
     signal setup_delay_result : setup_delay_result_t;
@@ -138,16 +107,10 @@ begin
         ck_reset_o => ck_reset,
 
         phy_ca_o => setup_ca,
-        phy_ca3_o => setup_ca3,
-        phy_cke_n_o => setup_cke_n,
-        phy_output_enable_o => setup_output_enable,
-        phy_data_o => setup_data_out,
-        phy_data_i => setup_data_in,
+        phy_dq_o => setup_dq_out,
+        phy_dq_i => setup_dq_in,
         phy_dbi_n_i => setup_dbi_n_in,
         phy_dbi_n_o => setup_dbi_n_out,
-        phy_edc_in_i => setup_edc_in,
-        phy_edc_write_i => setup_edc_write,
-        phy_edc_read_i => setup_edc_read,
 
         setup_delay_o => setup_delay,
         setup_delay_i => setup_delay_result,
@@ -171,17 +134,10 @@ begin
         setup_delay_o => setup_delay_result,
 
         ca_i => phy_ca,
-        ca3_i => phy_ca3,
-        cke_n_i => phy_cke_n,
-
-        data_i => phy_data_out,
-        data_o => phy_data_in,
-        output_enable_i => phy_output_enable,
+        dq_i => phy_dq_out,
+        dq_o => phy_dq_in,
         dbi_n_i => phy_dbi_n_out,
         dbi_n_o => phy_dbi_n_in,
-        edc_in_o => phy_edc_in,
-        edc_write_o => phy_edc_write,
-        edc_read_o => phy_edc_read,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
@@ -220,26 +176,14 @@ begin
         if rising_edge(ck_clk) then
             if enable_controller then
                 phy_ca <= ctrl_ca_i;
-                phy_ca3 <= ctrl_ca3_i;
-                phy_cke_n <= ctrl_cke_n_i;
-                phy_data_out <= ctrl_data_i;
-                phy_output_enable <= ctrl_output_enable_i;
+                phy_dq_out <= ctrl_dq_i;
             else
                 phy_ca <= setup_ca;
-                phy_ca3 <= setup_ca3;
-                phy_cke_n <= setup_cke_n;
-                phy_data_out <= setup_data_out;
-                phy_output_enable <= setup_output_enable;
+                phy_dq_out <= setup_dq_out;
             end if;
-            ctrl_data_o <= phy_data_in;
-            ctrl_edc_in_o <= phy_edc_in;
-            ctrl_edc_write_o <= phy_edc_write;
-            ctrl_edc_read_o <= phy_edc_read;
-            setup_data_in <= phy_data_in;
-            setup_edc_in <= phy_edc_in;
-            setup_edc_write <= phy_edc_write;
-            setup_edc_read <= phy_edc_read;
-            -- These two delays are only used during training, but ensure that
+            ctrl_dq_o <= phy_dq_in;
+            setup_dq_in <= phy_dq_in;
+            -- These two signals are only used during training, but ensure that
             -- DBI and DQ data are aligned
             phy_dbi_n_out <= setup_dbi_n_out;
             setup_dbi_n_in <= phy_dbi_n_in;

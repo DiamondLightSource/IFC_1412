@@ -28,17 +28,11 @@ entity gddr6_setup is
         ck_clk_ok_i : in std_ulogic;    -- Qualifies status of CK clock
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
-        phy_ca_o : out vector_array(0 to 1)(9 downto 0);
-        phy_ca3_o : out std_ulogic_vector(0 to 3);
-        phy_cke_n_o : out std_ulogic;
-        phy_output_enable_o : out std_ulogic;
-        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
-        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
+        phy_ca_o : out phy_ca_t;
+        phy_dq_o : out phy_dq_out_t;
+        phy_dq_i : in phy_dq_in_t;
         phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
         phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0);
 
         -- PHY configuration and status
         phy_setup_o : out phy_setup_t;
@@ -117,16 +111,16 @@ begin
 
         capture_edc_out_i => capture_edc_out,
 
-        phy_ca_o => phy_ca_o,
-        phy_ca3_o => phy_ca3_o,
-        phy_cke_n_o => phy_cke_n_o,
-        phy_output_enable_o => phy_output_enable_o,
-        phy_data_o => phy_data_o,
-        phy_data_i => phy_data_i,
+        phy_ca_o => phy_ca_o.ca,
+        phy_ca3_o => phy_ca_o.ca3,
+        phy_cke_n_o => phy_ca_o.cke_n,
+        phy_output_enable_o => phy_dq_o.output_enable,
+        phy_data_o => phy_dq_o.data,
+        phy_data_i => phy_dq_i.data,
         phy_dbi_n_o => phy_dbi_n_o,
         phy_dbi_n_i => phy_dbi_n_i,
-        phy_edc_in_i => phy_edc_in_i,
-        phy_edc_write_i => phy_edc_write_i,
-        phy_edc_read_i => phy_edc_read_i
+        phy_edc_in_i => phy_dq_i.edc_in,
+        phy_edc_write_i => phy_dq_i.edc_write,
+        phy_edc_read_i => phy_dq_i.edc_read
     );
 end;

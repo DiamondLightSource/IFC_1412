@@ -6,6 +6,7 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
+use work.gddr6_defs.all;
 
 use work.sim_support.all;
 
@@ -51,15 +52,9 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
-    signal ctrl_ca : vector_array(0 to 1)(9 downto 0);
-    signal ctrl_ca3 : std_ulogic_vector(0 to 3);
-    signal ctrl_cke_n : std_ulogic;
-    signal ctrl_data_in : vector_array(63 downto 0)(7 downto 0);
-    signal ctrl_data_out : vector_array(63 downto 0)(7 downto 0);
-    signal ctrl_output_enable : std_ulogic;
-    signal ctrl_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal ctrl_edc_write : vector_array(7 downto 0)(7 downto 0);
-    signal ctrl_edc_read : vector_array(7 downto 0)(7 downto 0);
+    signal ctrl_ca : phy_ca_t;
+    signal ctrl_dq_in : phy_dq_out_t;
+    signal ctrl_dq_out : phy_dq_in_t;
 
     signal clk : std_ulogic := '0';
 
@@ -84,14 +79,8 @@ begin
         read_ack_o => read_ack,
 
         ctrl_ca_i => ctrl_ca,
-        ctrl_ca3_i => ctrl_ca3,
-        ctrl_cke_n_i => ctrl_cke_n,
-        ctrl_data_i => ctrl_data_in,
-        ctrl_data_o => ctrl_data_out,
-        ctrl_output_enable_i => ctrl_output_enable,
-        ctrl_edc_in_o => ctrl_edc_in,
-        ctrl_edc_write_o => ctrl_edc_write,
-        ctrl_edc_read_o => ctrl_edc_read,
+        ctrl_dq_i => ctrl_dq_in,
+        ctrl_dq_o => ctrl_dq_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

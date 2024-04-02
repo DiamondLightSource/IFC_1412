@@ -70,31 +70,14 @@ entity gddr6_phy is
 
         -- --------------------------------------------------------------------
         -- CA
-        -- Bit 3 in the second tick, ca_i(1)(3), can be overridden by ca3_i.
-        -- To allow this set ca_i(1)(3) to '0', then ca3_i(n) will be used.
-        ca_i : in vector_array(0 to 1)(9 downto 0);
-        ca3_i : in std_ulogic_vector(0 to 3);
-        -- Clock enable, held low during normal operation
-        cke_n_i : in std_ulogic;
-
-        -- --------------------------------------------------------------------
+        ca_i : in phy_ca_t;
         -- DQ
-        -- Data is transferred in a burst of 128 bytes over two ticks, and so is
-        -- organised here as an array of 64 bytes, or 512 bits.
-        data_i : in vector_array(63 downto 0)(7 downto 0);
-        data_o : out vector_array(63 downto 0)(7 downto 0);
-        -- Due to an extra delay in the BITSLICE output stages output_enable_i
-        -- must be presented 1 CK tick earlier than data_i.
-        output_enable_i : in std_ulogic;
+        dq_i : in phy_dq_out_t;
+        dq_o : out phy_dq_in_t;
         -- DBI training support.  Input dbi_n_i is ignored unless
-        -- phy_setup_i.train_dbi is set
+        -- phy_setup_i.train_dbi is set, dbi_n_o is only for link training
         dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
         dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        -- EDC support.  edc_in_o is the code received from memory and must be
-        -- compared with edc_write_o for written data and edc_read_o for read
-        edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_write_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_read_o : out vector_array(7 downto 0)(7 downto 0);
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -294,9 +277,9 @@ begin
         enable_cabi_i => phy_setup_i.enable_cabi,
         fudge_sticky_ca6_i => phy_setup_i.fudge_sticky_ca6,
 
-        ca_i => ca_i,
-        ca3_i => ca3_i,
-        cke_n_i => cke_n_i,
+        ca_i => ca_i.ca,
+        ca3_i => ca_i.ca3,
+        cke_n_i => ca_i.cke_n,
 
         io_sg_resets_n_o => io_sg_resets_n_out,
         io_ca_o => io_ca_out,
@@ -323,7 +306,7 @@ begin
         vtc_ready_o => vtc_ready,
         fifo_ok_o => fifo_ok,
 
-        output_enable_i => output_enable_i,
+        output_enable_i => dq_i.output_enable,
         data_i => raw_data_out,
         data_o => raw_data_in,
         dbi_n_i => raw_dbi_n_out,
@@ -368,13 +351,13 @@ begin
         raw_dbi_n_i => raw_dbi_n_in,
         raw_edc_i => raw_edc_in,
 
-        data_o => data_o,
-        data_i => data_i,
+        data_o => dq_o.data,
+        data_i => dq_i.data,
         dbi_n_o => dbi_n_o,
         dbi_n_i => dbi_n_i,
-        edc_in_o => edc_in_o,
-        edc_write_o => edc_write_o,
-        edc_read_o => edc_read_o
+        edc_in_o => dq_o.edc_in,
+        edc_write_o => dq_o.edc_write,
+        edc_read_o => dq_o.edc_read
     );
 
 

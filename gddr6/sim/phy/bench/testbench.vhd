@@ -35,21 +35,11 @@ architecture arch of testbench is
 
     signal phy_setup : phy_setup_t;
     signal phy_status : phy_status_t;
-
-    signal ca_in : vector_array(0 to 1)(9 downto 0);
-    signal ca3_in : std_ulogic_vector(0 to 3);
-    signal cke_n_in : std_ulogic;
-    signal edc_in_out : vector_array(7 downto 0)(7 downto 0);
-    signal edc_write_out : vector_array(7 downto 0)(7 downto 0);
-    signal edc_read_out : vector_array(7 downto 0)(7 downto 0);
-
-    signal data_in : vector_array(63 downto 0)(7 downto 0)
-        := (others => (others => '0'));
-    signal data_out : vector_array(63 downto 0)(7 downto 0);
-    signal output_enable_in : std_ulogic := '0';
+    signal ca_in : phy_ca_t;
+    signal dq_in : phy_dq_out_t;
+    signal dq_out : phy_dq_in_t;
     signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal dbi_n_out : vector_array(7 downto 0)(7 downto 0);
-    signal edc_t_in : std_ulogic := '0';
 
     signal setup_delay_in : setup_delay_t;
     signal setup_delay_out : setup_delay_result_t;
@@ -111,17 +101,10 @@ begin
         setup_delay_o => setup_delay_out,
 
         ca_i => ca_in,
-        ca3_i => ca3_in,
-        cke_n_i => cke_n_in,
-
-        data_i => data_in,
-        data_o => data_out,
-        output_enable_i => output_enable_in,
+        dq_i => dq_in,
+        dq_o => dq_out,
         dbi_n_i => dbi_n_in,
         dbi_n_o => dbi_n_out,
-        edc_in_o => edc_in_out,
-        edc_write_o => edc_write_out,
-        edc_read_o => edc_read_out,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,
@@ -273,11 +256,15 @@ begin
             fudge_sticky_ca6 => '0'
         );
 
-        ca_in <= (others => (others => '1'));
-        ca3_in <= X"0";
-        cke_n_in <= '1';
-        data_in <= (others => (others => '1'));
-        output_enable_in <= '0';
+        ca_in <= (
+            ca => (others => (others => '1')),
+            ca3 => "0000",
+            cke_n => '1'
+        );
+        dq_in <= (
+            data => (others => (others => '1')),
+            output_enable => '0'
+        );
 
         wait for 50 ns;
         ck_reset_in <= '0';
@@ -291,31 +278,31 @@ begin
         --  ck  |   |   |   |   |   |   |   |
         --  d    FF  00  00  FF  00  00  FF
         --  oe   0   0   1   1   1   0   0
-        data_in <= (others => (others => '0'));
+        dq_in.data <= (others => (others => '0'));
         clk_wait;
-        output_enable_in <= '1';
+        dq_in.output_enable <= '1';
         clk_wait;
         clk_wait;
-        data_in <= (others => (others => '1'));
+        dq_in.data <= (others => (others => '1'));
         clk_wait;
-        data_in <= (others => (others => '0'));
+        dq_in.data <= (others => (others => '0'));
         clk_wait;
-        output_enable_in <= '0';
+        dq_in.output_enable <= '0';
         clk_wait;
-        data_in <= (others => (others => '1'));
+        dq_in.data <= (others => (others => '1'));
         clk_wait;
 
 
         -- Test pattern for CA
-        cke_n_in <= '0';
-        ca_in <= (0 => 10X"155", 1 => 10X"2AA");
+        ca_in.cke_n <= '0';
+        ca_in.ca <= (0 => 10X"155", 1 => 10X"2AA");
         clk_wait;
-        ca_in <= (10X"000", 10X"000");
-        ca3_in <= X"5";
+        ca_in.ca <= (10X"000", 10X"000");
+        ca_in.ca3 <= X"5";
         clk_wait;
-        ca_in <= (10X"000", 10X"000");
-        ca3_in <= X"0";
-        cke_n_in <= '1';
+        ca_in.ca <= (10X"000", 10X"000");
+        ca_in.ca3 <= X"0";
+        ca_in.cke_n <= '1';
 
         phy_setup.edc_tri <= '1';
 
@@ -338,12 +325,12 @@ begin
         read_delay(T_ODELAY, 3);            -- Should be 0
 
         clk_wait;
-        output_enable_in <= '1';
+        dq_in.output_enable <= '1';
         clk_wait;
-        output_enable_in <= '0';
-        data_in <= (others => (others => '0'));
+        dq_in.output_enable <= '0';
+        dq_in.data <= (others => (others => '0'));
         clk_wait;
-        data_in <= (others => (others => '1'));
+        dq_in.data <= (others => (others => '1'));
 
         wait;
     end process;

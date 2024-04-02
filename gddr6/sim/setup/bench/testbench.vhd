@@ -27,17 +27,11 @@ architecture arch of testbench is
     signal read_data_out : reg_data_array_t(GDDR6_REGS_RANGE);
     signal read_ack_out : std_ulogic_vector(GDDR6_REGS_RANGE);
 
-    signal phy_ca_out : vector_array(0 to 1)(9 downto 0);
-    signal phy_ca3_out : std_ulogic_vector(0 to 3);
-    signal phy_cke_n_out : std_ulogic;
-    signal phy_output_enable_out : std_ulogic;
-    signal phy_data_out : vector_array(63 downto 0)(7 downto 0);
-    signal phy_data_in : vector_array(63 downto 0)(7 downto 0);
+    signal phy_ca_out : phy_ca_t;
+    signal phy_dq_out : phy_dq_out_t;
+    signal phy_dq_in : phy_dq_in_t;
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
     signal phy_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_in_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_write_in : vector_array(7 downto 0)(7 downto 0);
-    signal phy_edc_read_in : vector_array(7 downto 0)(7 downto 0);
 
     signal phy_setup_out : phy_setup_t;
     signal phy_status_in : phy_status_t;
@@ -66,16 +60,10 @@ begin
         ck_clk_ok_i => ck_clk_ok_in,
 
         phy_ca_o => phy_ca_out,
-        phy_ca3_o => phy_ca3_out,
-        phy_cke_n_o => phy_cke_n_out,
-        phy_output_enable_o => phy_output_enable_out,
-        phy_data_o => phy_data_out,
-        phy_data_i => phy_data_in,
+        phy_dq_o => phy_dq_out,
+        phy_dq_i => phy_dq_in,
         phy_dbi_n_o => phy_dbi_n_out,
         phy_dbi_n_i => phy_dbi_n_in,
-        phy_edc_in_i => phy_edc_in_in,
-        phy_edc_write_i => phy_edc_write_in,
-        phy_edc_read_i => phy_edc_read_in,
 
         phy_setup_o => phy_setup_out,
         phy_status_i => phy_status_in,
@@ -88,10 +76,10 @@ begin
 
     process (ck_clk_in) begin
         if rising_edge(ck_clk_in) then
-            if phy_output_enable_out then
-                phy_data_in <= (others => (others => '1'));
+            if phy_dq_out.output_enable then
+                phy_dq_in.data <= (others => (others => '1'));
             else
-                phy_data_in <= phy_data_out;
+                phy_dq_in.data <= phy_dq_out.data;
             end if;
         end if;
     end process;
