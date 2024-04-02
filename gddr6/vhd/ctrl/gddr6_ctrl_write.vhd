@@ -62,12 +62,10 @@ architecture arch of gddr6_ctrl_write is
     signal command_decode : decode_t;
     signal command_enables : std_ulogic_vector(0 to 3);
     signal command_address : unsigned(24 downto 0);
+    signal command_advance : std_ulogic;
     signal mask_index : natural range 0 to 3;
     signal even_byte_mask : vector_array(0 to 3)(15 downto 0);
     signal odd_byte_mask : vector_array(0 to 3)(15 downto 0);
-    -- Remembers if there were pending channels on the last command
-    signal new_command : std_ulogic := '0';
-    signal last_pending : std_ulogic := '0';
 
     -- We don't actually implement automatic precharge, but all the place
     -- holders are here.  I don't think it earns its keep in our application.
@@ -106,7 +104,7 @@ architecture arch of gddr6_ctrl_write is
         end;
 
         -- Decode the byte mask for a single channel
-        function decode_byte_mask(
+        function decode_one_mask(
             even_bytes : std_ulogic_vector(15 downto 0);
             odd_bytes : std_ulogic_vector(15 downto 0)) return decode_t is
         begin
@@ -134,7 +132,7 @@ architecture arch of gddr6_ctrl_write is
         even_bytes_out <= even_bytes;
         odd_bytes_out <= odd_bytes;
         for ch in 0 to 3 loop
-            decode_array(ch) <= decode_byte_mask(even_bytes(ch), odd_bytes(ch));
+            decode_array(ch) <= decode_one_mask(even_bytes(ch), odd_bytes(ch));
         end loop;
     end;
 
@@ -148,6 +146,7 @@ architecture arch of gddr6_ctrl_write is
         signal command : out decode_t;
         signal enables : out std_ulogic_vector(0 to 3);
         signal mask_index : out natural range 0 to 3;
+        signal command_advance : out std_ulogic;
         signal input_ready : out std_ulogic)
     is
         -- Returns bit array matching given decode condition
@@ -223,6 +222,7 @@ architecture arch of gddr6_ctrl_write is
         pending <= pending_out;
         enables <= enables_out;
         mask_index <= find_bit(enables_out);
+        command_advance <= to_std_ulogic(pending_out = "0000");
         input_ready <= not vector_or(pending_out) and write_ready_i;
     end;
 
@@ -305,13 +305,8 @@ architecture arch of gddr6_ctrl_write is
             next_axi_command := '1';
         end;
 
-        variable write_advance : std_ulogic;
-
     begin
         next_axi_command := '0';
-        write_advance :=
-            to_std_ulogic(pending_channels = "0000") when new_command
-            else last_pending;
 
         case state is
             when WRITE_IDLE =>
@@ -325,9 +320,7 @@ architecture arch of gddr6_ctrl_write is
                 if write_ready_i or not write_request.valid then
                     write_request <= write_command(
                         command_decode, command_address,
-                        command_enables,
-                        write_advance,
-                        auto_precharge);
+                        command_enables, command_advance, auto_precharge);
                     case command_decode is
                         when DECODE_NOP | DECODE_WOM =>
                             goto_next_command;
@@ -356,17 +349,14 @@ architecture arch of gddr6_ctrl_write is
 
 begin
     proc : process (clk_i)
+        -- Set when sending state machine is ready for next command
         variable next_command : std_ulogic;
     begin
         if rising_edge(clk_i) then
             -- Generate output according to the decoded command and determine
-            -- whether to advance to the next command.
+            -- whether to advance to the next command.  Logically this should
+            -- be last, but we need the combinatorial flag next_command first
             advance_write_state(write_state, write_request_o, next_command);
-            new_command <= next_command;
-            if new_command then
-                -- Hang onto pending state, needed when issuing write commands
-                last_pending <= to_std_ulogic(pending_channels = "0000");
-            end if;
 
             if pending_channels = "0000" then
                 -- Load next AXI write request once we've finished with the
@@ -385,16 +375,14 @@ begin
                     -- command has been held up waiting to send this command
                     axi_ready_o <= '1';
                 end if;
-            else
-                -- Processing a command.  If this is the last command in
+            elsif next_command then
+                -- Decode the next command.  If this is the last command in
                 -- for this write request then pending_channels will be zero
-                -- and command_done is set to indicate this
-                if next_command then
-                    decode_next_command(
-                        pattern_decode, pending_channels,
-                        command_decode, command_enables, mask_index,
-                        axi_ready_o);
-                end if;
+                -- and axi_ready_o is set to enable loading a new command.
+                decode_next_command(
+                    pattern_decode, pending_channels,
+                    command_decode, command_enables, mask_index,
+                    command_advance, axi_ready_o);
             end if;
 
             if pending_channels = "1111" and next_command = '1' then

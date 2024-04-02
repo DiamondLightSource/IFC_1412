@@ -87,12 +87,6 @@ begin
         axi_valid <= '0';
         clk_wait(2);
 
--- request_delay <= 2;
--- write(NOP & NOP & WOM & WDM);
--- write;
--- write(NOP & NOP & NOP & WSM);
--- wait;
-
         request_delay <= 0;
         write(string'("Writes without delays"));
         write(NOP & NOP & WOM & WDM);
@@ -135,7 +129,6 @@ begin
         write(NOP & NOP & WOM & WDM);
         write;
         write(NOP & NOP & NOP & WSM);
--- wait;
         write;
         write;
         write(WOM & WOM & WDM & WSM);
@@ -190,7 +183,7 @@ begin
             ca := write_request.command.ca;
             assert ca(0)(9 downto 8) & ca(1)(9 downto 8) = "1111"
                 report "This is not a mask!"
-                severity error;
+                severity failure;
             return ca(1)(7 downto 0) & ca(0)(7 downto 0);
         end;
 
@@ -203,17 +196,18 @@ begin
             assert opcode = get_opcode
                 report "Invalid opcode: " &
                     to_hstring(opcode) & " /= " & to_hstring(get_opcode)
-                severity error;
+                severity failure;
             assert enables = get_enables
-                report "Invalid enables"
-                severity error;
+                report "Invalid enables: " &
+                    to_string(enables) & " /= " & to_string(get_enables)
+                severity failure;
             assert address = get_column
                 report "Invalid address: " &
                     to_string(address) & " /= " & to_string(get_column)
-                severity error;
+                severity failure;
             assert advance = write_request.write_advance
                 report "Inconsisted advance state"
-                severity error;
+                severity failure;
             if advance then
                 address := address + 1;
             end if;
@@ -224,10 +218,10 @@ begin
             wait_for_request;
             assert write_request.extra
                 report "Expected mask got command"
-                severity error;
+                severity failure;
             assert get_mask = mask
                 report "Invalid mask value"
-                severity error;
+                severity failure;
         end;
 
         -- Expected opcodes
@@ -241,33 +235,32 @@ begin
         constant WSM_MASK2 : std_ulogic_vector(15 downto 0) := X"1416";
 
     begin
+        for i in 0 to 2 loop
+            write("Checking loop " & to_string(i));
 
--- expect(WOM, "0100", '0');
--- expect(WDM, "1000");
--- expect_mask(WDM_MASK);
--- expect(WOM);
--- expect(WSM, "1000");
--- expect_mask(WSM_MASK1);
--- expect_mask(WSM_MASK2);
-
-        loop
-            -- Expects for writes without delays
+            -- write(NOP & NOP & WOM & WDM)
             expect(WOM, "0100", '0');
             expect(WDM, "1000");
             expect_mask(WDM_MASK);
+            -- write
             expect(WOM);
+            -- write(NOP & NOP & NOP & WSM)
             expect(WSM, "1000");
             expect_mask(WSM_MASK1);
             expect_mask(WSM_MASK2);
+            -- write x2
             expect(WOM);
             expect(WOM);
+            -- write(WOM & WOM & WDM & WSM);
             expect(WOM, "0011", '0');
             expect(WDM, "0100", '0');
             expect_mask(WDM_MASK);
             expect(WSM, "1000");
             expect_mask(WSM_MASK1);
             expect_mask(WSM_MASK2);
+            -- write(NOP & NOP & NOP & NOP);
             expect(WOM, "0000");
+            -- write(WSM & WSM & WSM & WSM);
             expect(WSM, "0001", '0');
             expect_mask(WSM_MASK1);
             expect_mask(WSM_MASK2);
@@ -280,6 +273,7 @@ begin
             expect(WSM, "1000");
             expect_mask(WSM_MASK1);
             expect_mask(WSM_MASK2);
+            -- write(WDM & WDM & WDM & WDM);
             expect(WDM, "0001", '0');
             expect_mask(WDM_MASK);
             expect(WDM, "0010", '0');
@@ -288,51 +282,9 @@ begin
             expect_mask(WDM_MASK);
             expect(WDM, "1000");
             expect_mask(WDM_MASK);
+            -- write
             expect(WOM);
         end loop;
-
-        -- Expects for writes with delays
-        -- write(NOP & NOP & WOM & WDM)
-        expect(WOM, "0100", '0');
-        expect(WDM, "1000");
-        expect_mask(WDM_MASK);
-        -- write
-        expect(WOM);
-        -- write(NOP & NOP & NOP & WSM)
-        expect(WSM, "1000");
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        -- write x2
-        expect(WOM);
-        expect(WOM);
-        --
-        expect(WOM, "0011", '0');
-        expect(WDM, "0100", '0');
-        expect_mask(WDM_MASK);
-        expect(WSM, "1000");
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        expect(WOM, "0000");
-        expect(WSM, "0001", '0');
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        expect(WSM, "0010", '0');
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        expect(WSM, "0100", '0');
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        expect(WSM, "1000");
-        expect_mask(WSM_MASK1);
-        expect_mask(WSM_MASK2);
-        expect(WDM, "0001", '0');
-        expect_mask(WDM_MASK);
-        expect(WDM, "0010", '0');
-        expect_mask(WDM_MASK);
-        expect(WDM, "0100", '0');
-        expect_mask(WDM_MASK);
-        expect(WDM, "1000");
-        expect_mask(WDM_MASK);
 
         write("Expects complete");
 
@@ -340,7 +292,7 @@ begin
     end process;
 
 
-    -- Request acknwoledge after configurable delay
+    -- Request acknowledge after configurable delay
     process (clk) begin
         if rising_edge(clk) then
             if request_counter > 0 and write_request.valid = '1' then
