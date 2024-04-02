@@ -43,13 +43,20 @@ package gddr6_ctrl_core_defs is
         row : unsigned(13 downto 0);    -- Row to read or write
         command : ca_command_t;         -- CA command to send
         -- We don't actually implement automatic precharge, but all the place
-        -- holders are here.  I don't think it earns its keep here
+        -- holders are here.  I don't think it earns its keep
         auto_precharge : std_ulogic;    -- Command sent with auto-precharge
         -- The following two flags worth together to ensure that write mask
         -- commands don't get detached from the write command
         next_extra : std_ulogic;        -- Write mask follows this command
         extra : std_ulogic;             -- This is a write mask command
         valid : std_ulogic;             -- Command valid
+    end record;
+
+    -- This event is generated when a core request is dispatched
+    type request_completion_t is record
+        direction : direction_t;        -- Direction of request
+        advance : std_ulogic;           -- Controls advance of write address
+        valid : std_ulogic;             -- Set on completion
     end record;
 
     -- Request to check bank and row status
@@ -100,6 +107,7 @@ package gddr6_ctrl_core_defs is
     -- Constants for initialisers
     function IDLE_CORE_REQUEST(
         direction : direction_t := DIR_READ) return core_request_t;
+    constant IDLE_COMPLETION : request_completion_t;
     constant IDLE_OPEN_REQUEST : bank_open_t;
     constant IDLE_OUT_REQUEST : out_request_t;
     constant IDLE_BANKS_ADMIN : banks_admin_t;
@@ -122,6 +130,12 @@ package body gddr6_ctrl_core_defs is
             valid => '0'
         );
     end;
+
+    constant IDLE_COMPLETION : request_completion_t := (
+        direction => DIR_READ,
+        advance => '0',
+        valid => '0'
+    );
 
     constant IDLE_OPEN_REQUEST : bank_open_t := (
         bank => (others => '0'),

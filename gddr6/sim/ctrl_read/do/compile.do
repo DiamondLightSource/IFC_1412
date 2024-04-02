@@ -10,12 +10,7 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
-    $common_vhd/util/memory_array.vhd \
-    $common_vhd/util/long_delay.vhd \
-    $common_vhd/util/fixed_delay_dram.vhd \
-    $common_vhd/util/fixed_delay.vhd \
     $vhd_dir/gddr6_defs.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_read.vhd

@@ -15,16 +15,11 @@ end testbench;
 architecture arch of testbench is
     signal clk : std_ulogic := '0';
 
-    constant PHY_INPUT_DELAY : natural := 5;
-
-    signal axi_request : axi_read_request_t;
-    signal axi_response : axi_read_response_t;
+    signal axi_address : unsigned(24 downto 0);
+    signal axi_valid : std_ulogic;
+    signal axi_ready : std_ulogic := '1';
     signal read_request : core_request_t;
     signal read_ready : std_ulogic;
-    signal read_sent : std_ulogic := '0';
-    signal read_lookahead : bank_open_t;
-    signal edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal edc_read : vector_array(7 downto 0)(7 downto 0);
 
 
     procedure clk_wait(count : natural := 1) is
@@ -44,19 +39,14 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    read : entity work.gddr6_ctrl_read generic map (
-        PHY_INPUT_DELAY => PHY_INPUT_DELAY
-    ) port map (
+    read : entity work.gddr6_ctrl_read port map (
         clk_i => clk,
 
-        axi_request_i => axi_request,
-        axi_response_o => axi_response,
+        axi_address_i => axi_address,
+        axi_valid_i => axi_valid,
+        axi_ready_o => axi_ready,
         read_request_o => read_request,
-        read_ready_i => read_ready,
-        read_sent_i => read_sent,
-        read_lookahead_o => read_lookahead,
-        edc_in_i => edc_in,
-        edc_read_i => edc_read
+        read_ready_i => read_ready
     );
 
     -- AXI producer
@@ -64,21 +54,18 @@ begin
         procedure send(
             address : unsigned(24 downto 0); count : unsigned(4 downto 0)) is
         begin
-            axi_request.ra_address <= address;
-            axi_request.ra_count <= count;
-            axi_request.ra_valid <= '1';
+            axi_address <= address;
+            axi_valid <= '1';
             loop
                 clk_wait;
-                exit when axi_response.ra_ready;
+                exit when axi_ready;
             end loop;
-            axi_request.ra_address <= (others => 'U');
-            axi_request.ra_count <= (others => 'U');
-            axi_request.ra_valid <= '0';
+            axi_address <= (others => 'U');
+            axi_valid <= '0';
         end;
 
     begin
-        axi_request.ra_valid <= '0';
-        axi_request.ral_valid <= '0';
+        axi_valid <= '0';
 
         clk_wait(5);
 
@@ -109,12 +96,4 @@ begin
 
         wait;
     end process;
-
-    delay_sent : entity work.fixed_delay generic map (
-        DELAY => 4
-    ) port map (
-        clk_i => clk,
-        data_i(0) => read_request.valid and read_ready,
-        data_o(0) => read_sent
-    );
 end;

@@ -18,8 +18,7 @@ entity gddr6_ctrl_request is
         mux_ready_o : out std_ulogic;
 
         -- Command completion notification
-        write_request_sent_o : out std_ulogic := '0';
-        read_request_sent_o : out std_ulogic := '0';
+        completion_o : out request_completion_t := IDLE_COMPLETION;
 
         -- Check bank open and reserve
         bank_open_o : out bank_open_t := IDLE_OPEN_REQUEST;
@@ -112,7 +111,7 @@ begin
         request_test <= (
             direction => bank_out.direction,
             bank => bank_out.bank,
-            auto_precharge => bank_out.precharge,
+            auto_precharge => bank_out.auto_precharge,
             valid => bank_out.valid and not bank_out.extra and bank_ok
         );
     end process;
@@ -190,14 +189,11 @@ begin
             command_valid_o <= request_ok or request_out.extra;
 
             -- Command completion
-            case request_out.direction is
-                when DIR_READ =>
-                    write_request_sent_o <= '0';
-                    read_request_sent_o <= request_ok;
-                when DIR_WRITE =>
-                    write_request_sent_o <= request_ok;
-                    read_request_sent_o <= '0';
-            end case;
+            completion_o <= (
+                direction => request_out.direction,
+                advance => request_out.write_advance,
+                valid => request_ok
+            );
         end if;
     end process;
 end;

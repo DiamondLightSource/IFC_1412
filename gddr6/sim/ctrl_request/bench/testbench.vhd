@@ -24,8 +24,7 @@ architecture arch of testbench is
 
     signal mux_request : core_request_t := IDLE_CORE_REQUEST;
     signal mux_request_ready : std_ulogic;
-    signal write_request_sent : std_ulogic;
-    signal read_request_sent : std_ulogic;
+    signal completion : request_completion_t;
     signal bank_open : bank_open_t;
     signal bank_open_ok : std_ulogic := '1';
     signal bank_open_request : std_logic;
@@ -58,8 +57,7 @@ begin
         mux_request_i => mux_request,
         mux_ready_o => mux_request_ready,
 
-        write_request_sent_o => write_request_sent,
-        read_request_sent_o => read_request_sent,
+        completion_o => completion,
 
         bank_open_o => bank_open,
         bank_open_ok_i => bank_open_ok,
@@ -83,13 +81,14 @@ begin
             -- We don't care about the context of most fields
             mux_request <= (
                 direction => DIR_WRITE,
+                write_advance => '1',
                 bank => to_unsigned(command_count mod 16, 4),
                 row => to_unsigned(command_count mod 2**14, 14),
                 command => (
                     ca => (others =>
                         to_std_ulogic_vector_u(command_count mod 2**10, 10)),
                     ca3 => to_std_ulogic_vector_u(count, 4)),
-                precharge => '0',
+                auto_precharge => '0',
                 extra => to_std_ulogic(count > 0),
                 next_extra => '0',
                 valid => '1'

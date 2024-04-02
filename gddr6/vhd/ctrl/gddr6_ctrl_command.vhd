@@ -16,12 +16,13 @@ entity gddr6_ctrl_command is
         -- Write request and report when sent
         write_request_i : in core_request_t;
         write_request_ready_o : out std_ulogic;
-        write_request_sent_o : out std_ulogic;
 
         -- Read request and report when sent
         read_request_i : in core_request_t;
         read_request_ready_o : out std_ulogic;
-        read_request_sent_o : out std_ulogic;
+
+        -- Request completion
+        request_completion_o : out request_completion_t;
 
         -- Admin request
         admin_i : in banks_admin_t;
@@ -104,8 +105,7 @@ begin
         mux_request_i => mux_request,
         mux_ready_o => mux_ready,
 
-        write_request_sent_o => write_request_sent_o,
-        read_request_sent_o => read_request_sent_o,
+        completion_o => request_completion_o,
 
         bank_open_o => bank_open,
         bank_open_ok_i => bank_open_ok,

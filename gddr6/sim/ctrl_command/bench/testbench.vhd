@@ -24,10 +24,9 @@ architecture arch of testbench is
 
     signal write_request : core_request_t;
     signal write_request_ready : std_ulogic;
-    signal write_request_sent : std_ulogic;
     signal read_request : core_request_t;
     signal read_request_ready : std_ulogic;
-    signal read_request_sent : std_ulogic;
+    signal request_completion : request_completion_t;
     signal admin_command : banks_admin_t;
     signal admin_command_ready : std_ulogic;
     signal bypass_command : ca_command_t;
@@ -56,11 +55,11 @@ begin
 
         write_request_i => write_request,
         write_request_ready_o => write_request_ready,
-        write_request_sent_o => write_request_sent,
 
         read_request_i => read_request,
         read_request_ready_o => read_request_ready,
-        read_request_sent_o => read_request_sent,
+
+        request_completion_o => request_completion,
 
         admin_i => admin_command,
         admin_ready_o => admin_command_ready,
@@ -91,8 +90,10 @@ begin
             extra : boolean; next_extra : boolean) is
         begin
             write_request <= (
-                direction => DIR_WRITE, bank => bank, row => row,
-                command => command, precharge => precharge,
+                direction => DIR_WRITE,
+                write_advance => '1',
+                bank => bank, row => row, command => command,
+                auto_precharge => precharge,
                 extra => to_std_ulogic(extra),
                 next_extra => to_std_ulogic(next_extra),
                 valid => '1');
@@ -147,8 +148,10 @@ begin
             precharge : std_ulogic := '0') is
         begin
             read_request <= (
-                direction => DIR_READ, bank => bank, row => row,
-                command => SG_RD(bank, column), precharge => precharge,
+                direction => DIR_READ,
+                write_advance => '0',
+                bank => bank, row => row, command => SG_RD(bank, column),
+                auto_precharge => precharge,
                 next_extra => '0', extra => '0', valid => '1');
             loop
                 clk_wait;
