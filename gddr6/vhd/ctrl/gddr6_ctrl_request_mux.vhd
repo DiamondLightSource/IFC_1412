@@ -25,6 +25,8 @@ entity gddr6_ctrl_request_mux is
         -- If refresh is running out of time and cannot access a bank this
         -- request will stall progress by blocking acceptance of requests
         stall_i : in std_ulogic;
+        -- Reports currently selected direction
+        current_direction_o : out direction_t;
 
         -- Write request with handshake and completion
         write_request_i : in core_request_t;
@@ -148,5 +150,7 @@ begin
             end if;
         end if;
     end process;
+
     out_request_o <= out_request;
+    current_direction_o <= current_direction;
 end;

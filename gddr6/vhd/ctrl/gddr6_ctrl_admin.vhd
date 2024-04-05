@@ -22,9 +22,8 @@ entity gddr6_ctrl_admin is
 
         -- Request to open bank.  Serviced first
         bank_open_i : in bank_open_t;
-        -- Read and write lookahead requests, serviced as appropriate
-        read_lookahead_i : in bank_open_t;
-        write_lookahead_i : in bank_open_t;
+        -- Filtered lookahead request
+        lookahead_i : in bank_open_t;
         -- Refresh requests, serviced and acknowledged when free
         refresh_i : in refresh_request_t;
         refresh_ready_o : out std_ulogic := '0';
@@ -52,24 +51,16 @@ architecture arch of gddr6_ctrl_admin is
     -- Keep track of the last bank activated so that we can block lookahead from
     -- changing this bank.
     signal last_bank_activated : unsigned(3 downto 0);
-    signal allow_read_lookahead : std_ulogic;
-    signal allow_write_lookahead : std_ulogic;
+    signal allow_lookahead : std_ulogic;
 
     -- Keep track of bank request completions
     signal bank_open_done : std_ulogic := '0';
-    signal read_lookahead_done : std_ulogic := '0';
-    signal write_lookahead_done : std_ulogic := '0';
+    signal lookahead_done : std_ulogic := '0';
 
 begin
-    allow_read_lookahead <=
-        status_i.read_active and
-        to_std_ulogic(read_lookahead_i.bank /= last_bank_activated) and
-        not read_lookahead_done;
-    allow_write_lookahead <=
-        status_i.write_active and
-        to_std_ulogic(write_lookahead_i.bank /= last_bank_activated) and
-        not write_lookahead_done;
-
+    allow_lookahead <=
+        to_std_ulogic(lookahead_i.bank /= last_bank_activated) and
+        not lookahead_done;
 
     process (clk_i)
         procedure update_done_flags is
@@ -77,20 +68,15 @@ begin
             if not bank_open_i.valid then
                 bank_open_done <= '0';
             end if;
-            if not read_lookahead_i.valid then
-                read_lookahead_done <= '0';
-            end if;
-            if not write_lookahead_i.valid then
-                write_lookahead_done <= '0';
+            if not lookahead_i.valid then
+                lookahead_done <= '0';
             end if;
 
             if state = IDLE then
                 if bank_open_i.valid and not bank_open_done then
                     bank_open_done <= '1';
-                elsif read_lookahead_i.valid and allow_read_lookahead then
-                    read_lookahead_done <= '1';
-                elsif write_lookahead_i.valid and allow_write_lookahead then
-                    write_lookahead_done <= '1';
+                elsif lookahead_i.valid and allow_lookahead then
+                    lookahead_done <= '1';
                 end if;
             end if;
         end;
@@ -101,11 +87,8 @@ begin
             if bank_open_i.valid and not bank_open_done then
                 bank_open <= bank_open_i;
                 state <= START_PRE_ACT;
-            elsif read_lookahead_i.valid and allow_read_lookahead then
-                bank_open <= read_lookahead_i;
-                state <= START_PRE_ACT;
-            elsif write_lookahead_i.valid and allow_write_lookahead then
-                bank_open <= write_lookahead_i;
+            elsif lookahead_i.valid and allow_lookahead then
+                bank_open <= lookahead_i;
                 state <= START_PRE_ACT;
             elsif refresh_i.valid then
                 refresh <= refresh_i;

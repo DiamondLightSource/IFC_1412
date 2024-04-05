@@ -16,12 +16,11 @@ entity gddr6_ctrl_command is
         -- Write request and report when sent
         write_request_i : in core_request_t;
         write_request_ready_o : out std_ulogic;
-
         -- Read request and report when sent
         read_request_i : in core_request_t;
         read_request_ready_o : out std_ulogic;
-
-        -- Request completion
+        -- Request completion, generated when each read or write request is
+        -- issued for dispatch to memory
         request_completion_o : out request_completion_t;
 
         -- Admin request
@@ -37,6 +36,9 @@ entity gddr6_ctrl_command is
         -- Direction control, mode and priority default
         priority_mode_i : in std_ulogic;
         priority_direction_i : in direction_t;
+        -- Currently selected direction
+        current_direction_o : out direction_t;
+
         -- Request to open bank from read or write request
         bank_open_o : out bank_open_t;
         -- Bank status to guide open and refresh
@@ -88,6 +90,7 @@ begin
         priority_mode_i => priority_mode_i,
         priority_direction_i => priority_direction_i,
         stall_i => refresh_stall_i,
+        current_direction_o => current_direction_o,
 
         write_request_i => write_request_i,
         write_ready_o => write_request_ready_o,

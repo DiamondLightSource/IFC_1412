@@ -1,4 +1,4 @@
--- Interface definitions for GDDR6
+-- GDDR6 definitions for internally shared definitions
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -10,52 +10,49 @@ package gddr6_defs is
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between AXI and CTRL
 
-    type axi_read_request_t is record
-        -- RA Read Adddress
-        ra_address : unsigned(24 downto 0);     -- Address to read
-        ra_count : unsigned(4 downto 0);        -- Count until lookahead address
-        ra_valid : std_ulogic;                  -- Read Address valid
-        -- RA Lookahead
-        ral_address : unsigned(24 downto 0);    -- Lookahead address
-        ral_valid : std_ulogic;                 -- Lookahead valid
-    end record;
-
-    type axi_read_response_t is record
-        -- RA Read Adddress
-        ra_ready : std_ulogic;                  -- Ready for read address
-        -- RD Read Data
-        rd_valid : std_ulogic;                  -- Returned read data valid
-        rd_ok : std_ulogic;                     -- Read data completion status
-        rd_ok_valid : std_ulogic;               -- Read completion valid
-    end record;
-
-    type axi_write_request_t is record
+    type axi_request_t is record
         -- WA Write Adddress
-        wa_address : unsigned(24 downto 0);     -- Address to write
-        wa_byte_mask : std_ulogic_vector(127 downto 0); -- Bytes to write
-        wa_count : unsigned(4 downto 0);        -- Count until next lookahead
-        wa_valid : std_ulogic;                  -- Write address valid
+        wa_address : unsigned(24 downto 0);
+        wa_byte_mask : std_ulogic_vector(127 downto 0);
+        wa_valid : std_ulogic;
         -- WA Lookahead
         wal_address : unsigned(24 downto 0);
+        wal_count : unsigned(4 downto 0);
         wal_valid : std_ulogic;
+        -- RA Read Address
+        ra_address : unsigned(24 downto 0);
+        ra_valid : std_ulogic;
+        -- RA Lookahead
+        ral_address : unsigned(24 downto 0);
+        ral_count : unsigned(4 downto 0);
+        ral_valid : std_ulogic;
         -- WD Write Data
-        wd_data : vector_array(63 downto 0)(7 downto 0);
+        -- Data is organised by channel and flattened into 16 bytes per channel
+        -- to reflect the flow required to match byte masks.
+        wd_data : vector_array(0 to 3)(127 downto 0);
     end record;
 
-    type axi_write_response_t is record
+    type axi_response_t is record
         -- WA Write Adddress
-        wa_ready : std_ulogic;                  -- Ready for write address
+        wa_ready : std_ulogic;
+        -- RA Read Address
+        ra_ready : std_ulogic;
         -- WD Write Data
-        wd_hold : std_ulogic;                   -- Holds for repeated writes
-        wd_ready : std_ulogic;                  -- Write data ready to advance
+        wd_advance : std_ulogic;
+        wd_ready : std_ulogic;
         -- WR Write Response
-        wr_ok : std_ulogic;                     -- Write completion ok
-        wr_ok_valid : std_ulogic;               -- Write completion valid
+        wr_ok : std_ulogic;
+        wr_ok_valid : std_ulogic;
+        -- RD Read Data
+        rd_data : vector_array(0 to 3)(127 downto 0);
+        rd_valid : std_ulogic;
+        rd_ok : std_ulogic;
+        rd_ok_valid : std_ulogic;
     end record;
 
 
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    -- Interfaces between CTRL and PHY
+    -- Interfaces between CTRL (and SETUP) and PHY
 
     -- CA command
     type phy_ca_t is record
@@ -160,4 +157,20 @@ package gddr6_defs is
         -- if FIFO underflow or overflow is detected.
         fifo_ok : std_ulogic_vector(0 to 1);
     end record;
+
+
+    -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    -- Interfaces between SETUP and CTRL
+
+    type ctrl_setup_t is record
+        enable_refresh : std_ulogic;
+        priority_mode : std_ulogic;
+        priority_direction : std_ulogic;
+    end record;
+
+    type ctrl_status_t is record
+        read_error : std_ulogic;
+        write_error : std_ulogic;
+    end record;
+
 end;
