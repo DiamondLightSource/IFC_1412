@@ -33,9 +33,13 @@ package gddr6_phy_defs is
 
     -- Controls over bitslip delay
     type bitslip_delay_control_t is record
-        -- Strobes for setting delay
+        -- Strobes for setting TX delay
         dq_tx_strobe : std_ulogic_vector(63 downto 0);
         dbi_tx_strobe : std_ulogic_vector(7 downto 0);
+        -- Strobes for setting RX delay
+        dq_rx_strobe : std_ulogic_vector(63 downto 0);
+        dbi_rx_strobe : std_ulogic_vector(7 downto 0);
+        edc_rx_strobe : std_ulogic_vector(7 downto 0);
         -- Delay set by strobes above
         delay : unsigned(2 downto 0);
     end record;
@@ -43,6 +47,9 @@ package gddr6_phy_defs is
     type bitslip_delay_readbacks_t is record
         dq_tx_delay : unsigned_array(63 downto 0)(2 downto 0);
         dbi_tx_delay : unsigned_array(7 downto 0)(2 downto 0);
+        dq_rx_delay : unsigned_array(63 downto 0)(2 downto 0);
+        dbi_rx_delay : unsigned_array(7 downto 0)(2 downto 0);
+        edc_rx_delay : unsigned_array(7 downto 0)(2 downto 0);
     end record;
 
 

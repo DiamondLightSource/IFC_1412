@@ -29,12 +29,13 @@ architecture arch of gddr6_phy_delay_control is
     -- Target and address decoding
     constant TARGET_IDELAY : natural := 0;
     constant TARGET_ODELAY : natural := 1;
+    constant TARGET_IBITSLIP : natural := 2;
     constant TARGET_OBITSLIP : natural := 3;
 
-    -- Strobe arrays for output indexed by target type
+    -- Strobe arrays for output indexed by target type, used for both bitslip
+    -- and I/O DELAY control
     signal ce_out : vector_array(0 to 3)(79 downto 0)
         := (others => (others => '0'));
-    signal bitslip_strobe : std_ulogic_vector(71 downto 0) := (others => '0');
 
     -- Incoming delays
     signal delays_in : vector_array_array(3 downto 0)(127 downto 0)(8 downto 0);
@@ -52,7 +53,7 @@ architecture arch of gddr6_phy_delay_control is
     signal bitslip_delay : unsigned(2 downto 0);
 
     -- Strobe controls
-    signal enable_bitslip : std_ulogic := '0';
+    signal enable_strobe : std_ulogic := '0';
 
     -- State machine for writing delays:
     --
@@ -89,22 +90,40 @@ architecture arch of gddr6_phy_delay_control is
         return result;
     end;
 
+    -- Uses selected address and target to generate selected strobe
+    procedure compute_strobe(
+        signal strobes : out vector_array; value : std_ulogic) is
+    begin
+        for t in strobes'RANGE loop
+            for a in strobes'ELEMENT'RANGE loop
+                if t = target and a = address then
+                    strobes(t)(a) <= value;
+                else
+                    strobes(t)(a) <= '0';
+                end if;
+            end loop;
+        end loop;
+    end;
+
 begin
     -- Map output strobes according to addressing
     bitslice_control_o <= (
         up_down_n => up_down_n,
 
         -- CE for IDELAY and ODELAY following the address map above
-        dq_rx_ce =>   ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
-        dq_tx_ce =>   ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
-        dbi_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
-        dbi_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
-        edc_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
+        dq_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
+        dq_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
+        dbi_rx_ce => ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
+        dbi_tx_ce => ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
+        edc_rx_ce => ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
     );
 
     bitslip_control_o <= (
-        dq_tx_strobe  => bitslip_strobe(DELAY_DQ_RANGE),
-        dbi_tx_strobe => bitslip_strobe(DELAY_DBI_RANGE),
+        dq_rx_strobe =>  ce_out(TARGET_IBITSLIP)(DELAY_DQ_RANGE),
+        dq_tx_strobe =>  ce_out(TARGET_OBITSLIP)(DELAY_DQ_RANGE),
+        dbi_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_DBI_RANGE),
+        dbi_tx_strobe => ce_out(TARGET_OBITSLIP)(DELAY_DBI_RANGE),
+        edc_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_EDC_RANGE),
         delay => bitslip_delay
     );
 
@@ -129,22 +148,6 @@ begin
 
 
     process (clk_i)
-        -- Uses selected address and target to generate selected strobe
-        procedure compute_strobe(
-            signal strobes : out vector_array;
-            value : std_ulogic; initial : std_ulogic) is
-        begin
-            for t in strobes'RANGE loop
-                for a in strobes'ELEMENT'RANGE loop
-                    if t = target and a = address then
-                        strobes(t)(a) <= value;
-                    else
-                        strobes(t)(a) <= initial;
-                    end if;
-                end loop;
-            end loop;
-        end;
-
         procedure count_delay(
             signal counter : inout unsigned; next_state : write_state_t) is
         begin
@@ -174,14 +177,15 @@ begin
                         case to_integer(setup_i.target) is
                             when TARGET_IDELAY | TARGET_ODELAY =>
                                 if setup_i.enable_write then
+                                    enable_strobe <= '1';
                                     write_state <= WRITE_DELAY;
                                 else
                                     write_state <= WRITE_END;
                                 end if;
 
-                            when TARGET_OBITSLIP =>
+                            when TARGET_IBITSLIP | TARGET_OBITSLIP =>
                                 if setup_i.enable_write then
-                                    enable_bitslip <= '1';
+                                    enable_strobe <= '1';
                                     write_state <= WRITE_RUNOUT;
                                 else
                                     write_state <= WRITE_END;
@@ -196,6 +200,7 @@ begin
                     -- Hold in WRITE_DELAY state for requested duration, insert
                     -- WRITE_DWELL states between ticks
                     dwell_counter <= DWELL_COUNT;
+                    enable_strobe <= '0';
                     if delay_counter > 0 then
                         write_state <= WRITE_DWELL;
                     end if;
@@ -203,11 +208,12 @@ begin
 
                 when WRITE_DWELL =>
                     -- Insert 5 tick delay between CE strobes
+                    enable_strobe <= to_std_ulogic(dwell_counter = 0);
                     count_delay(dwell_counter, WRITE_DELAY);
 
                 when WRITE_RUNOUT =>
                     -- Extra delay needed so that readbacks are valid
-                    enable_bitslip <= '0';
+                    enable_strobe <= '0';
                     count_delay(runout_counter, WRITE_END);
 
                 when WRITE_END =>
@@ -217,14 +223,8 @@ begin
                     write_state <= WRITE_IDLE;
             end case;
 
-
             -- Generate the control strobes.
-            --
-            -- Delay clock enable during delay slewing
-            compute_strobe(
-                ce_out, to_std_ulogic(write_state = WRITE_DELAY), '0');
-            -- Bitslip strobe to write selected bitslip
-            compute_strobe(bitslip_strobe, address, enable_bitslip, '0');
+            compute_strobe(ce_out, enable_strobe);
 
             -- Map and register the readbacks
             delays_in <= (
@@ -236,6 +236,11 @@ begin
                 TARGET_ODELAY => (
                     DELAY_DQ_RANGE  => bitslice_delays_i.dq_tx_delay,
                     DELAY_DBI_RANGE => bitslice_delays_i.dbi_tx_delay,
+                    others => (others => '0')),
+                TARGET_IBITSLIP => (
+                    DELAY_DQ_RANGE  => resize(bitslip_delays_i.dq_rx_delay),
+                    DELAY_DBI_RANGE => resize(bitslip_delays_i.dbi_rx_delay),
+                    DELAY_EDC_RANGE => resize(bitslip_delays_i.edc_rx_delay),
                     others => (others => '0')),
                 TARGET_OBITSLIP => (
                     DELAY_DQ_RANGE  => resize(bitslip_delays_i.dq_tx_delay),

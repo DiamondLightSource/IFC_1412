@@ -44,6 +44,9 @@ entity gddr6_phy_dq is
 end;
 
 architecture arch of gddr6_phy_dq is
+    -- For the moment we'll bypass RX bitslip
+    constant ENABLE_RX_BITSLIP : boolean := false;
+
     -- Data between bitslip correction and DBI
     signal data_out : vector_array(63 downto 0)(7 downto 0);
     signal data_in : vector_array(63 downto 0)(7 downto 0);
@@ -51,18 +54,43 @@ architecture arch of gddr6_phy_dq is
     signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
     signal edc_in : vector_array(7 downto 0)(7 downto 0);
 
-    -- Delay readbacks
-    signal dq_tx_delay : unsigned_array(63 downto 0)(2 downto 0);
-    signal dbi_tx_delay : unsigned_array(7 downto 0)(2 downto 0);
-
 begin
+    gen_in : if ENABLE_RX_BITSLIP generate
+        bitslip_in : entity work.gddr6_phy_bitslip port map (
+            clk_i => clk_i,
+
+            delay_i => delay_control_i.delay,
+            delay_o(DELAY_DQ_RANGE) => delay_readbacks_o.dq_rx_delay,
+            delay_o(DELAY_DBI_RANGE) => delay_readbacks_o.dbi_rx_delay,
+            delay_o(DELAY_EDC_RANGE) => delay_readbacks_o.edc_rx_delay,
+            strobe_i(DELAY_DQ_RANGE) => delay_control_i.dq_rx_strobe,
+            strobe_i(DELAY_DBI_RANGE) => delay_control_i.dbi_rx_strobe,
+            strobe_i(DELAY_EDC_RANGE) => delay_control_i.edc_rx_strobe,
+
+            data_i(DELAY_DQ_RANGE) => raw_data_i,
+            data_i(DELAY_DBI_RANGE) => raw_dbi_n_i,
+            data_i(DELAY_EDC_RANGE) => raw_edc_i,
+            data_o(DELAY_DQ_RANGE) => data_in,
+            data_o(DELAY_DBI_RANGE) => dbi_n_in,
+            data_o(DELAY_EDC_RANGE) => edc_in
+        );
+    else generate
+        -- Looks like we need bitslip on TX but not RX data.  Surprising...
+        data_in <= raw_data_i;
+        dbi_n_in <= raw_dbi_n_i;
+        edc_in <= raw_edc_i;
+        delay_readbacks_o.dq_rx_delay <= (others => "000");
+        delay_readbacks_o.dbi_rx_delay <= (others => "000");
+        delay_readbacks_o.edc_rx_delay <= (others => "000");
+    end generate;
+
     -- Apply bitslip correction to raw data
     bitslip_out : entity work.gddr6_phy_bitslip port map (
         clk_i => clk_i,
 
         delay_i => delay_control_i.delay,
-        delay_o(DELAY_DQ_RANGE) => dq_tx_delay,
-        delay_o(DELAY_DBI_RANGE) => dbi_tx_delay,
+        delay_o(DELAY_DQ_RANGE) => delay_readbacks_o.dq_tx_delay,
+        delay_o(DELAY_DBI_RANGE) => delay_readbacks_o.dbi_tx_delay,
         strobe_i(DELAY_DQ_RANGE) => delay_control_i.dq_tx_strobe,
         strobe_i(DELAY_DBI_RANGE) => delay_control_i.dbi_tx_strobe,
 
@@ -71,17 +99,6 @@ begin
         data_o(DELAY_DQ_RANGE) => raw_data_o,
         data_o(DELAY_DBI_RANGE) => raw_dbi_n_o
     );
-
-    -- Looks like we need bitslip on TX but not RX data.  A bit surprising...
-    data_in <= raw_data_i;
-    dbi_n_in <= raw_dbi_n_i;
-    edc_in <= raw_edc_i;
-
-    delay_readbacks_o <= (
-        dq_tx_delay => dq_tx_delay,
-        dbi_tx_delay => dbi_tx_delay
-    );
-
 
     -- Perform DBI processing where appropriate
     dbi : entity work.gddr6_phy_dbi port map (

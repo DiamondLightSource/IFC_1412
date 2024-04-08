@@ -102,7 +102,7 @@ package gddr6_defs is
         -- Target selection:
         --   00         Control or read IDELAY
         --   01         Control or read ODELAY
-        --   10         (unassigned)
+        --   10         Control or read input BITSLIP
         --   11         Control or read output BITSLIP
         target : unsigned(1 downto 0);
 
