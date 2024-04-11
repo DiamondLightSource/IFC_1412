@@ -192,6 +192,7 @@ begin
             completion_o <= (
                 direction => request_out.direction,
                 advance => request_out.write_advance,
+                enables => request_out.command.ca3,
                 valid => request_ok
             );
         end if;

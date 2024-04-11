@@ -188,6 +188,7 @@ begin
 
         request_completion_i => request_completion,
 
+        write_active_i => banks_status.write_active,
         output_enable_o => phy_dq_o.output_enable,
 
         phy_data_i => phy_dq_i.data,
@@ -202,8 +203,9 @@ begin
         axi_rd_ok_o => axi_response_o.rd_ok,
         axi_rd_ok_valid_o => axi_response_o.rd_ok_valid,
 
-        axi_wr_data_i => axi_request_i.wd_data,
-        axi_wr_ready_o => axi_response_o.wd_ready,
+        axi_wd_data_i => axi_request_i.wd_data,
+        axi_wd_advance_o => axi_response_o.wd_advance,
+        axi_wd_ready_o => axi_response_o.wd_ready,
         axi_wr_ok_o => axi_response_o.wr_ok,
         axi_wr_ok_valid_o => axi_response_o.wr_ok_valid
     );

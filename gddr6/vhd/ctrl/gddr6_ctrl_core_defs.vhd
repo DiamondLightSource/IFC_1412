@@ -56,6 +56,7 @@ package gddr6_ctrl_core_defs is
     type request_completion_t is record
         direction : direction_t;        -- Direction of request
         advance : std_ulogic;           -- Controls advance of write address
+        enables : std_ulogic_vector(0 to 3);    -- Channel enables for write
         valid : std_ulogic;             -- Set on completion
     end record;
 
@@ -134,6 +135,7 @@ package body gddr6_ctrl_core_defs is
     constant IDLE_COMPLETION : request_completion_t := (
         direction => DIR_READ,
         advance => '0',
+        enables => "0000",
         valid => '0'
     );
 
