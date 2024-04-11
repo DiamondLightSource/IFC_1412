@@ -77,7 +77,7 @@ package body gddr6_ctrl_command_defs is
     begin
         bank_pair_bits := std_ulogic_vector(bank_pair);
         return ((
-            b"10_1" & bank_pair_bits & "1111", b"10_111_0_1111"), "0000");
+            b"10_1" & bank_pair_bits & "1111", b"01_111_0_1111"), "0000");
     end;
 
     function SG_ACT(

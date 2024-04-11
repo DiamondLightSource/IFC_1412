@@ -70,8 +70,6 @@ architecture arch of gddr6_ctrl is
     signal refresh_ready : std_ulogic;
     signal stall_requests : std_ulogic;
 
-    signal ca_command : ca_command_t;
-
 begin
     -- Generate read requests from AXI addresses
     read : entity work.gddr6_ctrl_read port map (
@@ -179,8 +177,10 @@ begin
         bank_open_o => bank_open,
         banks_status_o => banks_status,
 
-        ca_command_o => ca_command
+        ca_command_o.ca => phy_ca_o.ca,
+        ca_command_o.ca3 => phy_ca_o.ca3
     );
+    phy_ca_o.cke_n <= '0';
 
     -- Manages data timing and EDC checking
     data : entity work.gddr6_ctrl_data port map (

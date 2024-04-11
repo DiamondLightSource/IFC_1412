@@ -48,6 +48,7 @@ architecture arch of gddr6_ctrl_banks is
     signal open_bank : natural range 0 to 15;
     signal request_bank : natural range 0 to 15;
     signal admin_bank : natural range 0 to 15;
+    signal incoming_precharge : std_ulogic_vector(0 to 15);
     signal request_read : std_ulogic;
     signal request_write : std_ulogic;
     signal request_activate : std_ulogic;
@@ -72,14 +73,14 @@ architecture arch of gddr6_ctrl_banks is
 
     function admin_request(
         command : admin_command_t;
-        admin_i : banks_admin_t) return std_ulogic_vector
+        admin : banks_admin_t) return std_ulogic_vector
     is
         variable admin_bank : natural range 0 to 15;
         variable result : std_ulogic_vector(0 to 15) := (others => '0');
     begin
-        admin_bank := to_integer(admin_i.bank);
-        if admin_i.valid = '1' and admin_i.command = command then
-            if admin_i.all_banks then
+        admin_bank := to_integer(admin.bank);
+        if admin.valid = '1' and admin.command = command then
+            if admin.all_banks then
                 result := (others => '1');
             elsif command = CMD_REF then
                 -- Special treatment for refresh which treats banks in pairs
@@ -128,8 +129,9 @@ begin
     bank_open_ok_o <=
         bank_open_i.valid and active(open_bank) and
         to_std_ulogic(row(open_bank) = bank_open_i.row) and
-        -- Also guard against an accepted precharge on this bank!
-        not (accept_precharge and to_std_ulogic(open_bank = admin_bank));
+        -- Also guard against accepted or requested precharge on this bank!
+        not (accept_precharge and to_std_ulogic(open_bank = admin_bank)) and
+        not incoming_precharge(open_bank);
 
     -- Decode incoming read/write request
     request_read <=
@@ -143,8 +145,8 @@ begin
         admin_i.valid and to_std_ulogic(admin_i.command = CMD_ACT) and
         not tRRD_delay and not block_admin and not refresh_busy;
     -- Precharge is either for a single bank or all banks
-    request_precharge <=
-        admin_request(CMD_PRE, admin_i) and not block_admin;
+    incoming_precharge <= admin_request(CMD_PRE, admin_i);
+    request_precharge <= incoming_precharge and not block_admin;
     -- Refresh is either for a pair of banks or all banks
     request_refresh <=
         admin_request(CMD_REF, admin_i) and

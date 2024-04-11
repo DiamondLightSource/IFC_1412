@@ -36,20 +36,10 @@ architecture arch of gddr6_ctrl_refresh is
     signal refresh_tick : std_ulogic := '0';
     signal full_refresh_tick : std_ulogic := '0';
 
-    constant MAX_REFRESH_DELAY : natural := 3;
+    constant MAX_REFRESH_DELAY : natural := 7;
+    constant STALL_REFRESH_DELAY : natural := 4;
     signal refresh_delay : natural range 0 to MAX_REFRESH_DELAY;
     signal do_full_refresh : std_ulogic := '0';
-
-    function find_set_bit(
-        bits : std_ulogic_vector(0 to 7)) return natural is
-    begin
-        for n in bits'RANGE loop
-            if bits(n) then
-                return n;
-            end if;
-        end loop;
-        return 0;   -- Should not happen!
-    end;
 
     -- List of bank pairs that still need refresh in this round
     signal needs_refresh : std_ulogic_vector(0 to 7) := (others => '0');
@@ -67,6 +57,40 @@ architecture arch of gddr6_ctrl_refresh is
         REFRESH_WAIT        -- Wait for outstanding refresh request to complete
     );
     signal refresh_state : refresh_state_t := REFRESH_IDLE;
+
+
+    function find_set_bit(
+        bits : std_ulogic_vector(0 to 7)) return natural is
+    begin
+        for n in bits'RANGE loop
+            if bits(n) then
+                return n;
+            end if;
+        end loop;
+        return 0;   -- Should not happen!
+    end;
+
+    -- Compute refresh list according to current refresh level.  The idea here
+    -- is to first refresh banks that won't interfere with reads and writes
+    -- already in progress, and then wait a little to allow a chance for the
+    -- busy banks to become free.
+    impure function get_refresh_list return std_ulogic_vector is
+    begin
+        case refresh_delay is
+            when 0 =>
+                -- During the first stage of refresh we only refresh idle
+                -- and old banks.  Both banks of a pair have to be eligible
+                return
+                    (not status_i.active(0 to 7) or status_i.old(0 to 7)) and
+                    (not status_i.active(8 to 15) or status_i.old(8 to 15));
+            when 1 =>
+                -- During middle refresh only exempt the young
+                return not (status_i.young(0 to 7) or status_i.young(8 to 15));
+            when others =>
+                -- During late refresh noone is exempt
+                return (0 to 7 => '1');
+        end case;
+    end;
 
 begin
     process (clk_i)
@@ -112,25 +136,10 @@ begin
             -- count.  We could be more clever about this, but this will work
             -- for now.
             stall_requests_o <=
-                to_std_ulogic(refresh_delay = MAX_REFRESH_DELAY);
+                to_std_ulogic(refresh_delay >= STALL_REFRESH_DELAY);
 
-            -- Update refresh list according to current refresh level.  The idea
-            -- here is to first refresh banks that won't interfere with reads
-            -- and writes already in progress, and then wait a little to allow a
-            -- chance for the busy banks to become free.
-            with refresh_delay select
-                refresh_list <=
-                    -- During the first stage of refresh we only refresh idle
-                    -- and old banks.  Both banks of a pair have to be eligible
-                    (not status_i.active(0 to 7) or status_i.old(0 to 7)) and
-                    (not status_i.active(8 to 15) or status_i.old(8 to 15))
-                when 0,
-                    -- During middle refresh only exempt the young
-                    not status_i.young(0 to 7) and not status_i.young(8 to 15)
-                when 1,
-                    -- During late refresh noone is exempt
-                    (others => '1')
-                when others;
+            -- Compute list of banks currently eligible for refresh
+            refresh_list <= get_refresh_list;
 
             -- Refresh stage engine.  Wait for a refresh interval to start, and
             -- then loop checking for eligible banks to refresh

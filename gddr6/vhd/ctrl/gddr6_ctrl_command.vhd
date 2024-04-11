@@ -62,10 +62,21 @@ architecture arch of gddr6_ctrl_command is
     signal request_command : ca_command_t;
     signal request_command_valid : std_ulogic;
 
-    signal admin_in : banks_admin_t := IDLE_BANKS_ADMIN;
     signal admin_ready : std_ulogic;
     signal admin_command : ca_command_t;
     signal admin_valid : std_ulogic := '0';
+
+
+    -- Block back to back admin commands
+    function guard(admin : banks_admin_t; blocked : std_ulogic)
+        return banks_admin_t
+    is
+        variable result : banks_admin_t;
+    begin
+        result := admin;
+        result.valid := admin.valid and not blocked;
+        return result;
+    end;
 
 begin
     banks : entity work.gddr6_ctrl_banks port map (
@@ -78,7 +89,7 @@ begin
         out_request_ok_o => out_request_ok,
         out_request_extra_i => out_request_extra,
 
-        admin_i => admin_in,
+        admin_i => guard(admin_i, admin_valid),
         admin_accept_o => admin_ready,
 
         status_o => banks_status_o
@@ -135,28 +146,21 @@ begin
 
     process (clk_i) begin
         if rising_edge(clk_i) then
-            -- Buffer incoming admin command
-            if not admin_in.valid then
-                admin_in <= admin_i;
-            elsif admin_ready then
-                admin_in.valid <= '0';
-            end if;
-
             -- Decode the admin command
-            case admin_in.command is
+            case admin_i.command is
                 when CMD_ACT =>
-                    admin_command <= SG_ACT(admin_in.bank, admin_in.row);
+                    admin_command <= SG_ACT(admin_i.bank, admin_i.row);
                 when CMD_PRE =>
-                    if admin_in.all_banks then
+                    if admin_i.all_banks then
                         admin_command <= SG_PREab;
                     else
-                        admin_command <= SG_PREpb(admin_in.bank);
+                        admin_command <= SG_PREpb(admin_i.bank);
                     end if;
                 when CMD_REF =>
-                    if admin_in.all_banks then
+                    if admin_i.all_banks then
                         admin_command <= SG_REFab;
                     else
-                        admin_command <= SG_REFp2b(admin_in.bank(2 downto 0));
+                        admin_command <= SG_REFp2b(admin_i.bank(2 downto 0));
                     end if;
             end case;
             admin_valid <= admin_ready;
@@ -173,5 +177,5 @@ begin
             end if;
         end if;
     end process;
-    admin_ready_o <= not admin_in.valid;
+    admin_ready_o <= admin_valid;
 end;
