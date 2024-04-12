@@ -14,6 +14,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_core_defs.all;
 
 entity gddr6_ctrl_admin is
@@ -33,11 +34,17 @@ entity gddr6_ctrl_admin is
 
         -- Admin command with completion handshake
         admin_o : out banks_admin_t := IDLE_BANKS_ADMIN;
-        admin_ready_i : in std_ulogic
+        admin_ok_i : in std_ulogic;
+
+        command_o : out ca_command_t;
+        command_valid_o : out std_ulogic := '0'
     );
 end;
 
 architecture arch of gddr6_ctrl_admin is
+    signal admin_ready : std_ulogic := '0';
+    signal admin_out : banks_admin_t := IDLE_BANKS_ADMIN;
+
     signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
     signal refresh : refresh_request_t := IDLE_REFRESH_REQUEST;
 
@@ -56,6 +63,18 @@ architecture arch of gddr6_ctrl_admin is
     -- Keep track of bank request completions
     signal bank_open_done : std_ulogic := '0';
     signal lookahead_done : std_ulogic := '0';
+
+
+    -- Block back to back admin commands
+    function guard(admin : banks_admin_t; blocked : std_ulogic)
+        return banks_admin_t
+    is
+        variable result : banks_admin_t;
+    begin
+        result := admin;
+        result.valid := admin.valid and not blocked;
+        return result;
+    end;
 
 begin
     allow_lookahead <=
@@ -102,7 +121,7 @@ begin
         procedure start_precharge(
             bank : unsigned; all_banks : std_ulogic := '0') is
         begin
-            admin_o <= (
+            admin_out <= (
                 command => CMD_PRE,
                 bank => bank,
                 all_banks => all_banks,
@@ -114,7 +133,7 @@ begin
         procedure start_activate is
         begin
             last_bank_activated <= bank_open.bank;
-            admin_o <= (
+            admin_out <= (
                 command => CMD_ACT,
                 bank => bank_open.bank,
                 all_banks => '0',
@@ -125,7 +144,7 @@ begin
 
         procedure start_refresh is
         begin
-            admin_o <= (
+            admin_out <= (
                 command => CMD_REF,
                 bank => '0' & refresh.bank,
                 all_banks => refresh.all_banks,
@@ -158,7 +177,7 @@ begin
                     end if;
                 when WAIT_PRE_ACT =>
                     -- Wait for precharge to complete before activating
-                    if admin_ready_i then
+                    if admin_ready then
                         start_activate;
                         state <= WAIT_IDLE;
                     end if;
@@ -183,22 +202,47 @@ begin
                     end if;
                 when WAIT_PRE_REF =>
                     -- Waiting for each precharge to finish
-                    if admin_ready_i then
+                    if admin_ready then
                         if refresh.all_banks then
                             start_refresh;
                             state <= WAIT_IDLE;
                         else
-                            admin_o.valid <= '0';
+                            admin_out.valid <= '0';
                             state <= START_PRE_REF;
                         end if;
                     end if;
                 when WAIT_IDLE =>
                     -- Wait for requested action to complete
-                    if admin_ready_i then
-                        admin_o.valid <= '0';
+                    if admin_ready then
+                        admin_out.valid <= '0';
                         state <= IDLE;
                     end if;
             end case;
+
+            -- Convert admin request to SG command
+            case admin_out.command is
+                when CMD_ACT =>
+                    command_o <= SG_ACT(admin_out.bank, admin_out.row);
+                when CMD_PRE =>
+                    if admin_out.all_banks then
+                        command_o <= SG_PREab;
+                    else
+                        command_o <= SG_PREpb(admin_out.bank);
+                    end if;
+                when CMD_REF =>
+                    if admin_out.all_banks then
+                        command_o <= SG_REFab;
+                    else
+                        command_o <= SG_REFp2b(admin_out.bank(2 downto 0));
+                    end if;
+            end case;
+            admin_ready <= admin_ok_i;
         end if;
     end process;
+
+    -- This is a temporary fudge, need to slightly rework the state machine
+    -- above to achieve this instead
+    admin_o <= guard(admin_out, admin_ready);
+
+    command_valid_o <= admin_ready;
 end;

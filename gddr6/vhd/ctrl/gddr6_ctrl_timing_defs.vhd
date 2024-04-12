@@ -7,14 +7,21 @@ use ieee.numeric_std.all;
 package gddr6_ctrl_timing_defs is
     -- These settings are configured in the mode registers
 
+    -- The four delays below are in principle programmable through the
+    -- corresponding MR register, but the Latency Timings section of table 47
+    -- of the device documentation adds clock related constrains, listed below.
+    --
     -- Write latency, delay from write command to data transmission MR0[2:0]
+    -- Can be set to the range 5 to 7
     constant WLmrs : natural := 5;
     -- Read latency, delay from read command to transmission MR0[6:3]
+    -- Can be set to the range 9 to 12
     constant RLmrs : natural := 9;
-
     -- Delay from write data to EDC output MR4[6:4]
+    -- Can only be set to 10 when operating at 250 MHz
     constant CRCWL : natural := 10;
     -- Delay from read data to EDC output MR4[6:4]
+    -- Can only be set to 2
     constant CRCRL : natural := 2;
 
     -- These settings are taken from table 47 (AC Timing)

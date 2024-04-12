@@ -6,13 +6,13 @@
 --      gddr6_ctrl_read             Generate SG read commands
 --      gddr6_ctrl_write            Generate SG write commands
 --      gddr6_ctrl_lookahead        Generate bank open request from lookahead
---      gddr6_ctrl_admin            Generate bank administration commands
 --      gddr6_ctrl_refresh          Refresh controller
 --      gddr6_ctrl_command          Command dispatcher and bank management
 --          gddr6_ctrl_banks            State and timing control for all banks
 --              gddr6_ctrl_bank             One bank state and timing
 --          gddr6_ctrl_request_mux      Read/Write command multiplexer
 --          gddr6_ctrl_request          Command timing and bank handshake
+--          gddr6_ctrl_admin            Generate bank administration commands
 --      gddr6_ctrl_data             Read and write data handling
 --          fixed_delay
 
@@ -58,11 +58,8 @@ architecture arch of gddr6_ctrl is
     signal write_ready : std_ulogic;
     signal request_completion : request_completion_t;
 
-    signal admin_command : banks_admin_t;
-    signal admin_ready : std_ulogic;
     signal open_lookahead : bank_open_t;
 
-    signal bank_open : bank_open_t;
     signal banks_status : banks_status_t;
     signal priority_direction : direction_t;
     signal current_direction : direction_t;
@@ -117,22 +114,6 @@ begin
         lookahead_o => open_lookahead
     );
 
-    -- Administration command generation, generates bank state management
-    -- commands (ACT and PRE) and refresh commands as appropriate.
-    admin : entity work.gddr6_ctrl_admin port map (
-        clk_i => clk_i,
-
-        bank_open_i => bank_open,
-        lookahead_i => open_lookahead,
-        refresh_i => refresh_command,
-        refresh_ready_o => refresh_ready,
-
-        status_i => banks_status,
-
-        admin_o => admin_command,
-        admin_ready_i => admin_ready
-    );
-
     -- Autonomous refresh generator.  Generates refresh requests as required.
     refresh : entity work.gddr6_ctrl_refresh generic map (
         SHORT_REFRESH_COUNT => SHORT_REFRESH_COUNT,
@@ -163,8 +144,9 @@ begin
         read_request_ready_o => read_ready,
         request_completion_o => request_completion,
 
-        admin_i => admin_command,
-        admin_ready_o => admin_ready,
+        lookahead_i => open_lookahead,
+        refresh_i => refresh_command,
+        refresh_ready_o => refresh_ready,
 
         bypass_command_i => SG_NOP,
         bypass_valid_i => '0',
@@ -174,7 +156,6 @@ begin
         priority_direction_i => priority_direction,
         current_direction_o => current_direction,
 
-        bank_open_o => bank_open,
         banks_status_o => banks_status,
 
         ca_command_o.ca => phy_ca_o.ca,

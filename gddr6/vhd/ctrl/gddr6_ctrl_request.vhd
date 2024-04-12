@@ -25,7 +25,7 @@ entity gddr6_ctrl_request is
         bank_open_ok_i : in std_ulogic;
         -- Request to open bank.  This is asserted while an open bank request
         -- is being rejected
-        bank_open_request_o : out std_logic := '0';
+        bank_open_request_o : out bank_open_t := IDLE_OPEN_REQUEST;
 
         -- Bank read/write request
         out_request_o : out out_request_t := IDLE_OUT_REQUEST;
@@ -49,6 +49,7 @@ architecture arch of gddr6_ctrl_request is
     signal bank_out_valid : std_ulogic;
     signal enable_bank_in : std_ulogic;
     signal enable_bank_out : std_ulogic;
+    signal bank_open_request : std_ulogic := '0';
 
     -- Bank test generation and control
     signal bank_mux_sel : mux_t := SEL_IN;
@@ -181,7 +182,7 @@ begin
 
             -- Bank request generation: assert this while we're blocked waiting
             -- for a bank open request to complete
-            bank_open_request_o <=
+            bank_open_request <=
                 bank_open_o.valid and not block_bank and not bank_open_ok_i;
 
             -- Output generation
@@ -197,4 +198,10 @@ begin
             );
         end if;
     end process;
+
+    bank_open_request_o <= (
+        bank => bank_open_o.bank,
+        row => bank_open_o.row,
+        valid => bank_open_request
+    );
 end;

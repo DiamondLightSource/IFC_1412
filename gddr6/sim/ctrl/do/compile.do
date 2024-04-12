@@ -43,11 +43,11 @@ view wave
 add wave -group "Read" ctrl/read/*
 add wave -group "Write" ctrl/write/*
 add wave -group "Lookahead" ctrl/lookahead/*
-add wave -group "Admin" ctrl/admin/*
 add wave -group "Refresh" ctrl/refresh/*
 add wave -group "Banks" ctrl/command/banks/*
 add wave -group "Mux" ctrl/command/request_mux/*
 add wave -group "Request" ctrl/command/request/*
+add wave -group "Admin" ctrl/command/admin/*
 add wave -group "Command" ctrl/command/*
 add wave -group "Data" ctrl/data/*
 add wave -group "Ctrl" ctrl/*
@@ -55,6 +55,6 @@ add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1
 
-run 10 us
+run 2 us
 
 # vim: set filetype=tcl:

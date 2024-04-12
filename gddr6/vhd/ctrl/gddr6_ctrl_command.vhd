@@ -23,9 +23,11 @@ entity gddr6_ctrl_command is
         -- issued for dispatch to memory
         request_completion_o : out request_completion_t;
 
-        -- Admin request
-        admin_i : in banks_admin_t;
-        admin_ready_o : out std_ulogic;
+        -- Refresh requests, serviced and acknowledged when free
+        refresh_i : in refresh_request_t;
+        refresh_ready_o : out std_ulogic := '0';
+        -- Filtered lookahead request
+        lookahead_i : in bank_open_t;
 
         -- Bypass channel for other commands
         bypass_command_i : in ca_command_t;
@@ -39,8 +41,6 @@ entity gddr6_ctrl_command is
         -- Currently selected direction
         current_direction_o : out direction_t;
 
-        -- Request to open bank from read or write request
-        bank_open_o : out bank_open_t;
         -- Bank status to guide open and refresh
         banks_status_o : out banks_status_t;
 
@@ -58,25 +58,14 @@ architecture arch of gddr6_ctrl_command is
 
     signal mux_request : core_request_t;
     signal mux_ready : std_ulogic;
-    signal bank_open_request : std_ulogic;
+    signal bank_open_request : bank_open_t;
     signal request_command : ca_command_t;
     signal request_command_valid : std_ulogic;
 
-    signal admin_ready : std_ulogic;
+    signal admin_request : banks_admin_t;
+    signal admin_accept : std_ulogic;
     signal admin_command : ca_command_t;
     signal admin_valid : std_ulogic := '0';
-
-
-    -- Block back to back admin commands
-    function guard(admin : banks_admin_t; blocked : std_ulogic)
-        return banks_admin_t
-    is
-        variable result : banks_admin_t;
-    begin
-        result := admin;
-        result.valid := admin.valid and not blocked;
-        return result;
-    end;
 
 begin
     banks : entity work.gddr6_ctrl_banks port map (
@@ -89,8 +78,8 @@ begin
         out_request_ok_o => out_request_ok,
         out_request_extra_i => out_request_extra,
 
-        admin_i => guard(admin_i, admin_valid),
-        admin_accept_o => admin_ready,
+        admin_i => admin_request,
+        admin_accept_o => admin_accept,
 
         status_o => banks_status_o
     );
@@ -133,37 +122,33 @@ begin
         command_valid_o => request_command_valid
     );
 
-    bank_open_o <= (
-        bank => bank_open.bank,
-        row => bank_open.row,
-        valid => bank_open_request
-    );
+    -- Administration command generation, generates bank state management
+    -- commands (ACT and PRE) and refresh commands as appropriate.
+    admin : entity work.gddr6_ctrl_admin port map (
+        clk_i => clk_i,
 
-    assert
-        not admin_valid or not request_command_valid
-        report "Simultaneous admin and request commands"
-        severity failure;
+        bank_open_i => bank_open_request,
+        lookahead_i => lookahead_i,
+        refresh_i => refresh_i,
+        refresh_ready_o => refresh_ready_o,
+
+        status_i => banks_status_o,
+
+        admin_o => admin_request,
+        admin_ok_i => admin_accept,
+
+        command_o => admin_command,
+        command_valid_o => admin_valid
+    );
 
     process (clk_i) begin
         if rising_edge(clk_i) then
-            -- Decode the admin command
-            case admin_i.command is
-                when CMD_ACT =>
-                    admin_command <= SG_ACT(admin_i.bank, admin_i.row);
-                when CMD_PRE =>
-                    if admin_i.all_banks then
-                        admin_command <= SG_PREab;
-                    else
-                        admin_command <= SG_PREpb(admin_i.bank);
-                    end if;
-                when CMD_REF =>
-                    if admin_i.all_banks then
-                        admin_command <= SG_REFab;
-                    else
-                        admin_command <= SG_REFp2b(admin_i.bank(2 downto 0));
-                    end if;
-            end case;
-            admin_valid <= admin_ready;
+            -- Bank administration handshaking will ensure that request and
+            -- admin commands are never enabled at the same time
+            assert
+                not (admin_valid and request_command_valid)
+                report "Simultaneous admin and request commands"
+                severity failure;
 
             -- Send the requested command
             if request_command_valid then
@@ -177,5 +162,4 @@ begin
             end if;
         end if;
     end process;
-    admin_ready_o <= admin_valid;
 end;
