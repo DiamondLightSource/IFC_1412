@@ -48,12 +48,13 @@ architecture arch of gddr6_ctrl_banks is
     signal open_bank : natural range 0 to 15;
     signal request_bank : natural range 0 to 15;
     signal admin_bank : natural range 0 to 15;
-    signal incoming_precharge : std_ulogic_vector(0 to 15);
     signal request_read : std_ulogic;
     signal request_write : std_ulogic;
     signal request_activate : std_ulogic;
-    signal request_precharge : std_ulogic_vector(0 to 15);
-    signal request_refresh : std_ulogic_vector(0 to 15);
+    signal request_precharge : std_ulogic;
+    signal request_refresh : std_ulogic;
+    signal request_precharge_banks : std_ulogic_vector(0 to 15);
+    signal request_refresh_banks : std_ulogic_vector(0 to 15);
     signal accept_read : std_ulogic;
     signal accept_write : std_ulogic;
     signal accept_activate : std_ulogic;
@@ -71,7 +72,16 @@ architecture arch of gddr6_ctrl_banks is
             not other_active and not tCCD;
     end;
 
+    -- Checks if the incoming request is for the specified command
     function admin_request(
+        command : admin_command_t;
+        admin : banks_admin_t) return std_ulogic is
+    begin
+        return admin.valid and to_std_ulogic(admin.command = command);
+    end;
+
+    -- Returns array of banks associated with incoming request
+    function admin_request_banks(
         command : admin_command_t;
         admin : banks_admin_t) return std_ulogic_vector
     is
@@ -79,7 +89,7 @@ architecture arch of gddr6_ctrl_banks is
         variable result : std_ulogic_vector(0 to 15) := (others => '0');
     begin
         admin_bank := to_integer(admin.bank);
-        if admin.valid = '1' and admin.command = command then
+        if admin_request(command, admin) then
             if admin.all_banks then
                 result := (others => '1');
             elsif command = CMD_REF then
@@ -114,44 +124,16 @@ architecture arch of gddr6_ctrl_banks is
     -- Flags used to avoid precharging a bank while it has been accepted for
     -- opening and before it has been read or written.
     signal precharge_guard : std_ulogic_vector(0 to 15) := (others => '0');
+    -- Copy of precharge request used as part of open guard
+    signal precharge_active : std_ulogic_vector(0 to 15) := (others => '0');
 
     -- Block admin commands during read or write commands.  Admin commands are
     -- requested one tick later than the corresponding read/write commands, so
     -- we record the fact that read/write is busy here to block admin commands.
-    signal block_admin : std_ulogic;
+    signal block_admin : std_ulogic := '0';
+    signal allow_admin : std_ulogic;
 
 begin
-    -- Integer versions of the three banks
-    open_bank <= to_integer(bank_open_i.bank);
-    request_bank <= to_integer(out_request_i.bank);
-    admin_bank <= to_integer(admin_i.bank);
-
-    bank_open_ok_o <=
-        bank_open_i.valid and active(open_bank) and
-        to_std_ulogic(row(open_bank) = bank_open_i.row) and
-        -- Also guard against accepted or requested precharge on this bank!
-        not (accept_precharge and to_std_ulogic(open_bank = admin_bank)) and
-        not incoming_precharge(open_bank);
-
-    -- Decode incoming read/write request
-    request_read <=
-        read_write_request(DIR_READ, out_request_i, write_active, tCCD_delay);
-    request_write <=
-        read_write_request(DIR_WRITE, out_request_i, read_active, tCCD_delay);
-
-    -- Activate is the simplest admin request as this only affects a single bank
-    -- and doesn't need any special interlocking
-    request_activate <=
-        admin_i.valid and to_std_ulogic(admin_i.command = CMD_ACT) and
-        not tRRD_delay and not block_admin and not refresh_busy;
-    -- Precharge is either for a single bank or all banks
-    incoming_precharge <= admin_request(CMD_PRE, admin_i);
-    request_precharge <= incoming_precharge and not block_admin;
-    -- Refresh is either for a pair of banks or all banks
-    request_refresh <=
-        admin_request(CMD_REF, admin_i) and
-        not block_admin and not refresh_busy and not tRRD_delay;
-
     -- Instantiate the 16 banks
     gen_banks : for bank in 0 to 15 generate
         signal is_request_bank : std_ulogic;
@@ -198,14 +180,50 @@ begin
                 request_activate_bank <=
                     accept_activate and to_std_ulogic(bank = admin_bank);
                 request_precharge_bank <=
-                    accept_precharge and request_precharge(bank);
+                    accept_precharge and request_precharge_banks(bank);
                 request_refresh_bank <=
-                    accept_refresh and request_refresh(bank);
+                    accept_refresh and request_refresh_banks(bank);
                 auto_precharge_bank <= out_request_i.auto_precharge;
                 row_bank <= admin_i.row;
             end if;
         end process;
     end generate;
+
+
+    -- Integer versions of the three banks
+    open_bank <= to_integer(bank_open_i.bank);
+    request_bank <= to_integer(out_request_i.bank);
+    admin_bank <= to_integer(admin_i.bank);
+
+    -- Bank open request: need to ensure that the requested bank is open on
+    -- the correct row.  We also need to interact correctly with precharge: to
+    -- ensure that refresh can take priority precharge needs to block opening
+    -- the bank here, and we also need to ensure that once the bank has been
+    -- accepted that precharge is blocked on this bank until the corresponding
+    -- read/write request has completed.
+    bank_open_ok_o <=
+        bank_open_i.valid and active(open_bank) and
+        to_std_ulogic(row(open_bank) = bank_open_i.row) and
+        -- Also guard against accepted or requested precharge on this bank!
+        not request_precharge_banks(open_bank) and
+        not precharge_active(open_bank);
+
+    -- Decode incoming read/write request
+    request_read <=
+        read_write_request(DIR_READ, out_request_i, write_active, tCCD_delay);
+    request_write <=
+        read_write_request(DIR_WRITE, out_request_i, read_active, tCCD_delay);
+
+    -- Activate is the simplest admin request as this only affects a single bank
+    -- and doesn't need any special interlocking
+    allow_admin <= not block_admin and not refresh_busy and not tRRD_delay;
+    request_activate <= admin_request(CMD_ACT, admin_i) and allow_admin;
+    -- Precharge is either for a single bank or all banks
+    request_precharge <= admin_request(CMD_PRE, admin_i) and allow_admin;
+    request_precharge_banks <= admin_request_banks(CMD_PRE, admin_i);
+    -- Refresh is either for a pair of banks or all banks
+    request_refresh <= admin_request(CMD_REF, admin_i) and allow_admin;
+    request_refresh_banks <= admin_request_banks(CMD_REF, admin_i);
 
     accept_read <= request_read and allow_read(request_bank);
     accept_write <= request_write and allow_write(request_bank);
@@ -213,11 +231,12 @@ begin
 
     accept_activate <= request_activate and allow_activate(admin_bank);
     accept_precharge <=
-        vector_and(not request_precharge or allow_precharge) and
-        vector_or(request_precharge) and not precharge_guard(admin_bank);
+        request_precharge and
+        vector_and(not request_precharge_banks or
+            (allow_precharge and not precharge_guard));
     accept_refresh <=
-        vector_and(not request_refresh or allow_refresh) and
-        vector_or(request_refresh);
+        request_refresh and
+        vector_and(not request_refresh_banks or allow_refresh);
     admin_accept_o <= accept_activate or accept_precharge or accept_refresh;
 
     process (clk_i) begin
@@ -276,6 +295,8 @@ begin
                     precharge_guard(bank) <= '0';
                 end if;
             end loop;
+            -- This is a copy of request_precharge_bank
+            precharge_active <= accept_precharge and request_precharge_banks;
 
             -- Block admin commands where necessary
             block_admin <= out_request_ok_o or out_request_extra_i;

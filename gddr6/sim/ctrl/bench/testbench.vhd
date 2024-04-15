@@ -24,7 +24,7 @@ architecture arch of testbench is
 
     signal tick_count : natural;
 
-    constant SHORT_REFRESH_COUNT : natural := 100;
+    constant SHORT_REFRESH_COUNT : natural := 200;
     constant LONG_REFRESH_COUNT : natural := 10;
 
     signal ctrl_setup : ctrl_setup_t;
@@ -90,6 +90,8 @@ begin
 
         for n in 0 to 512 loop
             do_write(n);
+            do_write(n + 1024);
+--             do_write(n + 2048);
         end loop;
 
         wait;
@@ -99,10 +101,25 @@ begin
     process
         procedure do_read(address : natural) is
         begin
+            axi_request.ra_address <= to_unsigned(address, 25);
+            axi_request.ra_valid <= '1';
+            loop
+                clk_wait;
+                exit when axi_response.ra_ready;
+            end loop;
+            axi_request.ra_address <= (others => 'U');
+            axi_request.ra_valid <= '0';
         end;
     begin
         axi_request.ra_valid <= '0';
         axi_request.ral_valid <= '0';
+
+        clk_wait(5);
+
+        for n in 0 to 512 loop
+            do_read(n);
+            do_read(n + 1024);
+        end loop;
 
         wait;
     end process;

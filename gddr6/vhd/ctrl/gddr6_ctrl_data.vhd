@@ -132,7 +132,7 @@ architecture arch of gddr6_ctrl_data is
 
 begin
     -- Output enable generation
-    delay_write_active_i : entity work.fixed_delay generic map (
+    delay_write_active_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_ACTIVE
     ) port map (
         clk_i => clk_i,
@@ -140,7 +140,7 @@ begin
         data_o(0) => write_active_in
     );
 
-    delay_write_active_extra_i : entity work.fixed_delay generic map (
+    delay_write_active_extra_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_ACTIVE_EXTRA
     ) port map (
         clk_i => clk_i,
@@ -155,7 +155,7 @@ begin
     read_complete_in <=
         to_std_ulogic(request_completion_i.direction = DIR_READ) and
         request_completion_i.valid;
-    delay_read_start_i : entity work.fixed_delay generic map (
+    delay_read_start_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_READ_START
     ) port map (
         clk_i => clk_i,
@@ -164,7 +164,7 @@ begin
     );
 
     -- Delay from data arriving to EDC
-    delay_read_check_i : entity work.fixed_delay generic map (
+    delay_read_check_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_READ_CHECK
     ) port map (
         clk_i => clk_i,
@@ -173,7 +173,7 @@ begin
     );
 
     -- Delay EDC calculated from data read to align with EDC from memory
-    delay_read_edc_i : entity work.fixed_delay generic map (
+    delay_read_edc_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_READ_EDC,
         WIDTH => 64
     ) port map (
@@ -187,7 +187,7 @@ begin
     write_complete_in <=
         to_std_ulogic(request_completion_i.direction = DIR_WRITE) and
         request_completion_i.valid;
-    delay_write_start_i : entity work.fixed_delay generic map (
+    delay_write_start_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_START,
         WIDTH => 2
     ) port map (
@@ -198,7 +198,7 @@ begin
         data_o(1) => write_advance
     );
 
-    delay_write_check_i : entity work.fixed_delay generic map (
+    delay_write_check_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_CHECK,
         WIDTH => 5
     ) port map (
@@ -209,7 +209,7 @@ begin
         data_o(4 downto 1) => write_enables_in
     );
 
-    delay_write_edc_i : entity work.fixed_delay generic map (
+    delay_write_edc_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_EDC,
         WIDTH => 64
     ) port map (
