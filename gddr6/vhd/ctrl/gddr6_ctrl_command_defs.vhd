@@ -68,7 +68,9 @@ package body gddr6_ctrl_command_defs is
         mode : std_ulogic_vector(3 downto 0);
         op : std_ulogic_vector(11 downto 0)) return ca_command_t is
     begin
-        return (("10" & mode & op(3 downto 0), "10" & op(11 downto 4)), "0000");
+        return ((
+            0 => "10" & mode & op(3 downto 0),
+            1 => "10" & op(11 downto 4)), "0000");
     end;
 
     function SG_REFp2b(bank_pair : unsigned(2 downto 0)) return ca_command_t
@@ -77,7 +79,8 @@ package body gddr6_ctrl_command_defs is
     begin
         bank_pair_bits := std_ulogic_vector(bank_pair);
         return ((
-            b"10_1" & bank_pair_bits & "1111", b"01_111_0_1111"), "0000");
+            0 => b"10_1" & bank_pair_bits & "1111",
+            1 => b"01_111_0_1111"), "0000");
     end;
 
     function SG_ACT(
@@ -90,8 +93,8 @@ package body gddr6_ctrl_command_defs is
         bank_bits := std_ulogic_vector(bank);
         row_bits := std_ulogic_vector(row);
         return ((
-            "01" & bank_bits & row_bits(3 downto 0),
-            row_bits(13 downto 4)), "0000");
+            0 => "01" & bank_bits & row_bits(3 downto 0),
+            1 => row_bits(13 downto 4)), "0000");
     end;
 
     function SG_PREpb(bank : unsigned(3 downto 0)) return ca_command_t
@@ -99,7 +102,9 @@ package body gddr6_ctrl_command_defs is
         variable bank_bits : std_ulogic_vector(3 downto 0);
     begin
         bank_bits := std_ulogic_vector(bank);
-        return (("10" & bank_bits & "1111", b"00_111_0_1111"), "0000");
+        return ((
+            0 => "10" & bank_bits & "1111",
+            1 => b"00_111_0_1111"), "0000");
     end;
 
     function SG_RD(
@@ -112,8 +117,8 @@ package body gddr6_ctrl_command_defs is
         bank_bits := std_ulogic_vector(bank);
         column_bits := std_ulogic_vector(column);
         return ((
-            "11" & bank_bits & column_bits(3 downto 0),
-            b"0100_1" & auto & "1" & column_bits(6 downto 4)), "0000");
+            0 => "11" & bank_bits & column_bits(3 downto 0),
+            1 => b"0100_1" & auto & "1" & column_bits(6 downto 4)), "0000");
     end;
 
     function SG_WOM(
@@ -127,8 +132,8 @@ package body gddr6_ctrl_command_defs is
         bank_bits := std_ulogic_vector(bank);
         column_bits := std_ulogic_vector(column);
         return ((
-            "11" & bank_bits & column_bits(3 downto 0),
-            b"0000_1" & auto & "0" & column_bits(6 downto 4)), ce);
+            0 => "11" & bank_bits & column_bits(3 downto 0),
+            1 => b"0000_1" & auto & "0" & column_bits(6 downto 4)), ce);
     end;
 
     function SG_WDM(
@@ -142,8 +147,8 @@ package body gddr6_ctrl_command_defs is
         bank_bits := std_ulogic_vector(bank);
         column_bits := std_ulogic_vector(column);
         return ((
-            "11" & bank_bits & column_bits(3 downto 0),
-            b"0010_1" & auto & "0" & column_bits(6 downto 4)), ce);
+            0 => "11" & bank_bits & column_bits(3 downto 0),
+            1 => b"0010_1" & auto & "0" & column_bits(6 downto 4)), ce);
     end;
 
     function SG_WSM(
@@ -157,15 +162,15 @@ package body gddr6_ctrl_command_defs is
         bank_bits := std_ulogic_vector(bank);
         column_bits := std_ulogic_vector(column);
         return ((
-            "11" & bank_bits & column_bits(3 downto 0),
-            b"0001_1" & auto & "0" & column_bits(6 downto 4)), ce);
+            0 => "11" & bank_bits & column_bits(3 downto 0),
+            1 => b"0001_1" & auto & "0" & column_bits(6 downto 4)), ce);
     end;
 
     function SG_write_mask(byte_mask : std_ulogic_vector(15 downto 0))
         return ca_command_t is
     begin
         return ((
-            "11" & byte_mask(7 downto 0),
-            "11" & byte_mask(15 downto 8)), "0000");
+            0 => "11" & byte_mask(7 downto 0),
+            1 => "11" & byte_mask(15 downto 8)), "0000");
     end;
 end;

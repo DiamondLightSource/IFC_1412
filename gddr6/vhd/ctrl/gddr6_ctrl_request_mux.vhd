@@ -99,11 +99,11 @@ begin
             elsif poll_counter > 0 then
                 poll_counter <= poll_counter - 1;
             else
-                poll_counter <= (others => '1');
-                with preferred_direction select
-                    preferred_direction <=
-                        DIR_WRITE when DIR_READ,
-                        DIR_READ  when DIR_WRITE;
+                poll_counter <= POLL_INTERVAL;
+                case preferred_direction is
+                    when DIR_READ  => preferred_direction <= DIR_WRITE;
+                    when DIR_WRITE => preferred_direction <= DIR_READ;
+                end case;
             end if;
 
             -- Remember the lock direction in case the producer has a command
