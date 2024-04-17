@@ -35,11 +35,23 @@ architecture arch of testbench is
     signal phy_dq_out : phy_dq_out_t;
     signal phy_dq_in : phy_dq_in_t;
 
+    signal write_count : natural := 0;
+    signal read_count : natural := 0;
+
     procedure write(message : string := "") is
         variable linebuffer : line;
     begin
         write(linebuffer, message);
         writeline(output, linebuffer);
+    end;
+
+    impure function write_efficiency(
+        start_tick : natural; count : natural) return string
+    is
+        variable efficiency : real;
+    begin
+        efficiency := 2.0 * real(count) / real(tick_count - start_tick);
+        return to_string(100.0 * efficiency, 1) & "%";
     end;
 
 begin
@@ -61,8 +73,9 @@ begin
 
     ctrl_setup <= (
         enable_refresh => '1',
-        priority_mode => '1',
-        priority_direction => '1'
+--         priority_mode => '1',       -- Select preferred direction
+        priority_mode => '0',       -- Switch directions regularly
+        priority_direction => '1'   -- Writes take priority
     );
 
 
@@ -80,7 +93,10 @@ begin
             axi_request.wa_address <= (others => 'U');
             axi_request.wa_byte_mask <= (others => 'U');
             axi_request.wa_valid <= '0';
+            write_count <= write_count + 1;
         end;
+
+        variable start_tick : natural;
 
     begin
         axi_request.wa_valid <= '0';
@@ -88,11 +104,16 @@ begin
 
         clk_wait(5);
 
+        start_tick := tick_count;
         for n in 0 to 512 loop
             do_write(n);
-            do_write(n + 1024);
+            do_write(n + 512);
+--             do_write(n + 1024);
 --             do_write(n + 2048);
         end loop;
+
+        write("All writes complete: " &
+            write_efficiency(start_tick, write_count));
 
         wait;
     end process;
@@ -109,17 +130,25 @@ begin
             end loop;
             axi_request.ra_address <= (others => 'U');
             axi_request.ra_valid <= '0';
+            read_count <= read_count + 1;
         end;
+
+        variable start_tick : natural;
+
     begin
         axi_request.ra_valid <= '0';
         axi_request.ral_valid <= '0';
 
         clk_wait(5);
 
+        start_tick := tick_count;
         for n in 0 to 512 loop
             do_read(n);
             do_read(n + 1024);
         end loop;
+
+        write("All reads complete: " &
+            write_efficiency(start_tick, read_count));
 
         wait;
     end process;

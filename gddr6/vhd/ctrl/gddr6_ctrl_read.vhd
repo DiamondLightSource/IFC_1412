@@ -55,6 +55,7 @@ begin
                 );
                 axi_ready_o <= '0';
             elsif read_ready_i and read_request_o.valid then
+                read_request_o.valid <= '0';
                 axi_ready_o <= '1';
             end if;
         end if;

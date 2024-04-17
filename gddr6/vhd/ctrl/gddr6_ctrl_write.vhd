@@ -150,16 +150,14 @@ architecture arch of gddr6_ctrl_write is
         signal input_ready : out std_ulogic)
     is
         -- Returns bit array matching given decode condition
-        function match(
-            decodes : decode_array_t;
-            decode : decode_t) return std_ulogic_vector
+        impure function match(decode : decode_t) return std_ulogic_vector
         is
             variable result : std_ulogic_vector(0 to 3);
         begin
             for ch in 0 to 3 loop
                 result(ch) := to_std_ulogic(decodes(ch) = decode);
             end loop;
-            return result;
+            return result and pending;
         end;
 
         -- Isolates a single bit from a (non zero) mask
@@ -189,10 +187,10 @@ architecture arch of gddr6_ctrl_write is
         variable pending_out : std_ulogic_vector(0 to 3);
 
     begin
-        nop_mask := match(decodes, DECODE_NOP) and pending;
-        wom_mask := match(decodes, DECODE_WOM) and pending;
-        wdm_mask := match(decodes, DECODE_WDM) and pending;
-        wsm_mask := match(decodes, DECODE_WSM) and pending;
+        nop_mask := match(DECODE_NOP);
+        wom_mask := match(DECODE_WOM);
+        wdm_mask := match(DECODE_WDM);
+        wsm_mask := match(DECODE_WSM);
 
         -- Work through the four possible cases
         if vector_and(nop_mask) then
@@ -292,7 +290,7 @@ architecture arch of gddr6_ctrl_write is
     -- plus mask for WDM, and command plus double mask for WSM.
     procedure advance_write_state(
         signal state : inout write_state_t;
-        signal write_request : out core_request_t;
+        signal write_request : inout core_request_t;
         variable next_axi_command : out std_ulogic)
     is
         procedure goto_next_command is

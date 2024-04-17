@@ -12,7 +12,7 @@ use work.gddr6_ctrl_core_defs.all;
 entity gddr6_ctrl_request_mux is
     generic (
         -- Interval over which the preferred direction alternates in polled mode
-        POLL_BITS : natural := 7
+        POLL_INTERVAL : natural := 255
     );
     port (
         clk_i : in std_ulogic;
@@ -48,7 +48,7 @@ architecture arch of gddr6_ctrl_request_mux is
     -- that is automatically selected, otherwise we maintain a "preferred
     -- direction" which is either fixed or alternates depending on whether
     -- priority mode is enabled.
-    signal poll_counter : unsigned(POLL_BITS-1 downto 0) := (others => '0');
+    signal poll_counter : natural range 0 to POLL_INTERVAL := POLL_INTERVAL;
     signal preferred_direction : direction_t := DIR_READ;
 
     -- The request direction must not change when extra commands (write mask
@@ -56,6 +56,9 @@ architecture arch of gddr6_ctrl_request_mux is
     signal current_direction : direction_t := DIR_READ;
     signal stalled : std_ulogic := '0';
     signal lock_direction : std_ulogic := '0';
+    -- Don't change direction too quickly as there is a cost to this
+    constant SWITCH_DELAY : natural := 7;
+    signal switch_count : natural range 0 to SWITCH_DELAY := 0;
 
     -- Double buffering, one for output, and an extra skid buffer to handle
     -- propagation of unready state
@@ -65,6 +68,21 @@ architecture arch of gddr6_ctrl_request_mux is
 
     -- Input as selected by the multiplexer
     signal selected_request : core_request_t;
+
+    -- Choose next direction according to configured settings and incoming
+    -- requests: if both are available then 
+    impure function next_direction return direction_t is
+    begin
+        if read_request_i.valid and write_request_i.valid then
+            return preferred_direction;
+        elsif read_request_i.valid then
+            return DIR_READ;
+        elsif write_request_i.valid then
+            return DIR_WRITE;
+        else
+            return current_direction;
+        end if;
+    end;
 
 begin
     -- Accept unless the skid buffer is busy or if we're explicitly stalled.
@@ -120,15 +138,18 @@ begin
             if not lock_direction and not lock_in then
                 stalled <= stall_i;
 
-                -- Use the current preferred direction to select the direction
-                -- if there is a choice of inputs, otherwise take the only
-                -- valid input if present.
-                if read_request_i.valid and write_request_i.valid then
-                    current_direction <= preferred_direction;
-                elsif read_request_i.valid then
-                    current_direction <= DIR_READ;
-                elsif write_request_i.valid then
-                    current_direction <= DIR_WRITE;
+                -- Block changes away from the preferred direction until a
+                -- timer has expired.  This ensures that we keep a single
+                -- direction consistently where possible.
+                -- Maintain the direction switch counter
+                if next_direction = preferred_direction then
+                    switch_count <= SWITCH_DELAY;
+                elsif switch_count > 0 then
+                    switch_count <= switch_count - 1;
+                end if;
+                -- Switch if appropriate
+                if switch_count = 0 or next_direction = preferred_direction then
+                    current_direction <= next_direction;
                 end if;
             end if;
 

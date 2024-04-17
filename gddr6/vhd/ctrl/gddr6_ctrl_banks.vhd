@@ -204,9 +204,14 @@ begin
     bank_open_ok_o <=
         bank_open_i.valid and active(open_bank) and
         to_std_ulogic(row(open_bank) = bank_open_i.row) and
-        -- Also guard against accepted or requested precharge on this bank!
-        not request_precharge_banks(open_bank) and
-        not precharge_active(open_bank);
+        -- Block if there is any admin activity on this bank, specifically
+        -- precharge.  Because of the clock skew between read/write and admin
+        -- we also need to check against a registered copy of this request.
+        not (admin_i.valid and to_std_ulogic(open_bank = admin_bank)) and
+        not precharge_active(open_bank) and
+        -- Don't accept if a read/write request is pending, this blocks
+        -- overlapping open and out.
+        (not out_request_i.valid or out_request_ok_o);
 
     -- Decode incoming read/write request
     request_read <=
@@ -295,8 +300,9 @@ begin
                     precharge_guard(bank) <= '0';
                 end if;
             end loop;
-            -- This is a copy of request_precharge_bank
-            precharge_active <= accept_precharge and request_precharge_banks;
+            -- This is a copy of request_precharge_banks used to allow open to
+            -- be guarded
+            precharge_active <= request_precharge_banks;
 
             -- Block admin commands where necessary
             block_admin <= out_request_ok_o or out_request_extra_i;

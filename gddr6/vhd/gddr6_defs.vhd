@@ -164,7 +164,14 @@ package gddr6_defs is
 
     type ctrl_setup_t is record
         enable_refresh : std_ulogic;
+        -- Determines the priority selection mode for the read/write multiplexer
+        -- If set to '1' then the preferred direction as selected by
+        -- priority_direction is used whenever possible, otherwise the preferred
+        -- direction alternates over time to implement round-robin scheduling
         priority_mode : std_ulogic;
+        -- When priority_mode = '1' selects the preferred direction:
+        --  '0' => reads take priority over writes
+        --  '1' => write take priority over reads
         priority_direction : std_ulogic;
     end record;
 
