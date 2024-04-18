@@ -5,7 +5,7 @@ use std.textio.all;
 
 use work.support.all;
 
-use work.gddr6_ctrl_core_defs.all;
+use work.gddr6_ctrl_defs.all;
 -- use work.gddr6_defs.all;
 
 entity testbench is

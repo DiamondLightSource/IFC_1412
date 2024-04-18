@@ -5,7 +5,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
-use work.gddr6_ctrl_core_defs.all;
+use work.gddr6_ctrl_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
 
 entity gddr6_ctrl_data is

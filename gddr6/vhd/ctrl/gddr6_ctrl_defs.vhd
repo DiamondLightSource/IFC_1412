@@ -1,4 +1,4 @@
--- Definitions for core
+-- Common CTRL definitions
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -8,7 +8,7 @@ use work.support.all;
 
 use work.gddr6_ctrl_command_defs.all;
 
-package gddr6_ctrl_core_defs is
+package gddr6_ctrl_defs is
     -- Address decoding for the 25 bit burst address from the AXI interface,
     -- organised as | row | bank | column |.  This arrangement supports
     -- consecutive accesses to columns from a single open bank, and consecutive
@@ -115,7 +115,7 @@ package gddr6_ctrl_core_defs is
     constant IDLE_REFRESH_REQUEST : refresh_request_t;
 end;
 
-package body gddr6_ctrl_core_defs is
+package body gddr6_ctrl_defs is
     function IDLE_CORE_REQUEST(
         direction : direction_t := DIR_READ) return core_request_t is
     begin

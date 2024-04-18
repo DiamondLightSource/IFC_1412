@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.gddr6_ctrl_timing_defs.all;
-use work.gddr6_ctrl_core_defs.all;
+use work.gddr6_ctrl_defs.all;
 
 entity gddr6_ctrl_banks is
     port (
