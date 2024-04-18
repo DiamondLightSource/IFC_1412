@@ -217,7 +217,7 @@ architecture arch of gddr6_ctrl_write is
         enables <= enables_out;
         mask_index <= find_bit(enables_out);
         command_advance <= to_std_ulogic(pending_out = "0000");
-        input_ready <= not vector_or(pending_out) and write_ready_i;
+        input_ready <= not vector_or(pending_out);
     end;
 
     -- Computes the approprate command request for the current command
