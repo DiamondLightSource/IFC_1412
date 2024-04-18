@@ -70,8 +70,8 @@ begin
             -- in range.  Also avoid generating an open request on a bank marked
             -- as young.
             lookahead_o <= (
-                bank => ral_address_i(BANK_RANGE),
-                row => ral_address_i(ROW_RANGE),
+                bank => bank,
+                row => row,
                 valid => valid and count_ok and
                     not status_i.young(to_integer(bank))
             );

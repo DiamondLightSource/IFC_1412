@@ -187,7 +187,8 @@ begin
 
             -- Output generation
             command_o <= request_out.command;
-            command_valid_o <= request_ok or request_out.extra;
+            command_valid_o <=
+                request_out.valid and (request_ok or request_out.extra);
 
             -- Command completion
             completion_o <= (
