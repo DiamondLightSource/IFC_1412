@@ -14,7 +14,9 @@ entity decode_commands is
         REPORT_NOP : boolean := false;
         -- Set this to only look at commands with valid_i set and ignore
         -- otherwise broken write masked commands
-        ONLY_VALID : boolean := false
+        ONLY_VALID : boolean := false;
+        -- Set to fail on unexected command
+        ASSERT_UNEXPECTED : boolean := false
     );
     port (
         clk_i : in std_ulogic;
@@ -44,6 +46,10 @@ architecture arch of decode_commands is
         case? decode_bits is
             when "1111--" | "1110--" | "1011--" =>
                 if ca(0)(7 downto 0) & ca(1)(7 downto 0) /= X"FFFF" then
+                    assert not ASSERT_UNEXPECTED
+                        report "NOP " & to_hstring(
+                            ca(1)(7 downto 0) & ca(0)(7 downto 0))
+                        severity failure;
                     return "NOP " & to_hstring(
                         ca(1)(7 downto 0) & ca(0)(7 downto 0));
                 else
@@ -83,6 +89,10 @@ architecture arch of decode_commands is
                 return "REF" & choose(ca(1)(4) = '1',
                     "ab", "p2b " & to_hstring(ca(0)(6 downto 4)));
             when others =>
+                assert not ASSERT_UNEXPECTED
+                    report "Other: " &
+                        to_hstring(ca(0)) & " " & to_hstring(ca(1))
+                    severity failure;
                 return "Other: " &
                     to_hstring(ca(0)) & " " & to_hstring(ca(1));
         end case?;
