@@ -9,7 +9,7 @@ use work.support.all;
 use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_core_defs.all;
 
-entity gddr6_ctrl_request_mux is
+entity gddr6_ctrl_mux is
     generic (
         -- Interval over which the preferred direction alternates in polled mode
         POLL_INTERVAL : natural := 255
@@ -43,7 +43,7 @@ entity gddr6_ctrl_request_mux is
     );
 end;
 
-architecture arch of gddr6_ctrl_request_mux is
+architecture arch of gddr6_ctrl_mux is
     -- Direction selection.  Fairly simple minded: when there is only one choice
     -- that is automatically selected, otherwise we maintain a "preferred
     -- direction" which is either fixed or alternates depending on whether

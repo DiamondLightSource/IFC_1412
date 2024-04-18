@@ -84,7 +84,7 @@ begin
         status_o => banks_status_o
     );
 
-    request_mux : entity work.gddr6_ctrl_request_mux port map (
+    request_mux : entity work.gddr6_ctrl_mux port map (
         clk_i => clk_i,
 
         priority_mode_i => priority_mode_i,

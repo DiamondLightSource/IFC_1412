@@ -15,7 +15,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_core_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_bank.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_banks.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_request_mux.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_mux.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_request.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command.vhd
 

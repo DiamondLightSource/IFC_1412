@@ -67,7 +67,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    request_mux : entity work.gddr6_ctrl_request_mux generic map (
+    request_mux : entity work.gddr6_ctrl_mux generic map (
         POLL_BITS => POLL_BITS
     ) port map (
         clk_i => clk,

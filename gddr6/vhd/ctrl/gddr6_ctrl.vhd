@@ -10,7 +10,7 @@
 --      gddr6_ctrl_command          Command dispatcher and bank management
 --          gddr6_ctrl_banks            State and timing control for all banks
 --              gddr6_ctrl_bank             One bank state and timing
---          gddr6_ctrl_request_mux      Read/Write command multiplexer
+--          gddr6_ctrl_mux              Read/Write command multiplexer
 --          gddr6_ctrl_request          Command timing and bank handshake
 --          gddr6_ctrl_admin            Generate bank administration commands
 --      gddr6_ctrl_data             Read and write data handling
