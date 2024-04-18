@@ -22,7 +22,7 @@ architecture arch of testbench is
         end loop;
     end;
 
-    constant POLL_BITS : natural := 4;
+    constant POLL_INTERVAL : natural := 16;
 
     signal priority_mode : std_ulogic := '0';
     signal priority_direction : direction_t := DIR_READ;
@@ -55,8 +55,10 @@ architecture arch of testbench is
             command => (
                 ca => (to_std_ulogic_vector_u(value, 10), (others => '0')),
                 ca3 => "0000"),
-            precharge => '0',
-            extra => extra, next_extra => next_extra, valid => '1');
+            auto_precharge => '0',
+            extra => extra, next_extra => next_extra,
+            write_advance => '1',
+            valid => '1');
         loop
             clk_wait;
             exit when ready;
@@ -68,7 +70,7 @@ begin
     clk <= not clk after 2 ns;
 
     request_mux : entity work.gddr6_ctrl_mux generic map (
-        POLL_BITS => POLL_BITS
+        POLL_INTERVAL => POLL_INTERVAL
     ) port map (
         clk_i => clk,
 

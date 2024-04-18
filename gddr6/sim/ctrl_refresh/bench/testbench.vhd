@@ -26,7 +26,6 @@ architecture arch of testbench is
 
     signal status : banks_status_t;
     signal enable_refresh : std_ulogic;
-    signal stall_requests : std_ulogic;
     signal refresh_request : refresh_request_t;
     signal refresh_ready : std_ulogic;
 
@@ -51,7 +50,6 @@ begin
         clk_i => clk,
         status_i => status,
         enable_refresh_i => enable_refresh,
-        stall_requests_o => stall_requests,
         refresh_request_o => refresh_request,
         refresh_ready_i => refresh_ready
     );

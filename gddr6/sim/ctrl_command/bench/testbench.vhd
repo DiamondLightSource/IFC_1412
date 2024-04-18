@@ -27,14 +27,15 @@ architecture arch of testbench is
     signal read_request : core_request_t;
     signal read_request_ready : std_ulogic;
     signal request_completion : request_completion_t;
-    signal admin_command : banks_admin_t;
-    signal admin_command_ready : std_ulogic;
+    signal refresh : refresh_request_t;
+    signal refresh_ready : std_ulogic;
+    signal lookahead : bank_open_t;
     signal bypass_command : ca_command_t;
     signal bypass_valid : std_ulogic;
     signal refresh_stall : std_ulogic;
     signal priority_mode : std_ulogic := '0';
     signal priority_direction : direction_t := DIR_READ;
-    signal bank_open : bank_open_t;
+    signal current_direction : direction_t;
     signal banks_status : banks_status_t;
     signal ca_command : ca_command_t;
 
@@ -55,14 +56,13 @@ begin
 
         write_request_i => write_request,
         write_request_ready_o => write_request_ready,
-
         read_request_i => read_request,
         read_request_ready_o => read_request_ready,
-
         request_completion_o => request_completion,
 
-        admin_i => admin_command,
-        admin_ready_o => admin_command_ready,
+        refresh_i => refresh,
+        refresh_ready_o => refresh_ready,
+        lookahead_i => lookahead,
 
         bypass_command_i => bypass_command,
         bypass_valid_i => bypass_valid,
@@ -70,7 +70,7 @@ begin
         refresh_stall_i => refresh_stall,
         priority_mode_i => priority_mode,
         priority_direction_i => priority_direction,
-        bank_open_o => bank_open,
+        current_direction_o => current_direction,
         banks_status_o => banks_status,
 
         ca_command_o => ca_command
@@ -168,37 +168,6 @@ begin
         read(X"3", 14X"1234", 7X"78");
         read(X"3", 14X"1234", 7X"12");
         read(X"3", 14X"1234", 7X"00");
-
-        wait;
-    end process;
-
-
-    -- Admin commands
-    process
-        procedure admin(
-            command : admin_command_t; bank : unsigned(3 downto 0);
-            row : unsigned(13 downto 0) := (others => '0');
-            all_banks : std_ulogic := '0') is
-        begin
-            admin_command <= (
-                command => command,
-                bank => bank,
-                all_banks => all_banks,
-                row => row,
-                valid => '1'
-            );
-            loop
-                clk_wait;
-                exit when admin_command_ready;
-            end loop;
-            admin_command <= IDLE_BANKS_ADMIN;
-        end;
-
-    begin
-        admin_command <= IDLE_BANKS_ADMIN;
-
-        clk_wait(12);
-        admin(CMD_ACT, X"3", 14X"1234");
 
         wait;
     end process;

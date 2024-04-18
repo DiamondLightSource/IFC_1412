@@ -5,6 +5,7 @@ use std.textio.all;
 
 use work.support.all;
 
+use work.gddr6_ctrl_command_defs.all;
 use work.gddr6_ctrl_defs.all;
 
 entity testbench is
@@ -22,13 +23,14 @@ architecture arch of testbench is
     end;
 
     signal bank_open : bank_open_t;
-    signal read_lookahead : bank_open_t;
-    signal write_lookahead : bank_open_t;
+    signal lookahead : bank_open_t;
     signal refresh : refresh_request_t;
     signal refresh_ready : std_ulogic;
     signal status : banks_status_t;
     signal admin : banks_admin_t;
-    signal admin_ready : std_ulogic;
+    signal admin_ok : std_ulogic;
+    signal command : ca_command_t;
+    signal command_valid : std_ulogic;
 
     procedure write(message : string := "") is
         variable linebuffer : line;
@@ -46,15 +48,17 @@ begin
         clk_i => clk,
 
         bank_open_i => bank_open,
-        read_lookahead_i => read_lookahead,
-        write_lookahead_i => write_lookahead,
+        lookahead_i => lookahead,
         refresh_i => refresh,
         refresh_ready_o => refresh_ready,
 
         status_i => status,
 
         admin_o => admin,
-        admin_ready_i => admin_ready
+        admin_ok_i => admin_ok,
+
+        command_o => command,
+        command_valid_o => command_valid
     );
 
     process
@@ -73,14 +77,13 @@ begin
 
     begin
         bank_open <= IDLE_OPEN_REQUEST;
-        read_lookahead <= IDLE_OPEN_REQUEST;
-        write_lookahead <= IDLE_OPEN_REQUEST;
+        lookahead <= IDLE_OPEN_REQUEST;
         refresh <= IDLE_REFRESH_REQUEST;
 
         clk_wait(2);
         bank_open <= (bank => X"3", row => 14X"1234", valid => '1');
         clk_wait(5);
-        read_lookahead <= (bank => X"4", row => 14X"3333", valid => '1');
+        lookahead <= (bank => X"4", row => 14X"3333", valid => '1');
         bank_open.valid <= '0';
         clk_wait;
         bank_open <= (bank => X"4", row => 14X"1234", valid => '1');
@@ -106,7 +109,7 @@ begin
 
         loop
             clk_wait;
-            if admin.valid and admin_ready then
+            if admin.valid and admin_ok then
                 bank := to_integer(admin.bank);
                 case admin.command is
                     when CMD_ACT =>
@@ -138,10 +141,10 @@ begin
     end process;
 
     process begin
-        admin_ready <= '1';
+        admin_ok <= '1';
         wait until admin.valid;
         clk_wait;
-        admin_ready <= '0';
+        admin_ok <= '0';
         clk_wait(5);
     end process;
 
@@ -162,7 +165,7 @@ begin
 
     begin
         if rising_edge(clk) then
-            if admin.valid and admin_ready then
+            if admin.valid and admin_ok then
                 write("@ " & to_string(tick_counter) & " " &
                     name(admin.command, admin.all_banks) & " " &
                     to_hstring(admin.bank) & " " & to_hstring(admin.row));

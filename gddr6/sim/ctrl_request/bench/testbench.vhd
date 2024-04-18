@@ -27,7 +27,7 @@ architecture arch of testbench is
     signal completion : request_completion_t;
     signal bank_open : bank_open_t;
     signal bank_open_ok : std_ulogic := '1';
-    signal bank_open_request : std_logic;
+    signal bank_open_request : bank_open_t;
     signal out_request : out_request_t;
     signal out_request_ok : std_ulogic := '1';
     signal out_request_extra : std_ulogic;
