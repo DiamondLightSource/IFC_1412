@@ -248,6 +248,9 @@ begin
         do_admin(CMD_REF, 4);
         do_admin(CMD_ACT, 5, 14X"2345");
 
+        -- Wait just long enough for reads on this row on bank 5 to complete
+        clk_wait(7);
+
         -- Switch bank 5 to new row
         do_admin(CMD_PRE, 5);
         do_admin(CMD_ACT, 5, 14X"2346");
@@ -261,6 +264,7 @@ begin
         wait_for_tick(165);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
+        clk_wait(10);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
 
