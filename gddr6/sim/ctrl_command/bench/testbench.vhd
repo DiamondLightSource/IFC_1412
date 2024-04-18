@@ -86,14 +86,12 @@ begin
     process
         procedure write_one(
             bank : unsigned; row : unsigned; column : unsigned;
-            command : ca_command_t; precharge : std_ulogic;
-            extra : boolean; next_extra : boolean) is
+            command : ca_command_t; extra : boolean; next_extra : boolean) is
         begin
             write_request <= (
                 direction => DIR_WRITE,
                 write_advance => '1',
                 bank => bank, row => row, command => command,
-                auto_precharge => precharge,
                 extra => to_std_ulogic(extra),
                 next_extra => to_std_ulogic(next_extra),
                 valid => '1');
@@ -106,7 +104,7 @@ begin
 
         procedure write(
             bank : unsigned; row : unsigned; column : unsigned;
-            precharge : std_ulogic := '0'; extra : natural := 0)
+            extra : natural := 0)
         is
             variable command : ca_command_t;
         begin
@@ -116,12 +114,12 @@ begin
                 when 2 => command := SG_WSM(bank, column, "1111");
                 when others =>
             end case;
-            write_one(bank, row, column, command, precharge, false, extra > 0);
+            write_one(bank, row, column, command, false, extra > 0);
 
             -- Send any mask commands straight after
             for n in extra downto 1 loop
                 command := SG_write_mask(X"ABC" & to_std_ulogic_vector_u(n, 4));
-                write_one(bank, row, column, command, precharge, true, n > 1);
+                write_one(bank, row, column, command, true, n > 1);
             end loop;
         end;
 
@@ -143,15 +141,12 @@ begin
 
     -- Read commands
     process
-        procedure read(
-            bank : unsigned; row : unsigned; column : unsigned;
-            precharge : std_ulogic := '0') is
+        procedure read(bank : unsigned; row : unsigned; column : unsigned) is
         begin
             read_request <= (
                 direction => DIR_READ,
                 write_advance => '0',
                 bank => bank, row => row, command => SG_RD(bank, column),
-                auto_precharge => precharge,
                 next_extra => '0', extra => '0', valid => '1');
             loop
                 clk_wait;

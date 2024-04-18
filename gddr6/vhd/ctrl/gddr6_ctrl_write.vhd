@@ -67,10 +67,6 @@ architecture arch of gddr6_ctrl_write is
     signal even_byte_mask : vector_array(0 to 3)(15 downto 0);
     signal odd_byte_mask : vector_array(0 to 3)(15 downto 0);
 
-    -- We don't actually implement automatic precharge, but all the place
-    -- holders are here.  I don't think it earns its keep in our application.
-    signal auto_precharge : std_ulogic := '0';
-
     -- State machine for command and mask generation
     type write_state_t is (
         WRITE_IDLE,         -- Waiting for commands to process
@@ -229,8 +225,7 @@ architecture arch of gddr6_ctrl_write is
         decode : decode_t;
         address : unsigned(24 downto 0);
         enables : std_ulogic_vector(0 to 3);
-        last_command : std_ulogic;
-        auto_precharge : std_ulogic) return core_request_t
+        last_command : std_ulogic) return core_request_t
     is
         variable row : unsigned(13 downto 0);
         variable bank : unsigned(3 downto 0);
@@ -246,13 +241,13 @@ architecture arch of gddr6_ctrl_write is
                 -- We still need to issue a write command even if there is
                 -- nothing to write, this is required to keep data flow and
                 -- bank state flags correctly in step.
-                command := SG_WOM(bank, column, enables, auto_precharge);
+                command := SG_WOM(bank, column, enables);
                 next_extra := '0';
             when DECODE_WDM =>
-                command := SG_WDM(bank, column, enables, auto_precharge);
+                command := SG_WDM(bank, column, enables);
                 next_extra := '1';
             when DECODE_WSM =>
-                command := SG_WSM(bank, column, enables, auto_precharge);
+                command := SG_WSM(bank, column, enables);
                 next_extra := '1';
         end case;
 
@@ -262,7 +257,6 @@ architecture arch of gddr6_ctrl_write is
             bank => bank,
             row => row,
             command => command,
-            auto_precharge => auto_precharge,
             extra => '0', next_extra => next_extra,
             valid => '1'
         );
@@ -279,7 +273,6 @@ architecture arch of gddr6_ctrl_write is
             bank => (others => '-'),
             row => (others => '-'),
             command => SG_write_mask(mask),
-            auto_precharge => '-',
             extra => '1', next_extra => next_extra,
             valid => '1'
         );
@@ -318,7 +311,7 @@ architecture arch of gddr6_ctrl_write is
                 if write_ready_i or not write_request.valid then
                     write_request <= write_command(
                         command_decode, command_address,
-                        command_enables, command_advance, auto_precharge);
+                        command_enables, command_advance);
                     case command_decode is
                         when DECODE_NOP | DECODE_WOM =>
                             goto_next_command;

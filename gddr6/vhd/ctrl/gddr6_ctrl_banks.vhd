@@ -143,7 +143,6 @@ begin
         signal request_read_bank : std_ulogic;
         signal request_write_bank : std_ulogic;
         signal request_precharge_bank : std_ulogic;
-        signal auto_precharge_bank : std_ulogic;
         signal row_bank : unsigned(13 downto 0);
 
     begin
@@ -168,7 +167,6 @@ begin
             request_precharge_i => request_precharge_bank,
             request_refresh_i => request_refresh_bank,
 
-            auto_precharge_i => auto_precharge_bank,
             row_i => row_bank,
             refresh_all_i => refresh_all
         );
@@ -183,7 +181,6 @@ begin
                     accept_precharge and request_precharge_banks(bank);
                 request_refresh_bank <=
                     accept_refresh and request_refresh_banks(bank);
-                auto_precharge_bank <= out_request_i.auto_precharge;
                 row_bank <= admin_i.row;
             end if;
         end process;

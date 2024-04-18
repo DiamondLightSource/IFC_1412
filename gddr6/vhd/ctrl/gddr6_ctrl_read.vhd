@@ -30,10 +30,6 @@ architecture arch of gddr6_ctrl_read is
     signal bank : unsigned(3 downto 0);
     signal column : unsigned(6 downto 0);
 
-    -- Placeholder for auto precharge, not actually implemented.  Complex to
-    -- get right, very low return, doesn't seem to earn its keep.
-    signal auto_precharge : std_ulogic := '0';
-
 begin
     bank <= axi_address_i(BANK_RANGE);
     row <= axi_address_i(ROW_RANGE);
@@ -48,8 +44,7 @@ begin
                     write_advance => '0',
                     bank => bank,
                     row => row,
-                    command => SG_RD(bank, column, auto_precharge),
-                    auto_precharge => auto_precharge,
+                    command => SG_RD(bank, column),
                     extra => '0', next_extra => '0',
                     valid => '1'
                 );

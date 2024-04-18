@@ -112,7 +112,6 @@ begin
         request_test <= (
             direction => bank_out.direction,
             bank => bank_out.bank,
-            auto_precharge => bank_out.auto_precharge,
             valid => bank_out.valid and not bank_out.extra and bank_ok
         );
     end process;

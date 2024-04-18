@@ -42,9 +42,6 @@ package gddr6_ctrl_defs is
         bank : unsigned(3 downto 0);    -- Bank to read or write
         row : unsigned(13 downto 0);    -- Row to read or write
         command : ca_command_t;         -- CA command to send
-        -- We don't actually implement automatic precharge, but all the place
-        -- holders are here.  I don't think it earns its keep
-        auto_precharge : std_ulogic;    -- Command sent with auto-precharge
         -- The following two flags worth together to ensure that write mask
         -- commands don't get detached from the write command
         next_extra : std_ulogic;        -- Write mask follows this command
@@ -71,7 +68,6 @@ package gddr6_ctrl_defs is
     type out_request_t is record
         direction : direction_t;
         bank : unsigned(3 downto 0);
-        auto_precharge : std_ulogic;
         valid : std_ulogic;
     end record;
 
@@ -125,7 +121,6 @@ package body gddr6_ctrl_defs is
             bank => (others => '0'),
             row => (others => '0'),
             command => SG_NOP,
-            auto_precharge => '0',
             next_extra => '0',
             extra => '0',
             valid => '0'
@@ -148,7 +143,6 @@ package body gddr6_ctrl_defs is
     constant IDLE_OUT_REQUEST : out_request_t := (
         direction => DIR_READ,
         bank => (others => '0'),
-        auto_precharge => '0',
         valid => '0'
     );
 

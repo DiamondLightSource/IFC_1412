@@ -55,7 +55,6 @@ architecture arch of testbench is
             command => (
                 ca => (to_std_ulogic_vector_u(value, 10), (others => '0')),
                 ca3 => "0000"),
-            auto_precharge => '0',
             extra => extra, next_extra => next_extra,
             write_advance => '1',
             valid => '1');

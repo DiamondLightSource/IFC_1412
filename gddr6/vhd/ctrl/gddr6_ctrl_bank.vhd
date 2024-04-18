@@ -33,8 +33,6 @@ entity gddr6_ctrl_bank is
         request_write_i : in std_ulogic;
         request_precharge_i : in std_ulogic;
 
-        -- Only asserted with read or write request to trigger auto precharge
-        auto_precharge_i : in std_ulogic;
         -- Row to set for CMD_ACT
         row_i : in unsigned(13 downto 0);
 
@@ -48,8 +46,6 @@ architecture arch of gddr6_ctrl_bank is
 
     type row_state_t is (BANK_IDLE, BANK_REFRESH, BANK_ACTIVE, BANK_PRECHARGE);
     signal state : row_state_t := BANK_IDLE;
-
-    signal auto_precharge : std_ulogic := '0';
 
     -- Internal permissions for read and write before qualification by active
     -- state
@@ -84,7 +80,6 @@ begin
                 tRCDRD_counter <= t_RCDRD - 4;
                 tRAS_counter <= t_RAS - 3;
                 tWTP_counter <= 0;
-                auto_precharge <= '0';
                 row_o <= row_i;
                 age <= (others => '0');
                 young_o <= '1';
@@ -105,8 +100,8 @@ begin
             end if;
         end;
 
-        -- Process ACTIVE state: enable read/write/precharge and support auto-
-        -- precharge.  Transition to PRECHARGE when requested
+        -- Process ACTIVE state: enable read/write/precharge, transition to
+        -- PRECHARGE when requested
         procedure do_bank_active is
             variable do_write : std_ulogic;
             variable do_read : std_ulogic;
@@ -116,8 +111,7 @@ begin
             -- Decode the command requests
             do_write := allow_write_o and request_write_i;
             do_read := allow_read_o and request_read_i;
-            do_precharge :=
-                allow_precharge_o and (request_precharge_i or auto_precharge);
+            do_precharge := allow_precharge_o and request_precharge_i;
 
             if do_read or do_write or do_precharge then
                 -- We include precharge just to leave the age of an idle bank
@@ -145,21 +139,12 @@ begin
             elsif tWTP_counter > 0 then
                 tWTP_counter <= tWTP_counter - 1;
             end if;
-            allow_write <= not auto_precharge;
 
             -- The tRTP counter
             -- is two ticks and so is absorbed into the allow_read_o state
             -- We don't have time to block on next tick, but reads won't be
             -- generated any faster
-            allow_read <=
-                not auto_precharge and to_std_ulogic(tRCDRD_counter = 0);
-
-            -- Register precharge if requested on read or write.  This will
-            -- block subsequent operations and automatically deactive the bank
-            if auto_precharge_i and (do_read or do_write) then
-                auto_precharge <= '1';
-                active_o <= '0';
-            end if;
+            allow_read <= to_std_ulogic(tRCDRD_counter = 0);
 
             -- Trigger precharge when allowed
             if do_precharge then

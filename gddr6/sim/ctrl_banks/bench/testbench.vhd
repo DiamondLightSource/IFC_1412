@@ -128,7 +128,7 @@ begin
     process
         procedure do_request(
             bank : natural; row : unsigned; direction : direction_t;
-            precharge : std_ulogic := '0'; extra : natural := 0) is
+            extra : natural := 0) is
         begin
             test_open <= (
                 bank => to_unsigned(bank, 4),
@@ -138,7 +138,6 @@ begin
             test_out <= (
                 direction => direction,
                 bank => to_unsigned(bank, 4),
-                auto_precharge => precharge,
                 valid => '1');
             test_out_extra <= '0';
             loop
@@ -428,8 +427,7 @@ begin
             if final_out_request.valid and final_out_request_ok then
                 write(delta &
                     name(final_out_request.direction) & " " &
-                    to_hstring(final_out_request.bank) & " " &
-                    to_string(final_out_request.auto_precharge));
+                    to_hstring(final_out_request.bank));
                 report_count := report_count + 1;
                 last_tick <= tick_counter;
             end if;

@@ -88,7 +88,6 @@ begin
                     ca => (others =>
                         to_std_ulogic_vector_u(command_count mod 2**10, 10)),
                     ca3 => to_std_ulogic_vector_u(count, 4)),
-                auto_precharge => '0',
                 extra => to_std_ulogic(count > 0),
                 next_extra => '0',
                 valid => '1'
