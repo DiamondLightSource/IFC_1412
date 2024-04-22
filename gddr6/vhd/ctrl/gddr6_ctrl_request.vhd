@@ -30,8 +30,7 @@ entity gddr6_ctrl_request is
         -- Bank read/write request
         out_request_o : out out_request_t := IDLE_OUT_REQUEST;
         out_request_ok_i : in std_ulogic;
-        -- Probably want out_request_extra as a separate field
-        out_request_extra_o : out std_ulogic;
+        out_request_extra_o : out std_ulogic := '0';
 
         -- CA Commands out to PHY
         command_o : out ca_command_t;

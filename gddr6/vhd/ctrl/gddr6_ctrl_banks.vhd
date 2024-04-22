@@ -204,7 +204,8 @@ begin
         -- Block if there is any admin activity on this bank, specifically
         -- precharge.  Because of the clock skew between read/write and admin
         -- we also need to check against a registered copy of this request.
-        not (admin_i.valid and to_std_ulogic(open_bank = admin_bank)) and
+        not (admin_i.valid and not admin_accept_o and
+            to_std_ulogic(open_bank = admin_bank)) and
         not precharge_active(open_bank) and
         -- Don't accept if a read/write request is pending, this blocks
         -- overlapping open and out.
@@ -218,7 +219,9 @@ begin
 
     -- Activate is the simplest admin request as this only affects a single bank
     -- and doesn't need any special interlocking
-    allow_admin <= not block_admin and not refresh_busy and not tRRD_delay;
+    allow_admin <=
+        not block_admin and not refresh_busy and not tRRD_delay
+        and not admin_accept_o;
     request_activate <= admin_request(CMD_ACT, admin_i) and allow_admin;
     -- Precharge is either for a single bank or all banks
     request_precharge <= admin_request(CMD_PRE, admin_i) and allow_admin;
@@ -239,7 +242,6 @@ begin
     accept_refresh <=
         request_refresh and
         vector_and(not request_refresh_banks or allow_refresh);
-    admin_accept_o <= accept_activate or accept_precharge or accept_refresh;
 
     process (clk_i) begin
         if rising_edge(clk_i) then
@@ -303,6 +305,10 @@ begin
 
             -- Block admin commands where necessary
             block_admin <= out_request_ok_o or out_request_extra_i;
+
+            -- Register admin accept
+            admin_accept_o <=
+                accept_activate or accept_precharge or accept_refresh;
         end if;
     end process;
 
