@@ -21,7 +21,7 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "Request" request/* request/proc/*
+add wave -group "Request" request/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

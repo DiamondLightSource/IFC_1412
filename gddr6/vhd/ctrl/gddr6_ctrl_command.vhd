@@ -58,7 +58,6 @@ architecture arch of gddr6_ctrl_command is
 
     signal mux_request : core_request_t;
     signal mux_ready : std_ulogic;
-    signal bank_open_request : bank_open_t;
     signal request_command : ca_command_t;
     signal request_command_valid : std_ulogic;
 
@@ -112,7 +111,6 @@ begin
 
         bank_open_o => bank_open,
         bank_open_ok_i => bank_open_ok,
-        bank_open_request_o => bank_open_request,
 
         out_request_o => out_request,
         out_request_ok_i => out_request_ok,
@@ -127,7 +125,7 @@ begin
     admin : entity work.gddr6_ctrl_admin port map (
         clk_i => clk_i,
 
-        bank_open_i => bank_open_request,
+        bank_open_i => bank_open,
         lookahead_i => lookahead_i,
         refresh_i => refresh_i,
         refresh_ready_o => refresh_ready_o,

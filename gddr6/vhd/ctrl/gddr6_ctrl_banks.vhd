@@ -15,11 +15,11 @@ entity gddr6_ctrl_banks is
 
         -- Request to open a bank
         bank_open_i : in bank_open_t;
-        bank_open_ok_o : out std_ulogic;
+        bank_open_ok_o : out std_ulogic := '0';
 
         -- Request to perform read/write command
         out_request_i : in out_request_t;
-        out_request_ok_o : out std_ulogic;
+        out_request_ok_o : out std_ulogic := '0';
         out_request_extra_i : in std_ulogic;
 
         -- Request to execute admin command
@@ -60,6 +60,9 @@ architecture arch of gddr6_ctrl_banks is
     signal accept_activate : std_ulogic;
     signal accept_precharge : std_ulogic;
     signal accept_refresh : std_ulogic;
+
+    signal bank_open_ok : std_ulogic;
+    signal out_request_ok : std_ulogic;
 
 
     function read_write_request(
@@ -198,7 +201,8 @@ begin
     -- the bank here, and we also need to ensure that once the bank has been
     -- accepted that precharge is blocked on this bank until the corresponding
     -- read/write request has completed.
-    bank_open_ok_o <=
+    bank_open_ok <=
+        not bank_open_ok_o and
         bank_open_i.valid and active(open_bank) and
         to_std_ulogic(row(open_bank) = bank_open_i.row) and
         -- Block if there is any admin activity on this bank, specifically
@@ -209,12 +213,14 @@ begin
         not precharge_active(open_bank) and
         -- Don't accept if a read/write request is pending, this blocks
         -- overlapping open and out.
-        (not out_request_i.valid or out_request_ok_o);
+        (not out_request_i.valid or out_request_ok_o or out_request_ok);
 
     -- Decode incoming read/write request
     request_read <=
+        not out_request_ok_o and
         read_write_request(DIR_READ, out_request_i, write_active, tCCD_delay);
     request_write <=
+        not out_request_ok_o and
         read_write_request(DIR_WRITE, out_request_i, read_active, tCCD_delay);
 
     -- Activate is the simplest admin request as this only affects a single bank
@@ -232,7 +238,7 @@ begin
 
     accept_read <= request_read and allow_read(request_bank);
     accept_write <= request_write and allow_write(request_bank);
-    out_request_ok_o <= accept_read or accept_write;
+    out_request_ok <= accept_read or accept_write;
 
     accept_activate <= request_activate and allow_activate(admin_bank);
     accept_precharge <=
@@ -293,9 +299,9 @@ begin
             -- Maintain the precharge guard: set bit when open accepted, clear
             -- bit when read or write accepted and not overlapping with open.
             for bank in 0 to 15 loop
-                if bank = open_bank and bank_open_ok_o = '1' then
+                if bank = open_bank and bank_open_ok = '1' then
                     precharge_guard(bank) <= '1';
-                elsif bank = request_bank and out_request_ok_o = '1' then
+                elsif bank = request_bank and out_request_ok = '1' then
                     precharge_guard(bank) <= '0';
                 end if;
             end loop;
@@ -304,9 +310,11 @@ begin
             precharge_active <= request_precharge_banks;
 
             -- Block admin commands where necessary
-            block_admin <= out_request_ok_o or out_request_extra_i;
+            block_admin <= out_request_ok or out_request_extra_i;
 
-            -- Register admin accept
+            -- Register accept states
+            bank_open_ok_o <= bank_open_ok;
+            out_request_ok_o <= out_request_ok;
             admin_accept_o <=
                 accept_activate or accept_precharge or accept_refresh;
         end if;

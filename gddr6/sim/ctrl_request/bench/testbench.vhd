@@ -26,10 +26,9 @@ architecture arch of testbench is
     signal mux_request_ready : std_ulogic;
     signal completion : request_completion_t;
     signal bank_open : bank_open_t;
-    signal bank_open_ok : std_ulogic := '1';
-    signal bank_open_request : bank_open_t;
+    signal bank_open_ok : std_ulogic := '0';
     signal out_request : out_request_t;
-    signal out_request_ok : std_ulogic := '1';
+    signal out_request_ok : std_ulogic := '0';
     signal out_request_extra : std_ulogic;
     signal refresh_stall : std_ulogic := '0';
     signal command : ca_command_t;
@@ -48,6 +47,8 @@ architecture arch of testbench is
     signal tick_count : natural;
     signal check_command_interval : boolean := true;
 
+    shared variable out_busy : std_ulogic := '0';
+
 begin
     clk <= not clk after 2 ns;
 
@@ -61,7 +62,6 @@ begin
 
         bank_open_o => bank_open,
         bank_open_ok_i => bank_open_ok,
-        bank_open_request_o => bank_open_request,
 
         out_request_o => out_request,
         out_request_ok_i => out_request_ok,
@@ -137,23 +137,10 @@ begin
 
         clk_wait(10);
         check_command_interval <= false;
-
         write("Bank delay");
         bank_open_delay <= 2;
-        write;
-        write;
-        write(1);
-        write(2);
-        write(2);
-        write;
-        clk_wait(2);
-        write;
-        clk_wait(2);
-        write;
+        out_request_delay <= 0;
 
-        write("Request delay");
-        bank_open_delay <= 0;
-        out_request_delay <= 2;
         write;
         write;
         write(1);
@@ -166,10 +153,26 @@ begin
         write;
 
         clk_wait(10);
+        write("Request delay");
+        bank_open_delay <= 0;
+        out_request_delay <= 2;
 
+        write;
+        write;
+        write(1);
+        write(2);
+        write(2);
+        write;
+        clk_wait(2);
+        write;
+        clk_wait(2);
+        write;
+
+        clk_wait(10);
         write("Mixed delays");
         bank_open_delay <= 3;
         out_request_delay <= 2;
+
         write;
         write;
         write(1);
@@ -189,22 +192,31 @@ begin
 
     -- Bank acknowledge after configurable delay
     process begin
-        bank_open_ok <= 'U';
-        wait until bank_open.valid;
         bank_open_ok <= '0';
+        loop
+            clk_wait;
+            exit when bank_open.valid;
+        end loop;
         clk_wait(bank_open_delay);
+        while out_busy loop
+            clk_wait;
+        end loop;
         bank_open_ok <= '1';
-        wait until not bank_open.valid;
+        clk_wait;
     end process;
 
     -- Out acknowledge after configurable delay
     process begin
-        out_request_ok <= 'U';
-        wait until out_request.valid;
         out_request_ok <= '0';
+        loop
+            clk_wait;
+            exit when out_request.valid;
+        end loop;
+        out_busy := '1';
         clk_wait(out_request_delay);
+        out_busy := '0';
         out_request_ok <= '1';
-        wait until not out_request.valid;
+        clk_wait;
     end process;
 
 

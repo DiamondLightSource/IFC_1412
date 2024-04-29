@@ -15,7 +15,7 @@ entity gddr6_ctrl_request is
 
         -- Selected request from read/write multiplexer
         mux_request_i : in core_request_t;
-        mux_ready_o : out std_ulogic;
+        mux_ready_o : out std_ulogic := '1';
 
         -- Command completion notification
         completion_o : out request_completion_t := IDLE_COMPLETION;
@@ -23,9 +23,6 @@ entity gddr6_ctrl_request is
         -- Check bank open and reserve
         bank_open_o : out bank_open_t := IDLE_OPEN_REQUEST;
         bank_open_ok_i : in std_ulogic;
-        -- Request to open bank.  This is asserted while an open bank request
-        -- is being rejected
-        bank_open_request_o : out bank_open_t := IDLE_OPEN_REQUEST;
 
         -- Bank read/write request
         out_request_o : out out_request_t := IDLE_OUT_REQUEST;
@@ -39,168 +36,179 @@ entity gddr6_ctrl_request is
 end;
 
 architecture arch of gddr6_ctrl_request is
-    type mux_t is (SEL_IN, SEL_OUT);
+    type core_request_array_t is array(natural range <>) of core_request_t;
+    signal stage : core_request_array_t(1 to 4)
+        := (others => IDLE_CORE_REQUEST);
 
-    -- Bank validation stage
-    signal bank_in : core_request_t := IDLE_CORE_REQUEST;
-    signal bank_out : core_request_t := IDLE_CORE_REQUEST;
-    signal bank_ok : std_ulogic := '0';
-    signal bank_out_valid : std_ulogic;
-    signal enable_bank_in : std_ulogic;
-    signal enable_bank_out : std_ulogic;
-    signal bank_open_request : std_ulogic := '0';
+    signal skid_buffer : core_request_t := IDLE_CORE_REQUEST;
+    signal input_request : core_request_t;
 
-    -- Bank test generation and control
-    signal bank_mux_sel : mux_t := SEL_IN;
-    signal bank_test : bank_open_t;
-    signal load_test_bank : std_ulogic := '1';
+    -- Data flow control
+    signal stage_enable : std_ulogic_vector(1 to 4);
+    signal stage_ready : std_ulogic_vector(1 to 4);
+    signal stage_3_guard : std_ulogic;
+    signal stage_1_guard : std_ulogic;
 
-    -- Request validation stage
-    signal request_in : core_request_t := IDLE_CORE_REQUEST;
-    signal request_out : core_request_t := IDLE_CORE_REQUEST;
-    signal request_ok : std_ulogic := '0';
-    signal enable_request_in : std_ulogic;
-    signal enable_request_out : std_ulogic;
+    signal bank_open_guard : std_ulogic;
+    signal bank_open_enable : std_ulogic;
+    signal bank_open_ready : std_ulogic;
+    signal out_request_enable : std_ulogic;
+    signal out_request_ready : std_ulogic;
 
-    -- Request test generation and control
-    signal request_test : out_request_t;
-    signal load_test_request : std_ulogic := '1';
+    -- Used to stretch bank_open_ok_i if stage(2) cannot be loaded, either
+    -- because it is not ready or if extra is being loaded
+    signal reset_open_ok : std_ulogic;
+    signal last_bank_open_ok : std_ulogic := '0';
+    signal bank_open_ok : std_ulogic;
+
+
+    -- Computes ready, valid_in, valid_out from ready, guard, enable, valid
+    procedure compute_enable(
+        valid_in : std_ulogic; ready_in : std_ulogic; guard : std_ulogic;
+        signal ready_out : out std_ulogic;
+        signal write_enable : out std_ulogic)
+    is
+        variable enable_store : std_ulogic;
+    begin
+        enable_store := not valid_in or ready_in;
+        ready_out <= guard and enable_store;
+        write_enable <= enable_store;
+    end;
 
 begin
-    -- Propagate enables from output back to input.  At each stage we forward
-    -- the buffer if allowed and not blocked.  This whole chain back to
-    -- mux_ready_o is combinatorial.
-    enable_request_out <=
-        not request_out.valid or request_ok or request_out.extra;
-    -- We must ensure that the request validation stage never has two valid
-    -- commands at the same time (the banks checker doesn't want to have to
-    -- deal with more than one command in transit at a time).
-    enable_request_in <=
-        -- Block everything while waiting for output command ready to send
-        request_ok when request_out.valid and not request_out.extra else
-        -- Only accept extra when request_in is a command
-        bank_out.extra when request_in.valid and not request_in.extra else
-        -- All other states are unconditional acceptors
-        '1';
+    with skid_buffer.valid select
+        input_request <=
+            skid_buffer when '1',
+            mux_request_i when others;
 
-    bank_out_valid <=
-        bank_out.valid and (bank_ok or bank_out.extra) and enable_request_in;
-    enable_bank_out <=
-        not bank_out.valid or (bank_out_valid and enable_request_in);
-    enable_bank_in <= not bank_in.valid or enable_bank_out;
-    mux_ready_o <= enable_bank_in;
+    -- Check whether stage 3 is ready to take the successful open result, if
+    -- not the open_ok flag will be stretched until it is
+    reset_open_ok <= stage_ready(3) and not stage(2).extra;
+    bank_open_ok <= bank_open_ok_i or last_bank_open_ok;
 
+    -- Only accept a new open when the out stage is ready and we're not blocked
+    -- (need to look forward to the next state of bank_open_ok)
+    bank_open_guard <= not bank_open_ok or reset_open_ok;
+    compute_enable(
+        bank_open_o.valid, bank_open_ok_i, bank_open_guard,
+        bank_open_ready, bank_open_enable);
 
-    -- Multiplexers for bank and request tests
-    process (all) begin
-        case bank_mux_sel is
-            when SEL_IN =>
-                bank_test <= (
-                    bank => mux_request_i.bank,
-                    row => mux_request_i.row,
-                    valid => mux_request_i.valid and not mux_request_i.extra
-                );
-            when SEL_OUT =>
-                bank_test <= (
-                    bank => bank_in.bank,
-                    row => bank_in.row,
-                    valid => bank_in.valid and not bank_in.extra
-                );
-        end case;
+    -- Loading of out_request
+    compute_enable(
+        out_request_o.valid, out_request_ok_i, '1',
+        out_request_ready, out_request_enable);
 
-        request_test <= (
-            direction => bank_out.direction,
-            bank => bank_out.bank,
-            valid => bank_out.valid and not bank_out.extra and bank_ok
-        );
-    end process;
+    -- Four pipeline stages with input guards on stages 1 and 3.  Written from
+    -- bottom to top to reflect backwards propagation of ready flags
+    compute_enable(
+        stage(4).valid, stage(4).extra or out_request_ok_i, '1',
+        stage_ready(4), stage_enable(4));
+    stage_3_guard <=
+        stage(2).extra or (bank_open_ok and out_request_ready);
+    compute_enable(
+        stage(3).valid, stage_ready(4), stage_3_guard,
+        stage_ready(3), stage_enable(3));
+    compute_enable(
+        stage(2).valid, stage_ready(3), '1',
+        stage_ready(2), stage_enable(2));
+    stage_1_guard <= input_request.extra or bank_open_ready;
+    compute_enable(
+        stage(1).valid, stage_ready(2), stage_1_guard,
+        stage_ready(1), stage_enable(1));
 
-
-    proc : process (clk_i)
-        variable bank_loaded : std_ulogic;
-        variable block_bank : std_ulogic;
-
-    begin
+    process (clk_i) begin
         if rising_edge(clk_i) then
-            -- Manage flow of data through the four stage pipeline
-            if enable_bank_in then
-                bank_in <= mux_request_i;
-            end if;
-            if enable_bank_out then
-                bank_out <= bank_in;
-            end if;
-            if enable_request_in then
-                request_in <= bank_out;
-                -- Qualify so that we only load passing bank commands
-                request_in.valid <= bank_out_valid;
-            elsif enable_request_out then
-                request_in.valid <= '0';
-            end if;
-            if enable_request_out then
-                request_out <= request_in;
+            -- Input enable and skid buffer
+            if stage_ready(1) then
+                -- Input is being consumed, enable input and clear skid buffer
+                skid_buffer.valid <= '0';
+                mux_ready_o <= '1';
+            elsif mux_request_i.valid and mux_ready_o then
+                -- First stage can't take this, so need to load skid buffer
+                skid_buffer <= mux_request_i;
+                mux_ready_o <= '0';
             end if;
 
+            -- -----------------------------------------------------------------
+            -- Pipeline stages
 
-            -- Advance bank test.  We need to block the blank when the output is
-            -- still pending acceptance, or if we are in the wrong position to
-            -- advance.
-            block_bank :=
-                (out_request_o.valid and not out_request_ok_i) or
-                (bank_out.valid and bank_out.extra and not enable_request_in);
-            if load_test_bank then
-                load_test_bank <= not bank_test.valid;
-                bank_open_o <= bank_test;
-            elsif bank_open_ok_i and not block_bank then
-                load_test_bank <= '1';
-                bank_open_o.valid <= '0';
-            end if;
-            bank_ok <= bank_open_ok_i and bank_open_o.valid and not block_bank;
-
-            -- Update bank mux selector
-            bank_loaded :=
-                enable_bank_in and mux_request_i.valid and
-                not mux_request_i.extra;
-            if bank_loaded and not load_test_bank then
-                bank_mux_sel <= SEL_OUT;
-            elsif not bank_loaded and load_test_bank then
-                bank_mux_sel <= SEL_IN;
+            -- Initial stage is guarded by bank open enable
+            if stage_enable(1) then
+                if stage_1_guard then
+                    stage(1) <= input_request;
+                else
+                    stage(1).valid <= '0';
+                end if;
             end if;
 
-            -- Advance request test
-            if load_test_request then
-                load_test_request <= not request_test.valid;
-                out_request_o <= request_test;
-            elsif out_request_ok_i then
-                load_test_request <= '1';
-                out_request_o.valid <= '0';
+            -- Waiting for open request
+            if stage_enable(2) then
+                stage(2) <= stage(1);
             end if;
-            request_ok <= out_request_ok_i and out_request_o.valid;
-            out_request_extra_o <= bank_out.valid and bank_out.extra;
 
+            -- Loading out request, needs to wait for open to complete
+            if stage_enable(3) then
+                if stage_3_guard then
+                    stage(3) <= stage(2);
+                else
+                    stage(3).valid <= '0';
+                end if;
+            end if;
 
-            -- Bank request generation: assert this while we're blocked waiting
-            -- for a bank open request to complete
-            bank_open_request <=
-                bank_open_o.valid and not block_bank and not bank_open_ok_i;
+            -- Final stage waiting for out request
+            if stage_enable(4) then
+                stage(4) <= stage(3);
+            end if;
 
+            -- -----------------------------------------------------------------
+            -- Open and Out requests
+
+            -- Load open request
+            if bank_open_enable then
+                if bank_open_guard then
+                    bank_open_o <= (
+                        bank => input_request.bank,
+                        row => input_request.row,
+                        valid => input_request.valid and not input_request.extra
+                    );
+                else
+                    bank_open_o.valid <= '0';
+                end if;
+            end if;
+            -- Hang onto open_ok while unable to hand over to out processing
+            if reset_open_ok then
+                last_bank_open_ok <= '0';
+            elsif bank_open_ok_i then
+                last_bank_open_ok <= '1';
+            end if;
+
+            -- Load out request
+            if out_request_enable then
+                out_request_o <= (
+                    direction => stage(2).direction,
+                    bank => stage(2).bank,
+                    valid => stage(2).valid and not stage(2).extra
+                );
+            end if;
+            -- Let banks know about any extra commands in the pipeline
+            out_request_extra_o <= stage(2).valid and stage(2).extra;
+
+            -- -----------------------------------------------------------------
             -- Output generation
-            command_o <= request_out.command;
+
+            -- Emit final command and completion
+            command_o <= stage(4).command;
             command_valid_o <=
-                request_out.valid and (request_ok or request_out.extra);
+                stage(4).valid and
+                (out_request_ok_i or stage(4).extra);
 
             -- Command completion
             completion_o <= (
-                direction => request_out.direction,
-                advance => request_out.write_advance,
-                enables => request_out.command.ca3,
-                valid => request_ok
+                direction => stage(4).direction,
+                advance => stage(4).write_advance,
+                enables => stage(4).command.ca3,
+                valid => out_request_ok_i
             );
         end if;
     end process;
-
-    bank_open_request_o <= (
-        bank => bank_open_o.bank,
-        row => bank_open_o.row,
-        valid => bank_open_request
-    );
 end;
