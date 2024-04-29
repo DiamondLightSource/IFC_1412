@@ -1,4 +1,7 @@
--- Refresh controller
+-- Refresh controller.  Generates refresh requests at the required tempo: a
+-- complete round of per bank refreshes every 1.9 us, together with a full all
+-- bank refresy every millisecond.  Hueristically chooses banks to refresh to
+-- avoid interfering with ongoing transfers as much as possible.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -20,7 +23,8 @@ entity gddr6_ctrl_refresh is
 
         -- Status of all banks, used to select appropriate banks for refresh
         status_i : in banks_status_t;
-        -- Top level refresh enable asserted during normal operation
+        -- Top level refresh enable asserted during normal operation.  This acts
+        -- as a reset when deasserted
         enable_refresh_i : in std_ulogic;
         -- Refresh request with completion handshake
         refresh_request_o : out refresh_request_t := IDLE_REFRESH_REQUEST;
@@ -34,8 +38,10 @@ architecture arch of gddr6_ctrl_refresh is
     signal refresh_tick : std_ulogic := '0';
     signal full_refresh_tick : std_ulogic := '0';
 
-    constant MAX_REFRESH_DELAY : natural := 7;
-    signal refresh_delay : natural range 0 to MAX_REFRESH_DELAY;
+    -- This refresh delay measures how far we are behind the regular 1.9us tick.
+    -- The larger the delay the more urgent is the choice of bank to refresh.
+    -- In practice this will never increase above 2.
+    signal refresh_delay : natural range 0 to 3;
     signal do_full_refresh : std_ulogic := '0';
 
     -- List of bank pairs that still need refresh in this round
@@ -95,22 +101,28 @@ begin
 
     begin
         if rising_edge(clk_i) then
-            -- Keep track of time, generate a one clock refresh_tick every
-            -- refresh interval t_REFI (1.9 microseconds), and a full refresh
-            -- flag once a millisecond
-            if short_counter > 0 then
-                short_counter <= short_counter - 1;
-                full_refresh_tick <= '0';
-            else
-                short_counter <= SHORT_REFRESH_COUNT - 1;
-                if long_counter > 0 then
-                    long_counter <= long_counter - 1;
+            if enable_refresh_i then
+                -- Keep track of time, generate a one clock refresh_tick every
+                -- refresh interval t_REFI (1.9 microseconds), and a full
+                -- refresh once a millisecond
+                if short_counter > 0 then
+                    short_counter <= short_counter - 1;
+                    full_refresh_tick <= '0';
                 else
-                    long_counter <= LONG_REFRESH_COUNT - 1;
+                    short_counter <= SHORT_REFRESH_COUNT - 1;
+                    if long_counter > 0 then
+                        long_counter <= long_counter - 1;
+                    else
+                        long_counter <= LONG_REFRESH_COUNT - 1;
+                    end if;
                 end if;
+                refresh_tick <= to_std_ulogic(short_counter = 0);
+                full_refresh_tick <= to_std_ulogic(long_counter = 0);
+            else
+                refresh_tick <= '0';
+                full_refresh_tick <= '0';
             end if;
-            refresh_tick <= to_std_ulogic(short_counter = 0);
-            full_refresh_tick <= to_std_ulogic(long_counter = 0);
+
 
             -- Maintain the count of outstanding refresh calls, this is
             -- incremented on each refresh tick and decremented when picked up

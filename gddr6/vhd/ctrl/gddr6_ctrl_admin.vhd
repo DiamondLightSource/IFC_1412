@@ -42,6 +42,7 @@ entity gddr6_ctrl_admin is
 end;
 
 architecture arch of gddr6_ctrl_admin is
+    signal bank_open_in : bank_open_t := IDLE_OPEN_REQUEST;
     signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
     signal refresh : refresh_request_t := IDLE_REFRESH_REQUEST;
 
@@ -61,6 +62,21 @@ architecture arch of gddr6_ctrl_admin is
     signal bank_open_done : std_ulogic := '0';
     signal lookahead_done : std_ulogic := '0';
 
+    function check_open(bank_open : bank_open_t; status : banks_status_t)
+        return bank_open_t
+    is
+        variable result : bank_open_t;
+        variable bank : natural;
+    begin
+        bank := to_integer(bank_open.bank);
+        result := bank_open;
+        result.valid :=
+            result.valid and (
+                not status.active(bank) or
+                to_std_ulogic(status.row(bank) /= bank_open.row));
+        return result;
+    end;
+
 begin
     allow_lookahead <=
         to_std_ulogic(lookahead_i.bank /= last_bank_activated) and
@@ -69,7 +85,7 @@ begin
     process (clk_i)
         procedure update_done_flags is
         begin
-            if not bank_open_i.valid then
+            if not bank_open_in.valid then
                 bank_open_done <= '0';
             end if;
             if not lookahead_i.valid then
@@ -77,7 +93,7 @@ begin
             end if;
 
             if state = IDLE then
-                if bank_open_i.valid and not bank_open_done then
+                if bank_open_in.valid and not bank_open_done then
                     bank_open_done <= '1';
                 elsif lookahead_i.valid and allow_lookahead then
                     lookahead_done <= '1';
@@ -88,8 +104,8 @@ begin
         -- Looks for the next thing to do
         procedure load_next_action is
         begin
-            if bank_open_i.valid and not bank_open_done then
-                bank_open <= bank_open_i;
+            if bank_open_in.valid and not bank_open_done then
+                bank_open <= bank_open_in;
                 state <= START_PRE_ACT;
             elsif lookahead_i.valid and allow_lookahead then
                 bank_open <= lookahead_i;
@@ -140,6 +156,9 @@ begin
 
     begin
         if rising_edge(clk_i) then
+            -- Check open request is actually required
+            bank_open_in <= check_open(bank_open_i, status_i);
+
             -- Manage the completion flags
             update_done_flags;
 
