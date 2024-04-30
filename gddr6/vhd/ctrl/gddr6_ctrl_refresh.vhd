@@ -28,7 +28,7 @@ entity gddr6_ctrl_refresh is
         enable_refresh_i : in std_ulogic;
         -- Refresh request with completion handshake
         refresh_request_o : out refresh_request_t := IDLE_REFRESH_REQUEST;
-        refresh_ready_i : in std_ulogic
+        refresh_ack_i : in std_ulogic
     );
 end;
 
@@ -40,7 +40,7 @@ architecture arch of gddr6_ctrl_refresh is
 
     -- This refresh delay measures how far we are behind the regular 1.9us tick.
     -- The larger the delay the more urgent is the choice of bank to refresh.
-    -- In practice this will never increase above 2.
+    -- In practice this should never increase above 2.
     signal refresh_delay : natural range 0 to 3;
     signal do_full_refresh : std_ulogic := '0';
 
@@ -48,7 +48,7 @@ architecture arch of gddr6_ctrl_refresh is
     signal needs_refresh : std_ulogic_vector(0 to 7) := (others => '0');
     -- Candidate bank pairs at current stage of refresh
     signal refresh_list : std_ulogic_vector(0 to 7) := (others => '0');
-    -- Selected bank to refresh
+    -- Selected bank pair to refresh (paired with n+8)
     signal refresh_bank : natural range 0 to 7;
 
     type refresh_state_t is (
@@ -172,6 +172,7 @@ begin
                     refresh_request_o <= (
                         bank => to_unsigned(refresh_bank, 3),
                         all_banks => '0',
+                        priority => to_std_ulogic(refresh_delay > 1),
                         valid => '1'
                     );
                     needs_refresh(refresh_bank) <= '0';
@@ -182,6 +183,7 @@ begin
                     refresh_request_o <= (
                         bank => "111",
                         all_banks => '1',
+                        priority => to_std_ulogic(refresh_delay > 1),
                         valid => '1'
                     );
                     needs_refresh <= (others => '0');
@@ -189,7 +191,7 @@ begin
 
                 when REFRESH_WAIT =>
                     -- Wait for outstanding refresh to complete
-                    if refresh_ready_i then
+                    if refresh_ack_i then
                         refresh_request_o.valid <= '0';
                         if vector_or(needs_refresh) then
                             refresh_state <= REFRESH_NEXT;

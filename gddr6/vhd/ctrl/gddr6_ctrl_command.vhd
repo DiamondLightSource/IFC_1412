@@ -25,7 +25,7 @@ entity gddr6_ctrl_command is
 
         -- Refresh requests, serviced and acknowledged when free
         refresh_i : in refresh_request_t;
-        refresh_ready_o : out std_ulogic := '0';
+        refresh_ack_o : out std_ulogic := '0';
         -- Filtered lookahead request
         lookahead_i : in bank_open_t;
 
@@ -62,7 +62,7 @@ architecture arch of gddr6_ctrl_command is
     signal request_command_valid : std_ulogic;
 
     signal admin_request : banks_admin_t;
-    signal admin_accept : std_ulogic;
+    signal admin_ack : std_ulogic;
     signal admin_command : ca_command_t;
     signal admin_valid : std_ulogic := '0';
 
@@ -78,7 +78,7 @@ begin
         out_request_extra_i => out_request_extra,
 
         admin_i => admin_request,
-        admin_accept_o => admin_accept,
+        admin_ack_o => admin_ack,
 
         status_o => banks_status_o
     );
@@ -128,12 +128,12 @@ begin
         bank_open_i => bank_open,
         lookahead_i => lookahead_i,
         refresh_i => refresh_i,
-        refresh_ready_o => refresh_ready_o,
+        refresh_ack_o => refresh_ack_o,
 
         status_i => banks_status_o,
 
         admin_o => admin_request,
-        admin_ok_i => admin_accept,
+        admin_ack_i => admin_ack,
 
         command_o => admin_command,
         command_valid_o => admin_valid

@@ -97,6 +97,7 @@ package gddr6_ctrl_defs is
     type refresh_request_t is record
         bank : unsigned(2 downto 0);
         all_banks : std_ulogic;
+        priority : std_ulogic;
         valid : std_ulogic;
     end record;
 
@@ -157,6 +158,7 @@ package body gddr6_ctrl_defs is
     constant IDLE_REFRESH_REQUEST : refresh_request_t := (
         bank => (others => '0'),
         all_banks => '0',
+        priority => '0',
         valid => '0'
     );
 end;

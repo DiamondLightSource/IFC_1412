@@ -24,7 +24,7 @@ entity gddr6_ctrl_banks is
 
         -- Request to execute admin command
         admin_i : in banks_admin_t;
-        admin_accept_o : out std_ulogic := '0';
+        admin_ack_o : out std_ulogic := '0';
 
         status_o : out banks_status_t
     );
@@ -208,7 +208,7 @@ begin
         -- Block if there is any admin activity on this bank, specifically
         -- precharge.  Because of the clock skew between read/write and admin
         -- we also need to check against a registered copy of this request.
-        not (admin_i.valid and not admin_accept_o and
+        not (admin_i.valid and not admin_ack_o and
             to_std_ulogic(open_bank = admin_bank)) and
         not precharge_active(open_bank) and
         -- Don't accept if a read/write request is pending, this blocks
@@ -227,7 +227,7 @@ begin
     -- and doesn't need any special interlocking
     allow_admin <=
         not block_admin and not refresh_busy and not tRRD_delay
-        and not admin_accept_o;
+        and not admin_ack_o;
     request_activate <= admin_request(CMD_ACT, admin_i) and allow_admin;
     -- Precharge is either for a single bank or all banks
     request_precharge <= admin_request(CMD_PRE, admin_i) and allow_admin;
@@ -315,7 +315,7 @@ begin
             -- Register accept states
             bank_open_ok_o <= bank_open_ok;
             out_request_ok_o <= out_request_ok;
-            admin_accept_o <=
+            admin_ack_o <=
                 accept_activate or accept_precharge or accept_refresh;
         end if;
     end process;

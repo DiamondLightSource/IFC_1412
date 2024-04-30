@@ -27,14 +27,14 @@ entity gddr6_ctrl_admin is
         lookahead_i : in bank_open_t;
         -- Refresh requests, serviced and acknowledged when free
         refresh_i : in refresh_request_t;
-        refresh_ready_o : out std_ulogic := '0';
+        refresh_ack_o : out std_ulogic := '0';
 
         -- Banks status
         status_i : in banks_status_t;
 
         -- Admin command with completion handshake
         admin_o : out banks_admin_t := IDLE_BANKS_ADMIN;
-        admin_ok_i : in std_ulogic;
+        admin_ack_i : in std_ulogic;
 
         command_o : out ca_command_t;
         command_valid_o : out std_ulogic := '0'
@@ -43,24 +43,33 @@ end;
 
 architecture arch of gddr6_ctrl_admin is
     signal bank_open_in : bank_open_t := IDLE_OPEN_REQUEST;
+    signal lookahead_in : bank_open_t := IDLE_OPEN_REQUEST;
     signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
     signal refresh : refresh_request_t := IDLE_REFRESH_REQUEST;
 
+    -- The admin state machine performs two actions:
+    --  1/ Opening a bank required for an active read/write request or a
+    --     lookahead: this may involve precharging the target bank before
+    --     activating it.
+    --  2/ Performing a complete refresh request.  This may involve precharging
+    --     one, two, or all banks before issuing the refresh.
+    -- The following state transitions are performed:
+    --
+    --                     START         WAIT
+    --             +--->  PRE ACT --->  PRE ACT
+    --             |          \            \
+    --     +--> IDLE           +------------+---->  WAIT IDLE  -->  IDLE DELAY
+    --     |       |          /            /                            |
+    --     |       +--->   START  --->   WAIT                           |
+    --     |              PRE REF <---  PRE REF                         |
+    --     +------------------------------------------------------------+
     type state_t is (
-        IDLE,
-        START_PRE_ACT, WAIT_PRE_ACT,
-        START_PRE_REF, WAIT_PRE_REF,
-        WAIT_IDLE);
+        IDLE,                           -- Waiting for valid request
+        START_PRE_ACT, WAIT_PRE_ACT,    -- Open bank for read/write or lookahead
+        START_PRE_REF, WAIT_PRE_REF,    -- Refresh
+        WAIT_IDLE,                      -- Wait for last command to complete
+        IDLE_DELAY);                    -- Let bank open status propagate
     signal state : state_t := IDLE;
-
-    -- Keep track of the last bank activated so that we can block lookahead from
-    -- changing this bank.
-    signal last_bank_activated : unsigned(3 downto 0);
-    signal allow_lookahead : std_ulogic;
-
-    -- Keep track of bank request completions
-    signal bank_open_done : std_ulogic := '0';
-    signal lookahead_done : std_ulogic := '0';
 
     function check_open(bank_open : bank_open_t; status : banks_status_t)
         return bank_open_t
@@ -78,41 +87,27 @@ architecture arch of gddr6_ctrl_admin is
     end;
 
 begin
-    allow_lookahead <=
-        to_std_ulogic(lookahead_i.bank /= last_bank_activated) and
-        not lookahead_done;
-
     process (clk_i)
-        procedure update_done_flags is
-        begin
-            if not bank_open_in.valid then
-                bank_open_done <= '0';
-            end if;
-            if not lookahead_i.valid then
-                lookahead_done <= '0';
-            end if;
-
-            if state = IDLE then
-                if bank_open_in.valid and not bank_open_done then
-                    bank_open_done <= '1';
-                elsif lookahead_i.valid and allow_lookahead then
-                    lookahead_done <= '1';
-                end if;
-            end if;
-        end;
-
         -- Looks for the next thing to do
         procedure load_next_action is
         begin
-            if bank_open_in.valid and not bank_open_done then
+            if refresh_i.valid and refresh_i.priority then
+                -- Priority refresh requests override everything else
+                refresh <= refresh_i;
+                refresh_ack_o <= '1';
+                state <= START_PRE_REF;
+            elsif bank_open_in.valid then
+                -- Read/Write request is pending
                 bank_open <= bank_open_in;
                 state <= START_PRE_ACT;
-            elsif lookahead_i.valid and allow_lookahead then
-                bank_open <= lookahead_i;
+            elsif lookahead_in.valid then
+                -- Lookahead request
+                bank_open <= lookahead_in;
                 state <= START_PRE_ACT;
             elsif refresh_i.valid then
+                -- Normal refresh requests are fitted in last
                 refresh <= refresh_i;
-                refresh_ready_o <= '1';
+                refresh_ack_o <= '1';
                 state <= START_PRE_REF;
             else
                 state <= IDLE;
@@ -133,7 +128,6 @@ begin
 
         procedure start_activate is
         begin
-            last_bank_activated <= bank_open.bank;
             admin_o <= (
                 command => CMD_ACT,
                 bank => bank_open.bank,
@@ -156,11 +150,10 @@ begin
 
     begin
         if rising_edge(clk_i) then
-            -- Check open request is actually required
+            -- Pipelined checks of incoming open requests to filter out requests
+            -- that need no action
             bank_open_in <= check_open(bank_open_i, status_i);
-
-            -- Manage the completion flags
-            update_done_flags;
+            lookahead_in <= check_open(lookahead_i, status_i);
 
             -- Select appropriate request to service
             case state is
@@ -181,7 +174,7 @@ begin
                     end if;
                 when WAIT_PRE_ACT =>
                     -- Wait for precharge to complete before activating
-                    if admin_ok_i then
+                    if admin_ack_i then
                         start_activate;
                         state <= WAIT_IDLE;
                     end if;
@@ -190,7 +183,7 @@ begin
                     -- doing an all banks refresh then it's simplest to
                     -- unconditionally precharge all the banks, otherwise we
                     -- have to check two banks
-                    refresh_ready_o <= '0';
+                    refresh_ack_o <= '0';
                     if refresh.all_banks then
                         start_precharge("0000", '1');
                         state <= WAIT_PRE_REF;
@@ -206,7 +199,7 @@ begin
                     end if;
                 when WAIT_PRE_REF =>
                     -- Waiting for each precharge to finish
-                    if admin_ok_i then
+                    if admin_ack_i then
                         if refresh.all_banks then
                             start_refresh;
                             state <= WAIT_IDLE;
@@ -217,10 +210,14 @@ begin
                     end if;
                 when WAIT_IDLE =>
                     -- Wait for requested action to complete
-                    if admin_ok_i then
+                    if admin_ack_i then
                         admin_o.valid <= '0';
-                        state <= IDLE;
+                        state <= IDLE_DELAY;
                     end if;
+                when IDLE_DELAY =>
+                    -- A one tick delay so that the computed bank status is
+                    -- fully in step
+                    state <= IDLE;
             end case;
 
             -- Convert admin request to SG command
@@ -245,5 +242,5 @@ begin
 
     -- Admin commands need to be emitted one tick earlier than read/write
     -- commands to compensate for deliberate timing skew elsewhere
-    command_valid_o <= admin_ok_i;
+    command_valid_o <= admin_ack_i;
 end;

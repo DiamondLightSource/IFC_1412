@@ -64,7 +64,7 @@ architecture arch of gddr6_ctrl is
     signal priority_direction : direction_t;
     signal current_direction : direction_t;
     signal refresh_command : refresh_request_t;
-    signal refresh_ready : std_ulogic;
+    signal refresh_ack : std_ulogic;
 
 begin
     -- Generate read requests from AXI addresses
@@ -123,7 +123,7 @@ begin
         status_i => banks_status,
         enable_refresh_i => ctrl_setup_i.enable_refresh,
         refresh_request_o => refresh_command,
-        refresh_ready_i => refresh_ready
+        refresh_ack_i => refresh_ack
     );
 
     -- Command dispatch including timing control and bank management.  Takes as
@@ -144,7 +144,7 @@ begin
 
         lookahead_i => open_lookahead,
         refresh_i => refresh_command,
-        refresh_ready_o => refresh_ready,
+        refresh_ack_o => refresh_ack,
 
         bypass_command_i => SG_NOP,
         bypass_valid_i => '0',
