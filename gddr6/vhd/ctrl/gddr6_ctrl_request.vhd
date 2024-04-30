@@ -52,6 +52,7 @@ architecture arch of gddr6_ctrl_request is
     signal bank_open_guard : std_ulogic;
     signal bank_open_enable : std_ulogic;
     signal bank_open_ready : std_ulogic;
+    signal out_request_guard : std_ulogic;
     signal out_request_enable : std_ulogic;
     signal out_request_ready : std_ulogic;
 
@@ -94,8 +95,9 @@ begin
         bank_open_ready, bank_open_enable);
 
     -- Loading of out_request
+    out_request_guard <= bank_open_ok;
     compute_enable(
-        out_request_o.valid, out_request_ok_i, '1',
+        out_request_o.valid, out_request_ok_i, out_request_guard,
         out_request_ready, out_request_enable);
 
     -- Four pipeline stages with input guards on stages 1 and 3.  Written from
@@ -184,11 +186,15 @@ begin
 
             -- Load out request
             if out_request_enable then
-                out_request_o <= (
-                    direction => stage(2).direction,
-                    bank => stage(2).bank,
-                    valid => stage(2).valid and not stage(2).extra
-                );
+                if out_request_guard then
+                    out_request_o <= (
+                        direction => stage(2).direction,
+                        bank => stage(2).bank,
+                        valid => stage(2).valid and not stage(2).extra
+                    );
+                else
+                    out_request_o.valid <= '0';
+                end if;
             end if;
             -- Let banks know about any extra commands in the pipeline
             out_request_extra_o <= stage(2).valid and stage(2).extra;
