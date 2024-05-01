@@ -115,8 +115,6 @@ architecture arch of gddr6_ctrl_banks is
     signal tRTW_counter : natural range 0 to t_RTW - 2 := 0;
     -- tRTW: minimum time from read to write commands
     signal tWTR_counter : natural range 0 to t_WTR_time - 2 := 0;
-    -- tRRD: ensure extra tick after ACT for following ACT or REF command
-    signal tRRD_delay : std_ulogic := '0';
     -- tRREFD: delay from REF to REF or ACT on different bank
     signal tRREFD_counter : natural range 0 to t_RREFD - 2 := 0;
     signal refresh_busy : std_ulogic := '0';
@@ -125,8 +123,16 @@ architecture arch of gddr6_ctrl_banks is
     signal refresh_all : std_ulogic := '0';
 
     -- Flags used to avoid precharging a bank while it has been accepted for
-    -- opening and before it has been read or written.
+    -- opening and before it has been read or written.  This flag is incremented
+    -- when bank_open_ok_o is set and decremented when out_request_ok_o is set.
+    -- It is possible for a second bank_open request to be acknowledged before
+    -- the first out_request has completed, so we need up to two outstanding
+    -- flags.  We use a 2-bit shift register rather than a counter to simplify
+    -- testing the guard flag.
     signal precharge_guard : std_ulogic_vector(0 to 15) := (others => '0');
+    signal precharge_guard_carry : std_ulogic_vector(0 to 15)
+        := (others => '0');
+
     -- Copy of precharge request used as part of open guard
     signal precharge_active : std_ulogic_vector(0 to 15) := (others => '0');
 
@@ -208,12 +214,9 @@ begin
         -- Block if there is any admin activity on this bank, specifically
         -- precharge.  Because of the clock skew between read/write and admin
         -- we also need to check against a registered copy of this request.
-        not (admin_i.valid and not admin_ack_o and
+        not (admin_i.valid and not block_admin and
             to_std_ulogic(open_bank = admin_bank)) and
-        not precharge_active(open_bank) and
-        -- Don't accept if a read/write request is pending, this blocks
-        -- overlapping open and out.
-        (not out_request_i.valid or out_request_ok_o or out_request_ok);
+        not precharge_active(open_bank);
 
     -- Decode incoming read/write request
     request_read <=
@@ -225,9 +228,7 @@ begin
 
     -- Activate is the simplest admin request as this only affects a single bank
     -- and doesn't need any special interlocking
-    allow_admin <=
-        not block_admin and not refresh_busy and not tRRD_delay
-        and not admin_ack_o;
+    allow_admin <= not block_admin and not refresh_busy;
     request_activate <= admin_request(CMD_ACT, admin_i) and allow_admin;
     -- Precharge is either for a single bank or all banks
     request_precharge <= admin_request(CMD_PRE, admin_i) and allow_admin;
@@ -249,12 +250,13 @@ begin
         request_refresh and
         vector_and(not request_refresh_banks or allow_refresh);
 
-    process (clk_i) begin
+    process (clk_i)
+        variable guard_up : std_ulogic;
+        variable guard_down : std_ulogic;
+    begin
         if rising_edge(clk_i) then
             -- Ensure a one tick delay between successive read or write commands
             tCCD_delay <= accept_read or accept_write;
-            -- One tick delay after activate
-            tRRD_delay <= accept_activate;
 
             -- Ensure read not accepted until t_WTR_time after write
             if accept_write then
@@ -296,21 +298,32 @@ begin
                 refresh_busy <= '0';
             end if;
 
-            -- Maintain the precharge guard: set bit when open accepted, clear
-            -- bit when read or write accepted and not overlapping with open.
+            -- Maintain the precharge guard: increment guard when open accepted,
+            -- decrement when read or write accepted
             for bank in 0 to 15 loop
-                if bank = open_bank and bank_open_ok = '1' then
+                guard_up :=
+                    to_std_ulogic(bank = open_bank) and bank_open_ok;
+                guard_down :=
+                    to_std_ulogic(bank = request_bank) and out_request_ok;
+                if guard_up and not guard_down then
+                    assert not precharge_guard_carry(bank) severity failure;
+                    precharge_guard_carry(bank) <= precharge_guard(bank);
                     precharge_guard(bank) <= '1';
-                elsif bank = request_bank and out_request_ok = '1' then
-                    precharge_guard(bank) <= '0';
+                elsif not guard_up and guard_down then
+                    assert precharge_guard(bank) severity failure;
+                    precharge_guard(bank) <= precharge_guard_carry(bank);
+                    precharge_guard_carry(bank) <= '0';
                 end if;
             end loop;
             -- This is a copy of request_precharge_banks used to allow open to
             -- be guarded
             precharge_active <= request_precharge_banks;
 
-            -- Block admin commands where necessary
-            block_admin <= out_request_ok or out_request_extra_i;
+            block_admin <=
+                -- Block admin commands when a request is being serviced
+                out_request_ok or out_request_extra_i or
+                -- Also block admin commands when acknowledged
+                accept_activate or accept_precharge or accept_refresh;
 
             -- Register accept states
             bank_open_ok_o <= bank_open_ok;

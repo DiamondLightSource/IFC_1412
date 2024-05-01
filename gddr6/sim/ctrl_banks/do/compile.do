@@ -14,7 +14,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_bank.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_banks.vhd
+    $vhd_dir/ctrl/gddr6_ctrl_banks.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_request.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/testbench.vhd
@@ -26,6 +27,7 @@ view wave
 add wave -group "Bank(0)" banks/gen_banks(0)/bank_inst/*
 add wave -group "Bank(1)" banks/gen_banks(1)/bank_inst/*
 add wave -group "Banks" banks/*
+add wave -group "Request" request/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

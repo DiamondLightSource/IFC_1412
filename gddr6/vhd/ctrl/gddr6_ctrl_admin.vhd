@@ -46,6 +46,7 @@ architecture arch of gddr6_ctrl_admin is
     signal lookahead_in : bank_open_t := IDLE_OPEN_REQUEST;
     signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
     signal refresh : refresh_request_t := IDLE_REFRESH_REQUEST;
+    signal refresh_ack : std_ulogic := '0';
 
     -- The admin state machine performs two actions:
     --  1/ Opening a bank required for an active read/write request or a
@@ -94,7 +95,7 @@ begin
             if refresh_i.valid and refresh_i.priority then
                 -- Priority refresh requests override everything else
                 refresh <= refresh_i;
-                refresh_ack_o <= '1';
+                refresh_ack <= '1';
                 state <= START_PRE_REF;
             elsif bank_open_in.valid then
                 -- Read/Write request is pending
@@ -107,7 +108,7 @@ begin
             elsif refresh_i.valid then
                 -- Normal refresh requests are fitted in last
                 refresh <= refresh_i;
-                refresh_ack_o <= '1';
+                refresh_ack <= '1';
                 state <= START_PRE_REF;
             else
                 state <= IDLE;
@@ -212,11 +213,15 @@ begin
                     -- Wait for requested action to complete
                     if admin_ack_i then
                         admin_o.valid <= '0';
+                        -- Acknowledge completion of refresh if appropriate
+                        refresh_ack_o <= refresh_ack;
+                        refresh_ack <= '0';
                         state <= IDLE_DELAY;
                     end if;
                 when IDLE_DELAY =>
                     -- A one tick delay so that the computed bank status is
                     -- fully in step
+                    refresh_ack_o <= '0';
                     state <= IDLE;
             end case;
 

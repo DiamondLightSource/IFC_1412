@@ -6,6 +6,7 @@ use std.textio.all;
 use work.support.all;
 
 use work.gddr6_ctrl_defs.all;
+use work.gddr6_ctrl_command_defs.all;
 
 entity testbench is
 end testbench;
@@ -22,26 +23,27 @@ architecture arch of testbench is
     end;
 
     -- Interface to banks
-    signal bank_open : bank_open_t := IDLE_OPEN_REQUEST;
+    signal bank_open : bank_open_t;
     signal bank_open_ok : std_ulogic;
-    signal out_request : out_request_t := IDLE_OUT_REQUEST;
-    signal out_request_extra : std_ulogic := '0';
+    signal out_request : out_request_t;
+    signal out_request_extra : std_ulogic;
     signal out_request_ok : std_ulogic;
     signal admin : banks_admin_t;
-    signal admin_accept : std_ulogic;
+    signal admin_ack : std_ulogic;
     signal status : banks_status_t;
+
+    -- Interface to request
+    signal mux_request : core_request_t;
+    signal mux_ready : std_ulogic;
+    signal completion : request_completion_t;
+    signal command : ca_command_t;
+    signal command_valid : std_ulogic;
 
     -- The out request needs to be delayed one tick
     signal final_out_request : out_request_t := IDLE_OUT_REQUEST;
     signal final_out_request_ok : std_ulogic := '0';
+    signal out_request_extra_delay : std_ulogic := '0';
     signal final_out_request_extra : std_ulogic := '0';
-
-    -- Communication channel to request flow simulation.  Request must assign
-    -- both test_open and test_out, and wait for load_test.
-    signal test_open : bank_open_t;
-    signal test_out : out_request_t;
-    signal test_out_extra : std_ulogic;
-    signal load_test : std_ulogic;
 
     signal tick_counter : natural := 0;
     signal last_tick : natural := 0;
@@ -91,78 +93,74 @@ begin
         out_request_ok_o => out_request_ok,
         out_request_extra_i => out_request_extra,
         admin_i => admin,
-        admin_accept_o => admin_accept,
+        admin_ack_o => admin_ack,
         status_o => status
     );
 
+    request : entity work.gddr6_ctrl_request port map (
+        clk_i => clk,
 
-    -- Emulation of ctrl_request via test_{open,out,ready}
-    bank_open <= test_open;
-    load_test <=
-        (bank_open_ok or not test_open.valid) and
-        (out_request_ok or not out_request.valid);
+        mux_request_i => mux_request,
+        mux_ready_o => mux_ready,
+        completion_o => completion,
+        bank_open_o => bank_open,
+        bank_open_ok_i => bank_open_ok,
+        out_request_o => out_request,
+        out_request_ok_i => out_request_ok,
+        out_request_extra_o => out_request_extra,
+        command_o => command,
+        command_valid_o => command_valid
+    );
+
+
+    -- Align out requests with admin commands.  This reflects the delays in the
+    -- final stage of request processing, including an extra tick of delay to
+    -- align the extra command marker
     process (clk) begin
         if rising_edge(clk) then
-            if out_request_ok or not out_request.valid then
-                -- Only advance out request when previous value consumed
-                if bank_open_ok and test_open.valid then
-                    out_request <= test_out;
-                    out_request_extra <= test_out_extra;
-                elsif test_out_extra then
-                    out_request.valid <= '0';
-                    out_request_extra <= '1';
-                else
-                    out_request.valid <= '0';
-                    out_request_extra <= '0';
-                end if;
-            end if;
-
             final_out_request <= out_request;
             final_out_request_ok <= out_request_ok;
-            final_out_request_extra <= out_request_extra;
+            out_request_extra_delay <= out_request_extra;
+            final_out_request_extra <= out_request_extra_delay;
         end if;
     end process;
 
 
     -- Generate read/write requests
     process
+        procedure send_request(
+            bank : natural; row : unsigned; direction : direction_t;
+            extra : std_ulogic) is
+        begin
+            mux_request <= (
+                direction => direction,
+                write_advance => '0',
+                bank => to_unsigned(bank, 4),
+                row => row,
+                command => SG_NOP,
+                next_extra => '0',
+                extra => extra,
+                valid => '1'
+            );
+            loop
+                clk_wait;
+                exit when mux_ready;
+            end loop;
+            mux_request.valid <= '0';
+        end;
+
         procedure do_request(
             bank : natural; row : unsigned; direction : direction_t;
             extra : natural := 0) is
         begin
-            test_open <= (
-                bank => to_unsigned(bank, 4),
-                row => row,
-                valid => '1'
-            );
-            test_out <= (
-                direction => direction,
-                bank => to_unsigned(bank, 4),
-                valid => '1');
-            test_out_extra <= '0';
-            loop
-                clk_wait;
-                exit when load_test;
+            send_request(bank, row, direction, '0');
+            for i in 1 to extra loop
+                send_request(bank, row, DIR_READ, '1');
             end loop;
-            test_open <= IDLE_OPEN_REQUEST;
-            test_out <= IDLE_OUT_REQUEST;
-            if extra > 0 then
-                test_out_extra <= '1';
-                loop
-                    clk_wait;
-                    exit when out_request_ok;
-                end loop;
-                for i in 2 to extra loop
-                    clk_wait;
-                end loop;
-                test_out_extra <= '0';
-            end if;
         end;
 
     begin
-        test_open <= IDLE_OPEN_REQUEST;
-        test_out <= IDLE_OUT_REQUEST;
-        test_out_extra <= '0';
+        mux_request <= IDLE_CORE_REQUEST;
         clk_wait(2);
 
         -- Start with mixing writes to multiple banks interleaved with activate
@@ -177,7 +175,7 @@ begin
         do_request(1, 14X"0000", DIR_WRITE);
 
         -- Wait for tWTP test to complete, then do read for tRTP test
-        wait_for_tick(48);
+        wait_for_tick(47);
         do_request(0, 14X"0000", DIR_READ);
         do_request(5, 14X"2345", DIR_READ);
 
@@ -191,7 +189,6 @@ begin
         do_request(0, 14X"0000", DIR_READ);
         do_request(0, 14X"0000", DIR_READ);
         do_request(0, 14X"0000", DIR_READ);
-
 
         write("All requests sent");
 
@@ -215,11 +212,9 @@ begin
             );
             loop
                 clk_wait;
-                exit when admin_accept;
+                exit when admin_ack;
             end loop;
             admin <= IDLE_BANKS_ADMIN;
-            -- Ensure we don't try to run admin commands back to back
-            clk_wait;
         end;
 
     begin
@@ -229,6 +224,7 @@ begin
         do_admin(CMD_ACT, 1, 14X"0000");
         do_admin(CMD_ACT, 0, 14X"0000");
         do_admin(CMD_ACT, 3, 14X"0000");
+        clk_wait;
         do_admin(CMD_ACT, 6, 14X"0000");
 
         -- Run until initial round of read/write tests complete
@@ -264,10 +260,10 @@ begin
         wait_for_tick(165);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
-        clk_wait(10);
+        clk_wait(4);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
-
+        clk_wait(20);
 
         write("All admin sent");
 
@@ -287,7 +283,7 @@ begin
                 ticks := ticks + 1;
                 exit when
                     (final_out_request.valid and final_out_request_ok) or
-                    (admin.valid and admin_accept);
+                    (admin.valid and admin_ack);
                 assert ticks < 50
                     report "Looks like we're stuck"
                     severity failure;
@@ -320,7 +316,7 @@ begin
             variable ok : boolean;
         begin
             wait_ready;
-            if admin.valid and admin_accept then
+            if admin.valid and admin_ack then
                 delta := tick_counter - last_tick;
                 ok :=
                     admin.command = command and admin.all_banks = all_banks and
@@ -350,11 +346,11 @@ begin
         -- We start the test with three back to back activates followed by
         -- four writes, two with mask data, and then read to write and write to
         -- read turnaround
-        expect(CMD_ACT, 5);
+        expect(CMD_ACT, 6);
         expect(CMD_ACT, 2);     -- t_RRD
         expect(CMD_ACT, 2);
         -- The bank open check adds an unavoidable two extra ticks
-        expect(DIR_WRITE, 2);   -- t_RCDWR + bank open check
+        expect(DIR_WRITE, 3);   -- t_RCDWR + bank open check + pipeline delays
         -- Activate fits into gap
         expect(CMD_ACT);
         expect(DIR_WRITE);
@@ -393,14 +389,14 @@ begin
         expect(CMD_ACT, 29);    -- t_RFCab
 
         -- Precharge checks
-        expect(CMD_PRE, 13);
+        expect(CMD_PRE, 12);
         expect(CMD_ACT, 5);
         expect(DIR_READ, 5);
         expect(DIR_READ, 2);
-        expect(DIR_READ, 2);
-        expect(DIR_READ, 2);
         expect(CMD_PRE, 2);
         expect(CMD_ACT, 5);
+        expect(DIR_READ, 5);
+        expect(DIR_READ, 2);
 
         -- Check that all timing checks were satisfied
         clk_wait(2);
@@ -436,7 +432,7 @@ begin
                 last_tick <= tick_counter;
             end if;
 
-            if admin.valid and admin_accept then
+            if admin.valid and admin_ack then
                 write(delta &
                     name(admin.command, admin.all_banks) & " " &
                     to_hstring(admin.bank) & " " & to_hstring(admin.row));
