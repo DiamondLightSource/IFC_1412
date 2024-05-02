@@ -133,7 +133,7 @@ architecture arch of gddr6_ctrl_banks is
     signal precharge_guard_carry : std_ulogic_vector(0 to 15)
         := (others => '0');
 
-    -- Copy of precharge request used as part of open guard
+    -- Registered copy of request_precharge_banks used to block bank open
     signal precharge_active : std_ulogic_vector(0 to 15) := (others => '0');
 
     -- Block admin commands during read or write commands.  Admin commands are
@@ -201,21 +201,16 @@ begin
     request_bank <= to_integer(out_request_i.bank);
     admin_bank <= to_integer(admin_i.bank);
 
-    -- Bank open request: need to ensure that the requested bank is open on
-    -- the correct row.  We also need to interact correctly with precharge: to
-    -- ensure that refresh can take priority precharge needs to block opening
-    -- the bank here, and we also need to ensure that once the bank has been
-    -- accepted that precharge is blocked on this bank until the corresponding
-    -- read/write request has completed.
+    -- Bank open request: pass requested when bank is correctly configured
     bank_open_ok <=
+        -- Ignore request during acknowledge cycle
         not bank_open_ok_o and
+        -- Ensure request is valid and selected bank is active
         bank_open_i.valid and active(open_bank) and
+        -- Ensure selected bank has the requested row open
         to_std_ulogic(row(open_bank) = bank_open_i.row) and
-        -- Block if there is any admin activity on this bank, specifically
-        -- precharge.  Because of the clock skew between read/write and admin
-        -- we also need to check against a registered copy of this request.
-        not (admin_i.valid and not block_admin and
-            to_std_ulogic(open_bank = admin_bank)) and
+        -- Allow any precharge request on this bank to take precedence
+        not request_precharge_banks(open_bank) and
         not precharge_active(open_bank);
 
     -- Decode incoming read/write request
@@ -315,9 +310,10 @@ begin
                     precharge_guard_carry(bank) <= '0';
                 end if;
             end loop;
-            -- This is a copy of request_precharge_banks used to allow open to
-            -- be guarded
-            precharge_active <= request_precharge_banks;
+
+            -- Needed as part of bank_open_ok guard
+            precharge_active <=
+                request_precharge_banks and not accept_precharge;
 
             block_admin <=
                 -- Block admin commands when a request is being serviced

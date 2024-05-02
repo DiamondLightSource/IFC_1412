@@ -245,13 +245,14 @@ begin
         do_admin(CMD_ACT, 5, 14X"2345");
 
         -- Wait just long enough for reads on this row on bank 5 to complete
-        clk_wait(7);
+        clk_wait(8);
 
         -- Switch bank 5 to new row
         do_admin(CMD_PRE, 5);
         do_admin(CMD_ACT, 5, 14X"2346");
 
         -- Now try a full refresh
+        clk_wait;
         do_admin(CMD_PRE, 0, all_banks => '1');
         do_admin(CMD_REF, 0, all_banks => '1');
         do_admin(CMD_ACT, 0, 14X"0000");
@@ -260,10 +261,9 @@ begin
         wait_for_tick(165);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
-        clk_wait(4);
+        clk_wait(3);
         do_admin(CMD_PRE, 0);
         do_admin(CMD_ACT, 0, 14X"0000");
-        clk_wait(20);
 
         write("All admin sent");
 
@@ -379,7 +379,7 @@ begin
 
         -- Reading on successive banks
         expect(DIR_READ, 2);
-        expect(CMD_PRE, 2);     -- t_RTP
+        expect(CMD_PRE, 3);     -- t_RTP
         expect(CMD_ACT, 5);     -- t_RP
         expect(DIR_READ, 5);    -- t_RCDRD
 
@@ -389,7 +389,7 @@ begin
         expect(CMD_ACT, 29);    -- t_RFCab
 
         -- Precharge checks
-        expect(CMD_PRE, 12);
+        expect(CMD_PRE, 11);
         expect(CMD_ACT, 5);
         expect(DIR_READ, 5);
         expect(DIR_READ, 2);
