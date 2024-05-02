@@ -26,6 +26,8 @@ entity gddr6_ctrl_refresh is
         -- Top level refresh enable asserted during normal operation.  This acts
         -- as a reset when deasserted
         enable_refresh_i : in std_ulogic;
+        -- Request to block read/write requests when refresh falling behind
+        stall_requests_o : out std_ulogic := '0';
         -- Refresh request with completion handshake
         refresh_request_o : out refresh_request_t := IDLE_REFRESH_REQUEST;
         refresh_ack_i : in std_ulogic
@@ -41,7 +43,9 @@ architecture arch of gddr6_ctrl_refresh is
     -- This refresh delay measures how far we are behind the regular 1.9us tick.
     -- The larger the delay the more urgent is the choice of bank to refresh.
     -- In practice this should never increase above 2.
-    signal refresh_delay : natural range 0 to 3;
+    constant MAX_REFRESH_DELAY : natural := 3;
+    constant STALL_REFRESH_DELAY : natural := 3;
+    signal refresh_delay : natural range 0 to MAX_REFRESH_DELAY;
     signal do_full_refresh : std_ulogic := '0';
 
     -- List of bank pairs that still need refresh in this round
@@ -140,6 +144,12 @@ begin
             elsif refresh_state = REFRESH_START then
                 do_full_refresh <= '0';
             end if;
+
+            -- Issue input stall when we reach the maximum outstanding refresh
+            -- count.  We could be more clever about this, but this will work
+            -- for now.  This should never normally happen!
+            stall_requests_o <=
+                to_std_ulogic(refresh_delay >= STALL_REFRESH_DELAY);
 
             -- Compute list of banks currently eligible for refresh
             refresh_list <= get_refresh_list;
