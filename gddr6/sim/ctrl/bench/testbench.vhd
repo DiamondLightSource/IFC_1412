@@ -24,7 +24,9 @@ architecture arch of testbench is
 
     signal tick_count : natural;
 
-    constant SHORT_REFRESH_COUNT : natural := 200;
+    -- Setting the refresh interval to 100 rather than 475 ticks results in a
+    -- much more challenging test and can expose subtle issues in the design.
+    constant SHORT_REFRESH_COUNT : natural := 150;
     constant LONG_REFRESH_COUNT : natural := 10;
 
     signal ctrl_setup : ctrl_setup_t;
@@ -34,6 +36,10 @@ architecture arch of testbench is
     signal phy_ca : phy_ca_t;
     signal phy_dq_out : phy_dq_out_t;
     signal phy_dq_in : phy_dq_in_t;
+
+    signal verbose : boolean := false;
+    signal read_priority : boolean := false;
+    signal write_priority : boolean := false;
 
     procedure write(message : string := "") is
         variable linebuffer : line;
@@ -51,11 +57,25 @@ architecture arch of testbench is
         return to_string(100.0 * efficiency, 1) & "%";
     end;
 
+    procedure wait_for_tick(target : natural) is
+    begin
+        while tick_count < target loop
+            clk_wait;
+        end loop;
+    end;
+
+    procedure wait_for(signal input : in boolean; target : boolean := true) is
+    begin
+        while input /= target loop
+            clk_wait;
+        end loop;
+    end;
+
 begin
     clk <= not clk after 2 ns;
 
     ctrl : entity work.gddr6_ctrl generic map (
---         SHORT_REFRESH_COUNT => SHORT_REFRESH_COUNT,
+        SHORT_REFRESH_COUNT => SHORT_REFRESH_COUNT,
         LONG_REFRESH_COUNT => LONG_REFRESH_COUNT
     ) port map (
         clk_i => clk,
@@ -68,12 +88,30 @@ begin
         phy_dq_i => phy_dq_in
     );
 
-    ctrl_setup <= (
-        enable_refresh => '1',
-        priority_mode => '1',       -- Select preferred direction
---         priority_mode => '0',       -- Switch directions regularly
-        priority_direction => '1'   -- Writes take priority
-    );
+
+
+    process begin
+        ctrl_setup <= (
+            enable_refresh => '1',
+            priority_mode => '0',
+            priority_direction => '1'
+        );
+
+        loop
+            clk_wait;
+            if read_priority and not write_priority then
+                ctrl_setup.priority_mode <= '1';
+                ctrl_setup.priority_direction <= '0';
+            elsif not read_priority and write_priority then
+                ctrl_setup.priority_mode <= '1';
+                ctrl_setup.priority_direction <= '1';
+            else
+                ctrl_setup.priority_mode <= '0';
+            end if;
+        end loop;
+
+        wait;
+    end process;
 
 
     -- Generate write requests
@@ -88,7 +126,6 @@ begin
 
         variable write_count : natural := 0;
         variable start_tick : natural;
-
 
         procedure do_write(
             address : natural; count : natural := 1;
@@ -124,36 +161,85 @@ begin
             axi_request.wal_valid <= '0';
         end;
 
+        procedure start_test(description : string) is
+        begin
+            start_tick := tick_count;
+            write_count := 0;
+            write(
+                "@ " & to_string(tick_count) &
+                " Starting " & description & " test");
+        end;
+
+        procedure end_test(description : string := "") is
+        begin
+            write(
+                "@ " & to_string(tick_count) & " " & description &
+                " done: " & write_efficiency(start_tick, write_count));
+        end;
+
     begin
         axi_request.wa_valid <= '0';
         axi_request.wal_valid <= '0';
 
         clk_wait(2);
 
-        -- A couple of standalone writes
-        do_write(999);
-        clk_wait(10);
-        do_write(999);
-        clk_wait(10);
-wait;
-
-        start_tick := tick_count;
+        -- Start with a write efficiency test.  The result depends on the value
+        -- of SHORT_REFRESH_COUNT according to the following table:
+        --  475 : 99.1%     200 : 92.5%     150 : 85.7%     100 : 68.7%
+        -- Note that below 100 refresh tends to run out of time!
+        start_test("write only timing test");
+        write_priority <= true;
         for n in 0 to 128 loop
             do_write(32 * n, 32, lookahead => 32 * (n + 1));
         end loop;
-        write("Bursts done: " & write_efficiency(start_tick, write_count));
-        wait;
+        write_priority <= false;
+        end_test("write only");
 
-        start_tick := tick_count;
+        -- Wait out the read test
+        wait_for(read_priority, false);
+        wait_for(read_priority);
+        wait_for(read_priority, false);
+
+        -- Now do the burst test with overlapping reads and writes
+        start_test("shared write timing test");
+        for n in 0 to 64 loop
+            do_write(32 * n, 32, lookahead => 32 * (n + 1));
+        end loop;
+        end_test("shared write");
+
+        -- A couple of standalone writes
+        do_write(999, mask => WSM & NOP & NOP & NOP);
+        do_write(999);
+        do_write(999, mask => WSM & WDM & WSM & WOM);
+        clk_wait(10);
+        do_write(999);
+        clk_wait(10);
+
+        start_test("scattered and large writes");
         for n in 0 to 512 loop
             do_write(n, mask => WSM & WSM & WOM & WOM);
---             do_write(n + 512);
---             do_write(n + 1024);
---             do_write(n + 2048);
+            do_write(n + 512);
+            do_write(n + 1024);
         end loop;
+        end_test("large writes");
 
-        write("All writes complete: " &
-            write_efficiency(start_tick, write_count));
+        start_test("conflicting banks");
+        for n in 0 to 64 loop
+            do_write(n, 32, lookahead => n + 512);
+            do_write(n + 512, 32, lookahead => n + 2048);
+            do_write(n + 2048, 32, lookahead => 32 * (n + 1));
+        end loop;
+        end_test("conflicting");
+
+        start_test("multiple banks");
+        for n in 0 to 64 loop
+            do_write(n, 32, lookahead => n + 512);
+            do_write(n + 512, 32, lookahead => n + 1024);
+            do_write(n + 1024, 32, lookahead => 32 * (n + 1));
+        end loop;
+        end_test("multiple");
+
+        write("All writes complete");
 
         wait;
     end process;
@@ -163,18 +249,51 @@ wait;
         variable read_count : natural := 0;
         variable start_tick : natural;
 
-
-        procedure do_read(address : natural) is
+        procedure do_read(
+            address : natural; count : natural := 1;
+            lookahead : natural := 2**25) is
         begin
-            axi_request.ra_address <= to_unsigned(address, 25);
             axi_request.ra_valid <= '1';
-            loop
-                clk_wait;
-                exit when axi_response.ra_ready;
+            if lookahead < 2**25 then
+                axi_request.ral_address <= to_unsigned(lookahead, 25);
+                axi_request.ral_valid <= '1';
+            else
+                axi_request.ral_valid <= '0';
+            end if;
+
+            -- Emit the burst, count down to end of burst for lookahead
+            for i in 0 to count-1 loop
+                axi_request.ra_address <= to_unsigned(address + i, 25);
+                axi_request.ral_count <= to_unsigned(count - i - 1, 5);
+                loop
+                    clk_wait;
+                    exit when axi_response.ra_ready;
+                end loop;
+                read_count := read_count + 1;
             end loop;
+
+            -- Between requests mark address and lookahead as invalid
             axi_request.ra_address <= (others => 'U');
             axi_request.ra_valid <= '0';
-            read_count := read_count + 1;
+            axi_request.ral_address <= (others => 'U');
+            axi_request.ral_count <= (others => 'U');
+            axi_request.ral_valid <= '0';
+        end;
+
+        procedure start_test(description : string) is
+        begin
+            start_tick := tick_count;
+            read_count := 0;
+            write(
+                "@ " & to_string(tick_count) &
+                " Starting " & description & " test");
+        end;
+
+        procedure end_test(description : string := "") is
+        begin
+            write(
+                "@ " & to_string(tick_count) & " " & description &
+                " done: " & write_efficiency(start_tick, read_count));
         end;
 
     begin
@@ -183,32 +302,41 @@ wait;
 
         clk_wait(5);
 
-        -- A couple of standalone reads
-        do_read(999);
-        clk_wait(10);
-        do_read(999);
-        clk_wait(10);
+        -- Wait for write test to complete
+        wait_for(write_priority, false);
 
-wait;
+        start_test("read only timing test");
+        read_priority <= true;
+        for n in 0 to 128 loop
+            do_read(32 * n, 32, lookahead => 32 * (n + 1));
+        end loop;
+        read_priority <= false;
+        end_test("read only");
+
+        start_test("shared read timing test");
+        for n in 0 to 64 loop
+            do_read(32 * n, 32, lookahead => 32 * (n + 1));
+        end loop;
+        end_test("shared read");
+
 
         start_tick := tick_count;
         for n in 0 to 512 loop
             do_read(n);
+            do_read(n + 128);
             do_read(n + 1024);
         end loop;
 
-        write("All reads complete: " &
-            write_efficiency(start_tick, read_count));
+        write("All reads complete");
 
         wait;
     end process;
 
 
-    -- Generate write data
+    -- Generate AXI write data
     process
         variable data_counter : natural := 0;
         variable phase : std_ulogic := '0';
-
     begin
         loop
             -- Generate a 16-bit counter in each word of output
@@ -225,6 +353,7 @@ wait;
                 exit when axi_response.wd_ready;
             end loop;
 
+            -- Advance data counter as appropriate
             if not phase or axi_response.wd_advance then
                 data_counter := data_counter + 1;
             else
@@ -240,6 +369,7 @@ wait;
     ) port map (
         clk_i => clk,
         ca_command_i => ( ca => phy_ca.ca, ca3 => phy_ca.ca3 ),
+        report_i => verbose,
         tick_count_o => tick_count
     );
 end;

@@ -22,6 +22,7 @@ entity decode_commands is
         clk_i : in std_ulogic;
         valid_i : in std_ulogic := '1';
         ca_command_i : in ca_command_t;
+        report_i : in boolean := true;
         tick_count_o : out natural
     );
 end;
@@ -152,7 +153,7 @@ begin
                     mask_counter <= extra_commands(ca_command_i.ca);
                     simple_nop := is_simple_nop(ca_command_i.ca);
                 end if;
-                if not simple_nop or REPORT_NOP then
+                if report_i and (not simple_nop or REPORT_NOP) then
                     write("@ " & to_string(tick_count) & " " & decode.all);
                 end if;
             elsif mask_counter > 0 and not ONLY_VALID then

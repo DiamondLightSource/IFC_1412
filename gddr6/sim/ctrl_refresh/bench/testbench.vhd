@@ -27,7 +27,7 @@ architecture arch of testbench is
     signal status : banks_status_t;
     signal enable_refresh : std_ulogic;
     signal refresh_request : refresh_request_t;
-    signal refresh_ready : std_ulogic;
+    signal refresh_ack : std_ulogic;
 
     procedure write(message : string := "") is
         variable linebuffer : line;
@@ -38,7 +38,7 @@ architecture arch of testbench is
 
     signal tick_counter : natural := 0;
 
-    signal verbose : boolean := false;
+    signal verbose : boolean := true;
 
 begin
     clk <= not clk after 2 ns;
@@ -51,7 +51,7 @@ begin
         status_i => status,
         enable_refresh_i => enable_refresh,
         refresh_request_o => refresh_request,
-        refresh_ready_i => refresh_ready
+        refresh_ack_i => refresh_ack
     );
 
     enable_refresh <= '1';
@@ -65,10 +65,10 @@ begin
     );
 
     process begin
-        refresh_ready <= '1';
+        refresh_ack <= '1';
         wait until refresh_request.valid;
         clk_wait;
-        refresh_ready <= '0';
+        refresh_ack <= '0';
         clk_wait(5);
     end process;
 
@@ -78,7 +78,7 @@ begin
         variable bank : natural;
     begin
         if rising_edge(clk) then
-            if refresh_request.valid and refresh_ready then
+            if refresh_request.valid and refresh_ack then
                 if verbose then
                     write("@ " & to_string(tick_counter) & " " &
                         "refresh " & to_hstring(refresh_request.bank) &
