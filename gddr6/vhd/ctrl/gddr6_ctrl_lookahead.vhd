@@ -7,6 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.gddr6_ctrl_defs.all;
+use work.gddr6_ctrl_tuning_defs.all;
 
 entity gddr6_ctrl_lookahead is
     port (
@@ -34,11 +35,6 @@ entity gddr6_ctrl_lookahead is
 end;
 
 architecture arch of gddr6_ctrl_lookahead is
-    -- Slightly arbitrary decision point for enabling lookahead.  Read lookahead
-    -- requires about three more commands lookahead than write.
-    constant WRITE_LOOKAHEAD_COUNT : natural := 5;
-    constant READ_LOOKAHEAD_COUNT : natural := WRITE_LOOKAHEAD_COUNT + 3;
-
     signal row : unsigned(13 downto 0);
     signal bank : unsigned(3 downto 0);
     signal count_ok : std_ulogic := '0';

@@ -20,14 +20,6 @@ package gddr6_ctrl_defs is
     type direction_t is (DIR_READ, DIR_WRITE);
     type admin_command_t is (CMD_ACT, CMD_PRE, CMD_REF);
 
-    -- Bank aging parameters
-    -- A bank that has been accessed less than 2^YOUNG_BANK_BITS is "young" and
-    -- should be treated as potentially active
-    constant YOUNG_BANK_BITS : natural := 4;
-    -- A bank that hasn't been accessed for at least 2^OLD_BANK_BITS is "old"
-    -- and is a candidate for immediate precharge and refresh
-    constant OLD_BANK_BITS : natural := 7;
-
     -- This command request is presented to the core for dispatch to the phy.
     -- There is a lot going on here: first of all, streams are multiplexed
     -- together from read and writes, but command completion needs to be
@@ -92,7 +84,6 @@ package gddr6_ctrl_defs is
         young : std_ulogic_vector(0 to 15);  -- < 2^N ticks
         old : std_ulogic_vector(0 to 15);    -- >= 2^M ticks
     end record;
-
 
     type refresh_request_t is record
         bank : unsigned(2 downto 0);
