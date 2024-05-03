@@ -72,6 +72,8 @@ architecture arch of gddr6_ctrl_admin is
         IDLE_DELAY);                    -- Let bank open status propagate
     signal state : state_t := IDLE;
 
+
+    -- Filters open requests that need to be processed
     function check_open(bank_open : bank_open_t; status : banks_status_t)
         return bank_open_t
     is

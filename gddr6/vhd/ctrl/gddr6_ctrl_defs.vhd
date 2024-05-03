@@ -63,7 +63,6 @@ package gddr6_ctrl_defs is
         valid : std_ulogic;
     end record;
 
-
     -- Request for admin command (ACT/PRE/REF/PREab/REFab)
     type banks_admin_t is record
         command : admin_command_t;
@@ -73,6 +72,7 @@ package gddr6_ctrl_defs is
         valid : std_ulogic;
     end record;
 
+    -- Gathers status information from all banks
     type banks_status_t is record
         -- At most one of these is set, and blocks activity in the opposite
         -- direction until the appropriate turnaround delay has passed
@@ -85,6 +85,7 @@ package gddr6_ctrl_defs is
         old : std_ulogic_vector(0 to 15);    -- >= 2^M ticks
     end record;
 
+    -- Refresh request to admin dispatcher
     type refresh_request_t is record
         bank : unsigned(2 downto 0);
         all_banks : std_ulogic;

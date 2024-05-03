@@ -42,7 +42,8 @@ architecture arch of gddr6_ctrl_refresh is
 
     -- This refresh delay measures how far we are behind the regular 1.9us tick.
     -- The larger the delay the more urgent is the choice of bank to refresh.
-    -- In practice this should never increase above 2.
+    -- In practice this should never increase above 2, if it reaches 3 we stall
+    -- all commands, if it overflows we lose track of refresh and fall behind.
     constant MAX_REFRESH_DELAY : natural := 3;
     constant STALL_REFRESH_DELAY : natural := 3;
     signal refresh_delay : natural range 0 to MAX_REFRESH_DELAY;

@@ -133,17 +133,16 @@ architecture arch of gddr6_ctrl_write is
     end;
 
     -- Determines the next command to emit.  There are four possible cases (NOP
-    -- for all channels needs special handling).  The schedule channel(s) are
+    -- for all channels needs special handling).  The scheduled channel(s) are
     -- ticked off the pending list and the output identifies the next command to
-    -- emit, the channel enables to use, and the mask_index to use 
+    -- emit, the channel enables to use, and the mask_index to use.
     procedure decode_next_command(
         decodes : decode_array_t;
         signal pending : inout std_ulogic_vector(0 to 3);
         signal command : out decode_t;
         signal enables : out std_ulogic_vector(0 to 3);
         signal mask_index : out natural range 0 to 3;
-        signal command_advance : out std_ulogic;
-        signal input_ready : out std_ulogic)
+        variable last_command : out std_ulogic)
     is
         -- Returns bit array matching given decode condition
         impure function match(decode : decode_t) return std_ulogic_vector
@@ -216,8 +215,7 @@ architecture arch of gddr6_ctrl_write is
         pending <= pending_out;
         enables <= enables_out;
         mask_index <= find_bit(enables_out);
-        command_advance <= to_std_ulogic(pending_out = "0000");
-        input_ready <= not vector_or(pending_out);
+        last_command := to_std_ulogic(pending_out = "0000");
     end;
 
     -- Computes the approprate command request for the current command
@@ -284,7 +282,7 @@ architecture arch of gddr6_ctrl_write is
     procedure advance_write_state(
         signal state : inout write_state_t;
         signal write_request : inout core_request_t;
-        variable next_axi_command : out std_ulogic)
+        variable next_command : out std_ulogic)
     is
         procedure goto_next_command is
         begin
@@ -293,11 +291,11 @@ architecture arch of gddr6_ctrl_write is
             else
                 state <= WRITE_COMMAND;
             end if;
-            next_axi_command := '1';
+            next_command := '1';
         end;
 
     begin
-        next_axi_command := '0';
+        next_command := '0';
 
         case state is
             when WRITE_IDLE =>
@@ -342,6 +340,7 @@ begin
     proc : process (clk_i)
         -- Set when sending state machine is ready for next command
         variable next_command : std_ulogic;
+        variable last_command : std_ulogic;
     begin
         if rising_edge(clk_i) then
             -- Generate output according to the decoded command and determine
@@ -373,7 +372,9 @@ begin
                 decode_next_command(
                     pattern_decode, pending_channels,
                     command_decode, command_enables, mask_index,
-                    command_advance, axi_ready_o);
+                    last_command);
+                command_advance <= last_command;
+                axi_ready_o <= last_command;
             end if;
 
             if pending_channels = "1111" and next_command = '1' then

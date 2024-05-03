@@ -47,8 +47,6 @@ architecture arch of testbench is
     signal tick_count : natural;
     signal check_command_interval : boolean := true;
 
-    shared variable out_busy : std_ulogic := '0';
-
 begin
     clk <= not clk after 2 ns;
 
@@ -198,9 +196,6 @@ begin
             exit when bank_open.valid;
         end loop;
         clk_wait(bank_open_delay);
-        while out_busy loop
-            clk_wait;
-        end loop;
         bank_open_ok <= '1';
         clk_wait;
     end process;
@@ -212,9 +207,7 @@ begin
             clk_wait;
             exit when out_request.valid;
         end loop;
-        out_busy := '1';
         clk_wait(out_request_delay);
-        out_busy := '0';
         out_request_ok <= '1';
         clk_wait;
     end process;
