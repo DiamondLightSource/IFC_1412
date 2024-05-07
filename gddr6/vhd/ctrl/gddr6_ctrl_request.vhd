@@ -1,5 +1,12 @@
 -- Command flow for read/write commands
 
+-- This implements a four stage pipeline supporting two stages of request
+-- validation against the bank status: first the bank being operated on is
+-- checked to be open on the correct row, then the output request is validated
+-- for timing.  Requests need to advance on every tick (hence the use of a four
+-- stage pipeline for two validation stages) so that write mask data can flow
+-- in a timely manner.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -43,38 +50,91 @@ architecture arch of gddr6_ctrl_request is
     signal skid_buffer : core_request_t := IDLE_CORE_REQUEST;
     signal input_request : core_request_t;
 
-    -- Data flow control
-    signal stage_enable : std_ulogic_vector(1 to 4);
-    signal stage_ready : std_ulogic_vector(1 to 4);
-    signal stage_3_guard : std_ulogic;
-    signal stage_1_guard : std_ulogic;
-
-    signal bank_open_guard : std_ulogic;
-    signal bank_open_enable : std_ulogic;
-    signal bank_open_ready : std_ulogic;
-    signal out_request_guard : std_ulogic;
-    signal out_request_enable : std_ulogic;
-    signal out_request_ready : std_ulogic;
-
     -- Used to stretch bank_open_ok_i if stage(2) cannot be loaded, either
     -- because it is not ready or if extra is being loaded
-    signal reset_open_ok : std_ulogic;
     signal last_bank_open_ok : std_ulogic := '0';
-    signal bank_open_ok : std_ulogic;
 
 
-    -- Computes ready, valid_in, valid_out from ready, guard, enable, valid
-    procedure compute_enable(
-        valid_in : std_ulogic; ready_in : std_ulogic; guard : std_ulogic;
-        signal ready_out : out std_ulogic;
-        signal write_enable : out std_ulogic)
+    -- The following three update_{request,open,out} procedures perform
+    -- essentially the same function: update the request_out pipeline register
+    -- from request_in and compute the ready_out variable based on the following
+    -- logic:
+    --  * If request_out will be consumed (ready_in set) or if request_out is
+    --    not valid then load and consume incoming data if possible.
+    --  * If guard is not set then treat the incoming data as not yet ready and
+    --    do not load it.
+    --  * Report ready_out if any incoming data will be consumed
+    -- Note that ready_o is a variable and so must be processed at the correct
+    -- point in the process to avoid accidentially becoming registered!
+
+    procedure update_request(
+        request_i : core_request_t;
+        signal request_o : inout core_request_t;
+        ready_i : std_ulogic;
+        variable ready_o : out std_ulogic;
+        guard_i : std_ulogic := '1')
     is
         variable enable_store : std_ulogic;
     begin
-        enable_store := not valid_in or ready_in;
-        ready_out <= guard and enable_store;
-        write_enable <= enable_store;
+        enable_store := ready_i or not request_o.valid;
+        ready_o := enable_store and guard_i;
+        if enable_store then
+            if guard_i then
+                request_o <= request_i;
+            else
+                request_o.valid <= '0';
+            end if;
+        end if;
     end;
+
+    procedure update_open(
+        request_i : core_request_t;
+        signal request_o : inout bank_open_t;
+        ready_i : std_ulogic;
+        variable ready_o : out std_ulogic;
+        guard_i : std_ulogic)
+    is
+        variable enable_store : std_ulogic;
+    begin
+        enable_store := ready_i or not request_o.valid;
+        ready_o := enable_store and guard_i;
+        if enable_store then
+            if guard_i then
+                request_o <= (
+                    bank => request_i.bank,
+                    row => request_i.row,
+                    valid => request_i.valid and not request_i.extra
+                );
+            else
+                request_o.valid <= '0';
+            end if;
+        end if;
+    end;
+
+    procedure update_out(
+        request_i : core_request_t;
+        signal request_o : inout out_request_t;
+        ready_i : std_ulogic;
+        variable ready_o : out std_ulogic;
+        guard_i : std_ulogic)
+    is
+        variable enable_store : std_ulogic;
+    begin
+        enable_store := ready_i or not request_o.valid;
+        ready_o := enable_store and guard_i;
+        if enable_store then
+            if guard_i then
+                request_o <= (
+                    direction => request_i.direction,
+                    bank => request_i.bank,
+                    valid => request_i.valid and not request_i.extra
+                );
+            else
+                request_o.valid <= '0';
+            end if;
+        end if;
+    end;
+
 
 begin
     with skid_buffer.valid select
@@ -82,44 +142,91 @@ begin
             skid_buffer when '1',
             mux_request_i when others;
 
-    -- Check whether stage 3 is ready to take the successful open result, if
-    -- not the open_ok flag will be stretched until it is
-    reset_open_ok <= stage_ready(3) and not stage(2).extra;
-    bank_open_ok <= bank_open_ok_i or last_bank_open_ok;
+    process (clk_i)
+        -- The following variables are updated in sequence by the update_
+        -- procedures.  The ordering is essential so that combinatorial control
+        -- data in variables flows from top to bottom in the code below; note
+        -- that this is opposite to the order of data flow.
+        --
+        -- WARNING: if the code below is reordered incorrectly it is
+        -- possible for one or more of these signals to be unintentionally
+        -- converted to a register signal.
+        variable stage_ready : std_ulogic_vector(1 to 4);
+        variable out_request_ready : std_ulogic;
+        variable bank_open_ready : std_ulogic;
 
-    -- Only accept a new open when the out stage is ready and we're not blocked
-    -- (need to look forward to the next state of bank_open_ok)
-    bank_open_guard <= not bank_open_ok or reset_open_ok;
-    compute_enable(
-        bank_open_o.valid, bank_open_ok_i, bank_open_guard,
-        bank_open_ready, bank_open_enable);
+        -- Stretched version of bank_open_ok_i, valid until open transferred to
+        -- out request and stage(3)
+        variable bank_open_ok : std_ulogic;
+        -- Set when bank open will be consumed on this tick
+        variable reset_open_ok : std_ulogic;
 
-    -- Loading of out_request
-    out_request_guard <= bank_open_ok;
-    compute_enable(
-        out_request_o.valid, out_request_ok_i, out_request_guard,
-        out_request_ready, out_request_enable);
-
-    -- Four pipeline stages with input guards on stages 1 and 3.  Written from
-    -- bottom to top to reflect backwards propagation of ready flags
-    compute_enable(
-        stage(4).valid, stage(4).extra or out_request_ok_i, '1',
-        stage_ready(4), stage_enable(4));
-    stage_3_guard <=
-        stage(2).extra or (bank_open_ok and out_request_ready);
-    compute_enable(
-        stage(3).valid, stage_ready(4), stage_3_guard,
-        stage_ready(3), stage_enable(3));
-    compute_enable(
-        stage(2).valid, stage_ready(3), '1',
-        stage_ready(2), stage_enable(2));
-    stage_1_guard <= input_request.extra or bank_open_ready;
-    compute_enable(
-        stage(1).valid, stage_ready(2), stage_1_guard,
-        stage_ready(1), stage_enable(1));
-
-    process (clk_i) begin
+    begin
         if rising_edge(clk_i) then
+            -- Check whether stage 3 is ready to take the successful open
+            -- result, if not the open_ok flag will be stretched until it is
+            bank_open_ok := bank_open_ok_i or last_bank_open_ok;
+
+            -- Four pipeline stages with input guards on stages 1 and 3 together
+            -- with open and out request stages.
+            -- Written from bottom to top to reflect backwards propagation
+            -- of ready flags and guards.
+
+            -- Output of final stage, blocks until out request accepted
+            -- Generates stage_ready(4) flag
+            update_request(
+                request_i => stage(3),
+                request_o => stage(4),
+                ready_i => stage(4).extra or out_request_ok_i,
+                ready_o => stage_ready(4));
+
+            -- Loading of out_request_o
+            -- Generates out_request_ready flag
+            update_out(
+                request_i => stage(2),
+                request_o => out_request_o,
+                ready_i => out_request_ok_i,
+                ready_o => out_request_ready,
+                guard_i => bank_open_ok_i or last_bank_open_ok);
+
+            -- Request concurrently loaded with out_request_o
+            -- Generates stage_ready(3) flag
+            update_request(
+                request_i => stage(2),
+                request_o => stage(3),
+                ready_i => stage_ready(4),
+                ready_o => stage_ready(3),
+                guard_i =>
+                    stage(2).extra or (bank_open_ok and out_request_ready));
+
+            -- Output of first stage
+            -- Generates stage_ready(2) flag
+            update_request(
+                request_i => stage(1),
+                request_o => stage(2),
+                ready_i => stage_ready(3),
+                ready_o => stage_ready(2));
+
+            -- Loading of open request
+            -- Generates bank_open_ready flag
+            reset_open_ok := stage_ready(3) and not stage(2).extra;
+            update_open(
+                request_i => input_request,
+                request_o => bank_open_o,
+                ready_i => bank_open_ok_i,
+                ready_o => bank_open_ready,
+                guard_i => not bank_open_ok or reset_open_ok);
+
+            -- Loading of input data concurrently with bank_open_o
+            -- Generates stage_ready(1) flag
+            update_request(
+                request_i => input_request,
+                request_o => stage(1),
+                ready_i => stage_ready(2),
+                ready_o => stage_ready(1),
+                guard_i => input_request.extra or bank_open_ready);
+
+
             -- Input enable and skid buffer
             if stage_ready(1) then
                 -- Input is being consumed, enable input and clear skid buffer
@@ -131,52 +238,6 @@ begin
                 mux_ready_o <= '0';
             end if;
 
-            -- -----------------------------------------------------------------
-            -- Pipeline stages
-
-            -- Initial stage is guarded by bank open enable
-            if stage_enable(1) then
-                if stage_1_guard then
-                    stage(1) <= input_request;
-                else
-                    stage(1).valid <= '0';
-                end if;
-            end if;
-
-            -- Waiting for open request
-            if stage_enable(2) then
-                stage(2) <= stage(1);
-            end if;
-
-            -- Loading out request, needs to wait for open to complete
-            if stage_enable(3) then
-                if stage_3_guard then
-                    stage(3) <= stage(2);
-                else
-                    stage(3).valid <= '0';
-                end if;
-            end if;
-
-            -- Final stage waiting for out request
-            if stage_enable(4) then
-                stage(4) <= stage(3);
-            end if;
-
-            -- -----------------------------------------------------------------
-            -- Open and Out requests
-
-            -- Load open request
-            if bank_open_enable then
-                if bank_open_guard then
-                    bank_open_o <= (
-                        bank => input_request.bank,
-                        row => input_request.row,
-                        valid => input_request.valid and not input_request.extra
-                    );
-                else
-                    bank_open_o.valid <= '0';
-                end if;
-            end if;
             -- Hang onto open_ok while unable to hand over to out processing
             if reset_open_ok then
                 last_bank_open_ok <= '0';
@@ -184,23 +245,8 @@ begin
                 last_bank_open_ok <= '1';
             end if;
 
-            -- Load out request
-            if out_request_enable then
-                if out_request_guard then
-                    out_request_o <= (
-                        direction => stage(2).direction,
-                        bank => stage(2).bank,
-                        valid => stage(2).valid and not stage(2).extra
-                    );
-                else
-                    out_request_o.valid <= '0';
-                end if;
-            end if;
             -- Let banks know about any extra commands in the pipeline
             out_request_extra_o <= stage(2).valid and stage(2).extra;
-
-            -- -----------------------------------------------------------------
-            -- Output generation
 
             -- Emit final command and completion
             command_o <= stage(4).command;
