@@ -24,10 +24,10 @@ entity gddr6 is
         read_data_o : out std_ulogic_vector(31 downto 0);
         read_ack_o : out std_ulogic;
 
-        -- ---------------------------------------------------------- --
-        -- AXI4 Slave Port -> Mapping GDDR6 Memory Area               --
-        --   1/2/4 GB Memory array AXI4 -> GDDR6                      --
-        -- ---------------------------------------------------------- --
+        -- ---------------------------------------------------------------------
+        -- AXI slave interface to 4GB GDDR6 SGRAM
+        --
+        -- Clock and reset
         s_axi_ACLK : in std_logic;      -- See note below on naming
         s_axi_RESET_i : in std_logic;
         -- AW
@@ -77,7 +77,6 @@ entity gddr6 is
 
         -- ---------------------------------------------------------- --
         -- GDDR6 PHY Interface                                        --
-        -- ---------------------------------------------------------- --
         pad_SG1_RESET_N_o : out std_logic;
         pad_SG2_RESET_N_o : out std_logic;
         pad_SG12_CKE_N_o : out std_logic;

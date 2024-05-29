@@ -31,8 +31,10 @@ architecture arch of testbench is
 
     signal ctrl_setup : ctrl_setup_t;
     signal ctrl_status : ctrl_status_t;
-    signal axi_request : axi_request_t;
-    signal axi_response : axi_response_t;
+    signal axi_read_request   : axi_ctrl_read_request_t;
+    signal axi_read_response  : axi_ctrl_read_response_t;
+    signal axi_write_request  : axi_ctrl_write_request_t;
+    signal axi_write_response : axi_ctrl_write_response_t;
     signal phy_ca : phy_ca_t;
     signal phy_dq_out : phy_dq_out_t;
     signal phy_dq_in : phy_dq_in_t;
@@ -75,19 +77,27 @@ begin
     clk <= not clk after 2 ns;
 
     ctrl : entity work.gddr6_ctrl generic map (
-        SHORT_REFRESH_COUNT => SHORT_REFRESH_COUNT,
+--         SHORT_REFRESH_COUNT => SHORT_REFRESH_COUNT,
         LONG_REFRESH_COUNT => LONG_REFRESH_COUNT
     ) port map (
         clk_i => clk,
         ctrl_setup_i => ctrl_setup,
         ctrl_status_o => ctrl_status,
-        axi_request_i => axi_request,
-        axi_response_o => axi_response,
+        axi_read_request_i => axi_read_request,
+        axi_read_response_o => axi_read_response,
+        axi_write_request_i => axi_write_request,
+        axi_write_response_o => axi_write_response,
         phy_ca_o => phy_ca,
         phy_dq_o => phy_dq_out,
         phy_dq_i => phy_dq_in
     );
 
+    phy : entity work.sim_phy port map (
+        clk_i => clk,
+        phy_ca_i => phy_ca,
+        phy_dq_i => phy_dq_out,
+        phy_dq_o => phy_dq_in
+    );
 
 
     process begin
@@ -132,33 +142,33 @@ begin
             mask : std_ulogic_vector := WOM & WOM & WOM & WOM;
             lookahead : natural := 2**25) is
         begin
-            axi_request.wa_byte_mask <= mask;
-            axi_request.wa_valid <= '1';
+            axi_write_request.wa_byte_mask <= mask;
+            axi_write_request.wa_valid <= '1';
             if lookahead < 2**25 then
-                axi_request.wal_address <= to_unsigned(lookahead, 25);
-                axi_request.wal_valid <= '1';
+                axi_write_request.wal_address <= to_unsigned(lookahead, 25);
+                axi_write_request.wal_valid <= '1';
             else
-                axi_request.wal_valid <= '0';
+                axi_write_request.wal_valid <= '0';
             end if;
 
             -- Emit the burst, count down to end of burst for lookahead
             for i in 0 to count-1 loop
-                axi_request.wa_address <= to_unsigned(address + i, 25);
-                axi_request.wal_count <= to_unsigned(count - i - 1, 5);
+                axi_write_request.wa_address <= to_unsigned(address + i, 25);
+                axi_write_request.wal_count <= to_unsigned(count - i - 1, 5);
                 loop
                     clk_wait;
-                    exit when axi_response.wa_ready;
+                    exit when axi_write_response.wa_ready;
                 end loop;
                 write_count := write_count + 1;
             end loop;
 
             -- Between requests mark address and lookahead as invalid
-            axi_request.wa_address <= (others => 'U');
-            axi_request.wa_byte_mask <= (others => 'U');
-            axi_request.wa_valid <= '0';
-            axi_request.wal_address <= (others => 'U');
-            axi_request.wal_count <= (others => 'U');
-            axi_request.wal_valid <= '0';
+            axi_write_request.wa_address <= (others => 'U');
+            axi_write_request.wa_byte_mask <= (others => 'U');
+            axi_write_request.wa_valid <= '0';
+            axi_write_request.wal_address <= (others => 'U');
+            axi_write_request.wal_count <= (others => 'U');
+            axi_write_request.wal_valid <= '0';
         end;
 
         procedure start_test(description : string) is
@@ -178,8 +188,8 @@ begin
         end;
 
     begin
-        axi_request.wa_valid <= '0';
-        axi_request.wal_valid <= '0';
+        axi_write_request.wa_valid <= '0';
+        axi_write_request.wal_valid <= '0';
 
         clk_wait(2);
 
@@ -253,31 +263,31 @@ begin
             address : natural; count : natural := 1;
             lookahead : natural := 2**25) is
         begin
-            axi_request.ra_valid <= '1';
+            axi_read_request.ra_valid <= '1';
             if lookahead < 2**25 then
-                axi_request.ral_address <= to_unsigned(lookahead, 25);
-                axi_request.ral_valid <= '1';
+                axi_read_request.ral_address <= to_unsigned(lookahead, 25);
+                axi_read_request.ral_valid <= '1';
             else
-                axi_request.ral_valid <= '0';
+                axi_read_request.ral_valid <= '0';
             end if;
 
             -- Emit the burst, count down to end of burst for lookahead
             for i in 0 to count-1 loop
-                axi_request.ra_address <= to_unsigned(address + i, 25);
-                axi_request.ral_count <= to_unsigned(count - i - 1, 5);
+                axi_read_request.ra_address <= to_unsigned(address + i, 25);
+                axi_read_request.ral_count <= to_unsigned(count - i - 1, 5);
                 loop
                     clk_wait;
-                    exit when axi_response.ra_ready;
+                    exit when axi_read_response.ra_ready;
                 end loop;
                 read_count := read_count + 1;
             end loop;
 
             -- Between requests mark address and lookahead as invalid
-            axi_request.ra_address <= (others => 'U');
-            axi_request.ra_valid <= '0';
-            axi_request.ral_address <= (others => 'U');
-            axi_request.ral_count <= (others => 'U');
-            axi_request.ral_valid <= '0';
+            axi_read_request.ra_address <= (others => 'U');
+            axi_read_request.ra_valid <= '0';
+            axi_read_request.ral_address <= (others => 'U');
+            axi_read_request.ral_count <= (others => 'U');
+            axi_read_request.ral_valid <= '0';
         end;
 
         procedure start_test(description : string) is
@@ -297,8 +307,8 @@ begin
         end;
 
     begin
-        axi_request.ra_valid <= '0';
-        axi_request.ral_valid <= '0';
+        axi_read_request.ra_valid <= '0';
+        axi_read_request.ral_valid <= '0';
 
         clk_wait(5);
 
@@ -342,7 +352,7 @@ begin
             -- Generate a 16-bit counter in each word of output
             for ch in 0 to 3 loop
                 for word in 0 to 7 loop
-                    axi_request.wd_data(ch)(16*word+15 downto 16*word) <=
+                    axi_write_request.wd_data(ch)(16*word+15 downto 16*word) <=
                         to_std_ulogic_vector_u(
                             32 * data_counter + 8 * ch + word, 16);
                 end loop;
@@ -350,11 +360,11 @@ begin
 
             loop
                 clk_wait;
-                exit when axi_response.wd_ready;
+                exit when axi_write_response.wd_ready;
             end loop;
 
             -- Advance data counter as appropriate
-            if not phase or axi_response.wd_advance then
+            if not phase or axi_write_response.wd_advance then
                 data_counter := data_counter + 1;
             else
                 data_counter := data_counter - 1;

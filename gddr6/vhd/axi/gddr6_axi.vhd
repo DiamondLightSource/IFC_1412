@@ -6,89 +6,36 @@ use ieee.numeric_std.all;
 
 entity gddr6_axi is
     port  (
-        -- ---------------------------------------------------------------------
-        -- AXI slave interface
-        -- Clock and reset
-        s_axi_ACLK_i : in std_logic;
-        s_axi_RESET_i : in std_logic;
-        -- AW
-        s_axi_AWID_i : in std_logic_vector(3 downto 0);
-        s_axi_AWADDR_i : in std_logic_vector(31 downto 0);
-        s_axi_AWLEN_i : in std_logic_vector(7 downto 0);
-        s_axi_AWSIZE_i : in std_logic_vector(2 downto 0);
-        s_axi_AWBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_AWLOCK_i : in std_logic;
-        s_axi_AWCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_AWPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_AWQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_AWUSER_i : in std_logic_vector(3 downto 0);
-        s_axi_AWVALID_i : in std_logic;
-        s_axi_AWREADY_o : out std_logic;
+        -- The AXI slave interface is on axi_clk_i and is bridged within this
+        -- component to the SG controller on ck_clk_i
+        axi_clk_i : in std_ulogic;
+
+        -- WA
+        axi_wa_i : in axi_write_address_t;
+        axi_wa_ready_o : out std_ulogic;
         -- W
-        s_axi_WDATA_i : in std_logic_vector(511 downto 0);
-        s_axi_WSTRB_i : in std_logic_vector(63 downto 0);
-        s_axi_WLAST_i : in std_logic;
-        s_axi_WVALID_i : in std_logic;
-        s_axi_WREADY_o : out std_logic;
+        axi_w_i : in axi_write_data_t;
+        axi_w_ready_o : out std_ulogic;
         -- B
-        s_axi_BREADY_i : in std_logic;
-        s_axi_BID_o : out std_logic_vector(3 downto 0);
-        s_axi_BRESP_o : out std_logic_vector(1 downto 0);
-        s_axi_BVALID_o : out std_logic;
-        -- AR
-        s_axi_ARID_i : in std_logic_vector(3 downto 0);
-        s_axi_ARADDR_i : in std_logic_vector(31 downto 0);
-        s_axi_ARLEN_i : in std_logic_vector(7 downto 0);
-        s_axi_ARSIZE_i : in std_logic_vector(2 downto 0);
-        s_axi_ARBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_ARLOCK_i : in std_logic;
-        s_axi_ARCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_ARPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_ARQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_ARUSER_i : in std_logic_vector(3 downto 0);
-        s_axi_ARVALID_i : in std_logic;
-        s_axi_ARREADY_o : out std_logic;
+        axi_b_o : out axi_write_response_t;
+        axi_b_ready_i : in std_ulogic;
+        -- RA
+        axi_ra_i : in axi_read_address_t;
+        axi_ra_ready_o : out std_ulogic;
         -- R
-        s_axi_RREADY_i : in std_logic;
-        s_axi_RLAST_o : out std_logic;
-        s_axi_RVALID_o : out std_logic;
-        s_axi_RRESP_o : out std_logic_vector(1 downto 0);
-        s_axi_RID_o : out std_logic_vector(3 downto 0);
-        s_axi_RDATA_o : out std_logic_vector(511 downto 0);
+        axi_r_o : out axi_read_data_t;
+        axi_r_ready_o : in std_ulogic;
 
         -- ---------------------------------------------------------------------
-        -- Controller interface
+        -- Controller interface on CK clk
 
-        -- Connection from AXI receiver
-        -- WA Write Adddress
-        ctrl_wa_address_o : out unsigned(24 downto 0);
-        ctrl_wa_byte_mask_o : out std_ulogic_vector(127 downto 0);
-        ctrl_wa_count_o : out unsigned(4 downto 0);
-        ctrl_wa_valid_o : out std_ulogic;
-        ctrl_wa_ready_i : in std_ulogic;
-        -- WA Lookahead
-        ctrl_wal_address_o : out unsigned(24 downto 0);
-        ctrl_wal_valid_o : out std_ulogic;
-        -- RA Read Address
-        ctrl_ra_address_o : out unsigned(24 downto 0);
-        ctrl_ra_count_o : out unsigned(4 downto 0);
-        ctrl_ra_valid_o : out std_ulogic;
-        ctrl_ra_ready_i : in std_ulogic;
-        -- RA Lookahead
-        ctrl_ral_address_o : out unsigned(24 downto 0);
-        ctrl_ral_valid_o : out std_ulogic;
-        -- WD Write Data
-        ctrl_wd_data_o : out std_ulogic_vector(511 downto 0);
-        ctrl_wd_hold_i : in std_ulogic;
-        ctrl_wd_ready_i : in std_ulogic;
-        -- WR Write Response
-        ctrl_wr_ok_i : in std_ulogic;
-        ctrl_wr_ok_valid_i : in std_ulogic;
-        -- RD Read Data
-        ctrl_rd_data_i : in std_ulogic_vector(511 downto 0);
-        ctrl_rd_valid_i : in std_ulogic
-        ctrl_rd_ok_i : in std_ulogic;
-        ctrl_rd_ok_valid_i : in std_ulogic;
+        ck_clk_i : in std_ulogic;
+
+        -- Connection to CTRL
+        ctrl_read_request_o : out axi_ctrl_read_request_t;
+        ctrl_read_response_i : in axi_ctrl_read_response_t;
+        ctrl_write_request_o : out axi_ctrl_write_request_t;
+        ctrl_write_response_i : in axi_ctrl_write_response_t
     );
 end;
 

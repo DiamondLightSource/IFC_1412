@@ -15,8 +15,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
-    $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_tuning_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_read.vhd \
@@ -34,6 +34,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
+    $vhd_dir/phy/gddr6_phy_crc.vhd \
+    $bench_dir/sim_phy.vhd \
     $bench_dir/../../common/decode_commands.vhd \
     $bench_dir/testbench.vhd
 

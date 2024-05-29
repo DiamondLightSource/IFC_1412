@@ -10,7 +10,31 @@ package gddr6_defs is
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between AXI and CTRL
 
-    type axi_request_t is record
+    -- Read
+
+    type axi_ctrl_read_request_t is record
+        -- RA Read Address
+        ra_address : unsigned(24 downto 0);
+        ra_valid : std_ulogic;
+        -- RA Lookahead
+        ral_address : unsigned(24 downto 0);
+        ral_count : unsigned(4 downto 0);
+        ral_valid : std_ulogic;
+    end record;
+
+    type axi_ctrl_read_response_t is record
+        -- RA Read Address
+        ra_ready : std_ulogic;
+        -- RD Read Data
+        rd_data : vector_array(0 to 3)(127 downto 0);
+        rd_valid : std_ulogic;
+        rd_ok : std_ulogic;
+        rd_ok_valid : std_ulogic;
+    end record;
+
+    -- Write
+
+    type axi_ctrl_write_request_t is record
         -- WA Write Adddress
         wa_address : unsigned(24 downto 0);
         wa_byte_mask : std_ulogic_vector(127 downto 0);
@@ -19,35 +43,21 @@ package gddr6_defs is
         wal_address : unsigned(24 downto 0);
         wal_count : unsigned(4 downto 0);
         wal_valid : std_ulogic;
-        -- RA Read Address
-        ra_address : unsigned(24 downto 0);
-        ra_valid : std_ulogic;
-        -- RA Lookahead
-        ral_address : unsigned(24 downto 0);
-        ral_count : unsigned(4 downto 0);
-        ral_valid : std_ulogic;
         -- WD Write Data
         -- Data is organised by channel and flattened into 16 bytes per channel
         -- to reflect the flow required to match byte masks.
         wd_data : vector_array(0 to 3)(127 downto 0);
     end record;
 
-    type axi_response_t is record
+    type axi_ctrl_write_response_t is record
         -- WA Write Adddress
         wa_ready : std_ulogic;
-        -- RA Read Address
-        ra_ready : std_ulogic;
         -- WD Write Data
         wd_advance : std_ulogic;
         wd_ready : std_ulogic;
         -- WR Write Response
         wr_ok : std_ulogic;
         wr_ok_valid : std_ulogic;
-        -- RD Read Data
-        rd_data : vector_array(0 to 3)(127 downto 0);
-        rd_valid : std_ulogic;
-        rd_ok : std_ulogic;
-        rd_ok_valid : std_ulogic;
     end record;
 
 

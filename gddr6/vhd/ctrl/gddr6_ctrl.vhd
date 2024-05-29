@@ -41,8 +41,10 @@ entity gddr6_ctrl is
         ctrl_status_o : out ctrl_status_t;
 
         -- Connection from AXI receiver
-        axi_request_i : in axi_request_t;
-        axi_response_o : out axi_response_t;
+        axi_read_request_i : in axi_ctrl_read_request_t;
+        axi_read_response_o : out axi_ctrl_read_response_t;
+        axi_write_request_i : in axi_ctrl_write_request_t;
+        axi_write_response_o : out axi_ctrl_write_response_t;
 
         -- Connection to PHY (via Setup MUX)
         phy_ca_o : out phy_ca_t;
@@ -72,9 +74,9 @@ begin
     read : entity work.gddr6_ctrl_read port map (
         clk_i => clk_i,
 
-        axi_address_i => axi_request_i.ra_address,
-        axi_valid_i => axi_request_i.ra_valid,
-        axi_ready_o => axi_response_o.ra_ready,
+        axi_address_i => axi_read_request_i.ra_address,
+        axi_valid_i => axi_read_request_i.ra_valid,
+        axi_ready_o => axi_read_response_o.ra_ready,
 
         read_request_o => read_request,
         read_ready_i => read_ready
@@ -86,10 +88,10 @@ begin
     write : entity work.gddr6_ctrl_write port map (
         clk_i => clk_i,
 
-        axi_address_i => axi_request_i.wa_address,
-        axi_byte_mask_i => axi_request_i.wa_byte_mask,
-        axi_valid_i => axi_request_i.wa_valid,
-        axi_ready_o => axi_response_o.wa_ready,
+        axi_address_i => axi_write_request_i.wa_address,
+        axi_byte_mask_i => axi_write_request_i.wa_byte_mask,
+        axi_valid_i => axi_write_request_i.wa_valid,
+        axi_ready_o => axi_write_response_o.wa_ready,
 
         write_request_o => write_request,
         write_ready_i => write_ready
@@ -101,12 +103,12 @@ begin
     lookahead : entity work.gddr6_ctrl_lookahead port map (
         clk_i => clk_i,
 
-        ral_address_i => axi_request_i.ral_address,
-        ral_count_i => axi_request_i.ral_count,
-        ral_valid_i => axi_request_i.ral_valid,
-        wal_address_i => axi_request_i.wal_address,
-        wal_count_i => axi_request_i.wal_count,
-        wal_valid_i => axi_request_i.wal_valid,
+        ral_address_i => axi_read_request_i.ral_address,
+        ral_count_i => axi_read_request_i.ral_count,
+        ral_valid_i => axi_read_request_i.ral_valid,
+        wal_address_i => axi_write_request_i.wal_address,
+        wal_count_i => axi_write_request_i.wal_count,
+        wal_valid_i => axi_write_request_i.wal_valid,
 
         status_i => banks_status,
         direction_i => current_direction,
@@ -179,23 +181,23 @@ begin
         edc_read_i => phy_dq_i.edc_read,
         edc_write_i => phy_dq_i.edc_write,
 
-        axi_rd_data_o => axi_response_o.rd_data,
-        axi_rd_valid_o => axi_response_o.rd_valid,
-        axi_rd_ok_o => axi_response_o.rd_ok,
-        axi_rd_ok_valid_o => axi_response_o.rd_ok_valid,
+        axi_rd_data_o => axi_read_response_o.rd_data,
+        axi_rd_valid_o => axi_read_response_o.rd_valid,
+        axi_rd_ok_o => axi_read_response_o.rd_ok,
+        axi_rd_ok_valid_o => axi_read_response_o.rd_ok_valid,
 
-        axi_wd_data_i => axi_request_i.wd_data,
-        axi_wd_advance_o => axi_response_o.wd_advance,
-        axi_wd_ready_o => axi_response_o.wd_ready,
-        axi_wr_ok_o => axi_response_o.wr_ok,
-        axi_wr_ok_valid_o => axi_response_o.wr_ok_valid
+        axi_wd_data_i => axi_write_request_i.wd_data,
+        axi_wd_advance_o => axi_write_response_o.wd_advance,
+        axi_wd_ready_o => axi_write_response_o.wd_ready,
+        axi_wr_ok_o => axi_write_response_o.wr_ok,
+        axi_wr_ok_valid_o => axi_write_response_o.wr_ok_valid
     );
 
     -- Statistics and readbacks
     ctrl_status_o <= (
         read_error =>
-            axi_response_o.rd_ok_valid and not axi_response_o.rd_ok,
+            axi_read_response_o.rd_ok_valid and not axi_read_response_o.rd_ok,
         write_error =>
-            axi_response_o.wr_ok_valid and not axi_response_o.wr_ok
+            axi_write_response_o.wr_ok_valid and not axi_write_response_o.wr_ok
     );
 end;
