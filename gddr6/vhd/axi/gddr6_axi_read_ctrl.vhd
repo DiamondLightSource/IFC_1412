@@ -56,8 +56,8 @@ architecture arch of gddr6_axi_read_ctrl is
             ctrl_valid_o and ctrl_ready_i);
 
         reserve_count <= next_count;
-        fifo_reserve_o <= to_std_ulogic(next_count < MAX_RESERVE_COUNT);
-        reserve_ok := to_std_ulogic(next_count > 0);
+        fifo_reserve_o <= next_count ?< MAX_RESERVE_COUNT;
+        reserve_ok := next_count ?> 0;
     end;
 
 
@@ -147,7 +147,7 @@ begin
             -- Maintain lookahead state
             lookahead_valid_o <=
                 next_address.valid and not address_ready and
-                to_std_ulogic(reserve_count > address.count);
+                reserve_count ?> address.count;
         end if;
     end process;
 

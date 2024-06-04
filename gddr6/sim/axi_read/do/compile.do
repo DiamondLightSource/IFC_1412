@@ -33,6 +33,7 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 view wave
 
 add wave -group "CTRL" axi_read/ctrl/*
+add wave -group "Data FIFO Address" axi_read/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_read/data_fifo/*
 add wave -group "R" axi_read/data/* axi_read/data/vars/*
 add wave -group "RA" axi_read/address/*

@@ -31,7 +31,10 @@ end;
 
 architecture arch of gddr6_axi_read_data is
     signal command : burst_command_t := IDLE_BURST_COMMAND;
-    signal first_transfer : std_ulogic := '1';
+
+    -- Support for skipping data at start and end of burst response
+    signal new_command : std_ulogic := '0';
+    signal data_skipped : std_ulogic := '0';
 
     type data_t is record
         data : std_ulogic_vector(511 downto 0);
@@ -45,24 +48,25 @@ architecture arch of gddr6_axi_read_data is
     signal data_skid : data_t := IDLE_DATA;
     signal data_buffer : data_t := IDLE_DATA;
 
-    signal axi_data_out : axi_read_data_t := (
-        id => (others => '0'),
-        data => (others => '0'),
-        resp => (others => '0'),
-        last => '0',
-        valid => '0'
-    );
+    signal axi_id : std_logic_vector(3 downto 0);
+    signal axi_resp : std_logic_vector(1 downto 0);
+    signal axi_last : std_logic;
+    signal axi_valid : std_ulogic := '0';
+
+    -- This state is needed to track whether data loaded into data_buffer has
+    -- been uploaded to axi
+    signal axi_data_valid : std_ulogic := '0';
 
 begin
 vars:
     process (clk_i)
-
         -- Manage input data stream, loads new data if available and
         -- load_new_data is set, returns data_valid if the newly loaded (or
         -- original if not loaded) data is valid.
         procedure advance_data(
             load_new_data : std_ulogic;
-            variable new_data : out data_t)
+            variable data_ok : out std_ulogic;
+            variable data_valid : out std_ulogic)
         is
             impure function get_data_in return data_t is
             begin
@@ -72,6 +76,8 @@ vars:
                     valid => fifo_data_valid_i
                 );
             end;
+
+            variable new_data : data_t;
 
         begin
             -- Load data buffer when data consumed or when empty
@@ -93,102 +99,125 @@ vars:
                 end if;
                 new_data := data_buffer;
             end if;
-        end;
 
+            data_ok := new_data.ok;
+            data_valid := new_data.valid;
+        end;
 
 
         -- Advance the command state when the AXI output is ready for a new
         -- result
-        procedure advance_command(axi_ready : std_ulogic)
-        is
-            variable load_command : std_ulogic;
+        procedure advance_command(load_new_command : std_ulogic) is
         begin
-            load_command :=
-                not command.valid or (axi_ready and command.count ?= 0);
-            if load_command then
-                command <= fifo_command_i;
-                first_transfer <= '1';
-            elsif axi_ready then
-                command.count <= command.count - 1;
-                command.offset <= command.offset + command.step;
-                first_transfer <= '0';
-            end if;
-
-            -- Acknowledge loading of command on next cycle
-            fifo_ready_o <= load_command and fifo_command_i.valid;
-        end;
-
-
-        -- Updates AXI output
-        -- The individual fields of axi_data_out are written separately as
-        -- axi_data_out.data needs to be assigned separately
-        procedure advance_axi(
-            data : data_t; skip_data : std_ulogic;
-            variable next_command : out std_ulogic)
-        is
-            variable load_axi : std_ulogic;
-            variable command_ready : std_ulogic;
-        begin
-            -- Load or clear when output is ready or we have nothing loaded
-            load_axi := axi_ready_i or not axi_data_out.valid;
-            -- Skip incoming data when phase mismatch at start or end of AXI
-            -- burst
-            command_ready :=
-                command.valid and
-                ((data.valid and not skip_data) or command.invalid_burst);
-            next_command := load_axi and command_ready;
-
-            if load_axi then
-                axi_data_out.id <= command.id;
-                -- The AXI specification really doesn't give us many options for
-                -- the error code, which means even in the case of an AXI
-                -- protocol error all we can return is SLVERR (slave error).
-                if command.invalid_burst or not data.ok then
-                    axi_data_out.resp <= "10";        -- SLVERR
+            -- Commands are only acknowledged after receipt, so fifo_ready_o is
+            -- normally reset
+            fifo_ready_o <= '0';
+            if load_new_command or not command.valid then
+                if command.valid and command.count ?> 0 then
+                    -- Advance current command to next count
+                    command.count <= command.count - 1;
+                    command.offset <= command.offset + command.step;
+                    new_command <= '0';
+                elsif fifo_command_i.valid and not fifo_ready_o then
+                    command <= fifo_command_i;
+                    new_command <= '1';
+                    fifo_ready_o <= '1';        -- Acknowledge command
                 else
-                    axi_data_out.resp <= "00";        -- OKAY
+                    new_command <= '0';
+                    command.valid <= '0';
                 end if;
-                axi_data_out.last <= command.count ?= 0;
-                axi_data_out.valid <= command_ready;
             end if;
         end;
 
 
-        -- Determines behaviour of data
-        procedure advance_control(
-            variable load_new_data : out std_ulogic;
-            variable skip_data : out std_ulogic)
+        -- Advance the AXI response when we can
+        procedure advance_axi(
+            new_axi_valid : std_ulogic; data_ok : std_ulogic;
+            variable load_new_command : out std_ulogic)
         is
-        begin
-            if first_transfer then
-                skip_data := command.offset(6);
-            elsif command.count = 0 then
-                skip_data := not command.offset(6);
-            else
-                skip_data := '0';
-            end if;
+            -- Compute AXI read RESP code from command and data status.
+            -- The AXI specification really doesn't give us many options for the
+            -- error code, which means even in the case of an AXI protocol
+            -- error all we can return is SLVERR (slave error).
+            function resp(invalid_burst : std_ulogic)
+                return std_ulogic_vector is
+            begin
+                if invalid_burst or not data_ok then
+                    return "10";        -- SLVERR
+                else
+                    return "00";        -- OKAY
+                end if;
+            end;
 
-            load_new_data := command.offset(5 downto 0) ?= 0;
+        begin
+            if axi_ready_i or not axi_valid then
+                axi_id <= command.id;
+                axi_resp <= resp(command.invalid_burst);
+                axi_last <= command.count ?= 0;
+                axi_valid <= command.valid and new_axi_valid;
+                if command.valid and new_axi_valid then
+                    -- Remember if we've consumed any data
+                    axi_data_valid <= not command.invalid_burst;
+                end if;
+            end if;
+            load_new_command :=
+                (axi_ready_i or not axi_valid) and new_axi_valid;
+        end;
+
+
+        -- Determines whether we need to skip a line of data from the start or
+        -- the end of an SG and AXI burst.
+        impure function skip_data return std_ulogic is
+        begin
+            if new_command then
+                return command.offset(6) and not data_skipped;
+            elsif command.count = 0 then
+                return not command.offset(6) and not data_skipped;
+            else
+                return '0';
+            end if;
         end;
 
 
         variable load_new_data : std_ulogic;
-        variable skip_data : std_ulogic;
-        variable new_data : data_t;
-        variable next_command : std_ulogic;
+        variable new_data_ok : std_ulogic;
+        variable new_data_valid : std_ulogic;
+        variable new_axi_valid : std_ulogic;
+        variable load_new_command : std_ulogic;
 
     begin
         if rising_edge(clk_i) then
-            advance_control(load_new_data, skip_data);
+            -- Work out whether new data will be needed
+            load_new_data :=
+--                 not axi_data_valid and
+                command.valid and not command.invalid_burst and
+                (command.offset(5 downto 0) ?= 0 or new_command or skip_data);
 
-            advance_data(load_new_data, new_data);
+            -- Ensure we have any data we need
+            advance_data(load_new_data, new_data_ok, new_data_valid);
 
-            advance_axi(new_data, skip_data, next_command);
+            -- Skipping data needs to be handled here.  When skipping the first
+            -- line we have to mark it as skipped so that new data can be
+            -- generated
+            data_skipped <= new_data_valid and skip_data;
 
-            advance_command(next_command);
+            -- Work out whether we're ready to send a new AXI response
+            new_axi_valid :=
+                (new_data_valid and not skip_data) or command.invalid_burst;
+
+            -- Update the AXI response if appropriate
+            advance_axi(new_axi_valid, new_data_ok, load_new_command);
+
+            -- Update the command if consumed
+            advance_command(load_new_command);
         end if;
     end process;
 
-    axi_data_out.data <= data_buffer.data;
-    axi_data_o <= axi_data_out;
+    axi_data_o <= (
+        id => axi_id,
+        data => data_buffer.data,
+        resp => axi_resp,
+        last => axi_last,
+        valid => axi_valid
+    );
 end;

@@ -50,9 +50,9 @@ architecture arch of gddr6_axi_address is
     -- explict 5-bit count.
     function valid_request(address : axi_address_t) return std_ulogic is
     begin
-        return to_std_ulogic(
-            address.burst = "01" and address.size /= 7 and
-            last_offset(address)(14 downto 12) = "000");
+        return
+            address.burst ?= "01" and address.size ?/= 7 and
+            last_offset(address)(14 downto 12) ?= "000";
     end;
 
     function command(address : axi_address_t) return burst_command_t
@@ -64,7 +64,7 @@ architecture arch of gddr6_axi_address is
             id => address.id,
             count => address.len,
             -- Ensure start offset is a multiple of step size
-            offset => address.addr(6 downto 0) and (step - 1),
+            offset => address.addr(6 downto 0) and not (step - 1),
             step => step,
             invalid_burst => not valid_request(address),
             valid => '1'
