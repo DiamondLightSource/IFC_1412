@@ -74,7 +74,7 @@ architecture arch of gddr6_axi_read_ctrl is
             assert address.count ?> 0 and address.valid severity failure;
             -- This assert indicates an AXI protocol error, not an error in
             -- the controller
-            assert address.address(4 downto 0) /= 5X"1F" severity failure;
+            assert address.address(4 downto 0) /= 5X"1F" severity warning;
             return (
                 address =>
                     -- The top 20 bits of the address are never incremented as

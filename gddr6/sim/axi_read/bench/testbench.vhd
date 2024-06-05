@@ -114,31 +114,29 @@ begin
 
         clk_wait(2);
 
---         -- A single invalid burst
---         send(X"F", X"FF00_0000", X"00", "111");
---         -- Two longer invalid bursts back to back
---         send(X"F", X"FF00_0000", X"02", "111");
---         send(X"F", X"FF00_0000", X"01", "111");
---         wait;
+        -- An invalid address, triggers counter wraparound.
+        send(X"E", X"ABCD_EF12", X"0E", "110");
 
---         -- A simple burst: two SG bursts, four AXI beats
---         send(X"1", X"0000_0100", X"03", "110");
---         wait;
+        -- A single invalid burst
+        send(X"F", X"FF00_0000", X"00", "111");
+        -- Two longer invalid bursts back to back
+        send(X"F", X"FF00_0000", X"02", "111");
+        send(X"F", X"FF00_0000", X"01", "111");
+
+        -- A simple burst: two SG bursts, four AXI beats
+        send(X"1", X"0000_0100", X"03", "110");
 
         -- A simple burst: one SG burst, two AXI beats
         send(X"1", X"0000_0100", X"01", "110");
-        wait;
 
         -- A single cycle of data from the start of an SG burst
         send(X"1", X"0000_0100", X"00", "110");
         send(X"1", X"0000_0100", X"00", "110");
-        wait;
 
         -- A single cycle of data from the end of an SG burst, so skip the first
         -- half burst each time
         send(X"2", X"0000_0240", X"00", "110");
         send(X"2", X"0000_0240", X"00", "110");
-        wait;
 
         send(X"3", X"1234_0020", X"02", "101");
 
@@ -147,7 +145,6 @@ begin
         send(X"3", X"1234_0000", X"03", "101");
         -- Same with two SG bursts
         send(X"3", X"1234_0000", X"07", "101");
-        wait;
 
 
         -- Start with an invalid burst, should return four cycles of invalid
@@ -177,21 +174,29 @@ begin
     end process;
 
 
---     axi_data_ready <= '1';
+    axi_data_ready <= '1';
 
     -- Log data returned to AXI
-    process (axi_clk) begin
+    process (axi_clk)
+        function to_resp_string(resp : std_ulogic_vector) return string is
+        begin
+            case resp is
+                when "00" => return "OK";
+                when "10" => return "SLVERR";
+                when others => return "???";
+            end case;
+        end;
+    begin
         if rising_edge(axi_clk) then
             axi_tick_count <= axi_tick_count + 1;
 
            -- Delayed response
 --             axi_data_ready <= axi_data.valid and not axi_data_ready;
-            axi_data_ready <= axi_data.valid;
 
             if axi_data.valid and axi_data_ready then
                 write("@axi " & to_string(axi_tick_count) &
                     " R " & to_hstring(axi_data.id) & " " &
-                    to_hstring(axi_data.resp) & " " &
+                    to_resp_string(axi_data.resp) & " " &
                     choose(axi_data.last = '1', "L", "-") & " " &
                     to_hstring(axi_data.data));
             end if;
