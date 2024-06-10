@@ -59,8 +59,8 @@ begin
         axi_address_i => axi_address_i,
         axi_ready_o => axi_address_ready_o,
 
-        fifo_command_o => address_command,
-        fifo_ready_i => address_command_ready,
+        command_o => address_command,
+        command_ready_i => address_command_ready,
 
         ctrl_address_o => axi_address,
         ctrl_ready_i => axi_address_ready

@@ -1,4 +1,4 @@
--- Clock crossing FIFO for Read address
+-- Clock crossing FIFO for Read/Write address
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -59,8 +59,7 @@ begin
         end;
 
         -- Manages input data stream and associated skid buffer
-        procedure advance_data(data_ready : std_ulogic)
-        is
+        procedure advance_data(data_ready : std_ulogic) is
         begin
             if data_ready then
                 -- When data is being taken allow it to pass through
@@ -76,7 +75,8 @@ begin
 
         -- Advance the command state when the AXI output is ready for a new
         -- result
-        procedure advance_command(command_ready : std_ulogic) is
+        procedure advance_command(command_ready : std_ulogic)
+        is
             variable load_new_command : std_ulogic;
         begin
             -- This doesn't quite follow the standard "ready or not valid" load
@@ -120,8 +120,7 @@ begin
 
 
         -- Advance the AXI response when we can
-        procedure advance_axi(axi_valid : std_ulogic; data : data_t)
-        is
+        procedure advance_axi(axi_valid : std_ulogic; data : data_t) is
             -- Compute AXI read RESP code from command and data status.
             -- The AXI specification really doesn't give us many options for the
             -- error code, which means even in the case of an AXI protocol
@@ -140,9 +139,9 @@ begin
                 axi_data_o <= (
                     id => command.id,
                     resp => resp,
+                    data => data.data,
                     last => command.count ?= 0,
-                    valid => command.valid and axi_valid,
-                    data => data.data
+                    valid => command.valid and axi_valid
                 );
             end if;
         end;

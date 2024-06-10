@@ -21,8 +21,12 @@ entity gddr6_axi_address is
         axi_ready_o : out std_ulogic := '0';
 
         -- FIFO to AXI R/W data interface
-        fifo_command_o : out burst_command_t := IDLE_BURST_COMMAND;
-        fifo_ready_i : in std_ulogic;
+        command_o : out burst_command_t := IDLE_BURST_COMMAND;
+        command_ready_i : in std_ulogic;
+
+        -- Optional response control to AXI W (B) response interface
+        response_o : out burst_response_t := IDLE_BURST_RESPONSE;
+        response_ready_i : in std_ulogic := '1';
 
         -- Address request to controller with number of SG bursts to transfer
         -- for this request
@@ -55,6 +59,12 @@ architecture arch of gddr6_axi_address is
             last_offset(address)(14 downto 12) ?= "000";
     end;
 
+    function sg_count(address : axi_address_t) return unsigned is
+    begin
+        return last_offset(address)(11 downto 7);
+    end;
+
+
     function command(address : axi_address_t) return burst_command_t
     is
         variable step : unsigned(6 downto 0);
@@ -71,11 +81,21 @@ architecture arch of gddr6_axi_address is
         );
     end;
 
+    function response(address : axi_address_t) return burst_response_t is
+    begin
+        return (
+            id => address.id,
+            count => sg_count(address),
+            invalid_burst => not valid_request(address),
+            valid => '1'
+        );
+    end;
+
     function address(address : axi_address_t) return address_t is
     begin
         return (
             address => address.addr(31 downto 7),
-            count => last_offset(address)(11 downto 7),
+            count => sg_count(address),
             valid => '1'
         );
     end;
@@ -85,15 +105,19 @@ begin
         if rising_edge(clk_i) then
             if axi_address_i.valid and axi_ready_o then
                 -- Process incoming request
-                fifo_command_o <= command(axi_address_i);
+                command_o <= command(axi_address_i);
+                response_o <= response(axi_address_i);
                 if valid_request(axi_address_i) then
                     ctrl_address_o <= address(axi_address_i);
                 end if;
                 axi_ready_o <= '0';
             else
                 -- Clear each command as it is accepted
-                if fifo_ready_i then
-                    fifo_command_o.valid <= '0';
+                if command_ready_i then
+                    command_o.valid <= '0';
+                end if;
+                if response_ready_i then
+                    response_o.valid <= '0';
                 end if;
                 if ctrl_ready_i then
                     ctrl_address_o.valid <= '0';
@@ -101,7 +125,8 @@ begin
                 -- Accept a new command once all outstanding commands are
                 -- resolved
                 axi_ready_o <=
-                    (fifo_ready_i or not fifo_command_o.valid) and
+                    (command_ready_i or not command_o.valid) and
+                    (response_ready_i or not response_o.valid) and
                     (ctrl_ready_i or not ctrl_address_o.valid);
             end if;
         end if;

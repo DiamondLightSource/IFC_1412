@@ -51,25 +51,44 @@ package gddr6_axi_defs is
     -- Transfer address for generating SG bursts required to fill the requested
     -- AXI burst.  Passed to CTRL layer
     type address_t is record
-        address : unsigned(24 downto 0);
-        count : unsigned(4 downto 0);
+        address : unsigned(24 downto 0);    -- First SG burst address
+        count : unsigned(4 downto 0);       -- Count of SG bursts
         valid : std_ulogic;
     end record;
 
     -- Command information for transferring data for an AXI burst
     type burst_command_t is record
         id : std_ulogic_vector(3 downto 0); -- AXI transfer ID
-        count : unsigned(7 downto 0);       -- Length of burst
+        count : unsigned(7 downto 0);       -- Length of AXI burst
         offset : unsigned(6 downto 0);      -- Burst start offset in SG burst
         step : unsigned(6 downto 0);        -- Offset step per burst
         invalid_burst : std_ulogic;         -- Set if no data transferred
         valid : std_ulogic;
     end record;
 
+    -- Command information for write response handling.  Similar to burst
+    -- control but without the address offset information
+    type burst_response_t is record
+        id : std_ulogic_vector(3 downto 0); -- AXI transfer ID
+        count : unsigned(4 downto 0);       -- Count of SG bursts
+        invalid_burst : std_ulogic;         -- Set if no data transferred
+        valid : std_ulogic;
+    end record;
+
+    -- Write interface for writing to data fifo
+    type write_data_t is record
+        data : std_ulogic_vector(511 downto 0);
+        bytes : std_ulogic_vector(63 downto 0);
+        advance : std_ulogic;
+        valid : std_ulogic;
+    end record;
+
 
     constant IDLE_ADDRESS : address_t;
     constant IDLE_BURST_COMMAND : burst_command_t;
+    constant IDLE_BURST_RESPONSE : burst_response_t;
     constant IDLE_AXI_READ_DATA : axi_read_data_t;
+    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t;
 end;
 
 package body gddr6_axi_defs is
@@ -88,11 +107,24 @@ package body gddr6_axi_defs is
         valid => '0'
     );
 
+    constant IDLE_BURST_RESPONSE : burst_response_t := (
+        id => (others => '0'),
+        count => (others => '0'),
+        invalid_burst => '0',
+        valid => '0'
+    );
+
     constant IDLE_AXI_READ_DATA : axi_read_data_t := (
         id => (others => '0'),
         data => (others => '0'),
         resp => (others => '0'),
         last => '0',
+        valid => '0'
+    );
+
+    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t := (
+        id => (others => '0'),
+        resp => (others => '0'),
         valid => '0'
     );
 end;
