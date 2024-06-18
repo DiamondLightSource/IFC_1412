@@ -78,20 +78,37 @@ package gddr6_axi_defs is
     -- Write interface for writing to data fifo
     type write_data_t is record
         data : std_ulogic_vector(511 downto 0);
-        bytes : std_ulogic_vector(63 downto 0);
+        byte_mask : std_ulogic_vector(63 downto 0);
+        phase : std_ulogic;
         advance : std_ulogic;
         valid : std_ulogic;
     end record;
 
 
+    constant IDLE_AXI_READ_DATA : axi_read_data_t;
+    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t;
+
     constant IDLE_ADDRESS : address_t;
     constant IDLE_BURST_COMMAND : burst_command_t;
     constant IDLE_BURST_RESPONSE : burst_response_t;
-    constant IDLE_AXI_READ_DATA : axi_read_data_t;
-    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t;
+    constant IDLE_WRITE_DATA : write_data_t;
 end;
 
 package body gddr6_axi_defs is
+    constant IDLE_AXI_READ_DATA : axi_read_data_t := (
+        id => (others => '0'),
+        data => (others => '0'),
+        resp => (others => '0'),
+        last => '0',
+        valid => '0'
+    );
+
+    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t := (
+        id => (others => '0'),
+        resp => (others => '0'),
+        valid => '0'
+    );
+
     constant IDLE_ADDRESS : address_t := (
         address => (others => '0'),
         count => (others => '0'),
@@ -114,17 +131,11 @@ package body gddr6_axi_defs is
         valid => '0'
     );
 
-    constant IDLE_AXI_READ_DATA : axi_read_data_t := (
-        id => (others => '0'),
+    constant IDLE_WRITE_DATA : write_data_t := (
         data => (others => '0'),
-        resp => (others => '0'),
-        last => '0',
-        valid => '0'
-    );
-
-    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t := (
-        id => (others => '0'),
-        resp => (others => '0'),
+        byte_mask => (others => '0'),
+        phase => '0',
+        advance => '0',
         valid => '0'
     );
 end;

@@ -40,7 +40,7 @@ end;
 architecture arch of gddr6_axi_read_data_fifo is
     -- We maintain two write addresses, one for data and one for the ok flag.
     -- The ok flag is advanced by the address manager, but we have to manage the
-    -- data write address separately
+    -- data write address separately: ok comes (slighly) after data.
     signal ok_write_address : unsigned(FIFO_BITS-2 downto 0);
     signal data_write_address : unsigned(FIFO_BITS-2 downto 0)
         := (others => '0');
@@ -49,9 +49,11 @@ architecture arch of gddr6_axi_read_data_fifo is
 
     -- Three separate FIFO buffers: one for the OK flags, and two separate FIFOs
     -- to support data interleaving
-    signal ok_fifo : std_ulogic_vector(0 to 2**(FIFO_BITS-1) - 1);
-    signal even_data_fifo : vector_array(0 to 2**FIFO_BITS-1)(255 downto 0);
-    signal odd_data_fifo  : vector_array(0 to 2**FIFO_BITS-1)(255 downto 0);
+    subtype SG_FIFO_RANGE is natural range 0 to 2**(FIFO_BITS-1) - 1;
+    subtype DATA_FIFO_RANGE is natural range 0 to 2**FIFO_BITS - 1;
+    signal ok_fifo : std_ulogic_vector(SG_FIFO_RANGE);
+    signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
+    signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
 
     -- Data interleaving depends on the whether we are transferring the first or
     -- second transfer of an SG burst.
@@ -64,19 +66,20 @@ architecture arch of gddr6_axi_read_data_fifo is
 begin
     -- The clock domain crossing part of this FIFO works in steps of SG bursts
     async_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => FIFO_BITS - 1
+        ADDRESS_WIDTH => FIFO_BITS - 1,
+        ENABLE_READ_RESERVE => false,
+        ENABLE_WRITE_RESERVE => true
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_reserve_i => ctrl_reserve_i,
-        write_enable_i => ctrl_data_ok_valid_i,
+        write_access_i => ctrl_data_ok_valid_i,
         write_ready_o => ctrl_reserve_ready_o,
-        write_address_o => ok_write_address,
+        write_access_address_o => ok_write_address,
 
         read_clk_i => axi_clk_i,
-        read_reserve_i => read_fifo_enable,
-        read_enable_i => read_fifo_enable and read_fifo_ready,
+        read_access_i => read_fifo_enable,
         read_ready_o => read_fifo_ready,
-        read_address_o => read_address
+        read_access_address_o => read_address
     );
 
 

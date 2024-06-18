@@ -21,9 +21,13 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/axi/gddr6_axi_address_fifo.vhd \
     $vhd_dir/axi/gddr6_axi_command_fifo.vhd \
     $vhd_dir/axi/gddr6_axi_ctrl.vhd \
-    $vhd_dir/axi/gddr6_axi_read_data.vhd \
-    $vhd_dir/axi/gddr6_axi_read_data_fifo.vhd \
-    $vhd_dir/axi/gddr6_axi_read.vhd
+    $vhd_dir/axi/gddr6_axi_write_response_fifo.vhd \
+    $vhd_dir/axi/gddr6_axi_write_response.vhd \
+    $vhd_dir/axi/gddr6_axi_write_data_fifo.vhd \
+    $vhd_dir/axi/gddr6_axi_write_status_fifo.vhd \
+    $vhd_dir/axi/gddr6_axi_write_data.vhd \
+    $vhd_dir/axi/gddr6_axi_write.vhd
+
 
 vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/testbench.vhd
@@ -32,12 +36,13 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "CTRL" axi_read/ctrl/*
-add wave -group "Data FIFO Address" axi_read/data_fifo/async_address/*
-add wave -group "Data FIFO" axi_read/data_fifo/*
-add wave -group "R" axi_read/data/* axi_read/data/vars/*
-add wave -group "RA" axi_read/address/*
-add wave -group "Read" axi_read/*
+add wave -group "CTRL" axi_write/ctrl/* axi_write/ctrl/vars/*
+# add wave -group "Data FIFO Address" axi_write/data_fifo/async_address/*
+add wave -group "Data FIFO" axi_write/data_fifo/*
+add wave -group "WA" axi_write/address/*
+# add wave -group "W" axi_write/data/*
+add wave -group "B" axi_write/response/*
+add wave -group "Write" axi_write/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

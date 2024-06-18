@@ -134,20 +134,20 @@ begin
     -- -------------------------------------------------------------------------
     -- CTRL interface (data connection is direct to data FIFO)
 
-    ctrl : entity work.gddr6_axi_read_ctrl port map (
+    ctrl : entity work.gddr6_axi_ctrl port map (
         clk_i => ctrl_clk_i,
+
+        address_i => ctrl_address,
+        address_ready_o => ctrl_address_ready,
+
+        reserve_o => ctrl_reserve,
+        reserve_ready_i => ctrl_reserve_ready,
 
         ctrl_address_o => ctrl_request_o.ra_address,
         ctrl_valid_o => ctrl_request_o.ra_valid,
         ctrl_ready_i => ctrl_response_i.ra_ready,
         lookahead_address_o => ctrl_request_o.ral_address,
         lookahead_count_o => ctrl_request_o.ral_count,
-        lookahead_valid_o => ctrl_request_o.ral_valid,
-
-        fifo_address_i => ctrl_address,
-        fifo_ready_o => ctrl_address_ready,
-
-        fifo_reserve_o => ctrl_reserve,
-        fifo_reserve_ready_i => ctrl_reserve_ready
+        lookahead_valid_o => ctrl_request_o.ral_valid
     );
 end;
