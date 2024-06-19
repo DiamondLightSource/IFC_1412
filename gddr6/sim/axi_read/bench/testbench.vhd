@@ -114,6 +114,10 @@ begin
 
         clk_wait(2);
 
+        -- A simple but misaligned narrow burst
+        send(X"0", X"0000_0010", X"04", "100");
+        send(X"1", X"0000_0100", X"01", "110");
+
         -- An invalid address, triggers counter wraparound.
         send(X"E", X"ABCD_EF12", X"0E", "110");
 

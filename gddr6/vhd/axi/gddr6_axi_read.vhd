@@ -38,9 +38,7 @@ architecture arch of gddr6_axi_read is
     signal data_command : burst_command_t;
     signal data_command_ready : std_ulogic;
 
-    signal axi_data : std_logic_vector(511 downto 0);
-    signal axi_data_ok : std_ulogic;
-    signal axi_data_valid : std_ulogic;
+    signal axi_data : read_data_t;
     signal axi_data_ready : std_ulogic;
     signal axi_address : address_t;
     signal axi_address_ready : std_ulogic;
@@ -81,12 +79,10 @@ begin
     data : entity work.gddr6_axi_read_data port map (
         clk_i => axi_clk_i,
 
-        fifo_command_i => data_command,
-        fifo_ready_o => data_command_ready,
+        command_i => data_command,
+        command_ready_o => data_command_ready,
 
         fifo_data_i => axi_data,
-        fifo_data_ok_i => axi_data_ok,
-        fifo_data_valid_i => axi_data_valid,
         fifo_data_ready_o => axi_data_ready,
 
         axi_data_o => axi_data_o,
@@ -115,8 +111,6 @@ begin
         axi_clk_i => axi_clk_i,
 
         axi_data_o => axi_data,
-        axi_data_ok_o => axi_data_ok,
-        axi_valid_o => axi_data_valid,
         axi_ready_i => axi_data_ready,
 
         ctrl_clk_i => ctrl_clk_i,

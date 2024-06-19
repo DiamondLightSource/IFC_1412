@@ -5,6 +5,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_read_data_fifo is
     generic (
@@ -14,9 +15,7 @@ entity gddr6_axi_read_data_fifo is
         -- AXI consumer interface
         axi_clk_i : in std_ulogic;
 
-        axi_data_o : out std_logic_vector(511 downto 0);
-        axi_data_ok_o : out std_ulogic;
-        axi_valid_o : out std_ulogic := '0';
+        axi_data_o : out read_data_t := IDLE_READ_DATA;
         axi_ready_i : in std_ulogic;
 
         -- CTRL producer interface
@@ -83,7 +82,7 @@ begin
     );
 
 
-    read_fifo_enable <= (axi_ready_i or not axi_valid_o) and read_phase;
+    read_fifo_enable <= (axi_ready_i or not axi_data_o.valid) and read_phase;
     process (axi_clk_i)
         variable address : natural;
         variable data_out : vector_array(0 to 3)(127 downto 0);
@@ -98,25 +97,25 @@ begin
                 2 => odd_data_fifo (address)(127 downto 0),
                 3 => odd_data_fifo (address)(255 downto 128));
 
-            if axi_ready_i or not axi_valid_o then
+            if axi_ready_i or not axi_data_o.valid then
                 if read_fifo_ready then
                     case read_phase is
                         when '0' =>
-                            axi_data_o <=
+                            axi_data_o.data <=
                                 data_out(3) & data_out(1) &
                                 data_out(2) & data_out(0);
                             read_phase <= '1';
                         when '1' =>
-                            axi_data_o <=
+                            axi_data_o.data <=
                                 data_out(2) & data_out(0) &
                                 data_out(3) & data_out(1);
                             read_phase <= '0';
                         when others =>
                     end case;
-                    axi_data_ok_o <= ok_fifo(to_integer(read_address));
-                    axi_valid_o <= '1';
+                    axi_data_o.ok <= ok_fifo(to_integer(read_address));
+                    axi_data_o.valid <= '1';
                 else
-                    axi_valid_o <= '0';
+                    axi_data_o.valid <= '0';
                 end if;
             end if;
         end if;

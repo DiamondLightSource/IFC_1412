@@ -14,13 +14,11 @@ entity gddr6_axi_read_data is
         clk_i : in std_ulogic;
 
         -- FIFO from AXI RA data interface
-        fifo_command_i : in burst_command_t;
-        fifo_ready_o : out std_ulogic := '0';
+        command_i : in burst_command_t;
+        command_ready_o : out std_ulogic := '0';
 
         -- Data FIFO
-        fifo_data_i : in std_logic_vector(511 downto 0);
-        fifo_data_ok_i : in std_ulogic;
-        fifo_data_valid_i : in std_ulogic;
+        fifo_data_i : in read_data_t;
         fifo_data_ready_o : out std_ulogic := '1';
 
         -- AXI R interface
@@ -34,30 +32,17 @@ architecture arch of gddr6_axi_read_data is
 
     -- Support for skipping data at start and end of burst response
     signal skip_data : std_ulogic := '0';
+    -- Records whether new data is needed after this command
+    signal consume_data : std_ulogic;
 
-    type data_t is record
-        data : std_ulogic_vector(511 downto 0);
-        ok : std_ulogic;
-        valid : std_ulogic;
-    end record;
-    constant IDLE_DATA : data_t := (data => (others => '0'), others => '0');
     -- We use a skid buffer for the incoming data.  This is expensive (the data
     -- array is *large*) but the combinatorial decision on consume_data is
     -- complex enough already.
-    signal data_skid : data_t := IDLE_DATA;
+    signal data_skid : read_data_t := IDLE_READ_DATA;
 
 begin
     vars :
     process (clk_i)
-        impure function get_data_in return data_t is
-        begin
-            return (
-                data => fifo_data_i,
-                ok => fifo_data_ok_i,
-                valid => fifo_data_valid_i
-            );
-        end;
-
         -- Manages input data stream and associated skid buffer
         procedure advance_data(data_ready : std_ulogic) is
         begin
@@ -65,12 +50,36 @@ begin
                 -- When data is being taken allow it to pass through
                 data_skid.valid <= '0';
                 fifo_data_ready_o <= '1';
-            elsif fifo_data_valid_i and fifo_data_ready_o then
+            elsif fifo_data_i.valid and fifo_data_ready_o then
                 -- When not ready put the data to one side
-                data_skid <= get_data_in;
+                data_skid <= fifo_data_i;
                 fifo_data_ready_o <= '0';
             end if;
         end;
+
+
+        -- Returns the result of advancing command by one tick.  Not used when
+        -- command.count is zero
+        function step_command(command : burst_command_t) return burst_command_t
+        is
+            variable result : burst_command_t;
+        begin
+            result := command;
+            result.count := command.count - 1;
+            result.offset := command.offset + command.step;
+            return result;
+        end;
+
+        -- Checks if the given command will consume the data
+        function command_consumes_data(command : burst_command_t)
+            return std_ulogic
+        is
+            variable next_offset : unsigned(6 downto 0);
+        begin
+            next_offset := command.offset + command.step;
+            return command.count ?= 0 or next_offset(5 downto 0) ?= 0;
+        end;
+
 
 
         -- Advance the command state when the AXI output is ready for a new
@@ -78,6 +87,7 @@ begin
         procedure advance_command(command_ready : std_ulogic)
         is
             variable load_new_command : std_ulogic;
+            variable next_command : burst_command_t;
         begin
             -- This doesn't quite follow the standard "ready or not valid" load
             -- process because "not valid and skip_data" is a special state, and
@@ -88,9 +98,11 @@ begin
                     if skip_data then
                         skip_data <= '0';
                     elsif command.count > 0 then
-                        -- Advance current command to next count
-                        command.count <= command.count - 1;
-                        command.offset <= command.offset + command.step;
+                        -- Advance current command to next count and work out if
+                        -- data will be consumed
+                        next_command := step_command(command);
+                        command <= next_command;
+                        consume_data <= command_consumes_data(next_command);
                     elsif not command.offset(6) and
                           not command.invalid_burst then
                         -- count is zero but we didn't consume the last half of
@@ -109,18 +121,19 @@ begin
             end if;
 
             -- Acknowledge commands after receipt
-            fifo_ready_o <= load_new_command;
+            command_ready_o <= load_new_command;
             if load_new_command then
-                command <= fifo_command_i;
+                command <= command_i;
                 skip_data <=
-                    fifo_command_i.offset(6) and fifo_command_i.valid and
-                    not fifo_command_i.invalid_burst;
+                    command_i.offset(6) and command_i.valid and
+                    not command_i.invalid_burst;
+                consume_data <= command_consumes_data(command_i);
             end if;
         end;
 
 
         -- Advance the AXI response when we can
-        procedure advance_axi(axi_valid : std_ulogic; data : data_t) is
+        procedure advance_axi(axi_valid : std_ulogic; data : read_data_t) is
             -- Compute AXI read RESP code from command and data status.
             -- The AXI specification really doesn't give us many options for the
             -- error code, which means even in the case of an AXI protocol
@@ -147,7 +160,7 @@ begin
         end;
 
 
-        variable new_data : data_t;
+        variable new_data : read_data_t;
         variable axi_ready : std_ulogic;
         variable axi_valid : std_ulogic;
         variable data_ready : std_ulogic;
@@ -158,7 +171,7 @@ begin
             if data_skid.valid then
                 new_data := data_skid;
             else
-                new_data := get_data_in;
+                new_data := fifo_data_i;
             end if;
 
             -- Find when AXI is ready for another output
@@ -178,7 +191,8 @@ begin
                 command_ready := axi_valid and axi_ready;
             else
                 axi_valid := command.valid and new_data.valid;
-                data_ready := axi_valid and axi_ready;
+                data_ready :=
+                    axi_valid and axi_ready and consume_data;
                 command_ready := axi_valid and axi_ready;
             end if;
 
