@@ -32,8 +32,6 @@ architecture arch of gddr6_axi_read_data is
 
     -- Support for skipping data at start and end of burst response
     signal skip_data : std_ulogic := '0';
-    -- Records whether new data is needed after this command
-    signal consume_data : std_ulogic;
 
     -- We use a skid buffer for the incoming data.  This is expensive (the data
     -- array is *large*) but the combinatorial decision on consume_data is
@@ -58,28 +56,25 @@ begin
         end;
 
 
-        -- Returns the result of advancing command by one tick.  Not used when
-        -- command.count is zero
-        function step_command(command : burst_command_t) return burst_command_t
-        is
-            variable result : burst_command_t;
+        -- Advance command with suitable ping-pong handshake
+        procedure load_command(ready : std_ulogic) is
         begin
-            result := command;
-            result.count := command.count - 1;
-            result.offset := command.offset + command.step;
-            return result;
+            if ready then
+                if command_ready_o then
+                    -- Awkward case: we have to ignore valid in for the moment
+                    command.valid <= '0';
+                    command_ready_o <= '0';
+                else
+                    command <= command_i;
+                    command_ready_o <= command_i.valid;
+                    skip_data <=
+                        command_i.offset(6) and command_i.valid and
+                        not command_i.invalid_burst;
+                end if;
+            else
+                command_ready_o <= '0';
+            end if;
         end;
-
-        -- Checks if the given command will consume the data
-        function command_consumes_data(command : burst_command_t)
-            return std_ulogic
-        is
-            variable next_offset : unsigned(6 downto 0);
-        begin
-            next_offset := command.offset + command.step;
-            return command.count ?= 0 or next_offset(5 downto 0) ?= 0;
-        end;
-
 
 
         -- Advance the command state when the AXI output is ready for a new
@@ -87,7 +82,6 @@ begin
         procedure advance_command(command_ready : std_ulogic)
         is
             variable load_new_command : std_ulogic;
-            variable next_command : burst_command_t;
         begin
             -- This doesn't quite follow the standard "ready or not valid" load
             -- process because "not valid and skip_data" is a special state, and
@@ -100,9 +94,9 @@ begin
                     elsif command.count > 0 then
                         -- Advance current command to next count and work out if
                         -- data will be consumed
-                        next_command := step_command(command);
-                        command <= next_command;
-                        consume_data <= command_consumes_data(next_command);
+                        -- Advance current command to next count
+                        command.count <= command.count - 1;
+                        command.offset <= command.offset + command.step;
                     elsif not command.offset(6) and
                           not command.invalid_burst then
                         -- count is zero but we didn't consume the last half of
@@ -116,19 +110,11 @@ begin
                 else
                     load_new_command := '1';
                 end if;
-            elsif not command.valid and not skip_data then
-                load_new_command := '1';
+            else
+                load_new_command := not command.valid and not skip_data;
             end if;
 
-            -- Acknowledge commands after receipt
-            command_ready_o <= load_new_command;
-            if load_new_command then
-                command <= command_i;
-                skip_data <=
-                    command_i.offset(6) and command_i.valid and
-                    not command_i.invalid_burst;
-                consume_data <= command_consumes_data(command_i);
-            end if;
+            load_command(load_new_command);
         end;
 
 
@@ -160,11 +146,38 @@ begin
         end;
 
 
+        -- Checks whether this command is the last command consuming this data
+        function consume_data(command : burst_command_t) return std_ulogic
+        is
+            variable next_offset : unsigned(6 downto 0);
+        begin
+            next_offset := command.offset + command.step;
+            return command.count ?= 0 or next_offset(5 downto 0) ?= 0;
+        end;
+
+
+        -- Progress of the controller state machine is determined by three flow
+        -- control inputs: command.valid, new_data.valid, and axi_ready,
+        -- indicating respectively that:
+        --
+        --  command.valid       A new command state is ready to be processed
+        --  new_data.valid      Incoming data is ready to be transmitted
+        --  axi_ready           The AXI port is ready to send a new value
+        --
+        -- All of these ports are controlled by the following three control
+        -- flags computed below:
+        --
+        --  command_ready       Command is consumed, step to next command
+        --  data_ready          Data is consumed, advance to next available data
+        --  axi_valid           AXI response is available to be sent
+        --
+        -- Computing these three control flags depends on the command state and
+        -- whether data is to be skipped, consumed or held.
         variable new_data : read_data_t;
         variable axi_ready : std_ulogic;
-        variable axi_valid : std_ulogic;
-        variable data_ready : std_ulogic;
         variable command_ready : std_ulogic;
+        variable data_ready : std_ulogic;
+        variable axi_valid : std_ulogic;
 
     begin
         if rising_edge(clk_i) then
@@ -184,16 +197,21 @@ begin
                 axi_valid := '0';
                 data_ready := '1';
                 command_ready := new_data.valid;
-            elsif command.invalid_burst then
+            elsif command.valid and command.invalid_burst then
                 -- During an invalid burst we don't transfer data
-                axi_valid := command.valid;
+                axi_valid := '1';
                 data_ready := '0';
                 command_ready := axi_valid and axi_ready;
-            else
-                axi_valid := command.valid and new_data.valid;
-                data_ready :=
-                    axi_valid and axi_ready and consume_data;
+            elsif command.valid then
+                -- During normal processing advance command and advance data
+                -- when consumed
+                axi_valid := new_data.valid;
+                data_ready := axi_valid and axi_ready and consume_data(command);
                 command_ready := axi_valid and axi_ready;
+            else
+                axi_valid := '0';
+                data_ready := '0';
+                command_ready := '1';
             end if;
 
 

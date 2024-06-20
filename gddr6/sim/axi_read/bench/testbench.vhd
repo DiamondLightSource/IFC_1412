@@ -115,17 +115,30 @@ begin
         clk_wait(2);
 
         -- A simple but misaligned narrow burst
-        send(X"0", X"0000_0010", X"04", "100");
-        send(X"1", X"0000_0100", X"01", "110");
+        send(X"0", X"0000_0010", X"04", "100");     -- 3 repeats then 2
 
-        -- An invalid address, triggers counter wraparound.
+        -- An AXI burst straddling two SG bursts followed by an aligned burst
+        send(X"1", X"0000_1040", X"01", "110");
+        send(X"1", X"0000_1100", X"01", "110");
+
+        -- An invalid address, triggers counter wraparound, but is processed
         send(X"E", X"ABCD_EF12", X"0E", "110");
 
-        -- A single invalid burst
-        send(X"F", X"FF00_0000", X"00", "111");
+        -- A single AXI burst (so generates a skip) followed by an invalid burst
+        send(X"1", X"ABCD_0000", X"00", "110");
+        send(X"2", X"FF00_0000", X"00", "111");
+
+        -- Similar, but the skip is at the start of the burst
+        send(X"3", X"ABCD_0040", X"00", "110");
+        send(X"4", X"FF00_0000", X"00", "111");
+
+        -- A full SG burst followed by an invalid burst
+        send(X"3", X"ABCD_0000", X"01", "110");
+        send(X"4", X"FF00_0000", X"00", "111");
+
         -- Two longer invalid bursts back to back
-        send(X"F", X"FF00_0000", X"02", "111");
-        send(X"F", X"FF00_0000", X"01", "111");
+        send(X"3", X"FF00_0000", X"02", "111");
+        send(X"4", X"FF00_0000", X"01", "111");
 
         -- A simple burst: two SG bursts, four AXI beats
         send(X"1", X"0000_0100", X"03", "110");
@@ -218,11 +231,11 @@ begin
 
         procedure generate_data is
         begin
-            data_counter := data_counter + 1;
-
             ctrl_response.rd_valid <= '1';
             ctrl_response.rd_data <=
                 (others => to_std_ulogic_vector_u(data_counter, 128));
+
+            data_counter := data_counter + 1;
         end;
 
     begin
