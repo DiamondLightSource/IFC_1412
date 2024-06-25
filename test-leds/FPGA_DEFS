@@ -1,0 +1,7 @@
+# Overrides for defaults
+
+BUILT =
+
+VHD_DIRS = $(VHD_DIR)
+
+# vim: set filetype=make:
