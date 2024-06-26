@@ -1,4 +1,5 @@
-BUILT_FILES += metadata.coe
+BUILT += metadata.coe
+
 BLOCK_DESIGNS += interconnect
 
 # vim: set filetype=make:

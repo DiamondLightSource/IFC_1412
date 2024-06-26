@@ -4,8 +4,8 @@ pad_SYSCLK100_{P,N}             in
 pad_MGT224_REFCLK_{P,N}         in
 
 # AMC PCIe first fat pipe
-pad_AMC_RX_7_4_{P,N}[7..4]      in
-pad_AMC_TX_7_4_{P,N}[7..4]      out
+pad_AMC_PCI_RX_{P,N}[7..4]      in
+pad_AMC_PCI_TX_{P,N}[7..4]      out
 
 # Status LEDs
 pad_FP_LED2A_K                  out

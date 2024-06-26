@@ -262,7 +262,7 @@ proc create_root_design { parentCell } {
   # Create instance: blk_mem_gen_0, and set properties
   set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
   set_property -dict [list \
-    CONFIG.Coe_File {../../../built/metadata.coe} \
+    CONFIG.Coe_File {../../../built_dir/metadata.coe} \
     CONFIG.Load_Init_File {true} \
     CONFIG.Memory_Type {Single_Port_ROM} \
     CONFIG.Port_A_Write_Rate {0} \

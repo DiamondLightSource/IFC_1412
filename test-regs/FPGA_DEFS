@@ -4,4 +4,23 @@ BUILT += version.vhd
 
 BLOCK_DESIGNS += interconnect
 
+# VHD_FILES += $(COMMON_VHD)/support.vhd
+# VHD_DIRS += $(COMMON_VHD)/util
+# VHD_DIRS += $(COMMON_VHD)/register
+# VHD_DIRS += $(COMMON_VHD)/axi
+
+# Add the individual VHDL support files used by this project
+# This doesn't scale very well, alas.  The alternative is to include entire
+# directories, as commented out above.
+VHD_FILES += $(COMMON_VHD)/support.vhd
+VHD_FILES += $(COMMON_VHD)/axi/axi_lite_slave.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_defs.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_mux.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_mux_strobe.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_buffer.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_file_rw.vhd
+VHD_FILES += $(COMMON_VHD)/register/register_file.vhd
+VHD_FILES += $(COMMON_VHD)/util/dlyreg.vhd
+VHD_FILES += $(COMMON_VHD)/util/fixed_delay_dram.vhd
+
 # vim: set filetype=make:

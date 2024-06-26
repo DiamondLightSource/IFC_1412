@@ -7,16 +7,10 @@ from fpga_lib.driver import driver
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd', 'register_defines.in')
 
-raw_regs = driver.RawRegisters('ifc_1412-regs', 1)
+raw_regs = driver.RawRegisters('ifc_1412-regs', 0)
 regs = driver.Registers(raw_regs, register_defines)
 
 print(regs.TOP.GIT_VERSION)
-
-# regs = driver.RawRegisters('ifc_1412-regs', 1)
-# 
-# while True:
-#     n = regs[1] & 0xffff
-#     regs[1] = n + 1
 
 leds = regs.TOP.LEDS
 while True:

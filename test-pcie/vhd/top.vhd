@@ -11,6 +11,12 @@ architecture arch of top is
 
     signal reset_counter : unsigned(10 downto 0) := (others => '1');
     signal reset_active : std_ulogic := '1';
+    -- We need a separate PCIe Reset signal which is marked as asynchronous
+    signal perst : std_ulogic := '1';
+    attribute KEEP : string;
+    attribute KEEP of perst : signal is "true";
+    attribute false_path_from : string;
+    attribute false_path_from of perst : signal is "TRUE";
 
     signal led_counter : unsigned(25 downto 0) := (others => '0');
     signal led_a : std_ulogic := '1';   -- Green if low
@@ -19,14 +25,14 @@ architecture arch of top is
 begin
     interconnect : entity work.interconnect_wrapper port map (
         -- Clocking and reset
-        nCOLDRST => not reset_active,
+        nCOLDRST => not perst,
         -- PCIe MGT interface
         FCLKA_clk_p(0) => pad_MGT224_REFCLK_P,
         FCLKA_clk_n(0) => pad_MGT224_REFCLK_N,
-        pcie_7x_mgt_0_rxn => pad_AMC_RX_7_4_N,
-        pcie_7x_mgt_0_rxp => pad_AMC_RX_7_4_P,
-        pcie_7x_mgt_0_txn => pad_AMC_TX_7_4_N,
-        pcie_7x_mgt_0_txp => pad_AMC_TX_7_4_P
+        pcie_7x_mgt_0_rxn => pad_AMC_PCI_RX_N,
+        pcie_7x_mgt_0_rxp => pad_AMC_PCI_RX_P,
+        pcie_7x_mgt_0_txn => pad_AMC_PCI_TX_N,
+        pcie_7x_mgt_0_txp => pad_AMC_PCI_TX_P
     );
 
     sysclk_ibuf : IBUFDS port map (
@@ -48,6 +54,7 @@ begin
                     reset_counter <= reset_counter - 1;
                 else
                     reset_active <= '0';
+                    perst <= '0';
                     led_a <= '0';
                 end if;
             end if;
