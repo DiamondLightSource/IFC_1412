@@ -128,10 +128,10 @@ begin
         -- PCIe MGT interface
         FCLKA_clk_p(0) => pad_MGT224_REFCLK_P,
         FCLKA_clk_n(0) => pad_MGT224_REFCLK_N,
-        pcie_7x_mgt_0_rxn => pad_AMC_RX_7_4_N,
-        pcie_7x_mgt_0_rxp => pad_AMC_RX_7_4_P,
-        pcie_7x_mgt_0_txn => pad_AMC_TX_7_4_N,
-        pcie_7x_mgt_0_txp => pad_AMC_TX_7_4_P,
+        pcie_7x_mgt_0_rxn => pad_AMC_PCI_RX_N,
+        pcie_7x_mgt_0_rxp => pad_AMC_PCI_RX_P,
+        pcie_7x_mgt_0_txn => pad_AMC_PCI_TX_N,
+        pcie_7x_mgt_0_txp => pad_AMC_PCI_TX_P,
 
         -- Register clock and AXI reset
         DSP_CLK => clk,
@@ -289,8 +289,8 @@ begin
         pad_LMK_SCS_L_o => pad_LMK_SCS_L,
         pad_LMK_SDIO_io => pad_LMK_SDIO,
         pad_LMK_RESET_L_o => pad_LMK_RESET_L,
-        pad_LMK_SYNC_io => pad_LMK_SYNC,
-        pad_LMK_STATUS_io => pad_LMK_STATUS
+        pad_LMK_SYNC_o => pad_LMK_SYNC,
+        pad_LMK_STATUS_i => pad_LMK_STATUS
     );
 
 

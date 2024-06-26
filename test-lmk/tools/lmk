@@ -12,7 +12,7 @@ def to_int(s):
 
 parser = argparse.ArgumentParser(description = 'Read/write LMK registers')
 parser.add_argument(
-    '-a', dest = 'addr', default = 1,
+    '-a', dest = 'addr', default = 0,
     help = 'Set physical address of card.  If not specified then card 1')
 parser.add_argument(
     '-s', dest = 'sel', default = 0, type = int, choices = (0, 1),
@@ -32,7 +32,7 @@ args = parser.parse_args()
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd', 'register_defines.in')
 
-raw_regs = driver.RawRegisters('ifc_1412-regs', args.addr)
+raw_regs = driver.RawRegisters('ifc_1412-lmk', args.addr)
 regs = driver.Registers(raw_regs, register_defines)
 top = regs.TOP
 

@@ -4,8 +4,8 @@ pad_SYSCLK100_{P,N}             in
 pad_MGT224_REFCLK_{P,N}         in
 
 # AMC PCIe first fat pipe
-pad_AMC_RX_7_4_{P,N}[7..4]      in
-pad_AMC_TX_7_4_{P,N}[7..4]      out
+pad_AMC_PCI_RX_{P,N}[7..4]      in
+pad_AMC_PCI_TX_{P,N}[7..4]      out
 
 # Status LEDs
 pad_FP_LED2A_K                  out
@@ -23,8 +23,8 @@ pad_LMK_SCS_L                   out
 pad_LMK_SDIO                    inout
 # Reset, sync, and status readbacks
 pad_LMK_RESET_L                 out
-pad_LMK_SYNC                    inout
-pad_LMK_STATUS[0..1]            inout
+pad_LMK_SYNC                    out
+pad_LMK_STATUS[0..1]            in
 
 # Some miscellaneous clocks to count
 # SG12_CK from CLKOUT9

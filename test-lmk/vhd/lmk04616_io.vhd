@@ -12,8 +12,8 @@ entity lmk04616_io is
         pad_LMK_SCS_L_o : out std_ulogic;
         pad_LMK_SDIO_io : inout std_logic;
         pad_LMK_RESET_L_o : out std_ulogic;
-        pad_LMK_SYNC_io : inout std_logic;
-        pad_LMK_STATUS_io : inout std_logic_vector(1 downto 0);
+        pad_LMK_SYNC_o : out std_logic;
+        pad_LMK_STATUS_i : in std_logic_vector(1 downto 0);
 
         lmk_ctl_sel_i : in std_ulogic;      -- LMK select (0 => SYS, 1 => ACQ)
 
@@ -33,19 +33,14 @@ end;
 
 architecture arch of lmk04616_io is
 begin
-    -- Needed for simulation to avoid undriven signals in simulation
-    -- pragma translate off
-    pad_LMK_STATUS_io <= "ZZ";
-    -- pragma translate on
-
     -- For most signals can just use the default constraint settings, don't need
     -- to instantiate IO buffers
     pad_LMK_CTL_SEL_o <= lmk_ctl_sel_i;
     pad_LMK_SCL_o <= lmk_scl_i;
     pad_LMK_SCS_L_o <= lmk_scs_l_i;
     pad_LMK_RESET_L_o <= lmk_reset_l_i;
-    pad_LMK_SYNC_io <= lmk_sync_i;
-    lmk_status_o <= pad_LMK_STATUS_io;
+    pad_LMK_SYNC_o <= lmk_sync_i;
+    lmk_status_o <= pad_LMK_STATUS_i;
 
     -- The SDIO line is shared and needs a tristate driver
     pad_LMK_SDIO_io <= lmk_mosi_i when lmk_moen_i else 'Z';

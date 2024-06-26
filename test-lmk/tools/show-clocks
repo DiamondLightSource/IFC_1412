@@ -10,8 +10,8 @@ from bind_lmk import top
 def print_freqs():
     while not top.EVENTS.COUNT_UPDATE:
         time.sleep(0.01)
-    for i in range(3):
-        print(top.CLOCK_FREQ[i]._value, end = '  ')
+    for freq_reg in top.CLOCK_FREQ:
+        print(freq_reg._value, end = '  ')
     print()
 
 count = int(sys.argv[1]) if len(sys.argv) > 1 else 1

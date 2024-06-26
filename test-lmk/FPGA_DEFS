@@ -4,4 +4,6 @@ BUILT += version.vhd
 
 BLOCK_DESIGNS += interconnect
 
+VHD_DIRS += $(COMMON_VHD)
+
 # vim: set filetype=make:

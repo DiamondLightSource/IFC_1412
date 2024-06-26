@@ -35,8 +35,8 @@ entity lmk04616 is
         pad_LMK_SCS_L_o : out std_ulogic;
         pad_LMK_SDIO_io : inout std_logic;
         pad_LMK_RESET_L_o : out std_ulogic;
-        pad_LMK_SYNC_io : inout std_logic;
-        pad_LMK_STATUS_io : inout std_logic_vector(1 downto 0)
+        pad_LMK_SYNC_o : out std_logic;
+        pad_LMK_STATUS_i : in std_logic_vector(1 downto 0)
     );
 end;
 
@@ -60,8 +60,8 @@ begin
         pad_LMK_SCS_L_o => pad_LMK_SCS_L_o,
         pad_LMK_SDIO_io => pad_LMK_SDIO_io,
         pad_LMK_RESET_L_o => pad_LMK_RESET_L_o,
-        pad_LMK_SYNC_io => pad_LMK_SYNC_io,
-        pad_LMK_STATUS_io => pad_LMK_STATUS_io,
+        pad_LMK_SYNC_o => pad_LMK_SYNC_o,
+        pad_LMK_STATUS_i => pad_LMK_STATUS_i,
 
         lmk_ctl_sel_i => lmk_ctl_sel,
 

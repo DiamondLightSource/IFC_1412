@@ -65,9 +65,7 @@ begin
 
     begin
         -- Pull data across from clk_in_i to clk_i
-        sync_read : entity work.cross_clocks_read generic map (
-            WIDTH => 32
-        ) port map (
+        sync_read : entity work.cross_clocks_read port map (
             clk_in_i => clk_i,
             strobe_i => read_request,
             ack_o => read_ready(i),
