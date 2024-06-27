@@ -8,14 +8,13 @@ from fpga_lib.driver import driver
 
 from setup_lmk import setup_sys_lmk
 
-
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd', 'register_defines.in')
 raw_regs = driver.RawRegisters('ifc_1412-lmk', 0)
 regs = driver.Registers(raw_regs, register_defines)
 top = regs.TOP
 
-lmk = setup_sys_lmk(regs.TOP)
+lmk = setup_sys_lmk(regs.TOP, use_fclk = False)
 
 # Give the system time to lock
 time.sleep(0.01)

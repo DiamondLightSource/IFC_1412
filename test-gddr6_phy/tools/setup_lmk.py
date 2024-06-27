@@ -76,7 +76,7 @@ def configure_sys_lmk(lmk, use_fclk = True):
         # Crystal input on OSCin
         lmk.CLKIN0_EN = 0           # Disable CLINK0
         lmk.OSCIN_PD_LDO = 0        # Power up OSCin
-        lmk.OSCIN_SE_MODE = 0       # Wired for differential input
+        lmk.OSCIN_SE_MODE = 1       # Wired for single ended input
         lmk.OSCIN_OSCINSTAGE_EN = 1 # Power up OSCin
         lmk.OSCIN_BUF_REF_EN = 1
         lmk.PLL2_GLOBAL_BYP = 0     # Input from OSCin
