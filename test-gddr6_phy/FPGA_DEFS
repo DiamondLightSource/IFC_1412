@@ -1,3 +1,6 @@
+VHD_DIRS += $(COMMON_VHD)
+VHD_DIRS += $(GDDR6_DIR)
+
 BUILT += metadata.coe
 BUILT += version.vhd
 BUILT += register_defines.vhd
@@ -8,7 +11,6 @@ BLOCK_DESIGNS += interconnect
 # Path to gddr6 files
 GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
 
-VHD_DIRS += $(GDDR6_DIR)
 VPATH += $(GDDR6_DIR)
 
 # This allows the GDDR6 register range to be included as part of the

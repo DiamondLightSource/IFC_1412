@@ -9,6 +9,8 @@ use work.support.all;
 use work.register_defs.all;
 use work.register_defines.all;
 
+use work.gddr6_defs.all;
+
 entity test_gddr6_phy is
     port (
         clk_i : in std_ulogic;
@@ -75,6 +77,18 @@ architecture arch of test_gddr6_phy is
     signal lmk_status : std_ulogic_vector(1 downto 0);
     signal lmk_reset : std_ulogic;
     signal lmk_sync : std_ulogic;
+
+    -- Unused CTRL interface
+    signal ctrl_ca_out : phy_ca_t := (
+        ca => (others => (others => '0')),
+        ca3 => "0000",
+        cke_n => '0'
+    );
+    signal ctrl_dq_out : phy_dq_out_t := (
+        data => (others => (others => '0')),
+        output_enable => '0'
+    );
+    signal ctrl_dq_in : phy_dq_in_t;
 
 begin
     register_mux : entity work.register_mux port map (
@@ -154,15 +168,9 @@ begin
 
         -- Unused operational interface
         ck_clk_o => open,
-        ctrl_ca_i => (others => (others => '0')),
-        ctrl_ca3_i => (others => '0'),
-        ctrl_cke_n_i => '0',
-        ctrl_data_i => (others => (others => '0')),
-        ctrl_data_o => open,
-        ctrl_output_enable_i => '0',
-        ctrl_edc_in_o => open,
-        ctrl_edc_write_o => open,
-        ctrl_edc_read_o => open,
+        ctrl_ca_i => ctrl_ca_out,
+        ctrl_dq_i => ctrl_dq_out,
+        ctrl_dq_o => ctrl_dq_in,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
