@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import os
+import numpy
+import time
+import argparse
+
+from fpga_lib.driver import driver
+from fpga_lib.boards import ifc_1412
+
+import bind_lmk
+
+
+parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+parser.add_argument(
+    '-a', dest = 'addr', default = 0,
+    help = 'Set physical address of card.  If not specified then card 0')
+parser.add_argument(
+    '-d', dest = 'dummy', default = False, action = 'store_true',
+    help = 'Use dummy LMK')
+args = parser.parse_args()
+
+
+if args.dummy:
+    lmk = bind_lmk.DummyLMK()
+else:
+    top = bind_lmk.open(args.addr)
+    lmk = bind_lmk.LMK(top, 'sys')
+
+lmk = ifc_1412.setup_sys_lmk(lmk)
+
+if not args.dummy:
+    # Give the system time to lock
+    time.sleep(0.01)
+    print(
+        'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
+        ', Status =', top.STATUS.LMK_STATUS)

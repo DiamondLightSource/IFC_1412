@@ -5,36 +5,66 @@
 import argparse
 import re
 
+from fpga_lib.devices import LMK04616
 
 
-parser = argparse.ArgumentParser(description = 'Read and save LMK state')
-parser.add_argument(
-    '-l', dest = 'load', default = None,
-    help = 'Specify file to load state from')
-parser.add_argument(
-    '-f', dest = 'format', default = 'names',
-    choices = ('names', 'raw', 'ti'),
-    help = 'Select output format: names or raw registers')
-args = parser.parse_args()
+def parse_args():
+    FORMAT_OPTIONS = ('names', 'raw', 'ti')
+
+    parser = argparse.ArgumentParser(description = 'Read and save LMK state')
+    parser.add_argument(
+        '-i', dest = 'input_format', default = 'names',
+        choices = FORMAT_OPTIONS,
+        help = 'Select input format: names or raw registers')
+    parser.add_argument(
+        '-o', dest = 'output_format', default = 'names',
+        choices = FORMAT_OPTIONS,
+        help = 'Select output format: names or raw registers')
+    parser.add_argument(
+        'load_file', nargs = '?', default = None,
+        help = 'Specify file to load state from, otherwise load from device')
+
+    args = parser.parse_args()
+    return args
 
 
-def load_lmk():
-    if args.load is None:
-        from bind_lmk import lmk
-    else:
-        from fpga_lib.devices import LMK04616
-        lmk = LMK04616()
+# Source of settings, either directly from hardware or from a file in one of
+# three supported formats
 
-        for line in open(args.load).readlines():
-            address, value = [
-                int(g, 16)
-                for g in re.match(r'PLL\[(...)] => (..)', line).groups()]
-            lmk._write_register(address, value)
+def bind_lmk():
+    from bind_lmk import lmk
+    return lmk
+
+def load_file(loader, filename):
+    lmk = LMK04616()
+    for line in open(filename).readlines():
+        loader(lmk, line)
     return lmk
 
 
+def input_names(lmk, line):
+    name, value = re.match(r'([^ ]+) = ([^ ]+)', line).groups()
+    value = int(value, 16)
+    setattr(lmk, name, value)
+
+def input_raw(lmk, line):
+    address, value = re.match(r'PLL\[(...)] (?:=>|=|<=) (..)', line).groups()
+    address = int(address, 16)
+    value = int(value, 16)
+    lmk._write_register(address, value)
+
+def input_ti(lmk, line):
+    address, addr2, value = re.match(r'R([0-9]+)\t0x(....)(..)', line).groups()
+    address = int(address)
+    assert address == int(addr2, 16), 'Malformed input line'
+    value = int(value, 16)
+    lmk._write_register(address, value)
+
+
+# Output settings in one of the three supported formats
+
 def output_names(lmk):
-    for field in lmk._get_fields():
+    for field in sorted(lmk._get_fields()):
         print(field, '=', '%X' % getattr(lmk, field))
 
 
@@ -47,12 +77,10 @@ def get_registers(lmk):
                 registers.add(m.register)
     return sorted(registers)
 
-
 def output_raw(lmk):
     for reg in get_registers(lmk):
         value = lmk._read_register(reg)
         print('PLL[%03X] => %02X' % (reg, value))
-
 
 def output_ti(lmk):
     for reg in get_registers(lmk):
@@ -66,8 +94,19 @@ output_options = {
     'ti':    output_ti,
 }
 
+input_options = {
+    'names': input_names,
+    'raw':   input_raw,
+    'ti':    input_ti,
+}
+
+
 def main():
-    lmk = load_lmk()
-    output_options[args.format](lmk)
+    args = parse_args()
+    if args.load_file:
+        lmk = load_file(input_options[args.input_format], args.load_file)
+    else:
+        lmk = bind_lmk()
+    output_options[args.output_format](lmk)
 
 main()

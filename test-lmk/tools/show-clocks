@@ -2,10 +2,24 @@
 
 import time
 import sys
+import argparse
 
 from fpga_lib.driver import driver
 
-from bind_lmk import top
+import bind_lmk
+
+parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+parser.add_argument(
+    '-a', dest = 'addr', default = 0,
+    help = 'Set physical address of card.  If not specified then card 1')
+parser.add_argument(
+    'count', default = 1, nargs = '?', type = int,
+    help = 'Number of samples to show')
+args = parser.parse_args()
+
+
+top = bind_lmk.open(args.addr)
+
 
 def print_freqs():
     while not top.EVENTS.COUNT_UPDATE:
@@ -14,7 +28,7 @@ def print_freqs():
         print(freq_reg._value, end = '  ')
     print()
 
-count = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+count = args.count
 try:
     if count > 0:
         for n in range(count):
