@@ -11,6 +11,9 @@ use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
 entity gddr6_setup_delay is
+    generic (
+        MAX_DELAY : real
+    );
     port (
         ck_clk_i : in std_ulogic;       -- CK clock
         ck_clk_ok_i : in std_ulogic;    -- CK and RIU clocks ok
@@ -41,7 +44,9 @@ architecture arch of gddr6_setup_delay is
 
 begin
     -- Bring the delay register over to the CK domain
-    cc : entity work.register_cc port map (
+    cc : entity work.register_cc generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         clk_in_i => reg_clk_i,
         clk_out_i => ck_clk_i,
         clk_out_ok_i => ck_clk_ok_i,

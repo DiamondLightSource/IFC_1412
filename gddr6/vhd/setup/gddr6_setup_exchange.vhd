@@ -10,6 +10,9 @@ use work.register_defs.all;
 use work.gddr6_register_defines.all;
 
 entity gddr6_setup_exchange is
+    generic (
+        MAX_DELAY : real
+    );
     port (
         reg_clk_i : in std_ulogic;          -- Register clock
         ck_clk_i : in std_ulogic;       -- PHY clock
@@ -177,7 +180,9 @@ begin
     end process;
 
 
-    buffers : entity work.gddr6_setup_buffers port map (
+    buffers : entity work.gddr6_setup_buffers generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok_i,

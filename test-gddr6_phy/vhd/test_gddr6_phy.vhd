@@ -12,6 +12,9 @@ use work.register_defines.all;
 use work.gddr6_defs.all;
 
 entity test_gddr6_phy is
+    generic (
+        CK_FREQUENCY : real := 250.0
+    );
     port (
         clk_i : in std_ulogic;
 
@@ -156,7 +159,9 @@ begin
     );
 
 
-    setup_phy : entity work.gddr6_setup_phy port map (
+    setup_phy : entity work.gddr6_setup_phy generic map (
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
         reg_clk_i => clk_i,
 
         write_strobe_i => sys_write_strobe(SYS_GDDR6_REGS),

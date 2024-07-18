@@ -43,6 +43,10 @@ use work.gddr6_defs.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy is
+    generic (
+        -- Can possibly set this to 300.0 on speed grade -2 devices
+        CK_FREQUENCY : real := 250.0
+    );
     port (
         -- CK associated reset, hold this high until SG12_CK is valid.  All IOs
         -- are held in reset until CK is good.  This signal is asynchronous
@@ -113,8 +117,6 @@ entity gddr6_phy is
 end;
 
 architecture arch of gddr6_phy is
-    -- Have tried 300 MHz, but cannot get timing closure of BITSLICE IOs!
-    constant CK_FREQUENCY : real := 250.0;
     constant REFCLK_FREQUENCY : real := 8.0 * CK_FREQUENCY;
 
     -- Pads with IO buffers

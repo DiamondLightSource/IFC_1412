@@ -11,6 +11,10 @@ use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
 entity gddr6_setup is
+    generic (
+        -- Must be set to the minimum clock period of the register and CK clocks
+        MAX_DELAY : real := 4.0
+    );
     port (
         reg_clk_i : in std_ulogic;      -- Register clock
 
@@ -59,7 +63,9 @@ begin
     );
 
 
-    control : entity work.gddr6_setup_control port map (
+    control : entity work.gddr6_setup_control generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok,
@@ -80,7 +86,9 @@ begin
     );
 
 
-    delay : entity work.gddr6_setup_delay port map (
+    delay : entity work.gddr6_setup_delay generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok,
@@ -97,7 +105,9 @@ begin
     );
 
 
-    exchange : entity work.gddr6_setup_exchange port map (
+    exchange : entity work.gddr6_setup_exchange generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok,

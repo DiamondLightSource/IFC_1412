@@ -11,6 +11,9 @@ use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
 entity gddr6_setup_control is
+    generic (
+        MAX_DELAY : real
+    );
     port (
         ck_clk_i : in std_ulogic;       -- CK clock
         ck_clk_ok_i : in std_ulogic;    -- CK and RIU clocks ok
@@ -86,7 +89,9 @@ begin
         register_data_o(0) => reg_config_bits
     );
 
-    ck_config : entity work.register_file_cc port map (
+    ck_config : entity work.register_file_cc generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         clk_reg_i => reg_clk_i,
         clk_data_i => ck_clk_i,
         clk_data_ok_i => ck_clk_ok_i,
@@ -115,7 +120,9 @@ begin
         event_bits_i => reg_event_bits
     );
 
-    reg_to_ck : entity work.cross_clocks_read port map (
+    reg_to_ck : entity work.cross_clocks_read generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         clk_in_i => reg_clk_i,
         clk_out_i => ck_clk_i,
         clk_out_ok_i => ck_clk_ok_i,

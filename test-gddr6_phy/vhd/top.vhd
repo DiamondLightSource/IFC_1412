@@ -143,7 +143,9 @@ begin
     );
 
 
-    test_gddr6_phy : entity work.test_gddr6_phy port map (
+    test_gddr6_phy : entity work.test_gddr6_phy generic map (
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
         clk_i => clk,
 
         regs_write_strobe_i => regs_write_strobe,

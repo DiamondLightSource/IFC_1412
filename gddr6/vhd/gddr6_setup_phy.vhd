@@ -14,6 +14,15 @@ use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
 entity gddr6_setup_phy is
+    generic (
+        -- Default SG interface to run at CK=250 MHz, WCK = 1GHz, but support
+        -- option to run at 300 MHz/1.2 GHz on speed-grade -2 FPGA
+        CK_FREQUENCY : real := 250.0;
+        -- In the unlikely case that reg_clk_i is running faster than ck_clk_o
+        -- this should be configured so that the correct clock domain crossing
+        -- delays are set.  Otherwise leave at the default value.
+        REG_FREQUENCY : real := 250.0
+    );
     port (
         reg_clk_i : in std_ulogic;      -- Register interface only
         ck_clk_o : out std_ulogic;      -- Memory controller only
@@ -67,6 +76,10 @@ entity gddr6_setup_phy is
 end;
 
 architecture arch of gddr6_setup_phy is
+    -- For clock domain crossing in gddr6_setup we need to allow for the fastest
+    -- clock.
+    constant MAX_DELAY : real := 1000.0 / maximum(CK_FREQUENCY, REG_FREQUENCY);
+
     alias ck_clk : std_ulogic is ck_clk_o;
     signal ck_clk_ok : std_ulogic;
     signal ck_reset : std_ulogic;
@@ -92,7 +105,9 @@ architecture arch of gddr6_setup_phy is
     signal enable_controller : std_ulogic;
 
 begin
-    setup : entity work.gddr6_setup port map (
+    setup : entity work.gddr6_setup generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         reg_clk_i => reg_clk_i,
 
         write_strobe_i => write_strobe_i,
@@ -122,7 +137,9 @@ begin
     );
 
 
-    phy : entity work.gddr6_phy port map (
+    phy : entity work.gddr6_phy generic map (
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
         ck_reset_i => ck_reset,
         ck_clk_ok_o => ck_clk_ok,
         ck_clk_o => ck_clk,

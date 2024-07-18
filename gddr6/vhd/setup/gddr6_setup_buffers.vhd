@@ -7,6 +7,9 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 entity gddr6_setup_buffers is
+    generic (
+        MAX_DELAY : real
+    );
     port (
         -- Clock for user side of FIFO
         reg_clk_i : in std_ulogic;
@@ -229,7 +232,9 @@ begin
 
 
     -- Exchange generation
-    cross_clocks : entity work.cross_clocks_write port map (
+    cross_clocks : entity work.cross_clocks_write generic map (
+        MAX_DELAY => MAX_DELAY
+    ) port map (
         clk_in_i => reg_clk_i,
         strobe_i => exchange_strobe_i,
         ack_o => exchange_ack_o,
