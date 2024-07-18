@@ -18,8 +18,10 @@ architecture arch of top is
     signal perst_n : std_ulogic;
 
     -- Test clocks
-    signal test_clocks : std_ulogic_vector(0 to 3);
-    signal test_clock_counts : unsigned_array(0 to 3)(31 downto 0);
+    constant CLOCKS_COUNT : natural := 5;
+    subtype CLOCKS_RANGE is natural range 0 to CLOCKS_COUNT-1;
+    signal test_clocks : std_ulogic_vector(CLOCKS_RANGE);
+    signal test_clock_counts : unsigned_array(CLOCKS_RANGE)(31 downto 0);
     signal test_clock_update : std_ulogic;
 
     -- Wiring from AXI-Lite master to register slave
@@ -96,27 +98,40 @@ begin
         perst_n_o => perst_n
     );
 
-    -- Four clock inputs
-    i_sg12_ck : IBUFDS port map (
-        I => pad_SG12_CK_P,
-        IB => pad_SG12_CK_N,
-        O => test_clocks(0)
+
+    -- Test clock inputs
+    sg_clocks : entity work.ibufds_array generic map (
+        COUNT => 3,
+        -- Don't set differential termination for CK and WCK as these have their
+        -- termination set separately in the constraints file
+        DIFF_TERM => false
+    ) port map (
+        p_i => (
+            pad_SG12_CK_P,
+            pad_SG1_WCK_P,
+            pad_SG2_WCK_P
+        ),
+        n_i => (
+            pad_SG12_CK_N,
+            pad_SG1_WCK_N,
+            pad_SG2_WCK_N
+        ),
+        o_o => test_clocks(0 to 2)
     );
 
-    i_sg1_wck : IBUFDS port map (
-        I => pad_SG1_WCK_P,
-        IB => pad_SG1_WCK_N,
-        O => test_clocks(1)
+    lvds_clocks : entity work.ibufds_array generic map (
+        COUNT => 2
+    ) port map (
+        p_i => (
+            pad_FPGA_ACQCLK_P,
+            pad_AMC_TCLKB_IN_P
+        ),
+        n_i => (
+            pad_FPGA_ACQCLK_N,
+            pad_AMC_TCLKB_IN_N
+        ),
+        o_o => test_clocks(3 to 4)
     );
-
-    i_sg2_wck : IBUFDS port map (
-        I => pad_SG2_WCK_P,
-        IB => pad_SG2_WCK_N,
-        O => test_clocks(2)
-    );
-
-    -- Cannot readily pick up any other clock input.
-    test_clocks(3) <= '0';
 
 
     -- -------------------------------------------------------------------------
@@ -296,7 +311,7 @@ begin
 
     -- Frequency counters for a handful of clocks
     counters : entity work.frequency_counters generic map (
-        COUNT => 4
+        COUNT => CLOCKS_COUNT
     ) port map (
         clk_i => clk,
         clk_in_i => test_clocks,

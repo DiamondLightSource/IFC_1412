@@ -33,3 +33,9 @@ pad_SG12_CK_{P,N}               in
 pad_SG{1,2}_WCK_{P,N}           in
 # MGT232 from CLKOUT6
 pad_MGT232_REFCLK_{P,N}         in
+
+# Acquisition clock from CLKOUT0
+pad_FPGA_ACQCLK_{P,N}           in
+
+# AMC TCLKB routeable from backplane
+pad_AMC_TCLKB_IN_{P,N}          in

@@ -26,4 +26,4 @@
         # Selects which LMK to address
         .SELECT
 
-    CLOCK_FREQ      R   4
+    CLOCK_FREQ      R   5

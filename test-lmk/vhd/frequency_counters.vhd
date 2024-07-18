@@ -69,9 +69,9 @@ begin
             clk_in_i => clk_i,
             strobe_i => read_request,
             ack_o => read_ready(i),
-            unsigned(data_o) => counters(i),
+            unsigned(data_o(31 downto 0)) => counters(i),
             clk_out_i => clk_in_i(i),
-            data_i => std_ulogic_vector(clock_counter)
+            data_i(31 downto 0) => std_ulogic_vector(clock_counter)
         );
 
         process (clk_in_i(i)) begin

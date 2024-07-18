@@ -40,7 +40,7 @@ entity top_registers is
         lmk_data_i : in std_ulogic_vector(7 downto 0);
 
         -- Frequency counters
-        clock_counts_i : in unsigned_array(0 to 3)(31 downto 0);
+        clock_counts_i : in unsigned_array;
         clock_update_i : in std_ulogic
     );
 end;
