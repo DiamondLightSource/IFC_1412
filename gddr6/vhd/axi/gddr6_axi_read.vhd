@@ -44,7 +44,7 @@ architecture arch of gddr6_axi_read is
     signal axi_address_ready : std_ulogic;
     signal ctrl_address : address_t;
     signal ctrl_address_ready : std_ulogic;
-    signal ctrl_reserve : std_ulogic;
+    signal ctrl_reserve_valid : std_ulogic;
     signal ctrl_reserve_ready : std_ulogic;
 
 begin
@@ -115,8 +115,8 @@ begin
 
         ctrl_clk_i => ctrl_clk_i,
 
-        ctrl_reserve_i => ctrl_reserve,
-        ctrl_reserve_ready_o => ctrl_reserve_ready,
+        ctrl_reserve_valid_o => ctrl_reserve_valid,
+        ctrl_reserve_ready_i => ctrl_reserve_ready,
 
         ctrl_data_i => ctrl_response_i.rd_data,
         ctrl_data_valid_i => ctrl_response_i.rd_valid,
@@ -134,8 +134,8 @@ begin
         address_i => ctrl_address,
         address_ready_o => ctrl_address_ready,
 
-        reserve_o => ctrl_reserve,
-        reserve_ready_i => ctrl_reserve_ready,
+        reserve_valid_i => ctrl_reserve_valid,
+        reserve_ready_o => ctrl_reserve_ready,
 
         ctrl_address_o => ctrl_request_o.ra_address,
         ctrl_valid_o => ctrl_request_o.ra_valid,

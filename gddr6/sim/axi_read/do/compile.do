@@ -10,8 +10,14 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
+    $common_vhd/util/fifo_defs.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/fifo.vhd \
+    $common_vhd/util/short_delay.vhd \
+    $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/long_delay.vhd \
+    $common_vhd/util/fixed_delay_dram.vhd \
+    $common_vhd/util/fixed_delay.vhd \
     $common_vhd/async_fifo/async_fifo_address.vhd \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
@@ -33,15 +39,17 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 view wave
 
 add wave -group "CTRL" axi_read/ctrl/*
+add wave -group "Address FIFO core" axi_read/address_fifo/fifo/*
+add wave -group "Address FIFO" axi_read/address_fifo/*
+add wave -group "R" axi_read/data/* axi_read/data/vars/*
 add wave -group "Data FIFO Address" axi_read/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_read/data_fifo/*
-add wave -group "R" axi_read/data/* axi_read/data/vars/*
 add wave -group "RA" axi_read/address/*
 add wave -group "Read" axi_read/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1
 
-run 1 us
+run 8 us
 
 # vim: set filetype=tcl:

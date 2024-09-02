@@ -24,8 +24,8 @@ entity gddr6_axi_read_data_fifo is
         -- Two data slots must be reserved by a single reserve/ready handshake
         -- before a READ request is issued.  On completion two data strobes and
         -- one data_ok strobe must be signalled.
-        ctrl_reserve_i : in std_ulogic;
-        ctrl_reserve_ready_o : out std_ulogic;
+        ctrl_reserve_valid_o : out std_ulogic;
+        ctrl_reserve_ready_i : in std_ulogic;
 
         -- Data from CTRL.  Two data strobes followed by an ok_valid strobe will
         -- advance the data FIFO
@@ -70,9 +70,9 @@ begin
         ENABLE_WRITE_RESERVE => true
     ) port map (
         write_clk_i => ctrl_clk_i,
-        write_reserve_i => ctrl_reserve_i,
+        write_reserve_i => ctrl_reserve_ready_i,
         write_access_i => ctrl_data_ok_valid_i,
-        write_ready_o => ctrl_reserve_ready_o,
+        write_ready_o => ctrl_reserve_valid_o,
         write_access_address_o => ok_write_address,
 
         read_clk_i => axi_clk_i,
@@ -107,8 +107,8 @@ begin
                             read_phase <= '1';
                         when '1' =>
                             axi_data_o.data <=
-                                data_out(2) & data_out(0) &
-                                data_out(3) & data_out(1);
+                                data_out(1) & data_out(3) &
+                                data_out(0) & data_out(2);
                             read_phase <= '0';
                         when others =>
                     end case;

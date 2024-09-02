@@ -9,6 +9,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+use work.fifo_defs.all;
 
 use work.gddr6_defs.all;
 use work.gddr6_axi_defs.all;
@@ -17,7 +18,7 @@ entity gddr6_axi_ctrl is
     port (
         clk_i : in std_ulogic;
 
-        -- SG burst transfer request
+        -- AXI transfer request in SG bursts
         address_i : in address_t;
         address_ready_o : out std_ulogic := '1';
 
@@ -25,11 +26,12 @@ entity gddr6_axi_ctrl is
         -- can simply be ignored for reads
         byte_mask_i : in std_ulogic_vector(127 downto 0) := (others => '0');
         byte_mask_valid_i : in std_ulogic := '1';
-        byte_mask_ready_o : out std_ulogic := '0';
+        byte_mask_ready_o : out std_ulogic := '1';
 
-        -- A FIFO result slot must be reserved before issuing a request
-        reserve_o : out std_ulogic := '0';
-        reserve_ready_i : in std_ulogic;
+        -- A FIFO result slot must be reserved before issuing a request: think
+        -- the reservation slot flowing from the FIFO to here
+        reserve_valid_i : in std_ulogic;
+        reserve_ready_o : out std_ulogic := '1';
 
         -- Request to CTRL
         ctrl_address_o : out unsigned(24 downto 0);
@@ -49,19 +51,44 @@ architecture arch of gddr6_axi_ctrl is
     signal next_address : address_t := IDLE_ADDRESS;
     signal address : address_t := IDLE_ADDRESS;
 
+    signal byte_mask : std_ulogic_vector(127 downto 0) := (others => '0');
+    signal byte_mask_valid : std_ulogic := '0';
+    signal reserve_valid : std_ulogic := '0';
+
+
 begin
-    vars :
     process (clk_i)
+        -- Keep next_address populated when possible, maintain address_ready_o
+        -- as the complement of next_address.valid for ping-pong handshake.
+        procedure advance_next_address(next_ready : std_ulogic)
+        is
+            variable load_value : std_ulogic;
+        begin
+            advance_ping_pong_buffer(
+                address_i.valid, next_ready,
+                next_address.valid, address_ready_o,
+                load_value);
+            if load_value then
+                next_address <= address_i;
+            end if;
+        end;
+
         -- Advances or loads the output address as appropriate, sets
-        -- address_ready when we're ready to load a new address
+        -- next_address_ready when we're ready to load a new address
         procedure advance_address(
+            next_ready : std_ulogic;
             variable next_address_ready : out std_ulogic) is
         begin
-            if address.valid and address.count ?> 0 then
-                assert address.count ?> 0 and address.valid severity failure;
-                -- This assert indicates a harmless AXI protocol error, not an
-                -- error in the controller
-                assert address.address(4 downto 0) /= 5X"1F" severity warning;
+            if address.valid and not next_ready then
+                -- Stand still
+                next_address_ready := '0';
+            elsif address.valid and address.count ?> 0 then
+                -- This assert checks against a harmless AXI protocol error, not
+                -- an error in the controller: address crosses 4K boundary, but
+                -- number of transfers is still correct
+                assert address.address(4 downto 0) /= 5X"1F"
+                    report "Address increment crosses 4K boundary"
+                    severity warning;
                 address <= (
                     address =>
                         -- The top 20 bits of the address are never incremented
@@ -78,66 +105,58 @@ begin
             end if;
         end;
 
-
-        -- Keep next_address populated when possible, maintain address_ready_o
-        -- as the complement of next_address.valid for ping-pong handshake.
-        procedure advance_next_address(next_address_ready : std_ulogic) is
+        procedure advance_byte_mask(next_ready : std_ulogic)
+        is
+            variable load_value : std_ulogic;
         begin
-            if next_address_ready and next_address.valid then
-                next_address.valid <= '0';
-                address_ready_o <= '1';
-            elsif address_i.valid and not next_address.valid then
-                next_address <= address_i;
-                address_ready_o <= '0';
+            advance_ping_pong_buffer(
+                byte_mask_valid_i, next_ready,
+                byte_mask_valid, byte_mask_ready_o,
+                load_value);
+            if load_value then
+                byte_mask <= byte_mask_i;
             end if;
         end;
 
-        variable next_address_valid : std_ulogic;
+        procedure advance_reserve(next_ready : std_ulogic)
+        is
+            variable load_value : std_ulogic;
+        begin
+            advance_ping_pong_buffer(
+                reserve_valid_i, next_ready,
+                reserve_valid, reserve_ready_o,
+                load_value);
+        end;
+
+        procedure advance_ctrl(variable next_ctrl_ready : out std_ulogic)
+        is
+            variable next_valid : std_ulogic;
+        begin
+            next_valid := address.valid and byte_mask_valid and reserve_valid;
+            if ctrl_ready_i or not ctrl_valid_o then
+                ctrl_address_o <= address.address;
+                ctrl_byte_mask_o <= byte_mask;
+                ctrl_valid_o <= next_valid;
+                next_ctrl_ready := next_valid;
+            else
+                next_ctrl_ready := '0';
+            end if;
+        end;
+
+
         variable next_ctrl_ready : std_ulogic;
-        variable next_ctrl_valid : std_ulogic;
         variable next_address_ready : std_ulogic;
 
     begin
         if rising_edge(clk_i) then
-            -- Whether a valid new address is available
-            next_address_valid :=
-                next_address.valid or (address.valid and address.count ?> 0);
-            next_ctrl_ready := not ctrl_valid_o or ctrl_ready_i;
-
-            next_ctrl_valid :=
-                next_ctrl_ready and
-                next_address_valid and byte_mask_valid_i and reserve_ready_i;
-
-
-
-            -- Advance the output
-            if next_ctrl_ready then
-                ctrl_byte_mask_o <= byte_mask_i;
-                ctrl_valid_o <= next_ctrl_valid;
-            end if;
-
-            -- Advance the address when loading
-            if next_ctrl_valid then
-                advance_address(next_address_ready);
-            else
-                next_address_ready := '0';
-            end if;
-
+            advance_ctrl(next_ctrl_ready);
+            advance_address(next_ctrl_ready, next_address_ready);
             advance_next_address(next_address_ready);
-
-            byte_mask_ready_o <=
-                next_ctrl_valid and
-                byte_mask_valid_i and not byte_mask_ready_o;
-            if next_ctrl_valid and byte_mask_valid_i then
-                ctrl_byte_mask_o <= byte_mask_i;
-            end if;
-            reserve_o <=
-                next_ctrl_valid and
-                reserve_ready_i and not reserve_o;
+            advance_byte_mask(next_ctrl_ready);
+            advance_reserve(next_ctrl_ready);
         end if;
     end process;
 
-    ctrl_address_o <= address.address;
     lookahead_address_o <= next_address.address;
     lookahead_count_o <= address.count;
     lookahead_valid_o <= next_address.valid;

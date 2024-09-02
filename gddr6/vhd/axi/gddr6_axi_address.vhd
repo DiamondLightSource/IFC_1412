@@ -54,9 +54,9 @@ architecture arch of gddr6_axi_address is
     -- explict 5-bit count.
     function valid_request(address : axi_address_t) return std_ulogic is
     begin
-        return
-            address.burst ?= "01" and address.size ?/= 7 and
-            last_offset(address)(14 downto 12) ?= "000";
+        return to_std_ulogic(
+            address.burst = "01" and address.size /= 7 and
+            last_offset(address)(14 downto 12) = "000");
     end;
 
     function sg_count(address : axi_address_t) return unsigned is
