@@ -5,7 +5,7 @@ import argparse
 import time
 import itertools
 
-from registers import read_idelay, read_odelay, read_obitslip
+from registers import read_idelay, read_odelay, read_obitslip, read_ibitslip
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--timestamp', action = 'store_true')
@@ -15,19 +15,19 @@ parser.add_argument('interval', nargs = '?', type = float)
 args = parser.parse_args()
 
 
+def print_iodelays(read):
+    for n in range(0, 64, 16):
+        print('%2d' % n, end = ': ')
+        for i in range(16):
+            print(' %3d' % read(n + i), end = '')
+        print()
+
+
 def pretty_print_delays():
     print('DQ RX IDELAY')
-    for n in range(0, 64, 16):
-        print('%2d' % n, end = ': ')
-        for i in range(16):
-            print(' %3d' % read_idelay(n + i), end = '')
-        print()
+    print_iodelays(read_idelay)
     print('DQ TX ODELAY')
-    for n in range(0, 64, 16):
-        print('%2d' % n, end = ': ')
-        for i in range(16):
-            print(' %3d' % read_odelay(n + i), end = '')
-        print()
+    print_iodelays(read_odelay)
     print('DBI IDELAY/ODELAY')
     print('    ', end = '')
     for i in range(8):
@@ -52,6 +52,19 @@ def pretty_print_delays():
     print('64:  ', end = '')
     for n in range(64, 72):
         print('', read_obitslip(n), end = '')
+    print()
+    print('IBITSLIP')
+    print(' 0:  ', end = '')
+    for n in range(32):
+        print('', read_ibitslip(n), end = '')
+    print()
+    print('32:  ', end = '')
+    for n in range(32, 64):
+        print('', read_ibitslip(n), end = '')
+    print()
+    print('64:  ', end = '')
+    for n in range(64, 80):
+        print('', read_ibitslip(n), end = '')
     print()
 
 

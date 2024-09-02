@@ -37,18 +37,18 @@ def condense_edc(edc):
 
 
 def print_condensed_data(data, offset = 0):
-    for n, dq in enumerate(data[offset:]):
+    for n, dq in enumerate(data[offset:], offset):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
             result.append(''.join(map(condense_byte, selection)))
         values, good = condense_data(dq)
-        print('%2d:' % (n + offset), ' '.join(result), ' ',
+        print('%2d:' % n, ' '.join(result), ' ',
             ' '.join(['%04X' % v if g else '----'
                 for v, g in zip(values, good)]))
 
 def print_condensed_data_edc(data, dbi, edc, offset = 0):
-    for n, (dq, di, eo) in enumerate(zip(data[offset:], dbi, edc)):
+    for n, (dq, di, eo) in enumerate(zip(data[offset:], dbi, edc), offset):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
@@ -56,21 +56,21 @@ def print_condensed_data_edc(data, dbi, edc, offset = 0):
         data, data_good = condense_data(dq)
         e_in, e_in_good = condense_edc(di)
         e_out, e_out_good = condense_edc(eo)
-        print('%2d:' % (n + offset), ' '.join(result), ' ',
+        print('%2d:' % n, ' '.join(result), ' ',
             ' '.join(['%04X' % v if g else '----'
                 for v, g in zip(data, data_good)]), ' '
             '%02X' % e_in if e_in_good else ' --',
             '%02X' % e_out if e_out_good else '--')
 
 def print_condensed_data_dbi(data, dbi, offset = 0):
-    for n, (dq, di) in enumerate(zip(data[offset:], dbi)):
+    for n, (dq, di) in enumerate(zip(data[offset:], dbi), offset):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
             result.append(''.join(map(condense_byte, selection)))
         data, data_good = condense_data(dq)
         e_in, e_in_good = condense_edc(di)
-        print('%2d:' % (n + offset), ' '.join(result), ' ',
+        print('%2d:' % n, ' '.join(result), ' ',
             ' '.join(['%04X' % v if g else '----'
                 for v, g in zip(data, data_good)]), ' '
             '%02X' % e_in if e_in_good else ' --')

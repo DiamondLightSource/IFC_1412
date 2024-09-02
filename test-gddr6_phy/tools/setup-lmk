@@ -1,27 +1,42 @@
 #!/usr/bin/env python
 
 import time
+import sys
 
 from registers import regs, sg
-from setup_lmk import setup_sys_lmk
+from fpga_lib.boards import ifc_1412
 
-# Start by putting CK and SG in reset
-sg.CONFIG._write_fields_rw(CK_RESET_N = 0, SG_RESET_N = 0)
+# read/write/reset bindings for SYS LMK
+class LMK:
+    def __init__(self, top):
+        self.__top = top
 
-# Configure LMK and sync
-lmk = setup_sys_lmk(regs.SYS, enable_sync_pin = False)
-lmk.GLOBAL_SYNC = 1
-time.sleep(0.01)
-lmk.GLOBAL_SYNC = 0
+    def write(self, reg, value):
+        self.__top.LMK04616._write_fields_wo(
+            ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
+
+    def read(self, reg):
+        self.__top.LMK04616._write_fields_wo(
+            ADDRESS = reg, R_WN = 1, SELECT = 0)
+        return self.__top.LMK04616.DATA
+
+    def reset(self, duration = 0.01):
+        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0)
+        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_RESET = 1)
+        time.sleep(duration)
+        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_RESET = 0)
+
+top = regs.SYS
+lmk = LMK(top)
+
+if sys.argv[1:]:
+    config = sys.argv[1]
+else:
+    config = '250'
+lmk = ifc_1412.setup_sys_lmk(lmk, config = config)
 
 # Give the system time to lock
 time.sleep(0.01)
 print(
     'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
-    ', Status =', regs.SYS.STATUS.LMK_STATUS)
-
-# # Now take CK out of reset
-# sg.CONFIG.CK_RESET_N = 1
-# time.sleep(0.1)
-# print(sg.STATUS)
-print(sg.STATUS)
+    ', Status =', top.STATUS.LMK_STATUS)

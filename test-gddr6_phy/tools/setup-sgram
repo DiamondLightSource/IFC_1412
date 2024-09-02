@@ -5,5 +5,5 @@ cd "$(dirname "$0")"  &&
 ./reset-ck  &&
 ./reset-sg  &&
 ./read-vid  &&
-./train-read -sv  &&
-./train-write -B3 -sv
+./train-read -frR -sv  &&
+./train-write -frR -sv

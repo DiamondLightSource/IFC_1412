@@ -16,8 +16,12 @@ parser.add_argument(
     '-a', dest = 'addr', default = 0,
     help = 'Set physical address of card.  If not specified then card 0')
 parser.add_argument(
-    '-d', dest = 'dummy', default = False, action = 'store_true',
+    '-d', dest = 'dummy', action = 'store_true',
     help = 'Use dummy LMK')
+parser.add_argument(
+    '-3', dest = 'config',
+    default = '250', action = 'store_const', const = '300',
+    help = 'Configure target SG RAM frequency')
 args = parser.parse_args()
 
 
@@ -27,7 +31,7 @@ else:
     top = bind_lmk.open(args.addr)
     lmk = bind_lmk.LMK(top, 'sys')
 
-lmk = ifc_1412.setup_sys_lmk(lmk)
+lmk = ifc_1412.setup_sys_lmk(lmk, args.config)
 
 if not args.dummy:
     # Give the system time to lock

@@ -37,7 +37,7 @@ sg.CONFIG.DBI_TRAINING = 1
 
 exchange = _Exchange(sg)
 
-test_patterns = [0xFF00, 0xCC3C, 0x5500, 0x5555, 0xA555, 0x0000]
+test_patterns = [0xFF00, 0xCC3C, 0x55AC, 0x5555, 0xA555, 0x00AA]
 # test_patterns = [0, 0, 0xFFFF, 0xFFFF, 0, 0]
 
 
@@ -224,6 +224,7 @@ def count_offset(byte):
             return n
         else:
             byte = (byte << 1) & 0xFF
+    assert False, 'Unable to find bitslip offset'
 
 
 if args.find_bitslip:
@@ -234,7 +235,7 @@ if args.find_bitslip:
     offsets = [count_offset(b) for b in last_column]
     print(offsets)
     for n, o in enumerate(offsets):
-        set_obitslip(n, o - 1)
+        set_obitslip(n, max(0, o - 1))
 
 
 if args.scan_bitslips:
@@ -264,8 +265,8 @@ if args.scan_bitslips:
 elif args.scan:
     matches = sweep_delays(500)
     odelays, windows = find_eyes(matches)
-    print(odelays)
-    print(windows)
+    print(list(odelays), ';')
+    print(list(windows), ';')
     for pin in range(72):
         set_odelay(pin, odelays[pin])
 

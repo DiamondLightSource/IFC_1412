@@ -78,6 +78,10 @@ class Output(ifc_1412.ClockOut):
 OUTPUTS = [Output] + 7 * [None]
 
 class AcqConfig(ifc_1412.Config):
+    #   CLKIN0  <= Front panel connector
+    #   CLKIN1  <= AMC TCLKA
+    #   CLKIN2  <= AMC TCLKC
+    #   CLKIN3  <= FMC clock multiplexer
     clkin = 1
 #     clkin = None
 #     oscin = True

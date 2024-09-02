@@ -13,11 +13,15 @@ def DWELL(command):
 #
 #  1:0  Channel A CA ODT: 00 => high impedance, 01 => 120 Ohm
 #  3:2  Channel B CA ODT, as above
-#  5:4  CK ODT, 00 => high impedance, 10 => 60 Ohm
+#  5:4  CK ODT, 00 => high impedance, 10 => 60 Ohm, 11 => 120 Ohm
 #  6    1 => 2 channel mode
 #                          6  4  2  0
+
+# shouldn't CK be 120 Ohm termination??
+
 RESET_SG1_CA = DWELL(0b111_1_00_00_00)  # SG1: all inputs high impedance
 RESET_SG2_CA = DWELL(0b111_1_10_01_01)  # SG2: CK @ 60 Ohm, CA @ 120 Ohm
+# RESET_SG2_CA = DWELL(0b111_1_11_01_01)  # SG2: CK @ 120 Ohm, CA @ 120 Ohm
 
 # NOP command for use when otherwise idle
 NOP = DWELL(0b11_11111111)
@@ -128,7 +132,7 @@ INIT_MR7  = MRS(7, 0b0000_0_0_0_1_1_0_0_1)
 #  3:2  CA[9:4] termination (disabled by MR8:4)
 #  4    Leave 0 to used CA ODT value at reset
 #  5    Sets EDC tri-state (1 => tri-state)
-#  6    Enable CK ODT auto termination
+#  6    Enable CK ODT auto calibration
 #  7    Controls number of banks: 0 => REFpb, 1 => REFp2b
 #  8,9  Field extensions to MR0[6:3] and MR0[11:8] respectively
 #                       9 8 7 6 5 4  2  0

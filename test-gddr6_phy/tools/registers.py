@@ -14,15 +14,6 @@ regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
 sg = regs.SYS.GDDR6
 
 
-def write_lmk(reg, value):
-    regs.SYS.LMK04616._write_fields_wo(
-        ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
-
-def read_lmk(reg):
-    regs.SYS.LMK04616._write_fields_wo(ADDRESS = reg, R_WN = 1, SELECT = 0)
-    return regs.SYS.LMK04616.DATA
-
-
 TARGET_IDELAY = 0
 TARGET_ODELAY = 1
 TARGET_IBITSLIP = 2
