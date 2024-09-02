@@ -76,7 +76,7 @@ if not args.no_load:
 data, dbi, edc = read_test()
 
 if args.exchange:
-    print_condensed_data_edc(data, dbi, edc, offset = 28)
+    print_condensed_data_edc(data, dbi, edc, offset = 29)
 
 def print_bits(bytes):
     print(' '.join(f'{byte:08b}' for byte in bytes))
@@ -94,7 +94,7 @@ def extend(range):
 
 
 
-data_offset = 30
+data_offset = 31
 data_range = numpy.s_[data_offset:data_offset + 12]
 edc_range = numpy.s_[data_offset+1:data_offset + 1 + 12]
 

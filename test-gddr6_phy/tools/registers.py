@@ -25,6 +25,7 @@ def read_lmk(reg):
 
 TARGET_IDELAY = 0
 TARGET_ODELAY = 1
+TARGET_IBITSLIP = 2
 TARGET_OBITSLIP = 3
 
 
@@ -57,6 +58,9 @@ def read_odelay(address):
 def read_obitslip(address):
     return read_delay(TARGET_OBITSLIP, address)
 
+def read_ibitslip(address):
+    return read_delay(TARGET_IBITSLIP, address)
+
 def set_idelay(address, delay):
     step_delay(TARGET_IDELAY, address, delay - read_idelay(address))
 
@@ -66,6 +70,11 @@ def set_odelay(address, delay):
 def set_obitslip(address, delay):
     sg.DELAY._write_fields_wo(
         ADDRESS = address, TARGET = TARGET_OBITSLIP,
+        DELAY = delay, ENABLE_WRITE = 1)
+
+def set_ibitslip(address, delay):
+    sg.DELAY._write_fields_wo(
+        ADDRESS = address, TARGET = TARGET_IBITSLIP,
         DELAY = delay, ENABLE_WRITE = 1)
 
 def last_delay():

@@ -25,22 +25,27 @@ exchange.delay(2)
 exchange.command(READ_TEMPS)
 exchange.delay(2)
 exchange.command(VENDOR_OFF)
-exchange.delay(14)
+exchange.delay(15)
 data = exchange.run()
 
-print_condensed_data(data, offset = 13)
+offset = 14
+print_condensed_data(data, offset = offset)
 
-ID1, id1_good = condense_data(data[14])
-ID2, id2_good = condense_data(data[17])
-temps, t_good = condense_data(data[20])
+ID1, id1_good = condense_data(data[offset + 2])
+ID2, id2_good = condense_data(data[offset + 5])
+temps, t_good = condense_data(data[offset + 8])
 
 assert id1_good.all(), 'Bad ID1 reading'
-assert (ID1[0] == ID1).all(), 'Inconsistent ID1'
+assert (ID1[0] == ID1).all(), 'Inconsistent ID1: %s' % ID1
 assert id2_good.all(), 'Bad ID2 reading'
-assert (ID2[0] == ID2).all(), 'Inconsistent ID2'
+assert (ID2[0] == ID2).all(), 'Inconsistent ID2: %s' % ID2
 assert t_good.all(), 'Bad temperature reading'
-assert (temps & 0xFF == temps >> 8).all(), 'Inconstent temperature readings'
+assert (temps & 0xFF == temps >> 8).all(), \
+    'Inconstent temperature readings: %s' % temps
 
 print(
     'ID1: %04X, ID2: %04X,' % (ID1[0], ID2[0]),
     'Temperatures:', 2 * (temps & 0xFF) - 40, 'degrees')
+
+# We expect ID1 = EB1F, ID2 = FFFC
+assert ID1[0] == 0xEB1F and ID2[0] == 0xFFFC, 'Unexpected ID1 or ID2'

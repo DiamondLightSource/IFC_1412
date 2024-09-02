@@ -137,7 +137,7 @@ def show_data(data, dbi, name, offset, channel):
 if args.data_out:
     show_data(data, dbi, 'Out', 17, args.channel)
 
-data_offset = 33
+data_offset = 34
 data_range = numpy.s_[data_offset:data_offset+12]
 
 show_data(data, dbi, 'In', data_offset, args.channel)
