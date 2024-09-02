@@ -155,10 +155,6 @@ package gddr6_defs is
         train_dbi : std_ulogic;
         -- Must be held low during SG reset, high during normal operation
         edc_tri : std_ulogic;
-
-        -- Special fudge for prototype board, must be removed.  Used to work
-        -- around sticky CA6 bit.
-        fudge_sticky_ca6 : std_ulogic;
     end record;
 
     -- Readbacks from PHY
@@ -189,5 +185,4 @@ package gddr6_defs is
         read_error : std_ulogic;
         write_error : std_ulogic;
     end record;
-
 end;

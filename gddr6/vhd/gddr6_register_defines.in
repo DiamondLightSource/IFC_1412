@@ -25,10 +25,6 @@
             # Set to enable capture of EDC_OUT to DBI
             .CAPTURE_EDC_OUT
 
-            # Special fudge for prototype board, must be removed.  Used to work
-            # around sticky CA6 bit.
-            .FUDGE_STICKY_CA6
-
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
             # will be effectively ignored

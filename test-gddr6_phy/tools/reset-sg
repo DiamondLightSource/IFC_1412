@@ -52,10 +52,7 @@ def send_init_command(command):
 
 stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
 
-
-# For the prototype card we need the sticky CA6 workaround
 sg.CONFIG.ENABLE_CABI = 1
-sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
 
 # Initialise all the MR registers

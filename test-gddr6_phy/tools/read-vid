@@ -14,9 +14,6 @@ from gddr6_lib.display import *
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
 
-# For the prototype card we need the sticky CA6 workaround
-sg.CONFIG.ENABLE_CABI = 1
-sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
 exchange = exchange._Exchange(sg)
 

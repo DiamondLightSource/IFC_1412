@@ -28,7 +28,6 @@ args = parser.parse_args()
 
 # For the prototype card we need the sticky CA6 workaround
 sg.CONFIG.ENABLE_CABI = 1
-sg.CONFIG.FUDGE_STICKY_CA6 = 1
 
 # Want to disable DBI for reception
 sg.CONFIG.ENABLE_DBI = 0
