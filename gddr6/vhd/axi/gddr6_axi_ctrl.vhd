@@ -9,7 +9,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
-use work.fifo_defs.all;
+use work.flow_control.all;
 
 use work.gddr6_defs.all;
 use work.gddr6_axi_defs.all;
@@ -77,31 +77,35 @@ begin
         -- next_address_ready when we're ready to load a new address
         procedure advance_address(
             next_ready : std_ulogic;
-            variable next_address_ready : out std_ulogic) is
+            variable next_address_ready : out std_ulogic)
+        is
+            variable load_value : std_ulogic;
         begin
-            if address.valid and not next_ready then
-                -- Stand still
-                next_address_ready := '0';
-            elsif address.valid and address.count ?> 0 then
-                -- This assert checks against a harmless AXI protocol error, not
-                -- an error in the controller: address crosses 4K boundary, but
-                -- number of transfers is still correct
-                assert address.address(4 downto 0) /= 5X"1F"
-                    report "Address increment crosses 4K boundary"
-                    severity warning;
-                address <= (
-                    address =>
-                        -- The top 20 bits of the address are never incremented
-                        -- as an AXI burst cannot cross a 4K page boundary
-                        address.address(24 downto 5) &
-                        (address.address(4 downto 0) + 1),
-                    count => address.count - 1,
-                    valid => '1'
-                );
-                next_address_ready := '0';
-            else
-                address <= next_address;
-                next_address_ready := '1';
+            advance_state_machine(
+                next_address.valid, next_ready,
+                address.count ?= 0, address.valid,
+                next_address_ready, load_value);
+            if load_value then
+                if address.count > 0 then
+                    -- This assert checks against a harmless AXI protocol error,
+                    -- not an error in the controller: address crosses 4K
+                    -- boundary, but number of transfers is still correct
+                    assert address.address(4 downto 0) /= 5X"1F"
+                        report "Address increment crosses 4K boundary"
+                        severity warning;
+                    address <= (
+                        address =>
+                            -- The top 20 bits of the address are never
+                            -- incremented as an AXI burst cannot cross a 4K
+                            -- page boundary
+                            address.address(24 downto 5) &
+                            (address.address(4 downto 0) + 1),
+                        count => address.count - 1,
+                        valid => '1'
+                    );
+                else
+                    address <= next_address;
+                end if;
             end if;
         end;
 

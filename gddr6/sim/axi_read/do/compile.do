@@ -10,7 +10,7 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
-    $common_vhd/util/fifo_defs.vhd \
+    $common_vhd/util/flow_control.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/fifo.vhd \
     $common_vhd/util/short_delay.vhd \

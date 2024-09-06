@@ -14,6 +14,7 @@ entity gddr6_axi_write is
         -- This can be overridden for simulation, but the natural depth to use
         -- is 1K as this matches the natural block RAM depth
         FIFO_BITS : natural := 10
+        -- Probably want separate DATA_ and COMMAND_ FIFO depths
     );
     port (
         -- AXI interface
@@ -63,7 +64,7 @@ architecture arch of gddr6_axi_write is
     signal axi_ok : std_ulogic;
     signal axi_ok_valid : std_ulogic;
     signal axi_ok_ready : std_ulogic;
-    signal ctrl_reserve : std_ulogic;
+    signal ctrl_reserve_valid : std_ulogic;
     signal ctrl_reserve_ready : std_ulogic;
 
 begin
@@ -103,8 +104,8 @@ begin
     data : entity work.gddr6_axi_write_data port map (
         clk_i => axi_clk_i,
 
-        fifo_command_i => command,
-        fifo_ready_o => command_ready,
+        command_i => command,
+        command_ready_o => command_ready,
 
         fifo_data_o => axi_data,
         fifo_ready_i => axi_data_ready,
@@ -181,8 +182,8 @@ begin
         axi_ok_ready_i => axi_ok_ready,
 
         ctrl_clk_i => ctrl_clk_i,
-        ctrl_reserve_i => ctrl_reserve,
-        ctrl_reserve_ready_o => ctrl_reserve_ready,
+        ctrl_reserve_valid_o => ctrl_reserve_valid,
+        ctrl_reserve_ready_i => ctrl_reserve_ready,
         ctrl_ok_i => ctrl_response_i.wr_ok,
         ctrl_ok_valid_i => ctrl_response_i.wr_ok_valid
     );
@@ -201,8 +202,8 @@ begin
         byte_mask_valid_i => ctrl_byte_mask_valid,
         byte_mask_ready_o => ctrl_byte_mask_ready,
 
-        reserve_o => ctrl_reserve,
-        reserve_ready_i => ctrl_reserve_ready,
+        reserve_valid_i => ctrl_reserve_valid,
+        reserve_ready_o => ctrl_reserve_ready,
 
         ctrl_address_o => ctrl_request_o.wa_address,
         ctrl_byte_mask_o => ctrl_request_o.wa_byte_mask,

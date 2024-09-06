@@ -10,6 +10,7 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
+    $common_vhd/util/flow_control.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/fifo.vhd \
     $common_vhd/async_fifo/async_fifo_address.vhd \
@@ -36,7 +37,7 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "CTRL" axi_write/ctrl/* axi_write/ctrl/vars/*
+add wave -group "CTRL" axi_write/ctrl/*
 # add wave -group "Data FIFO Address" axi_write/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_write/data_fifo/*
 add wave -group "WA" axi_write/address/*

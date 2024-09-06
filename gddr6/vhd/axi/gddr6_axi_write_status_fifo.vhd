@@ -21,8 +21,8 @@ entity gddr6_axi_write_status_fifo is
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
         -- Slot reservation for returning write completion status
-        ctrl_reserve_i : in std_ulogic;
-        ctrl_reserve_ready_o : out std_ulogic;
+        ctrl_reserve_valid_o : out std_ulogic;
+        ctrl_reserve_ready_i : in std_ulogic;
         -- Write completion status
         ctrl_ok_i : in std_ulogic;
         ctrl_ok_valid_i : in std_ulogic
@@ -45,9 +45,9 @@ begin
         ENABLE_WRITE_RESERVE => true
     ) port map (
         write_clk_i => ctrl_clk_i,
-        write_reserve_i => ctrl_reserve_i,
+        write_reserve_i => ctrl_reserve_ready_i,
         write_access_i => ctrl_ok_valid_i,
-        write_ready_o => ctrl_reserve_ready_o,
+        write_ready_o => ctrl_reserve_valid_o,
         write_access_address_o => write_address,
 
         read_clk_i => axi_clk_i,

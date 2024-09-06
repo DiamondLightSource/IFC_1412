@@ -69,7 +69,7 @@ architecture arch of gddr6_axi_address is
     is
         variable step : unsigned(6 downto 0);
     begin
-        step := shift_left(to_unsigned(1, 7), to_integer(address.size));
+        step := shift_left(7X"1", to_integer(address.size));
         return (
             id => address.id,
             count => address.len,
