@@ -13,6 +13,11 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/flow_control.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/fifo.vhd \
+    $common_vhd/util/short_delay.vhd \
+    $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/long_delay.vhd \
+    $common_vhd/util/fixed_delay_dram.vhd \
+    $common_vhd/util/fixed_delay.vhd \
     $common_vhd/async_fifo/async_fifo_address.vhd \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
@@ -41,7 +46,7 @@ add wave -group "CTRL" axi_write/ctrl/*
 # add wave -group "Data FIFO Address" axi_write/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_write/data_fifo/*
 add wave -group "WA" axi_write/address/*
-# add wave -group "W" axi_write/data/*
+add wave -group "W" axi_write/data/* axi_write/data/vars/*
 add wave -group "B" axi_write/response/*
 add wave -group "Write" axi_write/*
 add wave -group "Bench" sim:*

@@ -34,8 +34,9 @@ entity gddr6_axi_ctrl is
         reserve_ready_o : out std_ulogic := '1';
 
         -- Request to CTRL
-        ctrl_address_o : out unsigned(24 downto 0);
-        ctrl_byte_mask_o : out std_ulogic_vector(127 downto 0);
+        ctrl_address_o : out unsigned(24 downto 0) := (others => '0');
+        ctrl_byte_mask_o : out std_ulogic_vector(127 downto 0)
+            := (others => '0');
         ctrl_valid_o : out std_ulogic := '0';
         ctrl_ready_i : in std_ulogic;
 

@@ -9,7 +9,8 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write_data_fifo is
     generic (
-        FIFO_BITS : natural := 10
+        FIFO_BITS : natural := 10;
+        MAX_DELAY : real := 4.0
     );
     port (
         -- AXI interface
@@ -22,14 +23,17 @@ entity gddr6_axi_write_data_fifo is
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
 
-        -- Reading byte mask
+        -- Reading byte mask.  Each byte mask read must be followed by a
+        -- corresponding read of two data values at some point later.
         ctrl_byte_mask_o : out std_logic_vector(127 downto 0);
         ctrl_byte_mask_valid_o : out std_ulogic := '0';
         ctrl_byte_mask_ready_i : in std_ulogic;
-        -- Reading data to be written.  ctrl_data_o will be loaded one tick
-        -- after ctrl_data_ready_i is strobed, and ctrl_data_advance_i
-        -- determines whether the fifo is advanced (this is held low to resend
-        -- the same data when doing multiple partial writes).
+
+        -- ctrl_data_o will be valid as soon as the corresponding byte mask is
+        -- available, and must not be read before.  If ctrl_data_advance_i is
+        -- not set while ctrl_data_ready_i is asserted the data will be
+        -- replayed: this is designed to be used with separate writes to
+        -- multiple channels.
         ctrl_data_o : out vector_array(0 to 3)(127 downto 0);
         ctrl_data_advance_i : in std_ulogic;
         ctrl_data_ready_i : in std_ulogic
@@ -37,49 +41,91 @@ entity gddr6_axi_write_data_fifo is
 end;
 
 architecture arch of gddr6_axi_write_data_fifo is
-    signal write_address : unsigned(FIFO_BITS-2 downto 0);
-    signal data_read_address : unsigned(FIFO_BITS-2 downto 0);
-    signal byte_mask_read_address : unsigned(FIFO_BITS-2 downto 0);
+    signal write_data_address : unsigned(FIFO_BITS-1 downto 0);
+    signal read_data_address : unsigned(FIFO_BITS-1 downto 0);
+
+    signal write_fifo_valid : std_ulogic;
+    signal write_byte_mask_ready : std_ulogic;
+
     signal read_phase : std_ulogic := '0';
+    signal read_data_valid : std_ulogic;
+    signal data_valid : std_ulogic := '0';
 
     -- The byte mask can be accumulated over several write cycles
     signal saved_byte_mask : std_ulogic_vector(127 downto 0) := (others => '0');
 
-    signal write_valid : std_ulogic;
-    signal read_byte_mask_enable : std_ulogic;
-    signal read_byte_mask_valid : std_ulogic;
-
     -- Three separate FIFO buffers: one for the byte mask, and two separate
     -- FIFOs to support data interleaving
-    subtype SG_FIFO_RANGE is natural range 0 to 2**(FIFO_BITS-1) - 1;
     subtype DATA_FIFO_RANGE is natural range 0 to 2**FIFO_BITS - 1;
-    signal byte_mask_fifo : vector_array(SG_FIFO_RANGE)(127 downto 0);
     signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
     signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
 
+
+    -- Returns the byte mask associated with the current write
+    impure function byte_mask_in return std_ulogic_vector
+    is
+        constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
+            := (others => '0');
+    begin
+        case axi_write_i.phase is
+            when '0' =>
+                return EMPTY_BYTE_MASK & axi_write_i.byte_mask;
+            when '1' =>
+                return axi_write_i.byte_mask & EMPTY_BYTE_MASK;
+            when others =>
+                -- Invalid phase not expected in valid write
+                assert not axi_write_i.valid severity failure;
+        end case;
+    end;
+
 begin
-    -- The clock domain crossing part of this FIFO works in steps of SG bursts
-    async_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => FIFO_BITS - 1,
-        ENABLE_WRITE_RESERVE => false,
-        ENABLE_READ_RESERVE => true
+    -- Advance writes to both FIFOs on the same tick
+    write_fifo_valid <=
+        axi_write_i.valid and axi_ready_o and axi_write_i.advance;
+
+    -- FIFO for byte mask.  This will always have no more entries than the data
+    -- FIFO: we write to this FIFO when advancing the data FIFO pointer, and
+    -- data is never read without first reading the associated byte mask.
+    mask_fifo : entity work.async_fifo generic map (
+        FIFO_BITS => FIFO_BITS,
+        DATA_WIDTH => 128,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         write_clk_i => axi_clk_i,
-        write_access_i => write_valid,
-        write_ready_o => axi_ready_o,
-        write_access_address_o => write_address,
+        write_valid_i => write_fifo_valid,
+        write_ready_o => write_byte_mask_ready,
+        write_data_i => byte_mask_in or saved_byte_mask,
 
         read_clk_i => ctrl_clk_i,
-        read_reserve_i => read_byte_mask_enable,
-        read_ready_o => read_byte_mask_valid,
-        read_reserve_address_o => byte_mask_read_address,
-        read_access_i => ctrl_data_advance_i and ctrl_data_ready_i,
-        read_access_address_o => data_read_address
+        read_valid_o => ctrl_byte_mask_valid_o,
+        read_ready_i => ctrl_byte_mask_ready_i,
+        read_data_o => ctrl_byte_mask_o
     );
-    write_valid <= axi_write_i.valid and axi_ready_o and axi_write_i.advance;
-    read_byte_mask_enable <=
-        read_byte_mask_valid and
-        (ctrl_byte_mask_ready_i or not ctrl_byte_mask_valid_o);
+
+    -- Address management for data FIFO.  We need to separate the address from
+    -- the stored data to support the complex two phase update process.
+    data_address : entity work.async_fifo_address generic map (
+        ADDRESS_WIDTH => FIFO_BITS,
+        ENABLE_WRITE_RESERVE => false,
+        ENABLE_READ_RESERVE => false
+    ) port map (
+        write_clk_i => axi_clk_i,
+        write_access_i => write_fifo_valid,
+        write_ready_o => axi_ready_o,
+        write_access_address_o => write_data_address,
+
+        read_clk_i => ctrl_clk_i,
+        read_access_i =>
+            ctrl_data_ready_i and read_phase and ctrl_data_advance_i,
+        read_valid_o => read_data_valid,
+        read_access_address_o => read_data_address
+    );
+
+
+    -- Ensure that the mask FIFO is never less full than the data FIFO
+    assert axi_ready_o or not write_byte_mask_ready
+        report "Invalid FIFO state"
+        severity failure;
 
 
     process (axi_clk_i)
@@ -89,7 +135,7 @@ begin
         is
             variable address : natural;
         begin
-            address := to_integer(write_address & phase);
+            address := to_integer(write_data_address & phase);
             if axi_write_i.byte_mask(data_byte) then
                 fifo(address)(8*fifo_byte + 7 downto 8*fifo_byte) <=
                     axi_write_i.data(8*data_byte + 7 downto 8*data_byte);
@@ -114,26 +160,18 @@ begin
             end loop;
         end;
 
-        constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
-            := (others => '0');
-        variable byte_mask_in : std_ulogic_vector(127 downto 0);
-
     begin
         if rising_edge(axi_clk_i) then
             if axi_write_i.valid and axi_ready_o then
                 case axi_write_i.phase is
                     when '0' =>
                         distribute_writes(even_data_fifo, odd_data_fifo);
-                        byte_mask_in := EMPTY_BYTE_MASK & axi_write_i.byte_mask;
                     when '1' =>
                         distribute_writes(odd_data_fifo, even_data_fifo);
-                        byte_mask_in := axi_write_i.byte_mask & EMPTY_BYTE_MASK;
                     when others =>
                 end case;
 
                 if axi_write_i.advance then
-                    byte_mask_fifo(to_integer(write_address)) <=
-                        byte_mask_in or saved_byte_mask;
                     saved_byte_mask <= (others => '0');
                 else
                     saved_byte_mask <= saved_byte_mask or byte_mask_in;
@@ -143,38 +181,41 @@ begin
     end process;
 
 
+    -- Must not request data when not actually valid!
     process (ctrl_clk_i)
+        subtype LOWER_HALF is natural range 127 downto 0;
+        subtype UPPER_HALF is natural range 255 downto 128;
         variable address : natural;
     begin
         if rising_edge(ctrl_clk_i) then
-            if ctrl_data_ready_i then
-                address := to_integer(data_read_address & read_phase);
+            assert data_valid or not ctrl_data_ready_i severity failure;
+
+            if ctrl_data_ready_i or not data_valid then
+                address := to_integer(read_data_address & read_phase);
                 case read_phase is
                     when '0' =>
                         ctrl_data_o <= (
-                            0 => even_data_fifo(address)(127 downto 0),
-                            1 => even_data_fifo(address)(255 downto 128),
-                            2 => odd_data_fifo(address)(127 downto 0),
-                            3 => odd_data_fifo(address)(255 downto 128)
+                            0 => even_data_fifo(address)(LOWER_HALF),
+                            1 => even_data_fifo(address)(UPPER_HALF),
+                            2 => odd_data_fifo(address)(LOWER_HALF),
+                            3 => odd_data_fifo(address)(UPPER_HALF)
                         );
                     when '1' =>
                         ctrl_data_o <= (
-                            0 => odd_data_fifo(address)(127 downto 0),
-                            1 => odd_data_fifo(address)(255 downto 128),
-                            2 => even_data_fifo(address)(127 downto 0),
-                            3 => even_data_fifo(address)(255 downto 128)
+                            0 => odd_data_fifo(address)(LOWER_HALF),
+                            1 => odd_data_fifo(address)(UPPER_HALF),
+                            2 => even_data_fifo(address)(LOWER_HALF),
+                            3 => even_data_fifo(address)(UPPER_HALF)
                         );
                     when others =>
                 end case;
-                read_phase <= not read_phase;
-            end if;
 
-            if read_byte_mask_enable then
-                ctrl_byte_mask_o <=
-                    byte_mask_fifo(to_integer(byte_mask_read_address));
-                ctrl_byte_mask_valid_o <= '1';
-            elsif ctrl_byte_mask_ready_i then
-                ctrl_byte_mask_valid_o <= '0';
+                -- There is valid data in the buffer whenever the byte mask
+                -- buffer is ready, and this test is early enough for us.
+                data_valid <= read_data_valid;
+                if read_data_valid then
+                    read_phase <= not read_phase;
+                end if;
             end if;
         end if;
     end process;

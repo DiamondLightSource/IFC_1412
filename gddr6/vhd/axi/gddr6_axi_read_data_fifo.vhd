@@ -77,7 +77,7 @@ begin
 
         read_clk_i => axi_clk_i,
         read_access_i => read_fifo_enable,
-        read_ready_o => read_fifo_ready,
+        read_valid_o => read_fifo_ready,
         read_access_address_o => read_address
     );
 

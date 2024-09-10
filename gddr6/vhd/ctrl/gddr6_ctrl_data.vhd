@@ -36,9 +36,9 @@ entity gddr6_ctrl_data is
         -- WR
         axi_wd_data_i : in vector_array(0 to 3)(127 downto 0);
         axi_wd_advance_o : out std_ulogic;
-        axi_wd_ready_o : out std_ulogic;
-        axi_wr_ok_o : out std_ulogic;
-        axi_wr_ok_valid_o : out std_ulogic
+        axi_wd_ready_o : out std_ulogic := '0';
+        axi_wr_ok_o : out std_ulogic := '1';
+        axi_wr_ok_valid_o : out std_ulogic := '0'
     );
 end;
 
@@ -86,17 +86,22 @@ architecture arch of gddr6_ctrl_data is
     signal write_start : std_ulogic;
     signal write_delay : std_ulogic := '0';
     signal write_advance : std_ulogic;
-    signal write_enables_in : std_ulogic_vector(0 to 3);
-    signal write_enables : std_ulogic_vector(0 to 3);
     signal write_edc_in : vector_array(7 downto 0)(7 downto 0);
-    signal write_edc_ok : std_ulogic_vector(0 to 3);
-    signal write_last_edc_ok : std_ulogic_vector(0 to 3);
+
+    -- Relevant request signals delayed align with EDC: write_start_edc should
+    -- be valid one tick before edc_in_i and write_edc_in become valid
+    signal write_start_edc_in : std_ulogic;
+    signal write_advance_edc_in : std_ulogic;
+    signal write_enables_in : std_ulogic_vector(0 to 3);
+    -- Delayed write_enables valid synchronous with edc_in_i, write_edc_in
+    signal write_enables : std_ulogic_vector(0 to 3);
+    signal write_advance_edc : std_ulogic := '0';
+    -- Delayed valid signals
     signal write_start_edc : std_ulogic;
-    signal write_check_edc : std_ulogic := '0';
-    signal write_check_valid_out : std_ulogic := '0';
+    signal write_last_edc : std_ulogic;
 
 
-
+    -- Flatten and restore functions for interfacing EDC values to delay lines
     function from_edc(edc : vector_array) return std_ulogic_vector
     is
         variable result : std_ulogic_vector(63 downto 0);
@@ -117,17 +122,21 @@ architecture arch of gddr6_ctrl_data is
         return result;
     end;
 
-    -- Compare two arrays of EDC codes by channel
-    function compare_by_channel(a : vector_array; b : vector_array)
-        return std_ulogic_vector
-    is
-        variable result : std_ulogic_vector(0 to 3);
+
+    -- Compare two arrays of EDC codes by channel.  Only check channels which
+    -- are set in the mask
+    function compare_by_channel(
+        mask : std_ulogic_vector;
+        a : vector_array; b : vector_array) return std_ulogic is
     begin
         for ch in 0 to 3 loop
-            result(ch) := to_std_ulogic(
-                a(2*ch + 1 downto 2*ch) = b(2*ch + 1 downto 2*ch));
+            if mask(ch) then
+                if a(2*ch + 1 downto 2*ch) /= b(2*ch + 1 downto 2*ch) then
+                    return '0';
+                end if;
+            end if;
         end loop;
-        return result;
+        return '1';
     end;
 
 begin
@@ -200,13 +209,15 @@ begin
 
     delay_write_check_inst : entity work.fixed_delay generic map (
         DELAY => DELAY_WRITE_CHECK,
-        WIDTH => 5
+        WIDTH => 6
     ) port map (
         clk_i => clk_i,
         data_i(0) => write_complete_in,
-        data_i(4 downto 1) => request_completion_i.enables,
-        data_o(0) => write_start_edc,
-        data_o(4 downto 1) => write_enables_in
+        data_i(1) => request_completion_i.advance,
+        data_i(5 downto 2) => request_completion_i.enables,
+        data_o(0) => write_start_edc_in,
+        data_o(1) => write_advance_edc_in,
+        data_o(5 downto 2) => write_enables_in
     );
 
     delay_write_edc_inst : entity work.fixed_delay generic map (
@@ -235,7 +246,9 @@ begin
     end generate;
 
 
-    process (clk_i) begin
+    process (clk_i)
+        variable write_edc_ok : std_ulogic;
+    begin
         if rising_edge(clk_i) then
             -- Output enable generation, slightly stretched from write_active
             output_enable_o <= write_active_in or write_active_delay;
@@ -263,16 +276,29 @@ begin
             axi_wd_ready_o <= write_start or write_delay;
 
             -- Write CRC check
-            write_edc_ok <= compare_by_channel(write_edc_in, edc_in_i);
-            write_last_edc_ok <= write_edc_ok;
-            if write_start_edc then
+            -- Capture write and advance state
+            if write_start_edc_in then
                 write_enables <= write_enables_in;
+                write_advance_edc <= write_advance_edc_in;
             end if;
-            axi_wr_ok_o <= vector_and(
-                not write_enables or (write_last_edc_ok and write_edc_ok));
-            write_check_edc <= write_start_edc;
-            write_check_valid_out <= write_check_edc;
-            axi_wr_ok_valid_o <= write_check_valid_out;
+            -- Delayed EDC valid signals
+            write_start_edc <= write_start_edc_in;
+            write_last_edc <= write_start_edc;
+            -- Error calculation
+            write_edc_ok :=
+                compare_by_channel(write_enables, write_edc_in, edc_in_i);
+            if write_start_edc or write_last_edc then
+                -- Valid EDC data, up date ok status as appropriate
+                if axi_wr_ok_valid_o then
+                    axi_wr_ok_o <= write_edc_ok;
+                else
+                    axi_wr_ok_o <= write_edc_ok and axi_wr_ok_o;
+                end if;
+            elsif axi_wr_ok_valid_o then
+                axi_wr_ok_o <= '1';
+            end if;
+            -- Output valid on final test
+            axi_wr_ok_valid_o <= write_last_edc and write_advance_edc;
         end if;
     end process;
 end;

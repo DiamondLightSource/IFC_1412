@@ -33,6 +33,7 @@ architecture arch of gddr6_axi_write_data is
     signal data_skid : axi_write_data_t := IDLE_AXI_WRITE_DATA;
 
 begin
+    vars :
     process (clk_i)
         -- Advance command state machine or load new command as appropriate
         procedure advance_command(command_ready : std_ulogic)
@@ -46,7 +47,7 @@ begin
                 command.count ?= 0, command.valid,
                 command_ready_in, load_value);
             if load_value then
-                if command.count > 0 then
+                if command.valid and command.count ?> 0 then
                     command.count <= command.count - 1;
                     command.offset <= command.offset + command.step;
                 else
@@ -115,9 +116,9 @@ begin
                 else
                     -- A normal burst requires data.  Advance command and data
                     -- when the output FIFO is ready
-                    command_ready := fifo_ready and data_ready;
+                    command_ready := fifo_ready and data_valid;
                     data_ready := fifo_ready;
-                    fifo_valid := data_ready;
+                    fifo_valid := data_valid;
                 end if;
             else
                 -- If no command then stand still until ready
@@ -125,6 +126,11 @@ begin
                 data_ready := '0';
                 fifo_valid := '0';
             end if;
+        end;
+
+
+        procedure check_last is
+        begin
         end;
 
 
@@ -150,6 +156,10 @@ begin
             advance_command(command_ready);
             advance_data(data_ready);
             advance_fifo_out(next_data, fifo_valid);
+
+            -- We're not actually looking at last, but it had better be set
+            -- when it should be!
+            check_last;
         end if;
     end process;
 end;

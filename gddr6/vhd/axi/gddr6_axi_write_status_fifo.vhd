@@ -1,4 +1,4 @@
--- Clock crossing FIFO for Write completion status
+-- Clock crossing FIFO with reservation for Write completion status
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -52,7 +52,7 @@ begin
 
         read_clk_i => axi_clk_i,
         read_access_i => read_enable,
-        read_ready_o => read_valid,
+        read_valid_o => read_valid,
         read_access_address_o => read_address
     );
 
