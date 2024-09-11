@@ -46,7 +46,7 @@ add wave -group "CTRL" axi_write/ctrl/*
 # add wave -group "Data FIFO Address" axi_write/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_write/data_fifo/*
 add wave -group "WA" axi_write/address/*
-add wave -group "W" axi_write/data/* axi_write/data/vars/*
+add wave -group "W" axi_write/data/*
 add wave -group "B" axi_write/response/*
 add wave -group "Write" axi_write/*
 add wave -group "Bench" sim:*

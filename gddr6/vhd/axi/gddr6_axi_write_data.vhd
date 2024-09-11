@@ -33,7 +33,6 @@ architecture arch of gddr6_axi_write_data is
     signal data_skid : axi_write_data_t := IDLE_AXI_WRITE_DATA;
 
 begin
-    vars :
     process (clk_i)
         -- Advance command state machine or load new command as appropriate
         procedure advance_command(command_ready : std_ulogic)
@@ -129,8 +128,13 @@ begin
         end;
 
 
-        procedure check_last is
+        procedure check_last(next_data : axi_write_data_t) is
         begin
+            if command.valid and next_data.valid then
+                assert (next_data.last = '1') = (command.count = 0)
+                    report "Invalid last on write data"
+                    severity error;
+            end if;
         end;
 
 
@@ -159,7 +163,7 @@ begin
 
             -- We're not actually looking at last, but it had better be set
             -- when it should be!
-            check_last;
+            check_last(next_data);
         end if;
     end process;
 end;

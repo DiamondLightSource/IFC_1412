@@ -75,12 +75,12 @@ architecture arch of testbench is
     signal ctrl_tick_count : natural := 0;
 
     constant DATA_DELAY : natural := 10;
+    constant RESPONSE_DELAY : natural := DATA_DELAY + 10;
     signal write_valid : std_ulogic;
     signal write_phase : std_ulogic;
     signal write_advance : std_ulogic;
     signal delay_write_valid : std_ulogic := '0';
     signal delay_write_phase : std_ulogic;
-    signal delay_write_error : std_ulogic;
     signal delay_write_advance : std_ulogic;
     signal delay_write_mask : std_ulogic_vector(127 downto 0);
 
@@ -139,10 +139,18 @@ begin
     begin
         axi_address <= INVALID_AXI_ADDRESS;
 
+        clk_wait(5);
+
         -- A simple burst: one SG burst, two AXI beats
---         send(X"1", X"2000_0000", X"01", "110");
---         send(X"2", X"0000_0100", X"01", "110");
-        send(X"3", X"2000_0200", X"03", "110");
+        send(X"1", X"0000_0000", X"01", "110");
+        clk_wait(10);
+        -- Similar, but repeated 3 times on SG side
+        send(X"2", X"2000_0080", X"01", "110");
+        -- An invalid burst, no SG writes generated
+        send(X"3", X"0000_0100", X"03", "111");
+
+        -- Now a more complex sequence of narrow writes
+        send(X"4", X"0000_0230", X"06", "100");
 
         wait;
     end process;
@@ -156,70 +164,60 @@ begin
         end;
 
 
---         impure function generate_data(i : natural) return std_ulogic_vector
---         is
---             variable result : std_ulogic_vector(127 downto 0);
---         begin
---             result := (others => '0');
---             return result;
---         end;
+        -- Two kinds of marked up data
+        type DATA_TYPE is (DATA_BYTES, DATA_CHANNELS);
 
-        function generate_data(
+        variable data_counter : natural := 0;
+
+
+        impure function generate_data(
             mask : std_ulogic_vector(63 downto 0);
-            counter : natural) return std_ulogic_vector
+            dtype : DATA_TYPE) return std_ulogic_vector
         is
+            impure function generate_slice(
+                index : natural) return std_ulogic_vector
+            is
+                variable result : std_ulogic_vector(127 downto 0);
+            begin
+                result := (
+                    7 downto 0 => to_std_ulogic_vector_u(index, 8),
+                    31 downto 8 => to_std_ulogic_vector_u(data_counter, 24),
+                    others => '0'
+                );
+                return result;
+            end;
+
             variable result : std_ulogic_vector(511 downto 0);
         begin
+            case dtype is
+                when DATA_BYTES =>
+                    for byte in 0 to 63 loop
+                        result(8*byte + 7 downto 8*byte) :=
+                            to_std_ulogic_vector_u(
+                                byte + 64 * (data_counter mod 4), 8);
+                    end loop;
+                when DATA_CHANNELS =>
+                    result :=
+                        generate_slice(3) & generate_slice(2) &
+                        generate_slice(1) & generate_slice(0);
+            end case;
+
+            -- Mask out any bytes we're not writing
             for byte in 0 to 63 loop
-                if mask(byte) then
-                    result(8*byte + 7 downto 8*byte) :=
-                        to_std_ulogic_vector_u(
-                            byte + 64 * (counter mod 4), 8);
-                else
-                    result(8*byte + 7 downto 8*byte) := (others => 'U');
+                if not mask(byte) then
+                    result(8*byte + 7 downto 8*byte) := (others => '-');
                 end if;
             end loop;
             return result;
         end;
 
-
-        variable data_counter : natural := 0;
-
-        impure function generate_slice(index : natural) return std_ulogic_vector
-        is
-            variable result : std_ulogic_vector(127 downto 0);
-        begin
-            result := (
-                7 downto 0 => to_std_ulogic_vector_u(index, 8),
-                31 downto 8 => to_std_ulogic_vector_u(data_counter, 24),
-                others => '0'
-            );
-            return result;
-        end;
-
         procedure send_data(
             mask : std_ulogic_vector(63 downto 0);
-            last : std_ulogic)
+            last : std_ulogic := '0'; dtype : DATA_TYPE := DATA_CHANNELS)
         is
             variable data_out : std_ulogic_vector(511 downto 0);
         begin
---             for byte in 0 to 63 loop
---                 if mask(byte) then
---                     data_out(8*byte + 7 downto 8*byte) :=
---                         to_std_ulogic_vector_u(
---                             byte + 64 * (data_counter mod 4), 8);
---                 else
---                     data_out(8*byte + 7 downto 8*byte) := (others => 'U');
---                 end if;
---             end loop;
---             data_out :=
---                 generate_data(3) & generate_data(2) &
---                 generate_data(1) & generate_data(0);
-            data_out := generate_data(mask, data_counter);
-
-            data_out :=
-                generate_slice(3) & generate_slice(2) &
-                generate_slice(1) & generate_slice(0);
+            data_out := generate_data(mask, dtype);
             data_counter := data_counter + 1;
 
             axi_data <= (
@@ -238,20 +236,50 @@ begin
             axi_data <= INVALID_AXI_DATA;
         end;
 
+        procedure send_data_burst(
+            count : natural;
+            mask : std_ulogic_vector(63 downto 0) := (others => '1')) is
+        begin
+            for i in 1 to count loop
+                send_data(mask, to_std_ulogic(i = count));
+            end loop;
+        end;
+
     begin
-        send_data(X"FFFF_FFFF_FFFF_FFFF", '0');
-        send_data(X"FFFF_FFFF_FFFF_FFFF", '0');
-        send_data(X"FFFF_FFFF_FFFF_FFFF", '0');
-        send_data(X"FFFF_FFFF_FFFF_FFFF", '0');
---         send_data(X"0000_FFFF_FFFF_FFFF", '0');
---         send_data(X"0000_0000_FFFF_FFFF", '0');
+        axi_data <= INVALID_AXI_DATA;
+        clk_wait(5);
+
+        -- Simple burst: one SG, two AXI
+        send_data_burst(2);
+        -- Similar
+        send_data_burst(2);
+        send_data_burst(4);
+
+        -- Sequential bursts
+        send_data(X"FFFF_0000_0000_0000");
+        send_data(X"0000_0000_0000_FFFF");
+        send_data(X"0000_0000_FFFF_0000");
+        send_data(X"0000_FFFF_0000_0000");
+        send_data(X"FFFF_0000_0000_0000");
+        send_data(X"0000_0000_0000_FFFF");
+        send_data(X"0000_0000_FFFF_0000", '1');
 
         wait;
     end process;
 
 
     -- Report write response
-    process (axi_clk) begin
+    process (axi_clk)
+        function to_resp_string(resp : std_ulogic_vector) return string is
+        begin
+            case resp is
+                when "00" => return "OK";
+                when "10" => return "SLVERR";
+                when others => return "???";
+            end case;
+        end;
+
+    begin
         if rising_edge(axi_clk) then
             axi_tick_count <= axi_tick_count + 1;
 
@@ -259,7 +287,7 @@ begin
             if axi_response.valid and axi_response_ready then
                 write("@" & to_string(axi_tick_count) & " B " &
                     to_hstring(axi_response.id) & " " &
-                    to_string(axi_response.resp));
+                    to_resp_string(axi_response.resp));
             end if;
         end if;
     end process;
@@ -281,7 +309,7 @@ begin
             exit when ctrl_request.wa_valid;
             clk_wait;
         end loop;
-        write("%" & to_string(ctrl_tick_count) & " SG " &
+        write("%" & to_string(ctrl_tick_count) & " SG addr " &
             to_hstring(ctrl_request.wa_address) & " " &
             to_hstring(ctrl_request.wa_byte_mask));
 
@@ -306,20 +334,29 @@ begin
 
     -- Delay line for SG to data
     data_delay_inst : entity work.fixed_delay generic map (
-        WIDTH => 132,
+        WIDTH => 131,
         DELAY => DATA_DELAY
     ) port map (
         clk_i => ctrl_clk,
         data_i(0) => write_valid,
         data_i(1) => write_phase,
         data_i(2) => write_advance,
-        data_i(3) => ctrl_request.wa_address(24),
-        data_i(131 downto 4) => ctrl_request.wa_byte_mask,
+        data_i(130 downto 3) => ctrl_request.wa_byte_mask,
         data_o(0) => delay_write_valid,
         data_o(1) => delay_write_phase,
         data_o(2) => delay_write_advance,
-        data_o(3) => delay_write_error,
-        data_o(131 downto 4) => delay_write_mask
+        data_o(130 downto 3) => delay_write_mask
+    );
+
+    delay_response : entity work.fixed_delay generic map (
+        WIDTH => 2,
+        DELAY => RESPONSE_DELAY
+    ) port map (
+        clk_i => ctrl_clk,
+        data_i(0) => write_valid and write_phase and write_advance,
+        data_i(1) => not ctrl_request.wa_address(24),
+        data_o(0) => ctrl_response_wr_ok_valid,
+        data_o(1) => ctrl_response_wr_ok
     );
 
 
