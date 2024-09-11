@@ -11,7 +11,7 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write_response_fifo is
     generic (
-        FIFO_BITS : natural := 10
+        COMMAND_FIFO_BITS : natural := 10
     );
     port (
         clk_i : in std_ulogic;
@@ -32,7 +32,7 @@ architecture arch of gddr6_axi_write_response_fifo is
 
 begin
     fifo : entity work.fifo generic map (
-        FIFO_BITS => FIFO_BITS,
+        FIFO_BITS => COMMAND_FIFO_BITS,
         DATA_WIDTH => DATA_WIDTH
     ) port map (
         clk_i => clk_i,

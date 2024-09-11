@@ -8,7 +8,8 @@ use work.support.all;
 
 entity gddr6_axi_write_status_fifo is
     generic (
-        FIFO_BITS : natural := 10
+        DATA_FIFO_BITS : natural;
+        MAX_DELAY : real
     );
     port (
         -- AXI interface
@@ -30,19 +31,20 @@ entity gddr6_axi_write_status_fifo is
 end;
 
 architecture arch of gddr6_axi_write_status_fifo is
-    signal write_address : unsigned(FIFO_BITS-2 downto 0);
-    signal read_address : unsigned(FIFO_BITS-2 downto 0);
+    signal write_address : unsigned(DATA_FIFO_BITS-2 downto 0);
+    signal read_address : unsigned(DATA_FIFO_BITS-2 downto 0);
 
-    subtype SG_FIFO_RANGE is natural range 0 to 2**(FIFO_BITS-1) - 1;
+    subtype SG_FIFO_RANGE is natural range 0 to 2**(DATA_FIFO_BITS-1) - 1;
     signal ok_fifo : std_ulogic_vector(SG_FIFO_RANGE);
     signal read_enable : std_ulogic;
     signal read_valid : std_ulogic;
 
 begin
     async_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => FIFO_BITS - 1,
+        ADDRESS_WIDTH => DATA_FIFO_BITS - 1,
         ENABLE_READ_RESERVE => false,
-        ENABLE_WRITE_RESERVE => true
+        ENABLE_WRITE_RESERVE => true,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_reserve_i => ctrl_reserve_ready_i,

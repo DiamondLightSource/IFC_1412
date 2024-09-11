@@ -97,7 +97,8 @@ begin
     ctrl_clk <= not ctrl_clk after CTRL_PERIOD;
 
     axi_read : entity work.gddr6_axi_read generic map (
-        FIFO_BITS => FIFO_BITS
+        DATA_FIFO_BITS => FIFO_BITS,
+        COMMAND_FIFO_BITS => FIFO_BITS
     ) port map (
         axi_clk_i => axi_clk,
         axi_address_i => axi_address,

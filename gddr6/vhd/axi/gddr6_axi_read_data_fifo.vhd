@@ -9,7 +9,8 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_read_data_fifo is
     generic (
-        FIFO_BITS : natural := 10
+        DATA_FIFO_BITS : natural;
+        MAX_DELAY : real
     );
     port (
         -- AXI consumer interface
@@ -40,16 +41,16 @@ architecture arch of gddr6_axi_read_data_fifo is
     -- We maintain two write addresses, one for data and one for the ok flag.
     -- The ok flag is advanced by the address manager, but we have to manage the
     -- data write address separately: ok comes (slighly) after data.
-    signal ok_write_address : unsigned(FIFO_BITS-2 downto 0);
-    signal data_write_address : unsigned(FIFO_BITS-2 downto 0)
+    signal ok_write_address : unsigned(DATA_FIFO_BITS-2 downto 0);
+    signal data_write_address : unsigned(DATA_FIFO_BITS-2 downto 0)
         := (others => '0');
-    signal read_address : unsigned(FIFO_BITS-2 downto 0)
+    signal read_address : unsigned(DATA_FIFO_BITS-2 downto 0)
         := (others => '0');
 
     -- Three separate FIFO buffers: one for the OK flags, and two separate FIFOs
     -- to support data interleaving
-    subtype SG_FIFO_RANGE is natural range 0 to 2**(FIFO_BITS-1) - 1;
-    subtype DATA_FIFO_RANGE is natural range 0 to 2**FIFO_BITS - 1;
+    subtype SG_FIFO_RANGE is natural range 0 to 2**(DATA_FIFO_BITS-1) - 1;
+    subtype DATA_FIFO_RANGE is natural range 0 to 2**DATA_FIFO_BITS - 1;
     signal ok_fifo : std_ulogic_vector(SG_FIFO_RANGE);
     signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
     signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
@@ -65,9 +66,10 @@ architecture arch of gddr6_axi_read_data_fifo is
 begin
     -- The clock domain crossing part of this FIFO works in steps of SG bursts
     async_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => FIFO_BITS - 1,
+        ADDRESS_WIDTH => DATA_FIFO_BITS - 1,
         ENABLE_READ_RESERVE => false,
-        ENABLE_WRITE_RESERVE => true
+        ENABLE_WRITE_RESERVE => true,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_reserve_i => ctrl_reserve_ready_i,

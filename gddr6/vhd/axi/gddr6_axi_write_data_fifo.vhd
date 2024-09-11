@@ -9,8 +9,8 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write_data_fifo is
     generic (
-        FIFO_BITS : natural := 10;
-        MAX_DELAY : real := 4.0
+        DATA_FIFO_BITS : natural;
+        MAX_DELAY : real
     );
     port (
         -- AXI interface
@@ -41,8 +41,8 @@ entity gddr6_axi_write_data_fifo is
 end;
 
 architecture arch of gddr6_axi_write_data_fifo is
-    signal write_data_address : unsigned(FIFO_BITS-1 downto 0);
-    signal read_data_address : unsigned(FIFO_BITS-1 downto 0);
+    signal write_data_address : unsigned(DATA_FIFO_BITS-1 downto 0);
+    signal read_data_address : unsigned(DATA_FIFO_BITS-1 downto 0);
 
     signal write_fifo_valid : std_ulogic;
     signal write_byte_mask_ready : std_ulogic;
@@ -56,7 +56,7 @@ architecture arch of gddr6_axi_write_data_fifo is
 
     -- Three separate FIFO buffers: one for the byte mask, and two separate
     -- FIFOs to support data interleaving
-    subtype DATA_FIFO_RANGE is natural range 0 to 2**FIFO_BITS - 1;
+    subtype DATA_FIFO_RANGE is natural range 0 to 2**DATA_FIFO_BITS - 1;
     signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
     signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
 
@@ -87,7 +87,7 @@ begin
     -- FIFO: we write to this FIFO when advancing the data FIFO pointer, and
     -- data is never read without first reading the associated byte mask.
     mask_fifo : entity work.async_fifo generic map (
-        FIFO_BITS => FIFO_BITS,
+        FIFO_BITS => DATA_FIFO_BITS,
         DATA_WIDTH => 128,
         MAX_DELAY => MAX_DELAY
     ) port map (
@@ -105,9 +105,10 @@ begin
     -- Address management for data FIFO.  We need to separate the address from
     -- the stored data to support the complex two phase update process.
     data_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => FIFO_BITS,
+        ADDRESS_WIDTH => DATA_FIFO_BITS,
         ENABLE_WRITE_RESERVE => false,
-        ENABLE_READ_RESERVE => false
+        ENABLE_READ_RESERVE => false,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         write_clk_i => axi_clk_i,
         write_access_i => write_fifo_valid,

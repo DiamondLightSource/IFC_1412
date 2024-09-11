@@ -11,7 +11,8 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_address_fifo is
     generic (
-        FIFO_BITS : natural := 10
+        COMMAND_FIFO_BITS : natural;
+        MAX_DELAY : real
     );
     port (
         axi_clk_i : in std_ulogic;
@@ -31,8 +32,9 @@ architecture arch of gddr6_axi_address_fifo is
 
 begin
     fifo : entity work.async_fifo generic map (
-        FIFO_BITS => FIFO_BITS,
-        DATA_WIDTH => DATA_WIDTH
+        FIFO_BITS => COMMAND_FIFO_BITS,
+        DATA_WIDTH => DATA_WIDTH,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         write_clk_i => axi_clk_i,
         write_valid_i => axi_address_i.valid,

@@ -11,10 +11,9 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write is
     generic (
-        -- This can be overridden for simulation, but the natural depth to use
-        -- is 1K as this matches the natural block RAM depth
-        FIFO_BITS : natural := 10
-        -- Probably want separate DATA_ and COMMAND_ FIFO depths
+        DATA_FIFO_BITS : natural;
+        COMMAND_FIFO_BITS : natural;
+        MAX_DELAY : real := 4.0
     );
     port (
         -- AXI interface
@@ -89,7 +88,7 @@ begin
 
 
     command_fifo : entity work.gddr6_axi_command_fifo generic map (
-        FIFO_BITS => FIFO_BITS
+        COMMAND_FIFO_BITS => COMMAND_FIFO_BITS
     ) port map (
         clk_i => axi_clk_i,
 
@@ -116,7 +115,7 @@ begin
 
 
     response_fifo : entity work.gddr6_axi_write_response_fifo generic map (
-        FIFO_BITS => FIFO_BITS
+        COMMAND_FIFO_BITS => COMMAND_FIFO_BITS
     ) port map (
         clk_i => axi_clk_i,
 
@@ -146,7 +145,8 @@ begin
     -- Clock domain crossing FIFOs
 
     address_fifo : entity work.gddr6_axi_address_fifo generic map (
-        FIFO_BITS => FIFO_BITS
+        COMMAND_FIFO_BITS => COMMAND_FIFO_BITS,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         axi_clk_i => axi_clk_i,
         axi_address_i => axi_address,
@@ -158,7 +158,8 @@ begin
     );
 
     data_fifo : entity work.gddr6_axi_write_data_fifo generic map (
-        FIFO_BITS => FIFO_BITS
+        DATA_FIFO_BITS => DATA_FIFO_BITS,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         axi_clk_i => axi_clk_i,
         axi_write_i => axi_data,
@@ -174,7 +175,8 @@ begin
     );
 
     status_fifo : entity work.gddr6_axi_write_status_fifo generic map (
-        FIFO_BITS => FIFO_BITS
+        DATA_FIFO_BITS => DATA_FIFO_BITS,
+        MAX_DELAY => MAX_DELAY
     ) port map (
         axi_clk_i => axi_clk_i,
         axi_ok_o => axi_ok,
