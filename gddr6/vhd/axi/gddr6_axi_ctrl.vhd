@@ -87,7 +87,7 @@ begin
                 address.count ?= 0, address.valid,
                 next_address_ready, load_value);
             if load_value then
-                if address.count > 0 then
+                if address.valid and address.count ?> 0 then
                     -- This assert checks against a harmless AXI protocol error,
                     -- not an error in the controller: address crosses 4K
                     -- boundary, but number of transfers is still correct
