@@ -72,17 +72,17 @@ architecture arch of decode_commands is
                 return "WOM" & choose(ca(1)(4) = '1', "A", "") & " " &
                     to_hstring(ca(0)(7 downto 4)) & " " &
                     to_hstring(ca(1)(2 downto 0) & ca(0)(3 downto 0)) & " " &
-                    to_string(ce);
+                    to_string(reverse(ce));
             when "110001" =>
                 return "WSM" & choose(ca(1)(4) = '1', "A", "") & " " &
                     to_hstring(ca(0)(7 downto 4)) & " " &
                     to_hstring(ca(1)(2 downto 0) & ca(0)(3 downto 0)) & " " &
-                    to_string(ce);
+                    to_string(reverse(ce));
             when "110010" =>
                 return "WDM" & choose(ca(1)(4) = '1', "A", "") & " " &
                     to_hstring(ca(0)(7 downto 4)) & " " &
                     to_hstring(ca(1)(2 downto 0) & ca(0)(3 downto 0)) & " " &
-                    to_string(ce);
+                    to_string(reverse(ce));
             when "1000--" =>
                 return "PRE" & choose(ca(1)(4) = '1',
                     "ab", "pb " & to_hstring(ca(0)(7 downto 4)));
