@@ -4,6 +4,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.gddr6_defs.all;
+use work.gddr6_axi_defs.all;
+
 entity gddr6_axi is
     generic (
         -- Used to compute the appropriate constraints for the clock domain
@@ -23,7 +26,7 @@ entity gddr6_axi is
         axi_clk_i : in std_ulogic;
 
         -- WA
-        axi_wa_i : in axi_write_address_t;
+        axi_wa_i : in axi_address_t;
         axi_wa_ready_o : out std_ulogic;
         -- W
         axi_w_i : in axi_write_data_t;
@@ -32,11 +35,11 @@ entity gddr6_axi is
         axi_b_o : out axi_write_response_t;
         axi_b_ready_i : in std_ulogic;
         -- RA
-        axi_ra_i : in axi_read_address_t;
+        axi_ra_i : in axi_address_t;
         axi_ra_ready_o : out std_ulogic;
         -- R
         axi_r_o : out axi_read_data_t;
-        axi_r_ready_o : in std_ulogic;
+        axi_r_ready_i : in std_ulogic;
 
         -- ---------------------------------------------------------------------
         -- Controller interface on CK clk
@@ -72,7 +75,7 @@ begin
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_write_request_o,
-        ctrl_response_i => ctrl_write_response_i,
+        ctrl_response_i => ctrl_write_response_i
     );
 
     axi_read : entity work.gddr6_axi_read generic map (
@@ -84,10 +87,10 @@ begin
         axi_address_i => axi_ra_i,
         axi_address_ready_o => axi_ra_ready_o,
         axi_data_o => axi_r_o,
-        axi_data_ready_i => axi_r_ready_o,
+        axi_data_ready_i => axi_r_ready_i,
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_read_request_o,
-        ctrl_response_i => ctrl_read_response_i,
+        ctrl_response_i => ctrl_read_response_i
     );
 end;

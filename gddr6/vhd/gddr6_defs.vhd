@@ -32,6 +32,9 @@ package gddr6_defs is
         rd_ok_valid : std_ulogic;
     end record;
 
+    constant IDLE_AXI_CTRL_READ_REQUEST : axi_ctrl_read_request_t;
+    constant IDLE_AXI_CTRL_READ_RESPONSE : axi_ctrl_read_response_t;
+
     -- Write
 
     type axi_ctrl_write_request_t is record
@@ -59,6 +62,9 @@ package gddr6_defs is
         wr_ok : std_ulogic;
         wr_ok_valid : std_ulogic;
     end record;
+
+    constant IDLE_AXI_CTRL_WRITE_REQUEST : axi_ctrl_write_request_t;
+    constant IDLE_AXI_CTRL_WRITE_RESPONSE : axi_ctrl_write_response_t;
 
 
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -185,4 +191,40 @@ package gddr6_defs is
         read_error : std_ulogic;
         write_error : std_ulogic;
     end record;
+end;
+
+package body gddr6_defs is
+    constant IDLE_AXI_CTRL_READ_REQUEST : axi_ctrl_read_request_t := (
+        ra_address => (others => '0'),
+        ra_valid => '0',
+        ral_address => (others => '0'),
+        ral_count => (others => '0'),
+        ral_valid => '0'
+    );
+
+    constant IDLE_AXI_CTRL_READ_RESPONSE : axi_ctrl_read_response_t := (
+        ra_ready => '0',
+        rd_data => (others => (others => '0')),
+        rd_valid => '0',
+        rd_ok => '0',
+        rd_ok_valid => '0'
+    );
+
+    constant IDLE_AXI_CTRL_WRITE_REQUEST : axi_ctrl_write_request_t := (
+        wa_address => (others => '0'),
+        wa_byte_mask => (others => '0'),
+        wa_valid => '0',
+        wal_address => (others => '0'),
+        wal_count => (others => '0'),
+        wal_valid => '0',
+        wd_data => (others => (others => '0'))
+    );
+
+    constant IDLE_AXI_CTRL_WRITE_RESPONSE : axi_ctrl_write_response_t := (
+        wa_ready => '0',
+        wd_advance => '0',
+        wd_ready => '0',
+        wr_ok => '0',
+        wr_ok_valid => '0'
+    );
 end;

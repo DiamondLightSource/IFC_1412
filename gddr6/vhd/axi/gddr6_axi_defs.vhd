@@ -91,7 +91,7 @@ package gddr6_axi_defs is
         valid : std_ulogic;
     end record;
 
-
+    constant IDLE_AXI_ADDRESS : axi_address_t;
     constant IDLE_AXI_READ_DATA : axi_read_data_t;
     constant IDLE_AXI_WRITE_DATA : axi_write_data_t;
     constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t;
@@ -104,6 +104,15 @@ package gddr6_axi_defs is
 end;
 
 package body gddr6_axi_defs is
+    constant IDLE_AXI_ADDRESS : axi_address_t := (
+        id => (others => '0'),
+        addr => (others => '0'),
+        len => (others => '0'),
+        size => (others => '0'),
+        burst => (others => '0'),
+        valid => '0'
+    );
+
     constant IDLE_AXI_READ_DATA : axi_read_data_t := (
         id => (others => '0'),
         data => (others => '0'),
