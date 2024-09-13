@@ -38,13 +38,12 @@ begin
         procedure advance_command(command_ready : std_ulogic)
         is
             variable load_value : std_ulogic;
-            variable command_ready_in : std_ulogic;
         begin
             -- Advance the command counter and state or load a fresh command
-            advance_state_machine(
+            advance_state_machine_and_ping_pong(
                 command_i.valid, command_ready,
                 command.count ?= 0, command.valid,
-                command_ready_in, load_value);
+                command_ready_o, load_value);
             if load_value then
                 if command.valid and command.count ?> 0 then
                     command.count <= command.count - 1;
@@ -53,11 +52,6 @@ begin
                     command <= command_i;
                 end if;
             end if;
-
-            -- Flow control handshake for incoming command
-            update_ping_pong_ready_out(
-                command_i.valid, command_ready_in,
-                command.valid, command_ready_o);
         end;
 
 
