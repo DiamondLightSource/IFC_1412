@@ -60,28 +60,22 @@ architecture arch of gddr6_axi_write_data_fifo is
     signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
     signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
 
-
-    -- Returns the byte mask associated with the current write
-    impure function byte_mask_in return std_ulogic_vector
-    is
-        constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
-            := (others => '0');
-    begin
-        case axi_write_i.phase is
-            when '0' =>
-                return EMPTY_BYTE_MASK & axi_write_i.byte_mask;
-            when '1' =>
-                return axi_write_i.byte_mask & EMPTY_BYTE_MASK;
-            when others =>
-                -- Invalid phase not expected in valid write
-                assert not axi_write_i.valid severity failure;
-        end case;
-    end;
+    -- Byte mask associated with the current write
+    constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
+        := (others => '0');
+    signal byte_mask_in : std_ulogic_vector(127 downto 0);
 
 begin
     -- Advance writes to both FIFOs on the same tick
     write_fifo_valid <=
         axi_write_i.valid and axi_ready_o and axi_write_i.advance;
+
+    -- Shift the incoming byte mask according to the write phase
+    with axi_write_i.phase select
+        byte_mask_in <=
+            EMPTY_BYTE_MASK & axi_write_i.byte_mask when '0',
+            axi_write_i.byte_mask & EMPTY_BYTE_MASK when '1',
+            (others => '0') when others;
 
     -- FIFO for byte mask.  This will always have no more entries than the data
     -- FIFO: we write to this FIFO when advancing the data FIFO pointer, and
