@@ -1,4 +1,32 @@
 -- Bridge between AXI and core controller
+--
+-- Entity structure:
+--
+--  gddr6_axi
+--      gddr6_axi_read                      Process AXI Read transactions
+--          gddr6_axi_address               Process RA requests
+--          gddr6_axi_address_fifo          FIFO for SG commands
+--              async_fifo                  Cross clocks FIFO
+--          gddr6_axi_command_fifo          FIFO for AXI burst control
+--              fifo                        Synchronous FIFO
+--          gddr6_axi_ctrl                  Sends SG request to CTRL
+--          gddr6_axi_read_data_fifo        FIFO for read data from CTRL
+--              async_fifo_address          Cross clocks FIFO address control
+--          gddr6_axi_read_data             Process R bursts
+--      gddr6_axi_write                     Process AXI Write transactions
+--          gddr6_axi_address               Process WA requests
+--          gddr6_axi_address_fifo          (as above)
+--          gddr6_axi_command_fifo          (as above)
+--          gddr6_axi_ctrl                  (as above)
+--          gddr6_axi_write_data            Process W bursts
+--          gddr6_axi_write_data_fifo       FIFO for write data to CTRL
+--              async_fifo
+--              async_fifo_address
+--          gddr6_axi_write_response_fifo   FIFO for B request control
+--              fifo
+--          gddr6_axi_write_status_fifo     FIFO for write completion status
+--              async_fifo_address
+--          gddr6_axi_write_response        Process B requests on write complete
 
 library ieee;
 use ieee.std_logic_1164.all;

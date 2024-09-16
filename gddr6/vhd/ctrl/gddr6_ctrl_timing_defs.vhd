@@ -9,7 +9,7 @@ package gddr6_ctrl_timing_defs is
 
     -- The four delays below are in principle programmable through the
     -- corresponding MR register, but the Latency Timings section of table 47
-    -- of the device documentation adds clock related constrains, listed below.
+    -- of the device documentation adds clock related constraints, listed below.
     --
     -- Write latency, delay from write command to data transmission MR0[2:0]
     -- Can be set to the range 5 to 7
@@ -27,18 +27,18 @@ package gddr6_ctrl_timing_defs is
     -- These settings are taken from table 47 (AC Timing)
 
     -- Minimum time before closing a row after activation
-    constant t_RAS : natural := 7;      -- MAX(4, 28/t_CK)
+    constant t_RAS : natural := 7;              -- MAX(4, 28/t_CK)
     -- Minimum time from ACT to first read command
-    constant t_RCDRD : natural := 5;    -- 18 ns
+    constant t_RCDRD : natural := 5;            -- 18 ns
     -- Minimum time from ACT to first write command
-    constant t_RCDWR : natural := 1;    -- MAX(1, t_RCDRD - 1 - WLmrs)
+    constant t_RCDWR : natural := 1;            -- MAX(1, t_RCDRD - 1 - WLmrs)
     -- Minimum delay from PRE to ACT on same bank
-    constant t_RP : natural := 5;       -- 17 ns
+    constant t_RP : natural := 5;               -- 17 ns
     -- Minimum time interval between successive ACT commands on the same bank
     constant t_RC : natural := t_RAS + t_RP;    -- 45 ns
 
     -- Write recovery time, time from end of write to precharge
-    constant t_WR : natural := 5;       -- 18 ns (at 0 to 95 degrees C)
+    constant t_WR : natural := 5;               -- 18 ns (at 0 to 95 degrees C)
     -- Time from write to command to precharge
     constant t_WTP : natural := WLmrs + 2 + t_WR;   -- 12
     -- Time from read to precharge
@@ -50,19 +50,19 @@ package gddr6_ctrl_timing_defs is
     constant t_RREFD : natural := 4;
 
     -- Time for REFab to complete
-    constant t_RFCab : natural := 28;   -- 110 ns
+    constant t_RFCab : natural := 28;           -- 110 ns
     -- Time for REFp2b to complete
-    constant t_RFCpb : natural := 14;   -- tRAS + 25 ns
+    constant t_RFCpb : natural := 14;           -- tRAS + 25 ns
 
     -- Write turnaround time: time from completion of write to read command
-    constant t_WTR : natural := 3;      -- 2 + 4/t_CK
+    constant t_WTR : natural := 3;              -- 2 + 4/t_CK
     -- This is the actual WR to RD time calculated from the documentation
     constant t_WTR_time : natural := WLmrs + 2 + t_WTR;
     -- Read turnaround time: time from read to write commands
     constant t_RTW : natural := RLmrs + 4 - WLmrs;  -- 8
 
     -- Required periodic refresh interval
-    constant t_REFI : natural := 475;   -- 1.9 microseconds
+    constant t_REFI : natural := 475;           -- 1.9 microseconds
     -- Interval for periodic full refresh in multiples of t_REFI
     constant t_ABREF_REFI : natural := 526;     -- 1 ms / 1.9 microseconds
 end;
