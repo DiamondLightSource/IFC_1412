@@ -15,7 +15,8 @@ entity gddr6_axi is
         CK_FREQUENCY : real := 250.0;
 
         -- This can be overridden for simulation, but the natural depth to use
-        -- is 1K as this matches the natural block RAM depth
+        -- is 1K as this matches the natural block RAM depth.  Note that this
+        -- determines the number of SG bursts supported by each data FIFO
         DATA_FIFO_BITS : natural := 10;
         -- Command FIFOs can be shallower, and 64 is a natural dist RAM depth
         COMMAND_FIFO_BITS : natural := 6

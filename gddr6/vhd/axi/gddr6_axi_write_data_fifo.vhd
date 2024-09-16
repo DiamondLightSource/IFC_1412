@@ -41,8 +41,9 @@ entity gddr6_axi_write_data_fifo is
 end;
 
 architecture arch of gddr6_axi_write_data_fifo is
-    signal write_data_address : unsigned(DATA_FIFO_BITS-1 downto 0);
-    signal read_data_address : unsigned(DATA_FIFO_BITS-1 downto 0);
+    subtype ADDRESS_RANGE is natural range DATA_FIFO_BITS-1 downto 0;
+    signal write_data_address : unsigned(ADDRESS_RANGE);
+    signal read_data_address : unsigned(ADDRESS_RANGE);
 
     signal write_fifo_valid : std_ulogic;
     signal write_byte_mask_ready : std_ulogic;
@@ -56,7 +57,7 @@ architecture arch of gddr6_axi_write_data_fifo is
 
     -- Three separate FIFO buffers: one for the byte mask, and two separate
     -- FIFOs to support data interleaving
-    subtype DATA_FIFO_RANGE is natural range 0 to 2**DATA_FIFO_BITS - 1;
+    subtype DATA_FIFO_RANGE is natural range 0 to 2**(DATA_FIFO_BITS + 1) - 1;
     signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
     signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
 
