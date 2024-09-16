@@ -66,6 +66,7 @@ view wave
 
 add wave -group "AXI" axi/*
 add wave -group "CTRL" ctrl/*
+add wave -group "CTRL" -group "Data" ctrl/data/*
 add wave -group "PHY" phy/*
 add wave -group "AXI master" master/*
 add wave -group "Bench" sim:*

@@ -154,10 +154,10 @@ begin
                     simple_nop := is_simple_nop(ca_command_i.ca);
                 end if;
                 if report_i and (not simple_nop or REPORT_NOP) then
-                    write("@ " & to_string(tick_count) & " " & decode.all);
+                    write("%" & to_string(tick_count) & " SG " & decode.all);
                 end if;
             elsif mask_counter > 0 and not ONLY_VALID then
-                write("@ " & to_string(tick_count) &
+                write("%" & to_string(tick_count) & " SG " &
                     " missing mask, count = " & to_string(mask_counter));
                 mask_counter <= 0;
             end if;

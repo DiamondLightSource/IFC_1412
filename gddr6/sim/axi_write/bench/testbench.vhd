@@ -117,7 +117,7 @@ begin
             id : std_logic_vector(3 downto 0);
             addr : unsigned(31 downto 0);
             len : unsigned(7 downto 0);
-            size : unsigned(2 downto 0)) is
+            size : unsigned(2 downto 0) := "110") is
         begin
             axi_address <= (
                 id => id,
@@ -142,11 +142,15 @@ begin
 
         clk_wait(5);
 
+        send(X"0", X"0001_0080", X"03", "101");
+        send(X"0", X"0001_0000", X"00");
+        send(X"0", X"0001_0040", X"00");
+
         -- A simple burst: one SG burst, two AXI beats
-        send(X"1", X"0000_0000", X"01", "110");
+        send(X"1", X"0000_0000", X"01");
         clk_wait(10);
         -- Similar, but repeated 3 times on SG side
-        send(X"2", X"2000_0080", X"01", "110");
+        send(X"2", X"2000_0080", X"01");
         -- An invalid burst, no SG writes generated
         send(X"3", X"0000_0100", X"03", "111");
 
@@ -239,16 +243,25 @@ begin
 
         procedure send_data_burst(
             count : natural;
-            mask : std_ulogic_vector(63 downto 0) := (others => '1')) is
+            mask : std_ulogic_vector(63 downto 0) := (others => '1');
+            dtype : DATA_TYPE := DATA_CHANNELS) is
         begin
             for i in 1 to count loop
-                send_data(mask, to_std_ulogic(i = count));
+                send_data(mask, to_std_ulogic(i = count), dtype);
             end loop;
         end;
 
     begin
         axi_data <= INVALID_AXI_DATA;
         clk_wait(5);
+
+        send_data(X"0000_0000_FFFF_FFFF");
+        send_data(X"FFFF_FFFF_0000_0000");
+        send_data(X"0000_0000_FFFF_FFFF");
+        send_data(X"FFFF_FFFF_0000_0000", '1');
+
+        send_data_burst(1, dtype => DATA_BYTES);
+        send_data_burst(1, dtype => DATA_BYTES);
 
         -- Simple burst: one SG, two AXI
         send_data_burst(2);
@@ -270,6 +283,7 @@ begin
 
 
     -- Report write response
+    axi_response_ready <= '1';
     process (axi_clk)
         function to_resp_string(resp : std_ulogic_vector) return string is
         begin
@@ -284,7 +298,7 @@ begin
         if rising_edge(axi_clk) then
             axi_tick_count <= axi_tick_count + 1;
 
-            axi_response_ready <= axi_response.valid and not axi_response_ready;
+--             axi_response_ready <= axi_response.valid and not axi_response_ready;
             if axi_response.valid and axi_response_ready then
                 write("@" & to_string(axi_tick_count) & " B " &
                     to_hstring(axi_response.id) & " " &

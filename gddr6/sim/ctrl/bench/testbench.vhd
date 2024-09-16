@@ -191,7 +191,10 @@ begin
         axi_write_request.wa_valid <= '0';
         axi_write_request.wal_valid <= '0';
 
-        clk_wait(2);
+        -- Start with a single write in isolation
+        clk_wait(5);
+        do_write(0);
+        clk_wait(20);
 
         -- Start with a write efficiency test.  The result depends on the value
         -- of SHORT_REFRESH_COUNT according to the following table:

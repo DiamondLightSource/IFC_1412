@@ -112,8 +112,14 @@ begin
 
         clk_wait(5);
 
+        send(X"0", X"0001_0080", X"03", "101");
+
         -- A simple burst: one SG burst, two AXI beats
+        send(X"0", X"0001_0000", X"00");
+        send(X"0", X"0001_0040", X"00");
+        send(X"0", X"0001_0080", X"01", "101");
         send(X"1", X"0000_0000", X"01");
+
         -- Similar, but with partial writes
         send(X"2", X"0000_0080", X"01");
         send(X"2", X"0000_0100", X"01");
@@ -221,8 +227,18 @@ begin
         axi_w_o <= IDLE_AXI_WRITE_DATA;
         clk_wait(5);
 
+        send_data(X"0000_0000_FFFF_FFFF");
+        send_data(X"FFFF_FFFF_0000_0000");
+        send_data(X"0000_0000_FFFF_FFFF");
+        send_data(X"FFFF_FFFF_0000_0000", '1');
+
         -- Simple burst: one SG, two AXI
+        send_data_burst(1, dtype => DATA_BYTES);
+        send_data_burst(1, dtype => DATA_BYTES);
+        send_data(X"0000_0000_FFFF_FFFF");
+        send_data(X"FFFF_FFFF_0000_0000", '1');
         send_data_burst(2, dtype => DATA_BYTES);
+
         -- Burst with non-trival mask
 --         send_data_burst(2, X"0000_0000_FFFF_FFFF");
         send_data(X"0000_0000_FFFF_FFFF");
