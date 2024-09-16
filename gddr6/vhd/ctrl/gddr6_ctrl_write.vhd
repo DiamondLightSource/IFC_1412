@@ -138,7 +138,7 @@ architecture arch of gddr6_ctrl_write is
     -- emit, the channel enables to use, and the mask_index to use.
     procedure decode_next_command(
         decodes : decode_array_t;
-        signal pending : inout std_ulogic_vector(0 to 3);
+        signal pending : out std_ulogic_vector(0 to 3);
         signal command : out decode_t;
         signal enables : out std_ulogic_vector(0 to 3);
         signal mask_index : out natural range 0 to 3;
@@ -280,8 +280,8 @@ architecture arch of gddr6_ctrl_write is
     -- necessary for a single decoded command: a single command for WOM, command
     -- plus mask for WDM, and command plus double mask for WSM.
     procedure advance_write_state(
-        signal state : inout write_state_t;
-        signal write_request : inout core_request_t;
+        signal state : out write_state_t;
+        signal write_request : out core_request_t;
         variable next_command : out std_ulogic)
     is
         procedure goto_next_command is

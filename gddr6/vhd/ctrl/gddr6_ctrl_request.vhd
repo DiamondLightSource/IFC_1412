@@ -69,7 +69,7 @@ architecture arch of gddr6_ctrl_request is
 
     procedure update_request(
         request_i : core_request_t;
-        signal request_o : inout core_request_t;
+        signal request_o : out core_request_t;
         ready_i : std_ulogic;
         variable ready_o : out std_ulogic;
         guard_i : std_ulogic := '1')
@@ -89,7 +89,7 @@ architecture arch of gddr6_ctrl_request is
 
     procedure update_open(
         request_i : core_request_t;
-        signal request_o : inout bank_open_t;
+        signal request_o : out bank_open_t;
         ready_i : std_ulogic;
         variable ready_o : out std_ulogic;
         guard_i : std_ulogic)
@@ -113,7 +113,7 @@ architecture arch of gddr6_ctrl_request is
 
     procedure update_out(
         request_i : core_request_t;
-        signal request_o : inout out_request_t;
+        signal request_o : out out_request_t;
         ready_i : std_ulogic;
         variable ready_o : out std_ulogic;
         guard_i : std_ulogic)

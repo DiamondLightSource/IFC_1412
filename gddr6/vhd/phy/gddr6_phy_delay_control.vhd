@@ -149,7 +149,7 @@ begin
 
     process (clk_i)
         procedure count_delay(
-            signal counter : inout unsigned; next_state : write_state_t) is
+            signal counter : out unsigned; next_state : write_state_t) is
         begin
             if counter > 0 then
                 counter <= counter - 1;
