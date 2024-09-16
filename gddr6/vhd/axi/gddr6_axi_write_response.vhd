@@ -19,12 +19,12 @@ entity gddr6_axi_write_response is
 
         -- Response control from AXI WA
         response_i : in burst_response_t;
-        response_ready_o : out std_ulogic := '0';
+        response_ready_o : out std_ulogic := '1';
 
         -- Write status from control
         data_ok_i : in std_ulogic;
         data_ok_valid_i : in std_ulogic;
-        data_ok_ready_o : out std_ulogic := '0';
+        data_ok_ready_o : out std_ulogic := '1';
 
         -- AXI B interface
         axi_response_o : out axi_write_response_t := IDLE_AXI_WRITE_RESPONSE;
@@ -40,11 +40,9 @@ architecture arch of gddr6_axi_write_response is
     signal burst_ok_valid : std_ulogic := '0';
 
 begin
-vars :
     process (clk_i)
         procedure compute_ready_valid(
             variable response_ready : out std_ulogic;
-            variable data_ok_ready : out std_ulogic;
             variable axi_valid : out std_ulogic)
         is
             variable axi_ready : std_ulogic;
@@ -55,29 +53,23 @@ vars :
                     -- For an invalid burst there is no returned status to
                     -- check so we can advance our state immediately
                     response_ready := axi_ready;
-                    data_ok_ready := '0';
                     axi_valid := '1';
                 elsif not burst_ok_valid then
-                    -- Need to give the response engine a value data point
+                    -- Need to give the response engine a valid data point
                     response_ready := data_ok_valid;
-                    data_ok_ready := '1';
                     axi_valid := '0';
                 elsif response.count > 0 then
                     -- Need valid data to advance the response
                     response_ready := data_ok_valid;
-                    data_ok_ready := '1';
                     axi_valid := '0';
                 else
-                    -- At state end hand over response to AXI.  Can't accept
-                    -- data in this state, don't know if it will be consumed.
+                    -- At state end hand over response to AXI
                     response_ready := axi_ready;
-                    data_ok_ready := '0';
                     axi_valid := '1';
                 end if;
             else
                 -- Load a fresh response if available
                 response_ready := '1';      -- Actually ignored in this case
-                data_ok_ready := '0';
                 axi_valid := '0';
             end if;
         end;
@@ -85,34 +77,46 @@ vars :
 
         -- Advance the response control.  If we are processing a valid burst we
         -- need to count down responses, otherwise a new response can be loaded.
-        procedure advance_response(response_ready : std_ulogic)
+        procedure advance_response(
+            response_ready : std_ulogic;
+            variable data_ok_ready : out std_ulogic)
         is
-            variable load_new_state : std_ulogic;
+            variable load_new_response : std_ulogic;
             variable load_value : std_ulogic;
         begin
-            load_new_state :=
+            load_new_response :=
                 not response.valid or response.invalid_burst or
                 (response.count ?= 0 and burst_ok_valid);
             advance_state_machine_and_ping_pong(
-                response_i.valid, response_ready,
-                load_new_state, response.valid,
-                response_ready_o, load_value);
+                response_i.valid, response_ready, load_new_response,
+                response.valid, response_ready_o,
+                load_value);
+
+            data_ok_ready := '0';
             if load_value then
-                if load_new_state then
+                if load_new_response then
                     -- Load fresh state.  Will need to load data as a separate
                     -- step if required (not an invalid burst)
                     response <= response_i;
-                    burst_ok <= not response_i.invalid_burst;
-                    burst_ok_valid <= response_i.invalid_burst;
-                elsif not burst_ok_valid then
-                    -- Need to load the first data status
-                    assert data_ok_valid severity failure;
-                    burst_ok <= data_ok;
-                    burst_ok_valid <= data_ok_valid;
-                else
-                    -- Normal advance of data status
-                    response.count <= response.count - 1;
+                    if response_i.invalid_burst then
+                        burst_ok <= '0';
+                    else
+                        -- If data is not available when loading the new state
+                        -- mark the burst as ok so far, but ensure the ok state
+                        -- is not yet marked as valid
+                        burst_ok <= data_ok or not data_ok_valid;
+                        burst_ok_valid <= data_ok_valid;
+                        data_ok_ready := '1';
+                    end if;
+                elsif data_ok_valid then
+                    -- If data valid we can consume it and update the state,
+                    -- otherwise stand still
+                    if burst_ok_valid then
+                        response.count <= response.count - 1;
+                    end if;
                     burst_ok <= burst_ok and data_ok;
+                    burst_ok_valid <= '1';
+                    data_ok_ready := '1';
                 end if;
             end if;
         end;
@@ -152,8 +156,8 @@ vars :
 
     begin
         if rising_edge(clk_i) then
-            compute_ready_valid(response_ready, data_ok_ready, axi_valid);
-            advance_response(response_ready);
+            compute_ready_valid(response_ready, axi_valid);
+            advance_response(response_ready, data_ok_ready);
             advance_data_ok(data_ok_ready);
             advance_axi(axi_valid);
         end if;
