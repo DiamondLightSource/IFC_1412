@@ -11,7 +11,7 @@ use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_delay_control is
     port (
-        clk_i : std_ulogic;
+        clk_i : in std_ulogic;
 
         -- Control interface from registers
         setup_i : in setup_delay_t;

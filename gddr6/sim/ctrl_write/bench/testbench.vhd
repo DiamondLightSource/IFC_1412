@@ -44,7 +44,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    write_i : entity work.gddr6_ctrl_write port map (
+    write_inst : entity work.gddr6_ctrl_write port map (
         clk_i => clk,
         axi_address_i => axi_address,
         axi_byte_mask_i => axi_byte_mask,

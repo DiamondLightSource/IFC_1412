@@ -22,7 +22,7 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "Write" write_i/* write_i/proc/*
+add wave -group "Write" write_inst/* write_inst/proc/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

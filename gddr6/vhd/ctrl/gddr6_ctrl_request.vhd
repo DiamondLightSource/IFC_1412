@@ -64,73 +64,73 @@ architecture arch of gddr6_ctrl_request is
     --  * If guard is not set then treat the incoming data as not yet ready and
     --    do not load it.
     --  * Report ready_out if any incoming data will be consumed
-    -- Note that ready_o is a variable and so must be processed at the correct
+    -- Note that ready_out is a variable and so must be processed at the correct
     -- point in the process to avoid accidentially becoming registered!
 
     procedure update_request(
-        request_i : core_request_t;
-        signal request_o : out core_request_t;
-        ready_i : std_ulogic;
-        variable ready_o : out std_ulogic;
-        guard_i : std_ulogic := '1')
+        request_in : core_request_t;
+        signal request_out : out core_request_t;
+        ready_in : std_ulogic;
+        variable ready_out : out std_ulogic;
+        guard : std_ulogic := '1')
     is
         variable enable_store : std_ulogic;
     begin
-        enable_store := ready_i or not request_o.valid;
-        ready_o := enable_store and guard_i;
+        enable_store := ready_in or not request_out.valid;
+        ready_out := enable_store and guard;
         if enable_store then
-            if guard_i then
-                request_o <= request_i;
+            if guard then
+                request_out <= request_in;
             else
-                request_o.valid <= '0';
+                request_out.valid <= '0';
             end if;
         end if;
     end;
 
     procedure update_open(
-        request_i : core_request_t;
-        signal request_o : out bank_open_t;
-        ready_i : std_ulogic;
-        variable ready_o : out std_ulogic;
-        guard_i : std_ulogic)
+        request_in : core_request_t;
+        signal request_out : out bank_open_t;
+        ready_in : std_ulogic;
+        variable ready_out : out std_ulogic;
+        guard : std_ulogic)
     is
         variable enable_store : std_ulogic;
     begin
-        enable_store := ready_i or not request_o.valid;
-        ready_o := enable_store and guard_i;
+        enable_store := ready_in or not request_out.valid;
+        ready_out := enable_store and guard;
         if enable_store then
-            if guard_i then
-                request_o <= (
-                    bank => request_i.bank,
-                    row => request_i.row,
-                    valid => request_i.valid and not request_i.extra
+            if guard then
+                request_out <= (
+                    bank => request_in.bank,
+                    row => request_in.row,
+                    valid => request_in.valid and not request_in.extra
                 );
             else
-                request_o.valid <= '0';
+                request_out.valid <= '0';
             end if;
         end if;
     end;
 
     procedure update_out(
-        request_i : core_request_t;
-        signal request_o : out out_request_t;
-        ready_i : std_ulogic;
-        variable ready_o : out std_ulogic;
-        guard_i : std_ulogic)
+        request_in : core_request_t;
+        signal request_out : out out_request_t;
+        ready_in : std_ulogic;
+        variable ready_out : out std_ulogic;
+        guard : std_ulogic)
     is
         variable enable_store : std_ulogic;
     begin
-        enable_store := ready_i or not request_o.valid;
-        ready_o := enable_store and guard_i;
+        enable_store := ready_in or not request_out.valid;
+        ready_out := enable_store and guard;
         if enable_store then
-            if guard_i then
-                request_o <= (
-                    direction => request_i.direction,
-                    bank => request_i.bank,
-                    valid => request_i.valid and not request_i.extra
+            if guard then
+                request_out <= (
+                    direction => request_in.direction,
+                    bank => request_in.bank,
+                    valid => request_in.valid and not request_in.extra
                 );
             else
-                request_o.valid <= '0';
+                request_out.valid <= '0';
             end if;
         end if;
     end;
@@ -175,56 +175,56 @@ begin
             -- Output of final stage, blocks until out request accepted
             -- Generates stage_ready(4) flag
             update_request(
-                request_i => stage(3),
-                request_o => stage(4),
-                ready_i => stage(4).extra or out_request_ok_i,
-                ready_o => stage_ready(4));
+                request_in => stage(3),
+                request_out => stage(4),
+                ready_in => stage(4).extra or out_request_ok_i,
+                ready_out => stage_ready(4));
 
             -- Loading of out_request_o
             -- Generates out_request_ready flag
             update_out(
-                request_i => stage(2),
-                request_o => out_request_o,
-                ready_i => out_request_ok_i,
-                ready_o => out_request_ready,
-                guard_i => bank_open_ok_i or last_bank_open_ok);
+                request_in => stage(2),
+                request_out => out_request_o,
+                ready_in => out_request_ok_i,
+                ready_out => out_request_ready,
+                guard => bank_open_ok_i or last_bank_open_ok);
 
             -- Request concurrently loaded with out_request_o
             -- Generates stage_ready(3) flag
             update_request(
-                request_i => stage(2),
-                request_o => stage(3),
-                ready_i => stage_ready(4),
-                ready_o => stage_ready(3),
-                guard_i =>
+                request_in => stage(2),
+                request_out => stage(3),
+                ready_in => stage_ready(4),
+                ready_out => stage_ready(3),
+                guard =>
                     stage(2).extra or (bank_open_ok and out_request_ready));
 
             -- Output of first stage
             -- Generates stage_ready(2) flag
             update_request(
-                request_i => stage(1),
-                request_o => stage(2),
-                ready_i => stage_ready(3),
-                ready_o => stage_ready(2));
+                request_in => stage(1),
+                request_out => stage(2),
+                ready_in => stage_ready(3),
+                ready_out => stage_ready(2));
 
             -- Loading of open request
             -- Generates bank_open_ready flag
             reset_open_ok := stage_ready(3) and not stage(2).extra;
             update_open(
-                request_i => input_request,
-                request_o => bank_open_o,
-                ready_i => bank_open_ok_i,
-                ready_o => bank_open_ready,
-                guard_i => not bank_open_ok or reset_open_ok);
+                request_in => input_request,
+                request_out => bank_open_o,
+                ready_in => bank_open_ok_i,
+                ready_out => bank_open_ready,
+                guard => not bank_open_ok or reset_open_ok);
 
             -- Loading of input data concurrently with bank_open_o
             -- Generates stage_ready(1) flag
             update_request(
-                request_i => input_request,
-                request_o => stage(1),
-                ready_i => stage_ready(2),
-                ready_o => stage_ready(1),
-                guard_i => input_request.extra or bank_open_ready);
+                request_in => input_request,
+                request_out => stage(1),
+                ready_in => stage_ready(2),
+                ready_out => stage_ready(1),
+                guard => input_request.extra or bank_open_ready);
 
 
             -- Input enable and skid buffer
