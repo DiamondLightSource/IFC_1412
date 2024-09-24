@@ -59,6 +59,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/../../common/decode_commands.vhd \
     $bench_dir/sim_phy_defs.vhd \
     $bench_dir/sim_phy_memory.vhd \
+    $bench_dir/sim_phy_command.vhd \
     $bench_dir/sim_phy.vhd \
     $bench_dir/sim_axi_master.vhd \
     $bench_dir/testbench.vhd
@@ -70,8 +71,9 @@ view wave
 add wave -group "AXI" axi/*
 add wave -group "CTRL" ctrl/*
 add wave -group "CTRL.DATA" ctrl/data/*
+add wave -group "PHY Command" phy/command/* phy/command/vars/*
 add wave -group "PHY Memory" phy/memory/*
-add wave -group "PHY" phy/* phy/vars/*
+add wave -group "PHY" phy/*
 add wave -group "AXI master" master/*
 add wave -group "Bench" sim:*
 
