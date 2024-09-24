@@ -22,6 +22,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
     $vhd_dir/gddr6_defs.vhd \
+    $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
@@ -56,6 +57,8 @@ vcom -64 -2008 -work xil_defaultlib \
 
 vcom -64 -2008 -work xil_defaultlib \
     $bench_dir/../../common/decode_commands.vhd \
+    $bench_dir/sim_phy_defs.vhd \
+    $bench_dir/sim_phy_memory.vhd \
     $bench_dir/sim_phy.vhd \
     $bench_dir/sim_axi_master.vhd \
     $bench_dir/testbench.vhd
@@ -66,8 +69,9 @@ view wave
 
 add wave -group "AXI" axi/*
 add wave -group "CTRL" ctrl/*
-add wave -group "CTRL" -group "Data" ctrl/data/*
-add wave -group "PHY" phy/*
+add wave -group "CTRL.DATA" ctrl/data/*
+add wave -group "PHY Memory" phy/memory/*
+add wave -group "PHY" phy/* phy/vars/*
 add wave -group "AXI master" master/*
 add wave -group "Bench" sim:*
 

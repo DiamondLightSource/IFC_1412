@@ -11,6 +11,12 @@ use work.gddr6_ctrl_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
 
 entity gddr6_ctrl_data is
+    generic (
+        -- These two parameters allow any input and output multiplexing to be
+        -- accounted for.
+        MUX_OUTPUT_DELAY : natural := 1;
+        MUX_INPUT_DELAY : natural := 1
+    );
     port (
         clk_i : in std_ulogic;
 
@@ -19,7 +25,7 @@ entity gddr6_ctrl_data is
 
         -- Output enable
         write_active_i : in std_ulogic;
-        output_enable_o : out std_ulogic;
+        output_enable_o : out std_ulogic := '0';
 
         -- Data to and from PHY
         phy_data_i : in phy_data_t;
@@ -32,9 +38,9 @@ entity gddr6_ctrl_data is
         -- AXI connection
         -- RD
         axi_rd_data_o : out ctrl_data_t;
-        axi_rd_valid_o : out std_ulogic;
+        axi_rd_valid_o : out std_ulogic := '0';
         axi_rd_ok_o : out std_ulogic;
-        axi_rd_ok_valid_o : out std_ulogic;
+        axi_rd_ok_valid_o : out std_ulogic := '0';
         -- WR
         axi_wd_data_i : in ctrl_data_t;
         axi_wd_advance_o : out std_ulogic;
@@ -45,26 +51,95 @@ entity gddr6_ctrl_data is
 end;
 
 architecture arch of gddr6_ctrl_data is
+    -- The following delays are measured from input to the appropriate BITSLICE
+    -- input in _phy_nibble to the corresponding output.
+    constant TX_BITSLICE_DELAY : natural := 1;
+    constant RX_BITSLICE_DELAY : natural := 1;
+    constant TRI_BITSLICE_DELAY : natural := 2;
+
+    -- Delay from request_completion_i (synchronous with command_o from
+    -- _ctrl_request) to SG CA input
+    constant CA_OUTPUT_DELAY : natural :=
+        -- CA output: _ctrl_request.command_o
+        --  => _ctrl_command.ca_command_o
+        --  (=> output mux)
+        --  => _phy_ca.d1,d2 => ODDR => CA
+        MUX_OUTPUT_DELAY + 3;
+    -- Delay from output_enable_o here to output enable on edge of FPGA
+    constant OE_OUTPUT_DELAY : natural :=
+        -- Tristate control: _ctrl_data.output_enable_o
+        --  (=> output mux)
+        --  => _phy_byte.tbyte_in
+        --  => BITSLICE_CONTROL => TX_BITSLICE_TRI => RXTX_BITSLICE => OE
+        MUX_OUTPUT_DELAY + 1 + TRI_BITSLICE_DELAY;
+    -- Delay from phy_data_o to memory
+    constant TX_OUTPUT_DELAY : natural :=
+        -- Write data: _ctrl_data.phy_data_o
+        --  (=> output mux)
+        --  => _phy_dbi.data_out_o
+        --  => _phy_bitslip.data_o
+        --  => TX_BITSLICE => DQ
+        MUX_OUTPUT_DELAY + 2 + TX_BITSLICE_DELAY;
+    -- Delay from phy_data_o to edc_write_i
+    constant TX_EDC_DELAY : natural :=
+        -- EDC for write data: _ctrl_data.phy_data_o
+        --  (=> output mux)
+        --  => _phy_dbi.data_out_o
+        --  => _phy_crc.edc_o
+        --  (=> input_mux)
+        MUX_OUTPUT_DELAY + 2 + MUX_INPUT_DELAY;
+    -- Delay from memory to phy_data_i
+    constant RX_INPUT_DELAY : natural :=
+        -- Read data: DQ => RX_BITSLICE
+        --  => _phy_bitslip.data_i
+        --  => _phy_dbi.data_in_o
+        --  (=> input_mux)
+        RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
+    -- Delay from memory to edc_read_i
+    constant RX_EDC_DELAY : natural :=
+        -- EDC for read data: DQ => RX_BITSLICE
+        --  => _phy_bitslip.data_i
+        --  => _phy_crc.edc_o
+        --  (=> input_mux)
+        RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
+    -- Delay from memory to edc_in_i
+    constant EDC_INPUT_DELAY : natural :=
+        -- EDC from SG: EDC => RX_BITSLICE
+        --  => _phy_bitslip.data_i
+        --  (=> input_mux)
+        RX_BITSLICE_DELAY + 1 + MUX_INPUT_DELAY;
+
+
     -- DQ output enable is asserted when writing data, and we allow one tick
     -- margin either side.
     constant DELAY_WRITE_ACTIVE : natural := WLmrs;
     constant DELAY_WRITE_ACTIVE_EXTRA : natural := 2;
 
-    -- This delay takes account of the extra delay from sending a command to
-    -- seeing the response; this needs to be added to incoming data and EDC.
-    constant DELAY_LOOP : natural := 5;
 
     -- Delays for read
-    constant DELAY_READ_START : natural := RLmrs + DELAY_LOOP - 1;
-    constant DELAY_READ_CHECK : natural := CRCRL + 1;
-    -- read_edc_i arrives one tick after data_i, edc_in_i CRCRL ticks after, but
-    -- one tick ahead of data_i, so in fact this delay is zero!
-    constant DELAY_READ_EDC : natural := CRCRL - 2;
+    --
+    -- Time of arrival of read data after command completion
+    constant READ_START_DELAY : natural :=
+        CA_OUTPUT_DELAY + RLmrs + RX_INPUT_DELAY;
+    -- Time of arrival of read EDC response from SG after completion
+    constant READ_CHECK_DELAY : natural :=
+        CA_OUTPUT_DELAY + RLmrs + CRCRL + EDC_INPUT_DELAY;
+    -- Delay to align PHY and SG EDC signals
+    constant READ_EDC_DELAY : natural :=
+        READ_CHECK_DELAY - READ_START_DELAY;
 
     -- Delays for write
-    constant DELAY_WRITE_START : natural := WLmrs;
-    constant DELAY_WRITE_CHECK : natural := CRCWL + 1 + DELAY_LOOP;
-    constant DELAY_WRITE_EDC : natural := CRCWL - 2;
+    --
+    -- Time to send write data after command completion
+    constant WRITE_START_DELAY : natural :=
+        CA_OUTPUT_DELAY + WLmrs - TX_OUTPUT_DELAY;
+    -- Time of arrival of write EDC response from SG after completion
+    constant WRITE_CHECK_DELAY : natural :=
+        CA_OUTPUT_DELAY + WLmrs + CRCWL + EDC_INPUT_DELAY;
+    -- Delay to align PHY and SG EDC signals
+    constant WRITE_EDC_DELAY : natural :=
+        WRITE_CHECK_DELAY - WRITE_START_DELAY - TX_EDC_DELAY;
+
 
     -- Output enable
     signal write_active_in : std_ulogic;
@@ -75,7 +150,7 @@ architecture arch of gddr6_ctrl_data is
     signal read_start : std_ulogic;
     signal read_delay : std_ulogic := '0';
     signal read_start_edc : std_ulogic;
-    signal read_edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal read_edc_in : phy_edc_t;
     signal read_edc_in_ok : std_ulogic;
     signal read_check_edc : std_ulogic := '0';
 
@@ -88,7 +163,7 @@ architecture arch of gddr6_ctrl_data is
     signal write_start : std_ulogic;
     signal write_delay : std_ulogic := '0';
     signal write_advance : std_ulogic;
-    signal write_edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal write_edc_in : phy_edc_t;
 
     -- Relevant request signals delayed align with EDC: write_start_edc should
     -- be valid one tick before edc_in_i and write_edc_in become valid
@@ -104,7 +179,7 @@ architecture arch of gddr6_ctrl_data is
 
 
     -- Flatten and restore functions for interfacing EDC values to delay lines
-    function from_edc(edc : vector_array) return std_ulogic_vector
+    function from_edc(edc : phy_edc_t) return std_ulogic_vector
     is
         variable result : std_ulogic_vector(63 downto 0);
     begin
@@ -114,9 +189,9 @@ architecture arch of gddr6_ctrl_data is
         return result;
     end;
 
-    function to_edc(edc : std_ulogic_vector(63 downto 0)) return vector_array
+    function to_edc(edc : std_ulogic_vector(63 downto 0)) return phy_edc_t
     is
-        variable result : vector_array(7 downto 0)(7 downto 0);
+        variable result : phy_edc_t;
     begin
         for i in 0 to 7 loop
             result(i) := edc(8*i + 7 downto 8*i);
@@ -129,7 +204,7 @@ architecture arch of gddr6_ctrl_data is
     -- are set in the mask
     function compare_by_channel(
         mask : std_ulogic_vector;
-        a : vector_array; b : vector_array) return std_ulogic is
+        a : phy_edc_t; b : phy_edc_t) return std_ulogic is
     begin
         for ch in 0 to 3 loop
             if mask(ch) then
@@ -167,30 +242,29 @@ begin
         to_std_ulogic(request_completion_i.direction = DIR_READ) and
         request_completion_i.valid;
     delay_read_start_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_READ_START
+        DELAY => READ_START_DELAY - 1
     ) port map (
         clk_i => clk_i,
         data_i(0) => read_complete_in,
         data_o(0) => read_start
     );
 
-    -- Delay from data arriving to EDC
-    delay_read_check_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_READ_CHECK
-    ) port map (
-        clk_i => clk_i,
-        data_i(0) => read_start,
-        data_o(0) => read_start_edc
-    );
-
     -- Delay EDC calculated from data read to align with EDC from memory
     delay_read_edc_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_READ_EDC,
+        DELAY => READ_EDC_DELAY,
         WIDTH => 64
     ) port map (
         clk_i => clk_i,
         data_i => from_edc(edc_read_i),
         to_edc(data_o) => read_edc_in
+    );
+
+    delay_read_check_inst : entity work.fixed_delay generic map (
+        DELAY => READ_CHECK_DELAY + 1
+    ) port map (
+        clk_i => clk_i,
+        data_i(0) => read_complete_in,
+        data_o(0) => read_start_edc
     );
 
 
@@ -199,7 +273,7 @@ begin
         to_std_ulogic(request_completion_i.direction = DIR_WRITE) and
         request_completion_i.valid;
     delay_write_start_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_WRITE_START,
+        DELAY => WRITE_START_DELAY - 1,
         WIDTH => 2
     ) port map (
         clk_i => clk_i,
@@ -209,8 +283,17 @@ begin
         data_o(1) => write_advance
     );
 
+    delay_write_edc_inst : entity work.fixed_delay generic map (
+        DELAY => WRITE_EDC_DELAY,
+        WIDTH => 64
+    ) port map (
+        clk_i => clk_i,
+        data_i => from_edc(edc_write_i),
+        to_edc(data_o) => write_edc_in
+    );
+
     delay_write_check_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_WRITE_CHECK,
+        DELAY => WRITE_CHECK_DELAY - 1,
         WIDTH => 6
     ) port map (
         clk_i => clk_i,
@@ -220,15 +303,6 @@ begin
         data_o(0) => write_start_edc_in,
         data_o(1) => write_advance_edc_in,
         data_o(5 downto 2) => write_enables_in
-    );
-
-    delay_write_edc_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_WRITE_EDC,
-        WIDTH => 64
-    ) port map (
-        clk_i => clk_i,
-        data_i => from_edc(edc_write_i),
-        to_edc(data_o) => write_edc_in
     );
 
 
@@ -249,6 +323,7 @@ begin
 
 
     process (clk_i)
+-- can we move this to a register?  Need to pull write_enables earlier...
         variable write_edc_ok : std_ulogic;
     begin
         if rising_edge(clk_i) then

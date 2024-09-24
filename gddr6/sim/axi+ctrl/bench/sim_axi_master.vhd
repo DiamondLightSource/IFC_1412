@@ -35,6 +35,13 @@ end;
 
 architecture arch of sim_axi_master is
     signal tick_count : natural := 0;
+    -- Counts completed writes
+    signal write_count : natural := 0;
+
+    -- To avoid excessive memory use the SG simulation in sim_phy only
+    -- supports 4 row bits, 2 bank bits, and 5 column bits.  This means that
+    -- only addresses matching the mask below are valid.
+    constant VALID_ADDRESS_MASK : unsigned(31 downto 0) := X"003C_CFFF";
 
     procedure clk_wait(count : natural := 1) is
     begin
@@ -42,6 +49,7 @@ architecture arch of sim_axi_master is
             wait until rising_edge(clk_i);
         end loop;
     end;
+
 
     procedure write(prefix : string; message : string) is
         variable linebuffer : line;
@@ -60,13 +68,38 @@ architecture arch of sim_axi_master is
         end case;
     end;
 
+    -- Shared functionality to send WA/RA address to AXI slave
+    procedure send_address(
+        signal address : out axi_address_t;
+        signal ready : std_ulogic;
+        name : string;
+        id : std_logic_vector(3 downto 0);
+        addr : unsigned(31 downto 0);
+        len : unsigned(7 downto 0);
+        size : unsigned(2 downto 0) := "110") is
+    begin
+        address <= (
+            id => id,
+            addr => addr and VALID_ADDRESS_MASK,
+            len => len,
+            size => size,
+            burst => "01",
+            valid => '1'
+        );
+        loop
+            clk_wait;
+            exit when ready;
+        end loop;
+        write(name,
+            to_hstring(id) & " " & to_hstring(addr) & " " &
+            to_hstring(len) & " " & to_hstring(size));
+        address <= IDLE_AXI_ADDRESS;
+    end;
+
 begin
-    axi_ra_o <= IDLE_AXI_ADDRESS;
-    axi_r_ready_o <= '0';
-
-    -- We are always read to report B
+    -- We are always read to report B and R
     axi_b_ready_o <= '1';
-
+    axi_r_ready_o <= '1';
     process (clk_i) begin
         if rising_edge(clk_i) then
             tick_count <= tick_count + 1;
@@ -76,6 +109,16 @@ begin
                 write("B",
                     to_hstring(axi_b_i.id) & " " &
                     to_resp_string(axi_b_i.resp));
+                write_count <= write_count + 1;
+            end if;
+
+            -- Report read responses
+            if axi_r_i.valid then
+                write("R",
+                    to_hstring(axi_r_i.id) & " " &
+                    to_resp_string(axi_r_i.resp) & " " &
+                    to_string(axi_r_i.last) & " " &
+                    to_hstring(axi_r_i.data));
             end if;
         end if;
     end process;
@@ -89,28 +132,19 @@ begin
             len : unsigned(7 downto 0);
             size : unsigned(2 downto 0) := "110") is
         begin
-            axi_wa_o <= (
-                id => id,
-                addr => addr,
-                len => len,
-                size => size,
-                burst => "01",
-                valid => '1'
-            );
-            loop
-                clk_wait;
-                exit when axi_wa_ready_i;
-            end loop;
-            write("WA",
-                to_hstring(id) & " " & to_hstring(addr) & " " &
-                to_hstring(len) & " " & to_hstring(size));
-            axi_wa_o <= IDLE_AXI_ADDRESS;
+            send_address(axi_wa_o, axi_wa_ready_i, "WA", id, addr, len, size);
         end;
 
     begin
         axi_wa_o <= IDLE_AXI_ADDRESS;
 
         clk_wait(5);
+
+        -- Bank 3, Row 6, Column 7
+        send(X"0", X"0018_C300", X"01", "110");
+-- wait;
+        send(X"0", X"0018_C380", X"03", "110");
+wait;
 
         send(X"0", X"0001_0080", X"03", "101");
 
@@ -180,16 +214,16 @@ begin
             end case;
 
             -- Mask out any bytes we're not writing
-            for byte in 0 to 63 loop
-                if not mask(byte) then
-                    result(8*byte + 7 downto 8*byte) := (others => '-');
-                end if;
-            end loop;
+--             for byte in 0 to 63 loop
+--                 if not mask(byte) then
+--                     result(8*byte + 7 downto 8*byte) := (others => '-');
+--                 end if;
+--             end loop;
             return result;
         end;
 
         procedure send_data(
-            mask : std_ulogic_vector(63 downto 0);
+            mask : std_ulogic_vector(63 downto 0) := (others => '1');
             last : std_ulogic := '0'; dtype : DATA_TYPE := DATA_CHANNELS)
         is
             variable data_out : std_ulogic_vector(511 downto 0);
@@ -226,6 +260,17 @@ begin
     begin
         axi_w_o <= IDLE_AXI_WRITE_DATA;
         clk_wait(5);
+
+        send_data(dtype => DATA_BYTES);
+        send_data(dtype => DATA_BYTES, last => '1');
+-- wait;
+        send_data(dtype => DATA_BYTES);
+        send_data(dtype => DATA_BYTES);
+        send_data(dtype => DATA_BYTES);
+        send_data(dtype => DATA_BYTES, last => '1');
+--         send_data(X"FF0F_FFFF_0010_0000", dtype => DATA_BYTES);
+--         send_data(X"FFFF_FFFF_0000_0000", '1', dtype => DATA_BYTES);
+wait;
 
         send_data(X"0000_0000_FFFF_FFFF");
         send_data(X"FFFF_FFFF_0000_0000");
@@ -264,4 +309,41 @@ begin
     end process;
 
 
+    -- Send read requests
+    process
+        procedure send(
+            id : std_logic_vector(3 downto 0);
+            addr : unsigned(31 downto 0);
+            len : unsigned(7 downto 0);
+            size : unsigned(2 downto 0) := "110") is
+        begin
+            send_address(axi_ra_o, axi_ra_ready_i, "RA", id, addr, len, size);
+        end;
+
+        -- Blocks until the target write count is reached
+        procedure wait_for_write(count : natural) is
+        begin
+            wait until write_count >= count;
+            clk_wait;
+        end;
+
+    begin
+        axi_ra_o <= IDLE_AXI_ADDRESS;
+
+        clk_wait(5);
+
+        -- Read back the first write transaction
+        wait_for_write(1);
+        send(X"C", X"0018_C300", X"01", "110");
+-- wait;
+        send(X"C", X"0018_C380", X"03", "110");
+--         send(X"C", X"0018_C380", X"FF", "010");
+--         send(X"C", X"0018_C380", X"FF", "010");
+--         send(X"C", X"0018_C380", X"FF", "010");
+--         loop
+--             send(X"C", X"0018_C380", X"FF", "000");
+--         end loop;
+
+        wait;
+    end process;
 end;

@@ -31,7 +31,12 @@ entity gddr6_ctrl is
     generic (
         -- These are designed to be overwritten to speed up simulation only
         SHORT_REFRESH_COUNT : natural := t_REFI;
-        LONG_REFRESH_COUNT : natural := t_ABREF_REFI
+        LONG_REFRESH_COUNT : natural := t_ABREF_REFI;
+        -- These two parameters allow any input and output multiplexing to be
+        -- accounted for.  When building with gddr6_setup_phy the default values
+        -- below are appropriate
+        MUX_OUTPUT_DELAY : natural := 1;
+        MUX_INPUT_DELAY : natural := 1
     );
     port (
         clk_i : in std_ulogic;
@@ -166,7 +171,10 @@ begin
     phy_ca_o.cke_n <= '0';
 
     -- Manages data timing and EDC checking
-    data : entity work.gddr6_ctrl_data port map (
+    data : entity work.gddr6_ctrl_data generic map (
+        MUX_OUTPUT_DELAY => MUX_OUTPUT_DELAY,
+        MUX_INPUT_DELAY => MUX_INPUT_DELAY
+    ) port map (
         clk_i => clk_i,
 
         request_completion_i => request_completion,
