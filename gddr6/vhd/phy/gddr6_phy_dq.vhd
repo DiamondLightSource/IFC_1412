@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
 use work.gddr6_config_defs.all;
 use work.gddr6_phy_defs.all;
 
@@ -24,32 +25,32 @@ entity gddr6_phy_dq is
         delay_readbacks_o : out bitslip_delay_readbacks_t;
 
         -- Unaligned raw data from bitslices
-        raw_data_o : out vector_array(63 downto 0)(7 downto 0);
-        raw_data_i : in vector_array(63 downto 0)(7 downto 0);
-        raw_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        raw_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        raw_edc_i : in vector_array(7 downto 0)(7 downto 0);
+        raw_data_o : out phy_data_t;
+        raw_data_i : in phy_data_t;
+        raw_dbi_n_o : out phy_dbi_t;
+        raw_dbi_n_i : in phy_dbi_t;
+        raw_edc_i : in phy_edc_t;
 
         -- Data interface, all values for a single CA tick
-        data_o : out vector_array(63 downto 0)(7 downto 0);
-        data_i : in vector_array(63 downto 0)(7 downto 0);
-        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+        data_o : out phy_data_t;
+        data_i : in phy_data_t;
+        dbi_n_i : in phy_dbi_t;
+        dbi_n_o : out phy_dbi_t;
 
         -- EDC outputs
-        edc_in_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_write_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_read_o : out vector_array(7 downto 0)(7 downto 0)
+        edc_in_o : out phy_edc_t;
+        edc_write_o : out phy_edc_t;
+        edc_read_o : out phy_edc_t
     );
 end;
 
 architecture arch of gddr6_phy_dq is
     -- Data between bitslip correction and DBI
-    signal data_out : vector_array(63 downto 0)(7 downto 0);
-    signal data_in : vector_array(63 downto 0)(7 downto 0);
-    signal dbi_n_out : vector_array(7 downto 0)(7 downto 0);
-    signal dbi_n_in : vector_array(7 downto 0)(7 downto 0);
-    signal edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal data_out : phy_data_t;
+    signal data_in : phy_data_t;
+    signal dbi_n_out : phy_dbi_t;
+    signal dbi_n_in : phy_dbi_t;
+    signal edc_in : phy_edc_t;
 
 begin
     -- Bitslip on incoming data

@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
 use work.gddr6_config_defs.all;
 use work.gddr6_phy_defs.all;
 
@@ -31,11 +32,11 @@ entity gddr6_phy_bitslices is
 
         -- Data interface, all values for a single CA tick, all on ck_clk_i
         output_enable_i : in std_ulogic;
-        data_i : in vector_array(63 downto 0)(7 downto 0);
-        data_o : out vector_array(63 downto 0)(7 downto 0);
-        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        edc_o : out vector_array(7 downto 0)(7 downto 0);
+        data_i : in phy_data_t;
+        data_o : out phy_data_t;
+        dbi_n_i : in phy_dbi_t;
+        dbi_n_o : out phy_dbi_t;
+        edc_o : out phy_edc_t;
         edc_i : in std_ulogic;      -- Config value only
         edc_t_i : in std_ulogic;    -- Output only enabled during config
 

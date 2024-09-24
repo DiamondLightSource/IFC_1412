@@ -5,6 +5,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+
+use work.gddr6_defs.all;
 use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write_data_fifo is
@@ -34,7 +36,7 @@ entity gddr6_axi_write_data_fifo is
         -- not set while ctrl_data_ready_i is asserted the data will be
         -- replayed: this is designed to be used with separate writes to
         -- multiple channels.
-        ctrl_data_o : out vector_array(0 to 3)(127 downto 0);
+        ctrl_data_o : out ctrl_data_t;
         ctrl_data_advance_i : in std_ulogic;
         ctrl_data_ready_i : in std_ulogic
     );

@@ -35,8 +35,8 @@ entity gddr6_setup is
         phy_ca_o : out phy_ca_t;
         phy_dq_o : out phy_dq_out_t;
         phy_dq_i : in phy_dq_in_t;
-        phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
+        phy_dbi_n_o : out phy_dbi_t;
+        phy_dbi_n_i : in phy_dbi_t;
 
         -- PHY configuration and status
         phy_setup_o : out phy_setup_t;

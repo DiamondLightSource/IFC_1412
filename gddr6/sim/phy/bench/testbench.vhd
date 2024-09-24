@@ -252,8 +252,7 @@ begin
             enable_cabi => '0',
             enable_dbi => '0',
             train_dbi => '0',
-            edc_tri => '0',
-            fudge_sticky_ca6 => '0'
+            edc_tri => '0'
         );
 
         ca_in <= (

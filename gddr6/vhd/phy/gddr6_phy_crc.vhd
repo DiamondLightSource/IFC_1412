@@ -6,14 +6,16 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
+
 entity gddr6_phy_crc is
     port (
         clk_i : in std_ulogic;
 
-        data_i : in vector_array(63 downto 0)(7 downto 0);
-        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
+        data_i : in phy_data_t;
+        dbi_n_i : in phy_dbi_t;
 
-        edc_o : out vector_array(7 downto 0)(7 downto 0)
+        edc_o : out phy_edc_t
     );
 end;
 
@@ -62,7 +64,7 @@ architecture arch of gddr6_phy_crc is
         return result;
     end;
 
-    signal edc_out : vector_array(7 downto 0)(7 downto 0);
+    signal edc_out : phy_edc_t;
 
 begin
     gen_bank : for bank in 0 to 7 generate

@@ -5,6 +5,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+
+use work.gddr6_defs.all;
 use work.gddr6_phy_defs.all;
 
 entity gddr6_phy_dbi is
@@ -14,19 +16,19 @@ entity gddr6_phy_dbi is
         enable_dbi_i : in std_ulogic;
 
         -- Data to memory
-        data_out_i : in vector_array(63 downto 0)(7 downto 0);
-        dbi_n_out_o : out vector_array(7 downto 0)(7 downto 0);
-        data_out_o : out vector_array(63 downto 0)(7 downto 0);
+        data_out_i : in phy_data_t;
+        dbi_n_out_o : out phy_dbi_t;
+        data_out_o : out phy_data_t;
 
         -- Data from memory
-        data_in_i : in vector_array(63 downto 0)(7 downto 0);
-        dbi_n_in_i : in vector_array(7 downto 0)(7 downto 0);
-        data_in_o : out vector_array(63 downto 0)(7 downto 0);
+        data_in_i : in phy_data_t;
+        dbi_n_in_i : in phy_dbi_t;
+        data_in_o : out phy_data_t;
 
         -- DBI training support
         enable_training_i : in std_ulogic;
-        train_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        train_dbi_n_o : out vector_array(7 downto 0)(7 downto 0)
+        train_dbi_n_i : in phy_dbi_t;
+        train_dbi_n_o : out phy_dbi_t
     );
 end;
 
@@ -35,15 +37,15 @@ architecture arch of gddr6_phy_dbi is
     signal enable_dbi_in : std_ulogic;
 
     -- Gathered from dbi_n_in_i and masked by enable_dbi_i
-    signal invert_bits_in : vector_array(7 downto 0)(7 downto 0);
+    signal invert_bits_in : phy_dbi_t;
     -- Computed from outgoing data and masked by enable_dbi_i
-    signal invert_bits_out : vector_array(7 downto 0)(7 downto 0);
+    signal invert_bits_out : phy_dbi_t;
 
 
     -- Computes whether to invert the outgoing bits for the selected group of
     -- output bits and selected tick.
     function invert_bits(
-        bank_data_in : vector_array(63 downto 0)(7 downto 0);
+        bank_data_in : phy_data_t;
         lane : natural; tick : natural) return std_ulogic
     is
         variable byte : std_ulogic_vector(7 downto 0);

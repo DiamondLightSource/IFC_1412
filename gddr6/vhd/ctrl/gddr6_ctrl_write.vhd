@@ -51,11 +51,13 @@ architecture arch of gddr6_ctrl_write is
     );
     type decode_array_t is array(0 to 3) of decode_t;
 
+    subtype half_byte_mask_t is vector_array(0 to 3)(15 downto 0);
+
     -- Incoming write request decoded and pipelined
     signal pattern_decode : decode_array_t;
     signal command_address_in : unsigned(24 downto 0);
-    signal even_byte_mask_in : vector_array(0 to 3)(15 downto 0);
-    signal odd_byte_mask_in : vector_array(0 to 3)(15 downto 0);
+    signal even_byte_mask_in : half_byte_mask_t;
+    signal odd_byte_mask_in : half_byte_mask_t;
     -- Array of flags for communication between decode stages
     signal pending_channels : std_ulogic_vector(0 to 3) := "0000";
     -- Command decoded for output to command stream
@@ -64,8 +66,8 @@ architecture arch of gddr6_ctrl_write is
     signal command_address : unsigned(24 downto 0);
     signal command_advance : std_ulogic;
     signal mask_index : natural range 0 to 3;
-    signal even_byte_mask : vector_array(0 to 3)(15 downto 0);
-    signal odd_byte_mask : vector_array(0 to 3)(15 downto 0);
+    signal even_byte_mask : half_byte_mask_t;
+    signal odd_byte_mask : half_byte_mask_t;
 
     -- State machine for command and mask generation
     type write_state_t is (
@@ -80,16 +82,16 @@ architecture arch of gddr6_ctrl_write is
     -- Performs decode and rearrangement of byte mask for all four channels
     procedure decode_byte_mask(
         byte_mask : std_ulogic_vector(127 downto 0);
-        signal even_bytes_out : out vector_array(0 to 3)(15 downto 0);
-        signal odd_bytes_out  : out vector_array(0 to 3)(15 downto 0);
+        signal even_bytes_out : out half_byte_mask_t;
+        signal odd_bytes_out  : out half_byte_mask_t;
         signal decode_array : out decode_array_t)
     is
         -- Extract even or odd bits from byte mask by channel
         function channel_strobes(
             mask : std_ulogic_vector(127 downto 0);
-            offset : natural) return vector_array
+            offset : natural) return half_byte_mask_t
         is
-            variable result : vector_array(0 to 3)(15 downto 0);
+            variable result : half_byte_mask_t;
         begin
             for ch in 0 to 3 loop
                 for bit in 0 to 15 loop
@@ -119,8 +121,8 @@ architecture arch of gddr6_ctrl_write is
             end if;
         end;
 
-        variable even_bytes : vector_array(0 to 3)(15 downto 0);
-        variable odd_bytes  : vector_array(0 to 3)(15 downto 0);
+        variable even_bytes : half_byte_mask_t;
+        variable odd_bytes  : half_byte_mask_t;
 
     begin
         even_bytes := channel_strobes(byte_mask, 0);

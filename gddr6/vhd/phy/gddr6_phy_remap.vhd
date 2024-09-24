@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
 use work.gddr6_config_defs.all;
 use work.gddr6_phy_defs.all;
 
@@ -28,11 +29,11 @@ entity gddr6_phy_remap is
         slice_tx_delay_i : in vector_array_array(0 to 7)(0 to 11)(8 downto 0);
 
         -- Remapped data organised by pin and tick
-        bank_data_o : out vector_array(63 downto 0)(7 downto 0);
-        bank_data_i : in vector_array(63 downto 0)(7 downto 0);
-        bank_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        bank_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        bank_edc_o : out vector_array(7 downto 0)(7 downto 0);
+        bank_data_o : out phy_data_t;
+        bank_data_i : in phy_data_t;
+        bank_dbi_n_o : out phy_dbi_t;
+        bank_dbi_n_i : in phy_dbi_t;
+        bank_edc_o : out phy_edc_t;
         bank_edc_i : in std_ulogic;
 
         -- Delay controls and readbacks

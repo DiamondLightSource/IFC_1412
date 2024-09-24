@@ -80,8 +80,8 @@ entity gddr6_phy is
         dq_o : out phy_dq_in_t;
         -- DBI training support.  Input dbi_n_i is ignored unless
         -- phy_setup_i.train_dbi is set, dbi_n_o is only for link training
-        dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
+        dbi_n_i : in phy_dbi_t;
+        dbi_n_o : out phy_dbi_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins
@@ -164,11 +164,11 @@ architecture arch of gddr6_phy is
     signal fifo_ok : std_ulogic_vector(0 to 1);
 
     -- Signals to/from bitslices before alignment and processing
-    signal raw_data_out : vector_array(63 downto 0)(7 downto 0);
-    signal raw_data_in : vector_array(63 downto 0)(7 downto 0);
-    signal raw_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
-    signal raw_dbi_n_in : vector_array(7 downto 0)(7 downto 0);
-    signal raw_edc_in : vector_array(7 downto 0)(7 downto 0);
+    signal raw_data_out : phy_data_t;
+    signal raw_data_in : phy_data_t;
+    signal raw_dbi_n_out : phy_dbi_t;
+    signal raw_dbi_n_in : phy_dbi_t;
+    signal raw_edc_in : phy_edc_t;
 
     -- Delay controls and readbacks
     signal bitslice_delay_control : bitslice_delay_control_t;

@@ -5,6 +5,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+
+use work.gddr6_defs.all;
 use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_read_data_fifo is
@@ -30,7 +32,7 @@ entity gddr6_axi_read_data_fifo is
 
         -- Data from CTRL.  Two data strobes followed by an ok_valid strobe will
         -- advance the data FIFO
-        ctrl_data_i : in vector_array(0 to 3)(127 downto 0);
+        ctrl_data_i : in ctrl_data_t;
         ctrl_data_valid_i : in std_ulogic;
         ctrl_data_ok_i : in std_ulogic;
         ctrl_data_ok_valid_i : in std_ulogic
@@ -86,7 +88,7 @@ begin
     read_fifo_enable <= (axi_ready_i or not axi_data_o.valid) and read_phase;
     process (axi_clk_i)
         variable address : natural;
-        variable data_out : vector_array(0 to 3)(127 downto 0);
+        variable data_out : ctrl_data_t;
 
     begin
         if rising_edge(axi_clk_i) then

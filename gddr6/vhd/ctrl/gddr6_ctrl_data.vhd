@@ -5,6 +5,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.support.all;
+
+use work.gddr6_defs.all;
 use work.gddr6_ctrl_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
 
@@ -20,21 +22,21 @@ entity gddr6_ctrl_data is
         output_enable_o : out std_ulogic;
 
         -- Data to and from PHY
-        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
-        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
+        phy_data_i : in phy_data_t;
+        phy_data_o : out phy_data_t;
         -- EDC data
-        edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        edc_read_i : in vector_array(7 downto 0)(7 downto 0);
-        edc_write_i : in vector_array(7 downto 0)(7 downto 0);
+        edc_in_i : in phy_edc_t;
+        edc_read_i : in phy_edc_t;
+        edc_write_i : in phy_edc_t;
 
         -- AXI connection
         -- RD
-        axi_rd_data_o : out vector_array(0 to 3)(127 downto 0);
+        axi_rd_data_o : out ctrl_data_t;
         axi_rd_valid_o : out std_ulogic;
         axi_rd_ok_o : out std_ulogic;
         axi_rd_ok_valid_o : out std_ulogic;
         -- WR
-        axi_wd_data_i : in vector_array(0 to 3)(127 downto 0);
+        axi_wd_data_i : in ctrl_data_t;
         axi_wd_advance_o : out std_ulogic;
         axi_wd_ready_o : out std_ulogic := '0';
         axi_wr_ok_o : out std_ulogic := '1';

@@ -7,6 +7,18 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 package gddr6_defs is
+    -- Various arrays of data types
+
+    -- PHY data is organised by wire and by tick, directly representing how it
+    -- is transferred to and from IO BITSLICEs
+    subtype phy_data_t is vector_array(63 downto 0)(7 downto 0);
+    subtype phy_edc_t is vector_array(7 downto 0)(7 downto 0);
+    subtype phy_dbi_t is vector_array(7 downto 0)(7 downto 0);
+
+    -- CTRL data is organised by channel and word, reflecing the relationship
+    -- with write enable arrays
+    subtype ctrl_data_t is vector_array(0 to 3)(127 downto 0);
+
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between AXI and CTRL
 
@@ -26,7 +38,7 @@ package gddr6_defs is
         -- RA Read Address
         ra_ready : std_ulogic;
         -- RD Read Data
-        rd_data : vector_array(0 to 3)(127 downto 0);
+        rd_data : ctrl_data_t;
         rd_valid : std_ulogic;
         rd_ok : std_ulogic;
         rd_ok_valid : std_ulogic;
@@ -49,7 +61,7 @@ package gddr6_defs is
         -- WD Write Data
         -- Data is organised by channel and flattened into 16 bytes per channel
         -- to reflect the flow required to match byte masks.
-        wd_data : vector_array(0 to 3)(127 downto 0);
+        wd_data : ctrl_data_t;
     end record;
 
     type axi_ctrl_write_response_t is record
@@ -86,7 +98,7 @@ package gddr6_defs is
     -- containing data from a single wire.
     type phy_dq_out_t is record
         -- Data to send to memory
-        data : vector_array(63 downto 0)(7 downto 0);
+        data : phy_data_t;
         -- Due to an extra delay in the BITSLICE output stages output_enable_i
         -- must be presented 1 CK tick earlier than data_i.
         output_enable : std_ulogic;
@@ -95,12 +107,12 @@ package gddr6_defs is
     -- Data in from PHY
     type phy_dq_in_t is record
         -- Data received from memory
-        data : vector_array(63 downto 0)(7 downto 0);
+        data : phy_data_t;
         -- EDC support.  edc_in_o is the code received from memory and must be
         -- compared with edc_write_o for written data and edc_read_o for read
-        edc_in : vector_array(7 downto 0)(7 downto 0);
-        edc_write : vector_array(7 downto 0)(7 downto 0);
-        edc_read : vector_array(7 downto 0)(7 downto 0);
+        edc_in : phy_edc_t;
+        edc_write : phy_edc_t;
+        edc_read : phy_edc_t;
     end record;
 
 
