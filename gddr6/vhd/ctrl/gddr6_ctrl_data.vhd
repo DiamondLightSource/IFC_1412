@@ -9,14 +9,9 @@ use work.support.all;
 use work.gddr6_defs.all;
 use work.gddr6_ctrl_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
+use work.gddr6_ctrl_delay_defs.all;
 
 entity gddr6_ctrl_data is
-    generic (
-        -- These two parameters allow any input and output multiplexing to be
-        -- accounted for.
-        MUX_OUTPUT_DELAY : natural := 1;
-        MUX_INPUT_DELAY : natural := 1
-    );
     port (
         clk_i : in std_ulogic;
 
@@ -24,7 +19,6 @@ entity gddr6_ctrl_data is
         request_completion_i : in request_completion_t;
 
         -- Output enable
-        write_active_i : in std_ulogic;
         output_enable_o : out std_ulogic := '0';
 
         -- Data to and from PHY
@@ -51,64 +45,6 @@ entity gddr6_ctrl_data is
 end;
 
 architecture arch of gddr6_ctrl_data is
-    -- The following delays are measured from input to the appropriate BITSLICE
-    -- input in _phy_nibble to the corresponding output.
-    constant TX_BITSLICE_DELAY : natural := 1;
-    constant RX_BITSLICE_DELAY : natural := 1;
-    constant TRI_BITSLICE_DELAY : natural := 2;
-
-    -- Delay from request_completion_i (synchronous with command_o from
-    -- _ctrl_request) to SG CA input
-    constant CA_OUTPUT_DELAY : natural :=
-        -- CA output: _ctrl_request.command_o
-        --  => _ctrl_command.ca_command_o
-        --  (=> output mux)
-        --  => _phy_ca.d1,d2 => ODDR => CA
-        MUX_OUTPUT_DELAY + 3;
-    -- Delay from output_enable_o here to output enable on edge of FPGA
-    constant OE_OUTPUT_DELAY : natural :=
-        -- Tristate control: _ctrl_data.output_enable_o
-        --  (=> output mux)
-        --  => _phy_byte.tbyte_in
-        --  => BITSLICE_CONTROL => TX_BITSLICE_TRI => RXTX_BITSLICE => OE
-        MUX_OUTPUT_DELAY + 1 + TRI_BITSLICE_DELAY;
-    -- Delay from phy_data_o to memory
-    constant TX_OUTPUT_DELAY : natural :=
-        -- Write data: _ctrl_data.phy_data_o
-        --  (=> output mux)
-        --  => _phy_dbi.data_out_o
-        --  => _phy_bitslip.data_o
-        --  => TX_BITSLICE => DQ
-        MUX_OUTPUT_DELAY + 2 + TX_BITSLICE_DELAY;
-    -- Delay from phy_data_o to edc_write_i
-    constant TX_EDC_DELAY : natural :=
-        -- EDC for write data: _ctrl_data.phy_data_o
-        --  (=> output mux)
-        --  => _phy_dbi.data_out_o
-        --  => _phy_crc.edc_o
-        --  (=> input_mux)
-        MUX_OUTPUT_DELAY + 2 + MUX_INPUT_DELAY;
-    -- Delay from memory to phy_data_i
-    constant RX_INPUT_DELAY : natural :=
-        -- Read data: DQ => RX_BITSLICE
-        --  => _phy_bitslip.data_i
-        --  => _phy_dbi.data_in_o
-        --  (=> input_mux)
-        RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
-    -- Delay from memory to edc_read_i
-    constant RX_EDC_DELAY : natural :=
-        -- EDC for read data: DQ => RX_BITSLICE
-        --  => _phy_bitslip.data_i
-        --  => _phy_crc.edc_o
-        --  (=> input_mux)
-        RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
-    -- Delay from memory to edc_in_i
-    constant EDC_INPUT_DELAY : natural :=
-        -- EDC from SG: EDC => RX_BITSLICE
-        --  => _phy_bitslip.data_i
-        --  (=> input_mux)
-        RX_BITSLICE_DELAY + 1 + MUX_INPUT_DELAY;
-
 
     -- DQ output enable is asserted when writing data, and we allow one tick
     -- margin either side.

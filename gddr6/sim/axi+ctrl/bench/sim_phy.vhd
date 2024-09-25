@@ -9,6 +9,7 @@ use work.support.all;
 
 use work.gddr6_defs.all;
 use work.gddr6_ctrl_timing_defs.all;
+use work.gddr6_ctrl_delay_defs.all;
 use work.gddr6_ctrl_command_defs.all;
 
 use work.sim_phy_defs.all;
@@ -33,25 +34,6 @@ architecture arch of sim_phy is
             "%" & to_string(tick_count) & " " & prefix & " " & message);
         writeline(output, linebuffer);
     end;
-
-    -- All these constants are, alas, copied from _ctrl_data
-    constant MUX_OUTPUT_DELAY : natural := 1;
-    constant MUX_INPUT_DELAY : natural := 1;
-    constant TX_BITSLICE_DELAY : natural := 1;
-    constant RX_BITSLICE_DELAY : natural := 1;
-    constant TRI_BITSLICE_DELAY : natural := 2;
-    constant CA_OUTPUT_DELAY : natural := MUX_OUTPUT_DELAY + 3;
-    constant OE_OUTPUT_DELAY : natural :=
-        MUX_OUTPUT_DELAY + 1 + TRI_BITSLICE_DELAY;
-    constant TX_OUTPUT_DELAY : natural :=
-        MUX_OUTPUT_DELAY + 2 + TX_BITSLICE_DELAY;
-    constant TX_EDC_DELAY : natural := MUX_OUTPUT_DELAY + 2 + MUX_INPUT_DELAY;
-    constant RX_INPUT_DELAY : natural :=
-        RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
-    constant RX_EDC_DELAY : natural := RX_BITSLICE_DELAY + 2 + MUX_INPUT_DELAY;
-    constant EDC_INPUT_DELAY : natural :=
-        RX_BITSLICE_DELAY + 1 + MUX_INPUT_DELAY;
-
 
     -- Closing the loop for writes.  The transmitter _ctrl_data should be using
     -- the following delay calculation:
