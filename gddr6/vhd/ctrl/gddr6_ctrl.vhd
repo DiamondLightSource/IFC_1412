@@ -171,7 +171,6 @@ begin
 
         request_completion_i => request_completion,
 
-        write_active_i => banks_status.write_active,
         output_enable_o => phy_dq_o.output_enable,
 
         phy_data_i => phy_dq_i.data,

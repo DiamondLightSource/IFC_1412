@@ -45,12 +45,12 @@ entity gddr6_ctrl_data is
 end;
 
 architecture arch of gddr6_ctrl_data is
-
-    -- DQ output enable is asserted when writing data, and we allow one tick
-    -- margin either side.
-    constant DELAY_WRITE_ACTIVE : natural := WLmrs;
-    constant DELAY_WRITE_ACTIVE_EXTRA : natural := 2;
-
+    -- Delay for Output Enable
+    constant OUTPUT_ENABLE_DELAY : natural :=
+        CA_OUTPUT_DELAY + WLmrs - OE_OUTPUT_DELAY;
+    -- Output enable needs to be active one tick early, one tick late, and for
+    -- two ticks during the write, so we stretch the enable to 4 ticks total.
+    constant OUTPUT_ENABLE_STRETCH : natural := 3;
 
     -- Delays for read
     --
@@ -78,8 +78,7 @@ architecture arch of gddr6_ctrl_data is
 
 
     -- Output enable
-    signal write_active_in : std_ulogic;
-    signal write_active_delay : std_ulogic;
+    signal output_enable : std_ulogic;
 
     -- Read
     signal read_complete_in : std_ulogic;
@@ -153,30 +152,39 @@ architecture arch of gddr6_ctrl_data is
     end;
 
 begin
+    -- Completion calculation
+    read_complete_in <=
+        to_std_ulogic(request_completion_i.direction = DIR_READ) and
+        request_completion_i.valid;
+    write_complete_in <=
+        to_std_ulogic(request_completion_i.direction = DIR_WRITE) and
+        request_completion_i.valid;
+
+
     -- Output enable generation
-    delay_write_active_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_WRITE_ACTIVE
+
+    delay_output_enable : entity work.fixed_delay generic map (
+        -- The delay is adjusted by 2: one tick to start the output one tick
+        -- before data is sent, and one tick for a register in stretch_pulse
+        DELAY => OUTPUT_ENABLE_DELAY - 2
     ) port map (
         clk_i => clk_i,
-        data_i(0) => write_active_i,
-        data_o(0) => write_active_in
+        data_i(0) => write_complete_in,
+        data_o(0) => output_enable
     );
 
-    delay_write_active_extra_inst : entity work.fixed_delay generic map (
-        DELAY => DELAY_WRITE_ACTIVE_EXTRA
+    stretch_output_enable : entity work.stretch_pulse generic map (
+        DELAY => OUTPUT_ENABLE_STRETCH
     ) port map (
         clk_i => clk_i,
-        data_i(0) => write_active_in,
-        data_o(0) => write_active_delay
+        pulse_i => output_enable,
+        pulse_o => output_enable_o
     );
 
 
     -- Read processing
 
     -- Delay from outgoing command to data ready
-    read_complete_in <=
-        to_std_ulogic(request_completion_i.direction = DIR_READ) and
-        request_completion_i.valid;
     delay_read_start_inst : entity work.fixed_delay generic map (
         DELAY => READ_START_DELAY - 1
     ) port map (
@@ -205,9 +213,7 @@ begin
 
 
     -- Write processing
-    write_complete_in <=
-        to_std_ulogic(request_completion_i.direction = DIR_WRITE) and
-        request_completion_i.valid;
+
     delay_write_start_inst : entity work.fixed_delay generic map (
         DELAY => WRITE_START_DELAY - 1,
         WIDTH => 2
@@ -263,9 +269,6 @@ begin
         variable write_edc_ok : std_ulogic;
     begin
         if rising_edge(clk_i) then
-            -- Output enable generation, slightly stretched from write_active
-            output_enable_o <= write_active_in or write_active_delay;
-
             -- Read generation: two ticks of read from start
             read_delay <= read_start;
             axi_rd_valid_o <= read_start or read_delay;

@@ -18,6 +18,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
+    $common_vhd/util/stretch_pulse.vhd \
     $common_vhd/async_fifo/async_fifo_address.vhd \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
