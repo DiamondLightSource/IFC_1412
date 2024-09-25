@@ -14,6 +14,7 @@ package gddr6_defs is
     subtype phy_data_t is vector_array(63 downto 0)(7 downto 0);
     subtype phy_edc_t is vector_array(7 downto 0)(7 downto 0);
     subtype phy_dbi_t is vector_array(7 downto 0)(7 downto 0);
+    subtype axi_data_t is std_ulogic_vector(511 downto 0);
 
     -- CTRL data is organised by channel and word, reflecing the relationship
     -- with write enable arrays

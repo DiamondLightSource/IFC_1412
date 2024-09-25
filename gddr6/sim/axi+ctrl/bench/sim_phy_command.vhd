@@ -21,12 +21,10 @@ entity sim_phy_command is
 
         read_address_o : out sg_address_t;
         read_strobe_o : out std_ulogic := '0';
-        read_edc_select_o : out std_ulogic := '0';
 
         write_address_o : out sg_address_t;
         write_mask_o : out sg_write_mask_t;
-        write_strobe_o : out std_ulogic := '0';
-        write_edc_select_o : out std_ulogic := '0'
+        write_strobe_o : out std_ulogic := '0'
     );
 end;
 
@@ -36,6 +34,7 @@ architecture arch of sim_phy_command is
     -- correct number of ticks later.
     type command_t is (
         CMD_ACT, CMD_PRE, CMD_RD, CMD_WOM, CMD_WSM, CMD_WDM, CMD_OTHER);
+
     -- Decodes SG command into one of the above possiblities
     function decode_command(command : ca_command_t) return command_t
     is
@@ -74,17 +73,20 @@ architecture arch of sim_phy_command is
     begin
         return slice_bits(command.ca(0)(7 downto 4), BANK_BITS);
     end;
+
     -- For ACT returns selected row
     function get_row(command : ca_command_t) return natural is
     begin
         return slice_bits(command.ca(1) & command.ca(0)(3 downto 0), ROW_BITS);
     end;
+
     -- For RD/WxM returns selected column
     function get_column(command : ca_command_t) return natural is
     begin
         return slice_bits(
             command.ca(1)(2 downto 0) & command.ca(0)(3 downto 0), COLUMN_BITS);
     end;
+
     -- For write mask returns mask bits
     function get_mask(command : ca_command_t) return std_ulogic_vector is
     begin
@@ -93,6 +95,7 @@ architecture arch of sim_phy_command is
             severity failure;
         return command.ca(1)(7 downto 0) & command.ca(0)(7 downto 0);
     end;
+
 
     -- Bank activation state
     signal bank_active : std_ulogic_vector(BANK_RANGE) := (others => '0');
@@ -118,24 +121,31 @@ architecture arch of sim_phy_command is
         valid => '0'
     );
 
+    signal last_command : command_t := CMD_OTHER;
+    signal loading_mask : boolean := false;
     signal next_write_request : write_t := IDLE_WRITE;
     signal write_request : write_t := IDLE_WRITE;
 
 
 begin
+    -- Delay from WxM command to first write_strobe_o
+    --  ca_i (CA = WOM/WSM/WDM = WxM)
+    --      => last_command = WxM
+    --      => loading_mask
+    --      => next_write_request.valid
+    --      => write_request.valid = write_strobe_o
+
     -- SG command decoding with read and write generation
     vars : process (clk_i)
         -- Command decode state
         variable command : command_t := CMD_OTHER;
         variable bank : natural;
         variable column : natural;
+
         -- Write masking support
         variable enables : std_ulogic_vector(0 to 3);
         variable mask_count : natural := 0;
-        variable loading_mask : boolean := false;
         variable load_mask_extra : boolean;
-        -- Read EDC out support
-        variable next_select_read_edc : std_ulogic := '0';
 
         procedure check_bank_state(bank : natural; expected : std_ulogic) is
         begin
@@ -163,13 +173,10 @@ begin
 
         procedure do_read_stage0 is
         begin
-            bank := get_bank(ca_i);
-            column := get_column(ca_i);
             check_bank_state(bank, '1');
-            next_select_read_edc := '1';
             read_address_o <= (
                 bank => get_bank(ca_i),
-                row => bank_row(bank),
+                row => bank_row(get_bank(ca_i)),
                 column => get_column(ca_i),
                 stage => 0
             );
@@ -180,7 +187,6 @@ begin
         begin
             read_address_o.stage <= 1;
             read_strobe_o <= '1';
-            next_select_read_edc := '1';
         end;
 
         procedure do_write(count : natural) is
@@ -202,14 +208,14 @@ begin
                     next_write_request.odd_mask <= get_mask(ca_i);
                 end if;
                 next_write_request.valid <= '1';
-                loading_mask := false;
+                loading_mask <= false;
             else
                 -- Appropriate defaults
-                loading_mask := true;
+                loading_mask <= true;
                 load_mask_extra := false;
 
                 -- Look at command from previous state
-                case command is
+                case last_command is
                     when CMD_WOM =>
                         next_write_request.even_mask <= (others => '1');
                         next_write_request.odd_mask <= (others => '1');
@@ -220,7 +226,7 @@ begin
                         next_write_request.even_mask <= get_mask(ca_i);
                         load_mask_extra := true;
                     when others =>
-                        loading_mask := false;
+                        loading_mask <= false;
                 end case;
                 next_write_request.bank <= bank;
                 next_write_request.column <= column;
@@ -247,38 +253,17 @@ begin
             end if;
         end;
 
---         procedure generate_edc_out is
---         begin
---             -- Gather the appropriate EDC output
---             edc_out <= (others => X"AA");       -- Test pattern by default
---             assert not select_read_edc_delay or not select_write_edc_delay
---                 report "Somehow have simultaneous R/W EDC"
---                 severity failure;
---             if select_read_edc_delay then
---                 edc_out <= read_edc_out;
---             elsif select_write_edc_delay then
---                 edc_out <= write_edc_out;
---             end if;
--- 
---             select_write_edc <= write_request.valid;
---         end;
-
     begin
         if rising_edge(clk_i) then
             -- Default values
             read_strobe_o <= '0';
-            -- This assignment aligns select_read_edc with the computation of
-            -- read_edc
-            read_edc_select_o <= next_select_read_edc;
-            next_select_read_edc := '0';
-            write_edc_select_o <= write_request.valid;
 
             -- Write support
             do_mask_state;
             do_write_memory;
 
             -- Read support
-            if command = CMD_RD then
+            if last_command = CMD_RD then
                 do_read_stage1;
             end if;
 
@@ -298,8 +283,7 @@ begin
                     when CMD_OTHER =>
                 end case;
             end if;
-
---             generate_edc_out;
+            last_command <= command;
         end if;
     end process;
 

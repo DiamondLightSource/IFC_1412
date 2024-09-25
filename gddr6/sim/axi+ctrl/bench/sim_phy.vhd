@@ -25,25 +25,11 @@ entity sim_phy is
 end;
 
 architecture arch of sim_phy is
-    signal tick_count : natural;
-
-    procedure write(prefix : string; message : string) is
-        variable linebuffer : line;
-    begin
-        write(linebuffer,
-            "%" & to_string(tick_count) & " " & prefix & " " & message);
-        writeline(output, linebuffer);
-    end;
-
     -- Closing the loop for writes.  The transmitter _ctrl_data should be using
     -- the following delay calculation:
     --  CA_OUTPUT_DELAY + WLmrs - TX_OUTPUT_DELAY
     -- Our write processing actually takes place 4 ticks after we see
 
-    -- The delay from ca_i a write command to writing the associated data is:
-    --  ca_i (CA = WOM/WSM/WDM)
-    --      =(CA_OUTPUT_DELAY-CA_DELAY_OFFSET)=> ca_in
-    --      => 
     constant WRITE_PROCESS_DELAY : natural := 4;
     constant WRITE_DELAY : natural :=
         WRITE_PROCESS_DELAY - WLmrs + TX_OUTPUT_DELAY;
@@ -72,8 +58,6 @@ architecture arch of sim_phy is
     signal write_edc_delayed : phy_edc_t;
 
     -- EDC out selection, emulating SG EDC generation
-    signal select_read_edc : std_ulogic := '0';
-    signal select_write_edc : std_ulogic := '0';
     signal select_read_edc_delay : std_ulogic := '0';
     signal select_write_edc_delay : std_ulogic := '0';
     signal read_edc_out : phy_edc_t;
@@ -127,8 +111,7 @@ begin
         ASSERT_UNEXPECTED => true
     ) port map (
         clk_i => clk_i,
-        ca_command_i => ca_in,
-        tick_count_o => tick_count
+        ca_command_i => ca_in
     );
 
 
@@ -140,12 +123,10 @@ begin
 
         read_address_o => read_address,
         read_strobe_o => read_strobe,
-        read_edc_select_o => select_read_edc,
 
         write_address_o => write_address,
         write_mask_o => write_mask,
-        write_strobe_o => write_strobe,
-        write_edc_select_o => select_write_edc
+        write_strobe_o => write_strobe
     );
 
 
@@ -258,10 +239,11 @@ begin
         to_vector_array(data_o) => read_edc_delayed
     );
     read_edc_select_delay : entity work.fixed_delay generic map (
-        DELAY => READ_EDC_DELAY
+--         DELAY => READ_EDC_DELAY
+        DELAY => READ_EDC_DELAY + 1
     ) port map (
         clk_i => clk_i,
-        data_i(0) => select_read_edc,
+        data_i(0) => read_strobe,
         data_o(0) => select_read_edc_delay
     );
     read_edc_out <= read_edc_delayed;

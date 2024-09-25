@@ -4,6 +4,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
+use ieee.math_real.all;
 
 use work.support.all;
 
@@ -175,15 +176,27 @@ wait;
 
     -- Send data
     process
-        -- Two kinds of marked up data
-        type DATA_TYPE is (DATA_BYTES, DATA_CHANNELS);
+        -- Three kinds of marked up data
+        type DATA_TYPE is (DATA_BYTES, DATA_CHANNELS, DATA_RANDOM);
 
         variable data_counter : natural := 0;
+        variable seed1, seed2 : positive;
 
 
-        impure function generate_data(
-            mask : std_ulogic_vector(63 downto 0);
-            dtype : DATA_TYPE) return std_ulogic_vector
+        -- Increasing count of bytes
+        impure function generate_data_bytes return axi_data_t
+        is
+            variable result : axi_data_t;
+        begin
+            for byte in 0 to 63 loop
+                result(8*byte + 7 downto 8*byte) :=
+                    to_std_ulogic_vector_u(byte + 64 * (data_counter mod 4), 8);
+            end loop;
+            return result;
+        end;
+
+        -- Channel identification data
+        impure function generate_data_channels return axi_data_t
         is
             impure function generate_slice(
                 index : natural) return std_ulogic_vector
@@ -198,29 +211,54 @@ wait;
                 return result;
             end;
 
-            variable result : std_ulogic_vector(511 downto 0);
         begin
-            case dtype is
-                when DATA_BYTES =>
-                    for byte in 0 to 63 loop
-                        result(8*byte + 7 downto 8*byte) :=
-                            to_std_ulogic_vector_u(
-                                byte + 64 * (data_counter mod 4), 8);
-                    end loop;
-                when DATA_CHANNELS =>
-                    result :=
-                        generate_slice(3) & generate_slice(2) &
-                        generate_slice(1) & generate_slice(0);
-            end case;
+            return
+                generate_slice(3) & generate_slice(2) &
+                generate_slice(1) & generate_slice(0);
+        end;
 
-            -- Mask out any bytes we're not writing
---             for byte in 0 to 63 loop
---                 if not mask(byte) then
---                     result(8*byte + 7 downto 8*byte) := (others => '-');
---                 end if;
---             end loop;
+        -- Random data
+        impure function generate_data_random return axi_data_t
+        is
+            variable rand : real;
+            variable random_byte : natural;
+            variable result : axi_data_t;
+        begin
+            for byte in 0 to 63 loop
+                uniform(seed1, seed2, rand);
+                random_byte := integer(trunc(rand * 256.0));
+                result(8*byte + 7 downto 8*byte) :=
+                    to_std_ulogic_vector_u(random_byte, 8);
+            end loop;
             return result;
         end;
+
+
+        impure function generate_data(dtype : DATA_TYPE) return axi_data_t is
+        begin
+            case dtype is
+                when DATA_BYTES =>      return generate_data_bytes;
+                when DATA_CHANNELS =>   return generate_data_channels;
+                when DATA_RANDOM =>     return generate_data_random;
+            end case;
+        end;
+
+        function mask_data(
+            mask : std_ulogic_vector(63 downto 0);
+            data : axi_data_t) return axi_data_t
+        is
+            variable result : axi_data_t;
+        begin
+            -- Mask out any bytes we're not writing
+            result := data;
+            for byte in 0 to 63 loop
+                if not mask(byte) then
+                    result(8*byte + 7 downto 8*byte) := (others => '-');
+                end if;
+            end loop;
+            return result;
+        end;
+
 
         procedure send_data(
             mask : std_ulogic_vector(63 downto 0) := (others => '1');
@@ -228,7 +266,8 @@ wait;
         is
             variable data_out : std_ulogic_vector(511 downto 0);
         begin
-            data_out := generate_data(mask, dtype);
+            data_out := generate_data(dtype);
+            data_out := mask_data(mask, data_out);
             data_counter := data_counter + 1;
 
             axi_w_o <= (
@@ -264,10 +303,10 @@ wait;
         send_data(dtype => DATA_BYTES);
         send_data(dtype => DATA_BYTES, last => '1');
 -- wait;
-        send_data(dtype => DATA_BYTES);
-        send_data(dtype => DATA_BYTES);
-        send_data(dtype => DATA_BYTES);
-        send_data(dtype => DATA_BYTES, last => '1');
+        send_data(dtype => DATA_RANDOM);
+        send_data(dtype => DATA_RANDOM);
+        send_data(dtype => DATA_RANDOM);
+        send_data(dtype => DATA_RANDOM, last => '1');
 --         send_data(X"FF0F_FFFF_0010_0000", dtype => DATA_BYTES);
 --         send_data(X"FFFF_FFFF_0000_0000", '1', dtype => DATA_BYTES);
 wait;
