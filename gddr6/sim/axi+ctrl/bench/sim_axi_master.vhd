@@ -143,7 +143,6 @@ begin
 
         -- Bank 3, Row 6, Column 7
         send(X"0", X"0018_C300", X"01", "110");
--- wait;
         send(X"0", X"0018_C380", X"03", "110");
 wait;
 
@@ -374,7 +373,6 @@ wait;
         -- Read back the first write transaction
         wait_for_write(1);
         send(X"C", X"0018_C300", X"01", "110");
--- wait;
         send(X"C", X"0018_C380", X"03", "110");
 --         send(X"C", X"0018_C380", X"FF", "010");
 --         send(X"C", X"0018_C380", X"FF", "010");

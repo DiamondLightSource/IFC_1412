@@ -14,6 +14,11 @@ use work.gddr6_ctrl_command_defs.all;
 use work.sim_phy_defs.all;
 
 entity sim_phy_command is
+    generic (
+        -- Delays from CA to read and write strobes for delay validation
+        READ_STROBE_DELAY : natural;    -- 1
+        WRITE_STROBE_DELAY : natural    -- 4
+    );
     port (
         clk_i : in std_ulogic;
 
@@ -129,11 +134,17 @@ architecture arch of sim_phy_command is
 
 begin
     -- Delay from WxM command to first write_strobe_o
-    --  ca_i (CA = WOM/WSM/WDM = WxM)
+    --  ca_i = WOM/WSM/WDM = WxM
     --      => last_command = WxM
     --      => loading_mask
     --      => next_write_request.valid
     --      => write_request.valid = write_strobe_o
+    assert WRITE_STROBE_DELAY = 4 severity failure;
+
+    -- Delay from RD command to first read_strobe_o
+    --  ca_i = RD
+    --      => read_strobe_o
+    assert READ_STROBE_DELAY = 1 severity failure;
 
     -- SG command decoding with read and write generation
     vars : process (clk_i)
