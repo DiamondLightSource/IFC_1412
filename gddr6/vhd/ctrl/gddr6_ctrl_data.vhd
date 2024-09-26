@@ -265,7 +265,6 @@ begin
 
 
     process (clk_i)
--- can we move this to a register?  Need to pull write_enables earlier...
         variable write_edc_ok : std_ulogic;
     begin
         if rising_edge(clk_i) then

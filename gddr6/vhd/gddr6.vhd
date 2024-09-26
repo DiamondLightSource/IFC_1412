@@ -9,11 +9,28 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.support.all;
+
+use work.gddr6_defs.all;
+use work.gddr6_register_defines.all;
+use work.register_defs.all;
+
 entity gddr6 is
+    generic (
+        -- Default SG interface to run at CK=250 MHz, WCK = 1GHz, but support
+        -- option to run at 300 MHz/1.2 GHz on speed-grade -2 FPGA
+        CK_FREQUENCY : real := 250.0;
+        -- In the unlikely case that setup_clk_i is running faster than ck_clk_o
+        -- this should be configured so that the correct clock domain crossing
+        -- delays are set.  Otherwise leave at the default value.
+        REG_FREQUENCY : real := 250.0;
+        -- Similarly, if the AXI clock is running fast this should be set
+        AXI_FREQUENCY : real := 250.0
+    );
     port  (
-        -- ---------------------------------------------------------- --
-        -- Register Setup Interface                                   --
-        -- ---------------------------------------------------------- --
+        -- ---------------------------------------------------------------------
+        -- Register Setup Interface
+        --
         setup_clk_i : in std_ulogic;
         write_strobe_i : in std_ulogic;
         write_address_i : in unsigned(9 downto 0);
@@ -296,5 +313,168 @@ architecture arch of gddr6 is
     attribute X_INTERFACE_INFO of pad_SG2_EDC_B_io : signal
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_EDC_B";
 
+    signal ck_clk : std_ulogic;
+
+    signal read_request : axi_ctrl_read_request_t;
+    signal read_response : axi_ctrl_read_response_t;
+    signal write_request : axi_ctrl_write_request_t;
+    signal write_response : axi_ctrl_write_response_t;
+
+    signal ctrl_setup : ctrl_setup_t;
+    signal ctrl_status : ctrl_status_t;
+
+    signal ca : phy_ca_t;
+    signal dq_out : phy_dq_out_t;
+    signal dq_in : phy_dq_in_t;
+
+    signal write_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
+    signal write_data : reg_data_array_t(GDDR6_REGS_RANGE);
+    signal write_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
+    signal read_data : reg_data_array_t(GDDR6_REGS_RANGE);
+    signal read_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
+    signal read_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
+
 begin
+    axi : entity work.gddr6_axi generic map (
+        AXI_FREQUENCY => AXI_FREQUENCY,
+        CK_FREQUENCY => CK_FREQUENCY
+    ) port map (
+        axi_clk_i => s_axi_ACLK,
+
+        axi_wa_i => (
+            id => s_axi_AWID_i,
+            addr => unsigned(s_axi_AWADDR_i),
+            len => unsigned(s_axi_AWLEN_i),
+            size => unsigned(s_axi_AWSIZE_i),
+            burst => s_axi_AWBURST_i,
+            valid => s_axi_AWVALID_i
+
+--             s_axi_AWLOCK_i
+--             s_axi_AWCACHE_i
+--             s_axi_AWPROT_i
+--             s_axi_AWQOS_i
+--             s_axi_AWUSER_i
+        ),
+        axi_wa_ready_o => s_axi_AWREADY_o,
+
+        axi_w_i => (
+            data => s_axi_WDATA_i,
+            strb => s_axi_WSTRB_i,
+            last => s_axi_WLAST_i,
+            valid => s_axi_WVALID_i
+        ),
+        axi_w_ready_o => s_axi_WREADY_o,
+
+        axi_b_o.id => s_axi_BID_o,
+        axi_b_o.resp => s_axi_BRESP_o,
+        axi_b_o.valid => s_axi_BVALID_o,
+        axi_b_ready_i => s_axi_BREADY_i,
+
+        axi_ra_i => (
+            id => s_axi_ARID_i,
+            addr => unsigned(s_axi_ARADDR_i),
+            len => unsigned(s_axi_ARLEN_i),
+            size => unsigned(s_axi_ARSIZE_i),
+            burst => s_axi_ARBURST_i,
+            valid => s_axi_ARVALID_i
+        ),
+        axi_ra_ready_o => s_axi_ARREADY_o,
+
+        axi_r_o.id => s_axi_RID_o,
+        axi_r_o.data => s_axi_RDATA_o,
+        axi_r_o.resp => s_axi_RRESP_o,
+        axi_r_o.last => s_axi_RLAST_o,
+        axi_r_o.valid => s_axi_RVALID_o,
+        axi_r_ready_i => s_axi_RREADY_i,
+
+        ck_clk_i => ck_clk,
+        ctrl_read_request_o => read_request,
+        ctrl_read_response_i => read_response,
+        ctrl_write_request_o => write_request,
+        ctrl_write_response_i => write_response
+    );
+
+    ctrl : entity work.gddr6_ctrl port map (
+        clk_i => ck_clk,
+
+        ctrl_setup_i => ctrl_setup,
+        ctrl_status_o => ctrl_status,
+
+        axi_read_request_i => read_request,
+        axi_read_response_o => read_response,
+        axi_write_request_i => write_request,
+        axi_write_response_o => write_response,
+
+        phy_ca_o => ca,
+        phy_dq_o => dq_out,
+        phy_dq_i => dq_in
+    );
+
+    register_mux : entity work.register_mux port map (
+        clk_i => setup_clk_i,
+
+        write_strobe_i => write_strobe_i,
+        write_address_i => write_address_i,
+        write_data_i => write_data_i,
+        write_ack_o => write_ack_o,
+        read_strobe_i => read_strobe_i,
+        read_address_i => read_address_i,
+        read_data_o => read_data_o,
+        read_ack_o => read_ack_o,
+
+        write_strobe_o => write_strobe,
+        write_data_o => write_data,
+        write_ack_i => write_ack,
+        read_data_i => read_data,
+        read_strobe_o => read_strobe,
+        read_ack_i => read_ack
+    );
+
+    setup_phy : entity work.gddr6_setup_phy generic map (
+        CK_FREQUENCY => CK_FREQUENCY,
+        REG_FREQUENCY => REG_FREQUENCY
+    ) port map (
+        reg_clk_i => setup_clk_i,
+        ck_clk_o => ck_clk,
+
+        write_strobe_i => write_strobe,
+        write_data_i => write_data,
+        write_ack_o => write_ack,
+        read_strobe_i => read_strobe,
+        read_data_o => read_data,
+        read_ack_o => read_ack,
+
+        ctrl_ca_i => ca,
+        ctrl_dq_i => dq_out,
+        ctrl_dq_o => dq_in,
+
+        pad_SG12_CK_P_i => pad_SG12_CK_P_i,
+        pad_SG12_CK_N_i => pad_SG12_CK_N_i,
+        pad_SG1_WCK_P_i => pad_SG1_WCK_P_i,
+        pad_SG1_WCK_N_i => pad_SG1_WCK_N_i,
+        pad_SG2_WCK_P_i => pad_SG2_WCK_P_i,
+        pad_SG2_WCK_N_i => pad_SG2_WCK_N_i,
+        pad_SG1_RESET_N_o => pad_SG1_RESET_N_o,
+        pad_SG2_RESET_N_o => pad_SG2_RESET_N_o,
+        pad_SG12_CKE_N_o => pad_SG12_CKE_N_o,
+        pad_SG12_CABI_N_o => pad_SG12_CABI_N_o,
+        pad_SG12_CAL_o => pad_SG12_CAL_o,
+        pad_SG1_CA3_A_o => pad_SG1_CA3_A_o,
+        pad_SG1_CA3_B_o => pad_SG1_CA3_B_o,
+        pad_SG2_CA3_A_o => pad_SG2_CA3_A_o,
+        pad_SG2_CA3_B_o => pad_SG2_CA3_B_o,
+        pad_SG12_CAU_o => pad_SG12_CAU_o,
+        pad_SG1_DQ_A_io => pad_SG1_DQ_A_io,
+        pad_SG1_DQ_B_io => pad_SG1_DQ_B_io,
+        pad_SG2_DQ_A_io => pad_SG2_DQ_A_io,
+        pad_SG2_DQ_B_io => pad_SG2_DQ_B_io,
+        pad_SG1_DBI_N_A_io => pad_SG1_DBI_N_A_io,
+        pad_SG1_DBI_N_B_io => pad_SG1_DBI_N_B_io,
+        pad_SG2_DBI_N_A_io => pad_SG2_DBI_N_A_io,
+        pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B_io,
+        pad_SG1_EDC_A_io => pad_SG1_EDC_A_io,
+        pad_SG1_EDC_B_io => pad_SG1_EDC_B_io,
+        pad_SG2_EDC_A_io => pad_SG2_EDC_A_io,
+        pad_SG2_EDC_B_io => pad_SG2_EDC_B_io
+    );
 end;
