@@ -90,21 +90,6 @@ architecture arch of gddr6_phy_delay_control is
         return result;
     end;
 
-    -- Uses selected address and target to generate selected strobe
-    procedure compute_strobe(
-        signal strobes : out vector_array; value : std_ulogic) is
-    begin
-        for t in strobes'RANGE loop
-            for a in strobes'ELEMENT'RANGE loop
-                if t = target and a = address then
-                    strobes(t)(a) <= value;
-                else
-                    strobes(t)(a) <= '0';
-                end if;
-            end loop;
-        end loop;
-    end;
-
 begin
     -- Map output strobes according to addressing
     bitslice_control_o <= (
@@ -156,6 +141,20 @@ begin
             else
                 write_state <= next_state;
             end if;
+        end;
+
+        -- Uses selected address and target to generate selected strobe
+        procedure compute_strobe(value : std_ulogic) is
+        begin
+            for t in ce_out'RANGE loop
+                for a in ce_out'ELEMENT'RANGE loop
+                    if t = target and a = address then
+                        ce_out(t)(a) <= value;
+                    else
+                        ce_out(t)(a) <= '0';
+                    end if;
+                end loop;
+            end loop;
         end;
 
     begin
@@ -224,7 +223,7 @@ begin
             end case;
 
             -- Generate the control strobes.
-            compute_strobe(ce_out, enable_strobe);
+            compute_strobe(enable_strobe);
 
             -- Map and register the readbacks
             delays_in <= (

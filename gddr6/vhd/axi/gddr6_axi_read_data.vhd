@@ -39,7 +39,6 @@ architecture arch of gddr6_axi_read_data is
     signal data_skid : read_data_t := IDLE_READ_DATA;
 
 begin
-    vars :
     process (clk_i)
         -- Manages input data stream and associated skid buffer
         procedure advance_data(data_ready : std_ulogic) is
