@@ -1,4 +1,5 @@
-# The maximum sensible CK frequency seems to be around 250 MHz
+# we can operate at either 250 or 300 MHz, but 300 MHz needs a number of
+# carefuly adjustments elsewhere
 set ck_frequency 250.0
 
 # Reference clock

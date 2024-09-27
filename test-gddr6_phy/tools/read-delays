@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--timestamp', action = 'store_true')
 parser.add_argument('-i', '--idelays', action = 'store_true')
 parser.add_argument('-o', '--odelays', action = 'store_true')
+parser.add_argument('-b', '--brief', action = 'store_true')
 parser.add_argument('interval', nargs = '?', type = float)
 args = parser.parse_args()
 
@@ -74,17 +75,35 @@ def get_idelays():
 def get_odelays():
     return [read_odelay(n) for n in range(72)]
 
+def get_ibitslips():
+    return [read_ibitslip(n) for n in range(80)]
+
+def get_obitslips():
+    return [read_obitslip(n) for n in range(72)]
+
+def print_array(delays):
+    print(' '.join(map(str, delays)))
+
 def log_delays(args):
     while True:
         if args.timestamp:
             print(time.time(), end = ' ')
         delays = get_idelays() + get_odelays()
-        print(' '.join(map(str, delays)))
+        print_array(delays)
+#         print(' '.join(map(str, delays)))
         time.sleep(args.interval)
+
+def brief_print_delays():
+    padding = 8 * [0]
+    print_array(get_idelays())
+    print_array(get_odelays() + padding)
+    print_array(get_ibitslips())
+    print_array(get_obitslips() + padding)
 
 
 if args.interval:
     log_delays(args)
-
+elif args.brief:
+    brief_print_delays()
 else:
     pretty_print_delays()

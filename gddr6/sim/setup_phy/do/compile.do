@@ -39,7 +39,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_bank_cc.vhd \
     $common_vhd/register/register_cc.vhd \
     $common_vhd/register/register_read_block.vhd \
-    $common_vhd/misc/spi_master.vhd \
     $common_vhd/iodefs/ibufds_array.vhd \
     $common_vhd/iodefs/ibuf_array.vhd \
     $common_vhd/iodefs/obuf_array.vhd \

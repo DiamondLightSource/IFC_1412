@@ -40,7 +40,11 @@ end;
 
 architecture arch of gddr6_phy_clocking is
     -- Advance CK clock to help align the CA output eye with the centre of the
-    -- CK clock
+    -- CK clock.  I think we have 11.25 degrees of resolution here from 45
+    -- degrees resolution on the VCO clock divided by 4 for the CK clock.
+    --
+    -- At present a phase shift of -90 works for 250 MHz, but for 300 MHz we
+    -- appear to need something closer to -135.
     constant CA_PHASE_SHIFT : real := -90.0;
 
     -- Input clock and MMCM

@@ -348,12 +348,6 @@ begin
             size => unsigned(s_axi_AWSIZE_i),
             burst => s_axi_AWBURST_i,
             valid => s_axi_AWVALID_i
-
---             s_axi_AWLOCK_i
---             s_axi_AWCACHE_i
---             s_axi_AWPROT_i
---             s_axi_AWQOS_i
---             s_axi_AWUSER_i
         ),
         axi_wa_ready_o => s_axi_AWREADY_o,
 
