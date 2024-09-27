@@ -38,6 +38,13 @@ entity gddr6_setup_control is
         -- Controller enable
         enable_controller_o : out std_ulogic := '0'
     );
+
+    -- Because this signal is being used as an asynchronous reset we need to
+    -- mark it accordingly.
+    attribute KEEP : string;
+    attribute FALSE_PATH_FROM : string;
+    attribute KEEP of ck_reset_o : signal is "TRUE";
+    attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
 end;
 
 architecture arch of gddr6_setup_control is
@@ -63,12 +70,6 @@ architecture arch of gddr6_setup_control is
     signal reg_event_bits : reg_data_t := (others => '0');
     signal ck_event_bits : reg_data_t := (others => '0');
 
-    -- Because this signal is being used as an asynchronous reset we need to
-    -- mark it accordingly.
-    attribute KEEP : string;
-    attribute FALSE_PATH_FROM : string;
-    attribute KEEP of ck_reset_o : signal is "TRUE";
-    attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
 
 begin
     -- CONFIG

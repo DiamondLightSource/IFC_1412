@@ -128,9 +128,9 @@ entity gddr6 is
         pad_SG2_DBI_N_B_io : inout std_logic_vector(1 downto 0);
         pad_SG2_EDC_B_io : inout std_logic_vector(1 downto 0)
     );
-end;
 
-architecture arch of gddr6 is
+    -- X-Interface attributes for correct IP Integrator inference
+
     attribute X_INTERFACE_INFO : string;
     attribute X_INTERFACE_PARAMETER : string;
     attribute X_INTERFACE_IGNORE : string;
@@ -312,7 +312,9 @@ architecture arch of gddr6 is
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_DBI_N_B";
     attribute X_INTERFACE_INFO of pad_SG2_EDC_B_io : signal
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_EDC_B";
+end;
 
+architecture arch of gddr6 is
     signal ck_clk : std_ulogic;
 
     signal read_request : axi_ctrl_read_request_t;
