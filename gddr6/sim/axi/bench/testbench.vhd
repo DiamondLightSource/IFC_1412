@@ -28,6 +28,7 @@ architecture arch of testbench is
     signal axi_ra_ready : std_ulogic;
     signal axi_r : axi_read_data_t;
     signal axi_r_ready : std_ulogic := '0';
+    signal axi_stats : axi_stats_t;
 
     signal ctrl_read_request : axi_ctrl_read_request_t;
     signal ctrl_read_response : axi_ctrl_read_response_t
@@ -61,6 +62,7 @@ begin
         axi_ra_ready_o => axi_ra_ready,
         axi_r_o => axi_r,
         axi_r_ready_i => axi_r_ready,
+        axi_stats_o => axi_stats,
 
         ck_clk_i => ck_clk,
         ctrl_read_request_o => ctrl_read_request,

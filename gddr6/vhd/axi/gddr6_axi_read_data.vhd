@@ -23,7 +23,12 @@ entity gddr6_axi_read_data is
 
         -- AXI R interface
         axi_data_o : out axi_read_data_t := IDLE_AXI_READ_DATA;
-        axi_ready_i : in std_ulogic
+        axi_ready_i : in std_ulogic;
+
+        -- Stats
+        stats_crc_error_o : out std_ulogic := '0';
+        stats_transfer_o : out std_ulogic := '0';
+        stats_data_beat_o : out std_ulogic := '0'
     );
 end;
 
@@ -132,6 +137,8 @@ begin
                 end if;
             end;
 
+            variable stats_valid : std_ulogic;
+
         begin
             if axi_ready_i or not axi_data_o.valid then
                 axi_data_o <= (
@@ -142,6 +149,14 @@ begin
                     valid => command.valid and axi_valid
                 );
             end if;
+
+            stats_valid :=
+                (axi_ready_i or not axi_data_o.valid) and
+                command.valid and axi_valid;
+            stats_crc_error_o <=
+                stats_valid and not data.ok and not command.invalid_burst;
+            stats_transfer_o  <= stats_valid and command.count ?= 0;
+            stats_data_beat_o <= stats_valid;
         end;
 
 

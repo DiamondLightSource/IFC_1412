@@ -70,6 +70,9 @@ entity gddr6_axi is
         axi_r_o : out axi_read_data_t;
         axi_r_ready_i : in std_ulogic;
 
+        -- AXI statistics
+        axi_stats_o : out axi_stats_t;
+
         -- ---------------------------------------------------------------------
         -- Controller interface on CK clk
 
@@ -88,6 +91,9 @@ architecture arch of gddr6_axi is
     -- constrained by the maximum clock frequency.
     constant MAX_DELAY : real := 1000.0 / maximum(AXI_FREQUENCY, CK_FREQUENCY);
 
+    signal write_stats : raw_stats_t;
+    signal read_stats : raw_stats_t;
+
 begin
     axi_write : entity work.gddr6_axi_write generic map (
         DATA_FIFO_BITS => DATA_FIFO_BITS,
@@ -104,7 +110,9 @@ begin
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_write_request_o,
-        ctrl_response_i => ctrl_write_response_i
+        ctrl_response_i => ctrl_write_response_i,
+
+        stats_o => write_stats
     );
 
     axi_read : entity work.gddr6_axi_read generic map (
@@ -120,6 +128,15 @@ begin
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_read_request_o,
-        ctrl_response_i => ctrl_read_response_i
+        ctrl_response_i => ctrl_read_response_i,
+
+        stats_o => read_stats
+    );
+
+    stats : entity work.gddr6_axi_stats port map (
+        clk_i => axi_clk_i,
+        write_stats_i => write_stats,
+        read_stats_i => read_stats,
+        axi_stats_o => axi_stats_o
     );
 end;

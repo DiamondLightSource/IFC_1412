@@ -36,6 +36,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/axi/gddr6_axi_write_status_fifo.vhd \
     $vhd_dir/axi/gddr6_axi_write_data.vhd \
     $vhd_dir/axi/gddr6_axi_write.vhd \
+    $vhd_dir/axi/gddr6_axi_stats.vhd \
     $vhd_dir/axi/gddr6_axi.vhd
 
 vcom -64 -2008 -work xil_defaultlib \

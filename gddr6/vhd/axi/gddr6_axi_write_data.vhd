@@ -24,7 +24,10 @@ entity gddr6_axi_write_data is
 
         -- AXI W interface
         axi_data_i : in axi_write_data_t;
-        axi_ready_o : out std_ulogic := '1'
+        axi_ready_o : out std_ulogic := '1';
+
+        stats_last_error_o : out std_ulogic := '0';
+        stats_data_beat_o : out std_ulogic := '0'
     );
 end;
 
@@ -86,6 +89,8 @@ begin
                     valid => fifo_valid
                 );
             end if;
+            stats_data_beat_o <=
+                (fifo_ready_i or not fifo_data_o.valid) and fifo_valid;
         end;
 
 
@@ -124,11 +129,9 @@ begin
 
         procedure check_last(next_data : axi_write_data_t) is
         begin
-            if command.valid and next_data.valid then
-                assert (next_data.last = '1') = (command.count = 0)
-                    report "Invalid last on write data"
-                    severity error;
-            end if;
+            stats_last_error_o <=
+                (command.valid and next_data.valid) and
+                to_std_ulogic((next_data.last = '1') /= (command.count = 0));
         end;
 
 

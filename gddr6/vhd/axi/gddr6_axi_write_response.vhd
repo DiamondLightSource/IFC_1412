@@ -28,7 +28,10 @@ entity gddr6_axi_write_response is
 
         -- AXI B interface
         axi_response_o : out axi_write_response_t := IDLE_AXI_WRITE_RESPONSE;
-        axi_ready_i : in std_ulogic
+        axi_ready_i : in std_ulogic;
+
+        stats_crc_error_o : out std_ulogic := '0';
+        stats_transfer_o : out std_ulogic := '0'
     );
 end;
 
@@ -132,6 +135,7 @@ begin
             if load_value then
                 data_ok <= data_ok_i;
             end if;
+            stats_crc_error_o <= load_value and not data_ok_i;
         end;
 
 
@@ -147,6 +151,8 @@ begin
                     valid => axi_valid
                 );
             end if;
+            stats_transfer_o <=
+                (axi_ready_i or not axi_response_o.valid) and axi_valid;
         end;
 
 

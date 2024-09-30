@@ -31,7 +31,10 @@ entity gddr6_axi_write is
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
         ctrl_request_o : out axi_ctrl_write_request_t;
-        ctrl_response_i : in axi_ctrl_write_response_t
+        ctrl_response_i : in axi_ctrl_write_response_t;
+
+        -- Stats
+        stats_o : out raw_stats_t
     );
 end;
 
@@ -83,7 +86,10 @@ begin
         response_ready_i => address_response_ready,
 
         ctrl_address_o => axi_address,
-        ctrl_ready_i => axi_address_ready
+        ctrl_ready_i => axi_address_ready,
+
+        stats_frame_error_o => stats_o.frame_error,
+        stats_address_o => stats_o.address
     );
 
 
@@ -110,7 +116,10 @@ begin
         fifo_ready_i => axi_data_ready,
 
         axi_data_i => axi_data_i,
-        axi_ready_o => axi_data_ready_o
+        axi_ready_o => axi_data_ready_o,
+
+        stats_last_error_o => stats_o.last_error,
+        stats_data_beat_o => stats_o.data_beat
     );
 
 
@@ -137,7 +146,10 @@ begin
         data_ok_ready_o => axi_ok_ready,
 
         axi_response_o => axi_response_o,
-        axi_ready_i => axi_response_ready_i
+        axi_ready_i => axi_response_ready_i,
+
+        stats_crc_error_o => stats_o.crc_error,
+        stats_transfer_o => stats_o.transfer
     );
 
 

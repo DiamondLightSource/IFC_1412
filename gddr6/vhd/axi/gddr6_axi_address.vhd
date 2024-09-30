@@ -31,7 +31,11 @@ entity gddr6_axi_address is
         -- Address request to controller with number of SG bursts to transfer
         -- for this request
         ctrl_address_o : out address_t := IDLE_ADDRESS;
-        ctrl_ready_i : in std_ulogic
+        ctrl_ready_i : in std_ulogic;
+
+        -- Statistic events
+        stats_frame_error_o : out std_ulogic := '0';
+        stats_address_o : out std_ulogic := '0'
     );
 end;
 
@@ -103,13 +107,18 @@ architecture arch of gddr6_axi_address is
 begin
     process (clk_i) begin
         if rising_edge(clk_i) then
+            stats_frame_error_o <= '0';
+            stats_address_o <= '0';
             if axi_address_i.valid and axi_ready_o then
                 -- Process incoming request
                 command_o <= command(axi_address_i);
                 response_o <= response(axi_address_i);
                 if valid_request(axi_address_i) then
                     ctrl_address_o <= address(axi_address_i);
+                else
+                    stats_frame_error_o <= '1';
                 end if;
+                stats_address_o <= '1';
                 axi_ready_o <= '0';
             else
                 -- Clear each command as it is accepted

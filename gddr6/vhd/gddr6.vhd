@@ -335,6 +335,8 @@ architecture arch of gddr6 is
     signal read_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
     signal read_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
 
+    signal axi_stats : axi_stats_t;
+
 begin
     axi : entity work.gddr6_axi generic map (
         AXI_FREQUENCY => AXI_FREQUENCY,
@@ -382,12 +384,15 @@ begin
         axi_r_o.valid => s_axi_RVALID_o,
         axi_r_ready_i => s_axi_RREADY_i,
 
+        axi_stats_o => axi_stats,
+
         ck_clk_i => ck_clk,
         ctrl_read_request_o => read_request,
         ctrl_read_response_i => read_response,
         ctrl_write_request_o => write_request,
         ctrl_write_response_i => write_response
     );
+
 
     ctrl : entity work.gddr6_ctrl port map (
         clk_i => ck_clk,
@@ -403,6 +408,7 @@ begin
         phy_dq_o => dq_out,
         phy_dq_i => dq_in
     );
+
 
     register_mux : entity work.register_mux port map (
         clk_i => setup_clk_i,
@@ -423,6 +429,7 @@ begin
         read_strobe_o => read_strobe,
         read_ack_i => read_ack
     );
+
 
     setup_phy : entity work.gddr6_setup_phy generic map (
         CK_FREQUENCY => CK_FREQUENCY,

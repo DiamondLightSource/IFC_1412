@@ -28,7 +28,10 @@ entity gddr6_axi_read is
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
         ctrl_request_o : out axi_ctrl_read_request_t;
-        ctrl_response_i : in axi_ctrl_read_response_t
+        ctrl_response_i : in axi_ctrl_read_response_t;
+
+        -- Stats
+        stats_o : out raw_stats_t
     );
 end;
 
@@ -61,7 +64,10 @@ begin
         command_ready_i => address_command_ready,
 
         ctrl_address_o => axi_address,
-        ctrl_ready_i => axi_address_ready
+        ctrl_ready_i => axi_address_ready,
+
+        stats_frame_error_o => stats_o.frame_error,
+        stats_address_o => stats_o.address
     );
 
     command_fifo : entity work.gddr6_axi_command_fifo generic map (
@@ -86,8 +92,15 @@ begin
         fifo_data_ready_o => axi_data_ready,
 
         axi_data_o => axi_data_o,
-        axi_ready_i => axi_data_ready_i
+        axi_ready_i => axi_data_ready_i,
+
+        stats_crc_error_o => stats_o.crc_error,
+        stats_transfer_o => stats_o.transfer,
+        stats_data_beat_o => stats_o.data_beat
     );
+
+    -- Unused stats, only valid for write
+    stats_o.last_error <= '0';
 
 
     -- -------------------------------------------------------------------------

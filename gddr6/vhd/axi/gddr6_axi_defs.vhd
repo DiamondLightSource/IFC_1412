@@ -91,6 +91,24 @@ package gddr6_axi_defs is
         valid : std_ulogic;
     end record;
 
+    -- Internal statistics events
+    type raw_stats_t is record
+        -- Framing error in address request
+        frame_error : std_ulogic;
+        -- CRC error in response from CTRL
+        crc_error : std_ulogic;
+        -- Only valid for write: framing error for write burst
+        last_error : std_ulogic;
+
+        -- Address accepted
+        address : std_ulogic;
+        -- Transfer completed: end of read or B command accepted for write
+        transfer : std_ulogic;
+        -- Data beat completed
+        data_beat : std_ulogic;
+    end record;
+
+
     constant IDLE_AXI_ADDRESS : axi_address_t;
     constant IDLE_AXI_READ_DATA : axi_read_data_t;
     constant IDLE_AXI_WRITE_DATA : axi_write_data_t;
