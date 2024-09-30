@@ -32,7 +32,7 @@ architecture arch of testbench is
     signal lookahead : bank_open_t;
     signal bypass_command : ca_command_t;
     signal bypass_valid : std_ulogic;
-    signal refresh_stall : std_ulogic;
+    signal enable_mux : std_ulogic;
     signal priority_mode : std_ulogic := '0';
     signal priority_direction : direction_t := DIR_READ;
     signal current_direction : direction_t;
@@ -67,7 +67,7 @@ begin
         bypass_command_i => bypass_command,
         bypass_valid_i => bypass_valid,
 
-        refresh_stall_i => refresh_stall,
+        enable_mux_i => enable_mux,
         priority_mode_i => priority_mode,
         priority_direction_i => priority_direction,
         current_direction_o => current_direction,
@@ -78,7 +78,7 @@ begin
 
     priority_mode <= '1';
     priority_direction <= DIR_READ;
-    refresh_stall <= '0';
+    enable_mux <= '1';
     bypass_valid <= '0';
 
 

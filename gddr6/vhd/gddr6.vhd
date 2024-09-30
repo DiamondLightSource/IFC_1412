@@ -323,7 +323,6 @@ architecture arch of gddr6 is
     signal write_response : axi_ctrl_write_response_t;
 
     signal ctrl_setup : ctrl_setup_t;
-    signal ctrl_status : ctrl_status_t;
 
     signal ca : phy_ca_t;
     signal dq_out : phy_dq_out_t;
@@ -394,7 +393,6 @@ begin
         clk_i => ck_clk,
 
         ctrl_setup_i => ctrl_setup,
-        ctrl_status_o => ctrl_status,
 
         axi_read_request_i => read_request,
         axi_read_response_o => read_response,
@@ -440,6 +438,7 @@ begin
         read_data_o => read_data,
         read_ack_o => read_ack,
 
+        ctrl_setup_o => ctrl_setup,
         ctrl_ca_i => ca,
         ctrl_dq_i => dq_out,
         ctrl_dq_o => dq_in,

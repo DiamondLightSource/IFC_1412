@@ -15,13 +15,13 @@ entity gddr6_ctrl_mux is
         clk_i : in std_ulogic;
 
         -- Direction control: priority or polling.  In priority mode starvation
-        -- is possible, in priority mode we will try to avoid this by polling.
+        -- is possible, otherwise we avoid this by polling.
         priority_mode_i : in std_ulogic;
         -- In priority mode this is the selected direction
         priority_direction_i : in direction_t;
         -- If refresh is running out of time and cannot access a bank this
         -- request will stall progress by blocking acceptance of requests
-        stall_i : in std_ulogic;
+        enable_i : in std_ulogic;
         -- Reports currently selected direction
         current_direction_o : out direction_t;
 
@@ -52,7 +52,7 @@ architecture arch of gddr6_ctrl_mux is
     -- The request direction must not change when extra commands (write mask
     -- values) follow the selected command
     signal current_direction : direction_t := DIR_READ;
-    signal stalled : std_ulogic := '0';
+    signal enabled : std_ulogic := '0';
     signal lock_direction : std_ulogic := '0';
     -- Don't change direction too quickly as there is a cost to this
     signal switch_count : natural range 0 to MUX_SWITCH_DELAY := 0;
@@ -82,8 +82,8 @@ architecture arch of gddr6_ctrl_mux is
     end;
 
 begin
-    -- Accept unless the skid buffer is busy or if we're explicitly stalled.
-    input_ready <= not skid_request.valid and not stalled;
+    -- Accept unless the skid buffer is busy or if we're disabled
+    input_ready <= not skid_request.valid and enabled;
 
     -- Input flow control, acknowledge input from selected direction.
     -- These are not properly registered, relying on three registers each.
@@ -96,9 +96,9 @@ begin
             '0' when DIR_WRITE,
             input_ready when DIR_READ;
 
-    -- Input multiplexer, block input when stalled
+    -- Input multiplexer, block input when not enabled
     selected_request <=
-        IDLE_CORE_REQUEST when stalled else
+        IDLE_CORE_REQUEST when not enabled else
         write_request_i   when current_direction = DIR_WRITE else
         read_request_i    when current_direction = DIR_READ;
 
@@ -133,7 +133,7 @@ begin
             lock_in := input_ready and selected_request.valid and
                 selected_request.next_extra;
             if not lock_direction and not lock_in then
-                stalled <= stall_i;
+                enabled <= enable_i;
 
                 -- Block changes away from the preferred direction until a
                 -- timer has expired.  This ensures that we keep a single

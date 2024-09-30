@@ -14,9 +14,22 @@
             .ENABLE_CABI
             # Enable bit inversion on DQ input and output
             .ENABLE_DBI
+
+            # Three separate bits for managing controller interface.
+            #
             # Set this to hand control over the memory interface to the memory
-            # controller.
+            # controller, changes the direction of the multiplexer
             .ENABLE_CONTROL
+            # Set this to turn on the refresh engine
+            .ENABLE_REFRESH
+            # Set this to enable AXI commands
+            .ENABLE_AXI
+            # Priority control for controller when running.  If set to 1 then
+            # the direction configured by .PRIORITY_DIR takes precedence,
+            # otherwise round-robin scheduling is used
+            .PRIORITY_MODE
+            # 0 to enable read priority, 1 to enable write priority
+            .PRIORITY_DIR
 
             # Enable DBI training.  In this case data written to DBI is written
             # instead of the true DBI calculation.  .ENABLE_DBI should be reset

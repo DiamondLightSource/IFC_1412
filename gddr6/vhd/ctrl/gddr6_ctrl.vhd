@@ -36,9 +36,8 @@ entity gddr6_ctrl is
     port (
         clk_i : in std_ulogic;
 
-        -- Configuration and status connected to Setup
+        -- Configuration and setup control
         ctrl_setup_i : in ctrl_setup_t;
-        ctrl_status_o : out ctrl_status_t;
 
         -- Connection from AXI receiver
         axi_read_request_i : in axi_ctrl_read_request_t;
@@ -153,7 +152,7 @@ begin
         bypass_command_i => SG_NOP,
         bypass_valid_i => '0',
 
-        refresh_stall_i => stall_requests,
+        enable_mux_i => ctrl_setup_i.enable_axi and not stall_requests,
         priority_mode_i => ctrl_setup_i.priority_mode,
         priority_direction_i => priority_direction,
         current_direction_o => current_direction,
@@ -190,13 +189,5 @@ begin
         axi_wd_ready_o => axi_write_response_o.wd_ready,
         axi_wr_ok_o => axi_write_response_o.wr_ok,
         axi_wr_ok_valid_o => axi_write_response_o.wr_ok_valid
-    );
-
-    -- Statistics and readbacks
-    ctrl_status_o <= (
-        read_error =>
-            axi_read_response_o.rd_ok_valid and not axi_read_response_o.rd_ok,
-        write_error =>
-            axi_write_response_o.wr_ok_valid and not axi_write_response_o.wr_ok
     );
 end;

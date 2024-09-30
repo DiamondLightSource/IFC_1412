@@ -38,7 +38,6 @@ architecture arch of testbench is
 
     -- CTRL config and monitoring
     signal ctrl_setup : ctrl_setup_t;
-    signal ctrl_status : ctrl_status_t;
 
     -- Interface to PHY
     signal phy_ca : phy_ca_t;
@@ -82,7 +81,6 @@ begin
         clk_i => ck_clk,
 
         ctrl_setup_i => ctrl_setup,
-        ctrl_status_o => ctrl_status,
 
         axi_read_request_i => read_request,
         axi_read_response_o => read_response,
@@ -95,6 +93,7 @@ begin
     );
 
     ctrl_setup <= (
+        enable_axi => '1',
         enable_refresh => '1',
         priority_mode => '0',
         priority_direction => '0'

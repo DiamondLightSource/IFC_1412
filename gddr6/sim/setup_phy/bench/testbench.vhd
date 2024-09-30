@@ -52,6 +52,7 @@ architecture arch of testbench is
     signal pad_SG2_EDC_A : std_logic_vector(1 downto 0);
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
+    signal ctrl_setup : ctrl_setup_t;
     signal ctrl_ca : phy_ca_t;
     signal ctrl_dq_in : phy_dq_out_t;
     signal ctrl_dq_out : phy_dq_in_t;
@@ -78,6 +79,7 @@ begin
         read_data_o => read_data,
         read_ack_o => read_ack,
 
+        ctrl_setup_o => ctrl_setup,
         ctrl_ca_i => ctrl_ca,
         ctrl_dq_i => ctrl_dq_in,
         ctrl_dq_o => ctrl_dq_out,

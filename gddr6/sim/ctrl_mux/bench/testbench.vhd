@@ -26,7 +26,7 @@ architecture arch of testbench is
 
     signal priority_mode : std_ulogic := '0';
     signal priority_direction : direction_t := DIR_READ;
-    signal stall : std_ulogic := '0';
+    signal enable : std_ulogic := '1';
     signal write_request : core_request_t := IDLE_CORE_REQUEST;
     signal write_ready : std_ulogic;
     signal read_request : core_request_t := IDLE_CORE_REQUEST;
@@ -75,7 +75,7 @@ begin
 
         priority_mode_i => priority_mode,
         priority_direction_i => priority_direction,
-        stall_i => stall,
+        enable_i => enable,
 
         write_request_i => write_request,
         write_ready_o => write_ready,
@@ -177,11 +177,11 @@ begin
 
     -- Inject a random stall
     process begin
-        stall <= '0';
+        enable <= '1';
         clk_wait(7);
-        stall <= '1';
+        enable <= '0';
         clk_wait(6);
-        stall <= '0';
+        enable <= '1';
 
         wait;
     end process;

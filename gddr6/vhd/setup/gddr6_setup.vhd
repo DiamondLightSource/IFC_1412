@@ -47,6 +47,7 @@ entity gddr6_setup is
         setup_delay_i : in setup_delay_result_t;
 
         -- Controller enable
+        ctrl_setup_o : out ctrl_setup_t;
         enable_controller_o : out std_ulogic
     );
 end;
@@ -82,6 +83,7 @@ begin
         phy_status_i => phy_status_i,
 
         capture_edc_out_o => capture_edc_out,
+        ctrl_setup_o => ctrl_setup_o,
         enable_controller_o => enable_controller_o
     );
 

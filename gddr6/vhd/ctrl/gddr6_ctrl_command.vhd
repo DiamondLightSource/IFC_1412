@@ -33,8 +33,9 @@ entity gddr6_ctrl_command is
         bypass_command_i : in ca_command_t;
         bypass_valid_i : in std_ulogic;
 
-        -- Request to pause read and writes
-        refresh_stall_i : in std_ulogic;
+        -- Enabling the input mux allows AXI commands to flow through.  This is
+        -- disabled during startup and during forced refresh
+        enable_mux_i : in std_ulogic;
         -- Direction control, mode and priority default
         priority_mode_i : in std_ulogic;
         priority_direction_i : in direction_t;
@@ -88,7 +89,7 @@ begin
 
         priority_mode_i => priority_mode_i,
         priority_direction_i => priority_direction_i,
-        stall_i => refresh_stall_i,
+        enable_i => enable_mux_i,
         current_direction_o => current_direction_o,
 
         write_request_i => write_request_i,

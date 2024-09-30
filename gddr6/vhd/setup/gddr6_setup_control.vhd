@@ -36,6 +36,7 @@ entity gddr6_setup_control is
         capture_edc_out_o : out std_ulogic;
 
         -- Controller enable
+        ctrl_setup_o : out ctrl_setup_t;
         enable_controller_o : out std_ulogic := '0'
     );
 
@@ -206,6 +207,16 @@ begin
             capture_edc_out_o <=
                 ck_config_bits(GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT);
 
+            ctrl_setup_o <= (
+                enable_axi =>
+                    ck_config_bits(GDDR6_CONFIG_ENABLE_AXI_BIT),
+                enable_refresh =>
+                    ck_config_bits(GDDR6_CONFIG_ENABLE_REFRESH_BIT),
+                priority_mode =>
+                    ck_config_bits(GDDR6_CONFIG_PRIORITY_MODE_BIT),
+                priority_direction =>
+                    ck_config_bits(GDDR6_CONFIG_PRIORITY_DIR_BIT)
+            );
             enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
 

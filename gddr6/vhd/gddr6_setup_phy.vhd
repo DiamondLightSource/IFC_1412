@@ -38,6 +38,7 @@ entity gddr6_setup_phy is
 
         -- --------------------------------------------------------------------
         -- CTRL
+        ctrl_setup_o : out ctrl_setup_t;
         ctrl_ca_i : in phy_ca_t;
         ctrl_dq_i : in phy_dq_out_t;
         ctrl_dq_o : out phy_dq_in_t;
@@ -133,6 +134,7 @@ begin
         phy_setup_o => phy_setup,
         phy_status_i => phy_status,
 
+        ctrl_setup_o => ctrl_setup_o,
         enable_controller_o => enable_controller
     );
 

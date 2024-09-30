@@ -185,9 +185,11 @@ package gddr6_defs is
 
 
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    -- Interfaces between SETUP and CTRL
+    -- Interfaces from SETUP to CTRL
 
     type ctrl_setup_t is record
+        -- These will normally be enabled together
+        enable_axi : std_ulogic;
         enable_refresh : std_ulogic;
         -- Determines the priority selection mode for the read/write multiplexer
         -- If set to '1' then the preferred direction as selected by
@@ -198,11 +200,6 @@ package gddr6_defs is
         --  '0' => reads take priority over writes
         --  '1' => write take priority over reads
         priority_direction : std_ulogic;
-    end record;
-
-    type ctrl_status_t is record
-        read_error : std_ulogic;
-        write_error : std_ulogic;
     end record;
 end;
 
