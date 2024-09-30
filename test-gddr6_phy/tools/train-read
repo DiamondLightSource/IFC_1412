@@ -68,7 +68,7 @@ def read_test():
         exchange.delay(1)
     exchange.delay(24)
     exchange.exchange()
-    data = exchange.run()
+    data = exchange.read_data()
     dbi, edc = exchange.read_dbi_edc()
     return (data, dbi, edc)
 

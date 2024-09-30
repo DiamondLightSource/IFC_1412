@@ -123,6 +123,8 @@ begin
         ck_reset_o => ck_reset,
 
         phy_ca_o => setup_ca,
+        phy_ca_i => phy_ca,
+        phy_output_enable_i => phy_dq_out.output_enable,
         phy_dq_o => setup_dq_out,
         phy_dq_i => setup_dq_in,
         phy_dbi_n_i => setup_dbi_n_in,

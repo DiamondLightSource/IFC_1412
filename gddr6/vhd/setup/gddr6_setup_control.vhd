@@ -71,7 +71,6 @@ architecture arch of gddr6_setup_control is
     signal reg_event_bits : reg_data_t := (others => '0');
     signal ck_event_bits : reg_data_t := (others => '0');
 
-
 begin
     -- CONFIG
     -- The config register is overlaid so that writes are directed to both

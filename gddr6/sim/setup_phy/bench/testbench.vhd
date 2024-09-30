@@ -165,19 +165,20 @@ begin
                 clk, read_data, read_strobe, read_ack, reg, result, quiet);
         end;
 
-        procedure start_write is
+        procedure start_write(quiet : boolean := false) is
         begin
             write_reg(GDDR6_COMMAND_REG, (
                 GDDR6_COMMAND_START_WRITE_BIT => '1',
-                others => '0'));
+                others => '0'), quiet);
         end;
 
-        procedure do_exchange(start_read : std_ulogic := '1') is
+        procedure do_exchange(
+            start_read : std_ulogic := '1'; quiet : boolean := false) is
         begin
             write_reg(GDDR6_COMMAND_REG, (
                 GDDR6_COMMAND_EXCHANGE_BIT => '1',
                 GDDR6_COMMAND_START_READ_BIT => start_read,
-                others => '0'));
+                others => '0'), quiet);
         end;
 
         procedure write_ca(
@@ -185,7 +186,7 @@ begin
             rising : std_ulogic_vector(9 downto 0) := 10X"3FF";
             falling : std_ulogic_vector(9 downto 0) := 10X"3FF";
             ca3 : std_ulogic_vector(3 downto 0) := X"0";
-            cke_n : std_ulogic := '1') is
+            cke_n : std_ulogic := '1'; quiet : boolean := false) is
         begin
             write_reg(GDDR6_CA_REG, (
                 GDDR6_CA_RISING_BITS => rising,
@@ -193,11 +194,12 @@ begin
                 GDDR6_CA_CA3_BITS => ca3,
                 GDDR6_CA_CKE_N_BIT => cke_n,
                 GDDR6_CA_OUTPUT_ENABLE_BIT => oe,
-                others => '0'));
+                others => '0'), quiet => quiet);
         end;
 
 
         variable read_result : reg_data_t;
+        variable read_result2 : reg_data_t;
         variable dq_count : natural;
 
         procedure write_dq(dq : reg_data_t) is
@@ -265,7 +267,33 @@ begin
             GDDR6_CONFIG_SG_RESET_N_BITS => "01",
             GDDR6_CONFIG_EDC_T_BIT => '1',
             GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT => '1',
-            others => '0'));
+            others => '0'), true);
+
+
+        -- Configure test exchange
+        start_write(quiet => true);
+        write_reg(GDDR6_DQ_REG, X"0000_0000", true);
+        write_ca('0', 10X"0", 10X"0", X"0", '0', quiet => true);
+        write_reg(GDDR6_DQ_REG, X"0000_0000", true);
+        write_ca(oe => '1', quiet => true);
+        write_reg(GDDR6_DQ_REG, X"0000_0000", true);
+        write_ca(oe => '1', quiet => true);
+        for i in 1 to 15 loop
+            write_ca(quiet => true);
+        end loop;
+        -- Do exchange
+        do_exchange(quiet => true);
+        -- Read and print results
+        for i in 0 to 17 loop
+            read_reg_result(GDDR6_DQ_REG, read_result, true);
+            read_reg_result(GDDR6_CA_REG, read_result2, true);
+            write_reg(GDDR6_COMMAND_REG, (
+                GDDR6_COMMAND_STEP_READ_BIT => '1',
+                others => '0'), true);
+            write(to_string(i) & ": " &
+                to_hstring(read_result) & " " & to_hstring(read_result2));
+        end loop;
+        wait;
 
 
         -- Simple exchange to check CA

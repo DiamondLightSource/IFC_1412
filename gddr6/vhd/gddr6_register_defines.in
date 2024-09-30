@@ -103,7 +103,7 @@
         # Writing to this register configures the CA bus output and advances the
         # write counter.  This register must be writte *after* any required DQ
         # data has been written.
-        CA          W
+        CA          RW
             # Rising edge bits of CA command
             .RISING     10
             # Falling edge bits of CA command

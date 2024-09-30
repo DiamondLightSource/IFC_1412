@@ -7,6 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.register_defs.all;
+use work.gddr6_defs.all;
 use work.gddr6_register_defines.all;
 
 entity gddr6_setup_exchange is
@@ -29,17 +30,13 @@ entity gddr6_setup_exchange is
         capture_edc_out_i : in std_ulogic;
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
-        phy_ca_o : out vector_array(0 to 1)(9 downto 0);
-        phy_ca3_o : out std_ulogic_vector(0 to 3);
-        phy_cke_n_o : out std_ulogic;
-        phy_output_enable_o : out std_ulogic;
-        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
-        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
-        phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0)
+        phy_ca_o : out phy_ca_t;
+        phy_ca_i : in phy_ca_t;
+        phy_output_enable_i : in std_ulogic;
+        phy_dq_o : out phy_dq_out_t;
+        phy_dq_i : in phy_dq_in_t;
+        phy_dbi_n_o : out phy_dbi_t;
+        phy_dbi_n_i : in phy_dbi_t
     );
 end;
 
@@ -72,6 +69,7 @@ architecture arch of gddr6_setup_exchange is
     signal read_dq_data : reg_data_array_t(0 to 15);
     signal read_dbi_data : reg_data_array_t(0 to 1);
     signal read_edc_data : reg_data_array_t(0 to 1);
+    signal read_ca_data : reg_data_t := (others => '0');
 
 begin
     -- COMMAND
@@ -91,7 +89,7 @@ begin
     write_ca_strobe <= write_strobe_i(GDDR6_CA_REG);
     write_ack_o(GDDR6_CA_REG) <= '1';
     read_ack_o(GDDR6_CA_REG) <= '1';
-    read_data_o(GDDR6_CA_REG) <= (others => '0');
+    read_data_o(GDDR6_CA_REG) <= read_ca_data;
 
     -- DQ
     read_dq : entity work.register_read_block port map (
@@ -196,12 +194,19 @@ begin
 
         write_ca_strobe_i => write_ca_strobe,
         write_ca_i => (
-            0 => ca_bits(GDDR6_CA_RISING_BITS),
-            1 => ca_bits(GDDR6_CA_FALLING_BITS)),
-        write_ca3_i => reverse(ca_bits(GDDR6_CA_CA3_BITS)),
-        write_cke_n_i => ca_bits(GDDR6_CA_CKE_N_BIT),
+            ca => (
+                0 => ca_bits(GDDR6_CA_RISING_BITS),
+                1 => ca_bits(GDDR6_CA_FALLING_BITS)),
+            ca3 => reverse(ca_bits(GDDR6_CA_CA3_BITS)),
+            cke_n => ca_bits(GDDR6_CA_CKE_N_BIT)),
         write_output_enable_i => ca_bits(GDDR6_CA_OUTPUT_ENABLE_BIT),
         write_edc_select_i => ca_bits(GDDR6_CA_EDC_SELECT_BIT),
+
+        read_ca_o.ca(0) => read_ca_data(GDDR6_CA_RISING_BITS),
+        read_ca_o.ca(1) => read_ca_data(GDDR6_CA_FALLING_BITS),
+        reverse(read_ca_o.ca3) => read_ca_data(GDDR6_CA_CA3_BITS),
+        read_ca_o.cke_n => read_ca_data(GDDR6_CA_CKE_N_BIT),
+        read_output_enable_o => read_ca_data(GDDR6_CA_OUTPUT_ENABLE_BIT),
 
         write_data_strobe_i => write_dq_buf_strobe,
         write_data_i => (others => write_data_i(GDDR6_DQ_REG)),
@@ -216,15 +221,11 @@ begin
         capture_edc_out_i => capture_edc_out_i,
 
         phy_ca_o => phy_ca_o,
-        phy_ca3_o => phy_ca3_o,
-        phy_cke_n_o => phy_cke_n_o,
-        phy_output_enable_o => phy_output_enable_o,
-        phy_data_o => phy_data_o,
-        phy_data_i => phy_data_i,
+        phy_ca_i => phy_ca_i,
+        phy_output_enable_i => phy_output_enable_i,
+        phy_dq_o => phy_dq_o,
+        phy_dq_i => phy_dq_i,
         phy_dbi_n_o => phy_dbi_n_o,
-        phy_dbi_n_i => phy_dbi_n_i,
-        phy_edc_in_i => phy_edc_in_i,
-        phy_edc_write_i => phy_edc_write_i,
-        phy_edc_read_i => phy_edc_read_i
+        phy_dbi_n_i => phy_dbi_n_i
     );
 end;

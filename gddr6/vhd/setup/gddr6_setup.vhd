@@ -33,6 +33,8 @@ entity gddr6_setup is
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out phy_ca_t;
+        phy_ca_i : in phy_ca_t;
+        phy_output_enable_i : in std_ulogic;
         phy_dq_o : out phy_dq_out_t;
         phy_dq_i : in phy_dq_in_t;
         phy_dbi_n_o : out phy_dbi_t;
@@ -123,16 +125,12 @@ begin
 
         capture_edc_out_i => capture_edc_out,
 
-        phy_ca_o => phy_ca_o.ca,
-        phy_ca3_o => phy_ca_o.ca3,
-        phy_cke_n_o => phy_ca_o.cke_n,
-        phy_output_enable_o => phy_dq_o.output_enable,
-        phy_data_o => phy_dq_o.data,
-        phy_data_i => phy_dq_i.data,
+        phy_ca_o => phy_ca_o,
+        phy_ca_i => phy_ca_i,
+        phy_output_enable_i => phy_output_enable_i,
+        phy_dq_o => phy_dq_o,
+        phy_dq_i => phy_dq_i,
         phy_dbi_n_o => phy_dbi_n_o,
-        phy_dbi_n_i => phy_dbi_n_i,
-        phy_edc_in_i => phy_dq_i.edc_in,
-        phy_edc_write_i => phy_dq_i.edc_write,
-        phy_edc_read_i => phy_dq_i.edc_read
+        phy_dbi_n_i => phy_dbi_n_i
     );
 end;

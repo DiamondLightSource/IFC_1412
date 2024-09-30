@@ -6,6 +6,8 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
+
 entity gddr6_setup_buffers is
     generic (
         MAX_DELAY : real
@@ -26,13 +28,13 @@ entity gddr6_setup_buffers is
         write_address_i : in unsigned(5 downto 0);
         read_address_i : in unsigned(5 downto 0);
 
-        -- CA loading interface on reg_clk_i
+        -- CA loading and readback interface on reg_clk_i
         write_ca_strobe_i : in std_ulogic;
-        write_ca_i : in vector_array(0 to 1)(9 downto 0);
-        write_ca3_i : in std_ulogic_vector(0 to 3);
-        write_cke_n_i : in std_ulogic;
+        write_ca_i : in phy_ca_t;
         write_output_enable_i : in std_ulogic;
         write_edc_select_i : in std_ulogic;
+        read_ca_o : out phy_ca_t;
+        read_output_enable_o : out std_ulogic;
 
         -- Data loading and readback interface on reg_clk_i
         write_data_strobe_i : in std_ulogic_vector(0 to 15);
@@ -49,17 +51,13 @@ entity gddr6_setup_buffers is
         capture_edc_out_i : in std_ulogic;
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
-        phy_ca_o : out vector_array(0 to 1)(9 downto 0);
-        phy_ca3_o : out std_ulogic_vector(0 to 3);
-        phy_cke_n_o : out std_ulogic;
-        phy_output_enable_o : out std_ulogic;
-        phy_data_o : out vector_array(63 downto 0)(7 downto 0);
-        phy_data_i : in vector_array(63 downto 0)(7 downto 0);
-        phy_dbi_n_o : out vector_array(7 downto 0)(7 downto 0);
-        phy_dbi_n_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_in_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_write_i : in vector_array(7 downto 0)(7 downto 0);
-        phy_edc_read_i : in vector_array(7 downto 0)(7 downto 0)
+        phy_ca_o : out phy_ca_t;
+        phy_ca_i : in phy_ca_t;
+        phy_output_enable_i : in std_ulogic;
+        phy_dq_o : out phy_dq_out_t;
+        phy_dq_i : in phy_dq_in_t;
+        phy_dbi_n_o : out phy_dbi_t;
+        phy_dbi_n_i : in phy_dbi_t
     );
 end;
 
@@ -102,7 +100,8 @@ architecture arch of gddr6_setup_buffers is
     end;
 
 begin
-    -- CA buffer
+    -- CA buffers
+    -- Output for writing
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
         DATA_BITS => 27,
@@ -112,22 +111,46 @@ begin
         write_clk_i => reg_clk_i,
         write_strobe_i => write_ca_strobe_i,
         write_addr_i => write_address_i,
-        write_data_i(9 downto 0) => write_ca_i(0),
-        write_data_i(19 downto 10) => write_ca_i(1),
-        write_data_i(23 downto 20) => write_ca3_i,
-        write_data_i(24) => write_cke_n_i,
+        write_data_i(9 downto 0) => write_ca_i.ca(0),
+        write_data_i(19 downto 10) => write_ca_i.ca(1),
+        write_data_i(23 downto 20) => write_ca_i.ca3,
+        write_data_i(24) => write_ca_i.cke_n,
         write_data_i(25) => write_output_enable_i,
         write_data_i(26) => write_edc_select_i,
 
         read_clk_i => ck_clk_i,
         read_strobe_i => exchange_active,
         read_addr_i => exchange_address,
-        read_data_o(9 downto 0) => phy_ca_o(0),
-        read_data_o(19 downto 10) => phy_ca_o(1),
-        read_data_o(23 downto 20) => phy_ca3_o,
-        read_data_o(24) => phy_cke_n_o,
-        read_data_o(25) => phy_output_enable_o,
+        read_data_o(9 downto 0) => phy_ca_o.ca(0),
+        read_data_o(19 downto 10) => phy_ca_o.ca(1),
+        read_data_o(23 downto 20) => phy_ca_o.ca3,
+        read_data_o(24) => phy_ca_o.cke_n,
+        read_data_o(25) => phy_dq_o.output_enable,
         read_data_o(26) => edc_select
+    );
+
+    -- Input for capture when CTRL is alive
+    ca_in : entity work.memory_array_dual generic map (
+        ADDR_BITS => 6,
+        DATA_BITS => 26,
+        MARK_FALSE_PATH => true
+    ) port map (
+        write_clk_i => ck_clk_i,
+        write_strobe_i => exchange_active,
+        write_addr_i => exchange_address,
+        write_data_i(9 downto 0) => phy_ca_i.ca(0),
+        write_data_i(19 downto 10) => phy_ca_i.ca(1),
+        write_data_i(23 downto 20) => phy_ca_i.ca3,
+        write_data_i(24) => phy_ca_i.cke_n,
+        write_data_i(25) => phy_output_enable_i,
+
+        read_clk_i => reg_clk_i,
+        read_addr_i => read_address_i,
+        read_data_o(9 downto 0) => read_ca_o.ca(0),
+        read_data_o(19 downto 10) => read_ca_o.ca(1),
+        read_data_o(23 downto 20) => read_ca_o.ca3,
+        read_data_o(24) => read_ca_o.cke_n,
+        read_data_o(25) => read_output_enable_o
     );
 
 
@@ -138,6 +161,7 @@ begin
         data_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
+            INITIAL => (others => '1'),
             MARK_FALSE_PATH => true
         ) port map (
             write_clk_i => reg_clk_i,
@@ -148,7 +172,7 @@ begin
             read_clk_i => ck_clk_i,
             read_strobe_i => exchange_active,
             read_addr_i => exchange_address,
-            to_vector_array(read_data_o) => phy_data_o(BYTE_RANGE)
+            to_vector_array(read_data_o) => phy_dq_o.data(BYTE_RANGE)
         );
 
         data_in : entity work.memory_array_dual generic map (
@@ -159,7 +183,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => to_std_ulogic_vector(phy_data_i(BYTE_RANGE)),
+            write_data_i => to_std_ulogic_vector(phy_dq_i.data(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,
@@ -172,14 +196,15 @@ begin
     -- DBI or computed EDC
     dbi_capture_data <=
         phy_dbi_n_i when not capture_edc_out_i else
-        phy_edc_write_i when edc_select else
-        phy_edc_read_i;
+        phy_dq_i.edc_write when edc_select else
+        phy_dq_i.edc_read;
     gen_dbi : for word in 0 to 1 generate
         subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;
     begin
         dbi_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
+            INITIAL => (others => '1'),
             MARK_FALSE_PATH => true
         ) port map (
             write_clk_i => reg_clk_i,
@@ -222,7 +247,7 @@ begin
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
             write_addr_i => exchange_address,
-            write_data_i => to_std_ulogic_vector(phy_edc_in_i(BYTE_RANGE)),
+            write_data_i => to_std_ulogic_vector(phy_dq_i.edc_in(BYTE_RANGE)),
 
             read_clk_i => reg_clk_i,
             read_addr_i => read_address_i,

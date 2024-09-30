@@ -31,9 +31,12 @@ class _Exchange:
     def capacity(self):
         return self.MAX_COMMANDS - self.count
 
-    def command(self, command, cke_n = 0, ca3 = 0, oe = 0):
+    def command(self, command = NOP, cke_n = 0, ca3 = 0, oe = 0, data = None):
         assert self.count < self.MAX_COMMANDS, 'Command buffer is full'
         assert not self.exchanged, 'Must reset before refilling'
+        if data is not None:
+            for d in data:
+                self.sg.DQ._value = d
         self.sg.CA._write_fields_wo(
             RISING = command[0], FALLING = command[1],
             CA3 = ca3, CKE_N = cke_n, OUTPUT_ENABLE = oe)

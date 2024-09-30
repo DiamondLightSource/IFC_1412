@@ -28,6 +28,8 @@ architecture arch of testbench is
     signal read_ack_out : std_ulogic_vector(GDDR6_REGS_RANGE);
 
     signal phy_ca_out : phy_ca_t;
+    signal phy_ca_in : phy_ca_t;
+    signal phy_output_enable : std_ulogic;
     signal phy_dq_out : phy_dq_out_t;
     signal phy_dq_in : phy_dq_in_t;
     signal phy_dbi_n_out : vector_array(7 downto 0)(7 downto 0);
@@ -60,6 +62,8 @@ begin
         ck_clk_ok_i => ck_clk_ok_in,
 
         phy_ca_o => phy_ca_out,
+        phy_ca_i => phy_ca_in,
+        phy_output_enable_i => phy_output_enable,
         phy_dq_o => phy_dq_out,
         phy_dq_i => phy_dq_in,
         phy_dbi_n_o => phy_dbi_n_out,
