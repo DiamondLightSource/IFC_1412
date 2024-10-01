@@ -1,42 +1,82 @@
 #!/usr/bin/env python
 
+import os
 import time
-import sys
+import argparse
 
-from registers import regs, sg
+from fpga_lib.driver import driver
+from fpga_lib.devices import LMK04616
 from fpga_lib.boards import ifc_1412
 
-# read/write/reset bindings for SYS LMK
+
+def parse_args():
+    parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+    parser.add_argument(
+        '-a', dest = 'addr', default = 0,
+        help = 'Set physical address of card.  If not specified then card 0')
+    return parser.parse_args()
+
+
+# Opens hardware device and returns binding to registers
+def open(addr = 0):
+    here = os.path.dirname(__file__)
+    register_defines = os.path.join(here, '../vhd/register_defines.in')
+    gddr6_defines = \
+        os.path.join(here, '../../gddr6/vhd/gddr6_register_defines.in')
+    raw_regs = driver.RawRegisters('ifc_1412-gddr6', 0)
+    regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
+    return regs.SYS
+
+
+# read/write/reset bindings for LMK
 class LMK:
-    def __init__(self, top):
-        self.__top = top
+    # Call with select = 'sys' for SYS LMK, 'acq' for ACQ LMK
+    def __init__(self, lmk, select):
+        self.__lmk = lmk
+        self.__select = { 'acq' : 1, 'sys' : 0 }[select]
 
     def write(self, reg, value):
-        self.__top.LMK04616._write_fields_wo(
-            ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
+        self.__lmk._write_fields_wo(SELECT = self.__select)
+        self.__lmk._write_fields_wo(
+            SELECT = self.__select,
+            ADDRESS = reg, R_WN = 0, DATA = value, ENABLE = 1)
 
     def read(self, reg):
-        self.__top.LMK04616._write_fields_wo(
-            ADDRESS = reg, R_WN = 1, SELECT = 0)
-        return self.__top.LMK04616.DATA
+        self.__lmk._write_fields_wo(SELECT = self.__select)
+        self.__lmk._write_fields_wo(
+            SELECT = self.__select,
+            ADDRESS = reg, R_WN = 1, ENABLE = 1)
+        return self.__lmk.DATA
 
     def reset(self, duration = 0.01):
-        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0)
-        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_RESET = 1)
+        self.__lmk._write_fields_wo(SELECT = self.__select)
+        self.__lmk._write_fields_wo(SELECT = self.__select, RESET = 1)
         time.sleep(duration)
-        self.__top.CONFIG._write_fields_rw(LMK_SELECT = 0, LMK_RESET = 0)
+        self.__lmk._write_fields_wo(SELECT = self.__select, RESET = 0)
 
-top = regs.SYS
-lmk = LMK(top)
 
-if sys.argv[1:]:
-    config = sys.argv[1]
-else:
-    config = '250'
-lmk = ifc_1412.setup_sys_lmk(lmk, config = config)
+def setup_sys_lmk(top):
+    lmk = LMK(top.LMK04616, 'sys')
+    lmk = ifc_1412.setup_sys_lmk(lmk)
+    # Give the system time to lock
+    time.sleep(0.01)
+    return lmk
 
-# Give the system time to lock
-time.sleep(0.01)
-print(
-    'Locked' if lmk.PLL2_LCK_DET else 'Unlocked',
-    ', Status =', top.STATUS.LMK_STATUS)
+
+def report_status(top, lmk):
+    print('SYS LMK Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
+
+
+
+def main():
+    args = parse_args()
+    top = open(args.addr)
+
+    lmk = setup_sys_lmk(top)
+
+    # Wait for lock before enabling ethernet and reporting status
+    time.sleep(0.1)
+    report_status(top, lmk)
+
+
+main()

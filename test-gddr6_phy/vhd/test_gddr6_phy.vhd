@@ -75,12 +75,6 @@ architecture arch of test_gddr6_phy is
     signal sys_read_data : reg_data_array_t(SYS_REGS_RANGE);
     signal sys_read_ack : std_ulogic_vector(SYS_REGS_RANGE);
 
-    -- LMK config and status
-    signal lmk_command_select : std_ulogic;
-    signal lmk_status : std_ulogic_vector(1 downto 0);
-    signal lmk_reset : std_ulogic;
-    signal lmk_sync : std_ulogic;
-
     -- Unused CTRL interface
     signal ctrl_ca_out : phy_ca_t := (
         ca => (others => (others => '0')),
@@ -124,23 +118,12 @@ begin
         write_ack_o => sys_write_ack(SYS_CONTROL_REGS),
         read_strobe_i => sys_read_strobe(SYS_CONTROL_REGS),
         read_data_o => sys_read_data(SYS_CONTROL_REGS),
-        read_ack_o => sys_read_ack(SYS_CONTROL_REGS),
-
-        lmk_command_select_o => lmk_command_select,
-        lmk_status_i => lmk_status,
-        lmk_reset_o => lmk_reset,
-        lmk_sync_o => lmk_sync
+        read_ack_o => sys_read_ack(SYS_CONTROL_REGS)
     );
 
 
     lmk04616 : entity work.lmk04616 port map (
         clk_i => clk_i,
-
-        command_select_i => lmk_command_select,
-        select_valid_o => open,
-        status_o => lmk_status,
-        reset_i => lmk_reset,
-        sync_i => lmk_sync,
 
         write_strobe_i => sys_write_strobe(SYS_LMK04616_REG),
         write_data_i => sys_write_data(SYS_LMK04616_REG),
@@ -170,6 +153,8 @@ begin
         read_strobe_i => sys_read_strobe(SYS_GDDR6_REGS),
         read_data_o => sys_read_data(SYS_GDDR6_REGS),
         read_ack_o => sys_read_ack(SYS_GDDR6_REGS),
+
+        setup_trigger_i => '0',
 
         -- Unused operational interface
         ck_clk_o => open,

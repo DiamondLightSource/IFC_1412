@@ -273,9 +273,9 @@ begin
 
         -- Try an LMK transaction
         write_reg(SYS_LMK04616_REG, (
-            SYS_LMK04616_ADDRESS_BITS => 15X"0123",
-            SYS_LMK04616_R_WN_BIT => '1',
-            SYS_LMK04616_SELECT_BIT => '1',
+            LMK04616_ADDRESS_BITS => 15X"0123",
+            LMK04616_R_WN_BIT => '1',
+            LMK04616_SELECT_BIT => '1',
             others => '0'));
         read_reg(SYS_LMK04616_REG);
 

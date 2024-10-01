@@ -51,3 +51,5 @@ begin
     pad_LMK_SDIO_io <= lmk_mosi_i when lmk_moen_i else 'Z';
     lmk_miso_o <= to_X01(pad_LMK_SDIO_io);
 end;
+
+-- vim: set filetype=vhdl:

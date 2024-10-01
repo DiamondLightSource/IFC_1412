@@ -1,4 +1,6 @@
 -- SPI control interface to dual LMK04616 controllers
+--
+-- Only meaningful on the IFC_1412 card with its dual control over the LMK
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -9,13 +11,6 @@ use work.register_defs.all;
 entity lmk04616 is
     port (
         clk_i : in std_ulogic;
-
-        -- Config
-        command_select_i : in std_ulogic;   -- Select LMK to observe and control
-        select_valid_o : out std_ulogic;    -- Set while selection is valid
-        status_o : out std_ulogic_vector(1 downto 0);
-        reset_i : in std_ulogic;
-        sync_i : in std_ulogic;
 
         -- Register interface
         write_strobe_i : in std_ulogic;
@@ -38,13 +33,16 @@ end;
 
 architecture arch of lmk04616 is
     signal lmk_ctl_sel : std_ulogic;
+
     signal lmk_scl : std_ulogic;
     signal lmk_scs_l : std_ulogic;
     signal lmk_mosi : std_ulogic;
     signal lmk_miso : std_ulogic;
     signal lmk_moen : std_ulogic;
 
-    signal status : std_ulogic_vector(1 downto 0);
+    signal lmk_reset_l : std_ulogic;
+    signal lmk_sync : std_ulogic;
+    signal lmk_status : std_ulogic_vector(1 downto 0);
 
     signal spi_start : std_ulogic;
     signal spi_read_write_n : std_ulogic;
@@ -71,9 +69,9 @@ begin
         lmk_miso_o => lmk_miso,
         lmk_moen_i => lmk_moen,
 
-        lmk_reset_l_i => not reset_i,
-        lmk_sync_i => sync_i,
-        lmk_status_o => status
+        lmk_reset_l_i => lmk_reset_l,
+        lmk_sync_i => lmk_sync,
+        lmk_status_o => lmk_status
     );
 
 
@@ -103,11 +101,6 @@ begin
     control : entity work.lmk04616_control port map (
         clk_i => clk_i,
 
-        command_select_i => command_select_i,
-        select_valid_o => select_valid_o,
-        status_i => status,
-        status_o => status_o,
-
         write_strobe_i => write_strobe_i,
         write_data_i => write_data_i,
         write_ack_o => write_ack_o,
@@ -116,6 +109,11 @@ begin
         read_ack_o => read_ack_o,
 
         lmk_ctl_sel_o => lmk_ctl_sel,
+
+        lmk_reset_l_o => lmk_reset_l,
+        lmk_sync_o => lmk_sync,
+        lmk_status_i => lmk_status,
+
         spi_read_write_n_o => spi_read_write_n,
         spi_address_o => spi_address,
         spi_start_o => spi_start,
@@ -124,3 +122,5 @@ begin
         spi_data_o => spi_data_mosi
     );
 end;
+
+-- vim: set filetype=vhdl:
