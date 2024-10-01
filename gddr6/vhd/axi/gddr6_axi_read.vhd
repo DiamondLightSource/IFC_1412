@@ -24,14 +24,13 @@ entity gddr6_axi_read is
         -- R
         axi_data_o : out axi_read_data_t;
         axi_data_ready_i : in std_ulogic;
+        -- Stats
+        stats_o : out raw_stats_t;
 
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
         ctrl_request_o : out axi_ctrl_read_request_t;
-        ctrl_response_i : in axi_ctrl_read_response_t;
-
-        -- Stats
-        stats_o : out raw_stats_t
+        ctrl_response_i : in axi_ctrl_read_response_t
     );
 end;
 

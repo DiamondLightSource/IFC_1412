@@ -54,23 +54,8 @@ entity gddr6_axi is
         -- component to the SG controller on ck_clk_i
         axi_clk_i : in std_ulogic;
 
-        -- WA
-        axi_wa_i : in axi_address_t;
-        axi_wa_ready_o : out std_ulogic;
-        -- W
-        axi_w_i : in axi_write_data_t;
-        axi_w_ready_o : out std_ulogic;
-        -- B
-        axi_b_o : out axi_write_response_t;
-        axi_b_ready_i : in std_ulogic;
-        -- RA
-        axi_ra_i : in axi_address_t;
-        axi_ra_ready_o : out std_ulogic;
-        -- R
-        axi_r_o : out axi_read_data_t;
-        axi_r_ready_i : in std_ulogic;
-
-        -- AXI statistics
+        axi_request_i : in axi_request_t;
+        axi_response_o : out axi_response_t;
         axi_stats_o : out axi_stats_t;
 
         -- ---------------------------------------------------------------------
@@ -101,19 +86,20 @@ begin
         MAX_DELAY => MAX_DELAY
     ) port map (
         axi_clk_i => axi_clk_i,
-        axi_address_i => axi_wa_i,
-        axi_address_ready_o => axi_wa_ready_o,
-        axi_data_i => axi_w_i,
-        axi_data_ready_o => axi_w_ready_o,
-        axi_response_o => axi_b_o,
-        axi_response_ready_i => axi_b_ready_i,
+
+        axi_address_i => axi_request_i.write_address,
+        axi_address_ready_o => axi_response_o.write_address_ready,
+        axi_data_i => axi_request_i.write_data,
+        axi_data_ready_o => axi_response_o.write_data_ready,
+        axi_response_o => axi_response_o.write_response,
+        axi_response_ready_i => axi_request_i.write_response_ready,
+        stats_o => write_stats,
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_write_request_o,
-        ctrl_response_i => ctrl_write_response_i,
-
-        stats_o => write_stats
+        ctrl_response_i => ctrl_write_response_i
     );
+
 
     axi_read : entity work.gddr6_axi_read generic map (
         DATA_FIFO_BITS => DATA_FIFO_BITS,
@@ -121,17 +107,18 @@ begin
         MAX_DELAY => MAX_DELAY
     ) port map (
         axi_clk_i => axi_clk_i,
-        axi_address_i => axi_ra_i,
-        axi_address_ready_o => axi_ra_ready_o,
-        axi_data_o => axi_r_o,
-        axi_data_ready_i => axi_r_ready_i,
+
+        axi_address_i => axi_request_i.read_address,
+        axi_address_ready_o => axi_response_o.read_address_ready,
+        axi_data_o => axi_response_o.read_data,
+        axi_data_ready_i => axi_request_i.read_data_ready,
+        stats_o => read_stats,
 
         ctrl_clk_i => ck_clk_i,
         ctrl_request_o => ctrl_read_request_o,
-        ctrl_response_i => ctrl_read_response_i,
-
-        stats_o => read_stats
+        ctrl_response_i => ctrl_read_response_i
     );
+
 
     stats : entity work.gddr6_axi_stats port map (
         clk_i => axi_clk_i,

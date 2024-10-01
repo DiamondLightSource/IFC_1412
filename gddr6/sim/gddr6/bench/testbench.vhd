@@ -100,7 +100,7 @@ begin
     setup_clk <= not setup_clk after 2 ns;
     s_axi_ACLK <= not s_axi_ACLK after 2.3 ns;
 
-    gddr6 : entity work.gddr6 port map (
+    gddr6 : entity work.gddr6_ip port map (
         setup_clk_i => setup_clk,
         write_strobe_i => write_strobe,
         write_address_i => write_address,

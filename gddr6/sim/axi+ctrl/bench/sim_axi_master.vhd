@@ -14,23 +14,8 @@ use work.gddr6_axi_defs.all;
 entity sim_axi_master is
     port (
         clk_i : in std_ulogic;
-
-        -- WA
-        axi_wa_o : out axi_address_t;
-        axi_wa_ready_i : in std_ulogic;
-        -- W
-        axi_w_o : out axi_write_data_t;
-        axi_w_ready_i : in std_ulogic;
-        -- B
-        axi_b_i : in axi_write_response_t;
-        axi_b_ready_o : out std_ulogic;
-
-        -- RA
-        axi_ra_o : out axi_address_t;
-        axi_ra_ready_i : in std_ulogic;
-        -- R
-        axi_r_i : in axi_read_data_t;
-        axi_r_ready_o : out std_ulogic
+        axi_request_o : out axi_request_t;
+        axi_response_i : in axi_response_t
     );
 end;
 
@@ -99,27 +84,27 @@ architecture arch of sim_axi_master is
 
 begin
     -- We are always read to report B and R
-    axi_b_ready_o <= '1';
-    axi_r_ready_o <= '1';
+    axi_request_o.write_response_ready <= '1';
+    axi_request_o.read_data_ready <= '1';
     process (clk_i) begin
         if rising_edge(clk_i) then
             tick_count <= tick_count + 1;
 
             -- Report write completion
-            if axi_b_i.valid then
+            if axi_response_i.write_response.valid then
                 write("B",
-                    to_hstring(axi_b_i.id) & " " &
-                    to_resp_string(axi_b_i.resp));
+                    to_hstring(axi_response_i.write_response.id) & " " &
+                    to_resp_string(axi_response_i.write_response.resp));
                 write_count <= write_count + 1;
             end if;
 
             -- Report read responses
-            if axi_r_i.valid then
+            if axi_response_i.read_data.valid then
                 write("R",
-                    to_hstring(axi_r_i.id) & " " &
-                    to_resp_string(axi_r_i.resp) & " " &
-                    to_string(axi_r_i.last) & " " &
-                    to_hstring(axi_r_i.data));
+                    to_hstring(axi_response_i.read_data.id) & " " &
+                    to_resp_string(axi_response_i.read_data.resp) & " " &
+                    to_string(axi_response_i.read_data.last) & " " &
+                    to_hstring(axi_response_i.read_data.data));
             end if;
         end if;
     end process;
@@ -133,11 +118,13 @@ begin
             len : unsigned(7 downto 0);
             size : unsigned(2 downto 0) := "110") is
         begin
-            send_address(axi_wa_o, axi_wa_ready_i, "WA", id, addr, len, size);
+            send_address(
+                axi_request_o.write_address, axi_response_i.write_address_ready,
+                "WA", id, addr, len, size);
         end;
 
     begin
-        axi_wa_o <= IDLE_AXI_ADDRESS;
+        axi_request_o.write_address <= IDLE_AXI_ADDRESS;
 
         clk_wait(5);
 
@@ -269,7 +256,7 @@ wait;
             data_out := mask_data(mask, data_out);
             data_counter := data_counter + 1;
 
-            axi_w_o <= (
+            axi_request_o.write_data <= (
                 data => data_out,
                 strb => mask,
                 last => last,
@@ -277,12 +264,12 @@ wait;
             );
             loop
                 clk_wait;
-                exit when axi_w_ready_i;
+                exit when axi_response_i.write_data_ready;
             end loop;
             write("W",
                 to_hstring(mask) & " " & choose(last = '1', "L", "-") & " " &
                 to_hstring(data_out));
-            axi_w_o <= IDLE_AXI_WRITE_DATA;
+            axi_request_o.write_data <= IDLE_AXI_WRITE_DATA;
         end;
 
         procedure send_data_burst(
@@ -296,7 +283,7 @@ wait;
         end;
 
     begin
-        axi_w_o <= IDLE_AXI_WRITE_DATA;
+        axi_request_o.write_data <= IDLE_AXI_WRITE_DATA;
         clk_wait(5);
 
         send_data(dtype => DATA_BYTES);
@@ -355,7 +342,9 @@ wait;
             len : unsigned(7 downto 0);
             size : unsigned(2 downto 0) := "110") is
         begin
-            send_address(axi_ra_o, axi_ra_ready_i, "RA", id, addr, len, size);
+            send_address(
+                axi_request_o.read_address, axi_response_i.read_address_ready,
+                "RA", id, addr, len, size);
         end;
 
         -- Blocks until the target write count is reached
@@ -366,7 +355,7 @@ wait;
         end;
 
     begin
-        axi_ra_o <= IDLE_AXI_ADDRESS;
+        axi_request_o.read_address <= IDLE_AXI_ADDRESS;
 
         clk_wait(5);
 

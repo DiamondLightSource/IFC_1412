@@ -6,45 +6,9 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 
+use work.gddr6_defs.all;
+
 package gddr6_axi_defs is
-    -- -------------------------------------------------------------------------
-    -- AXI stream interfaces: AW, W, B, AR, R
-
-    -- AXI AW and AR are the same
-    type axi_address_t is record
-        id : std_logic_vector(3 downto 0);
-        addr : unsigned(31 downto 0);
-        len : unsigned(7 downto 0);
-        size : unsigned(2 downto 0);
-        burst : std_ulogic_vector(1 downto 0);
-        valid : std_ulogic;
-    end record;
-
-    -- AXI W
-    type axi_write_data_t is record
-        data : std_logic_vector(511 downto 0);
-        strb : std_ulogic_vector(63 downto 0);
-        last : std_logic;
-        valid : std_ulogic;
-    end record;
-
-    -- AXI B
-    type axi_write_response_t is record
-        id : std_logic_vector(3 downto 0);
-        resp : std_logic_vector(1 downto 0);
-        valid : std_ulogic;
-    end record;
-
-    -- AXI R
-    type axi_read_data_t is record
-        id : std_logic_vector(3 downto 0);
-        data : std_logic_vector(511 downto 0);
-        resp : std_logic_vector(1 downto 0);
-        last : std_logic;
-        valid : std_ulogic;
-    end record;
-
-
     -- -------------------------------------------------------------------------
     -- Internal FIFO interfaces
 

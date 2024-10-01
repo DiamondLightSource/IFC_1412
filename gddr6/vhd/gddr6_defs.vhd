@@ -20,6 +20,66 @@ package gddr6_defs is
     -- with write enable arrays
     subtype ctrl_data_t is vector_array(0 to 3)(127 downto 0);
 
+
+    -- Top level AXI interface
+    -- -------------------------------------------------------------------------
+    -- AXI stream interfaces: AW, W, B, AR, R
+
+    -- AXI AW and AR are the same
+    type axi_address_t is record
+        id : std_logic_vector(3 downto 0);
+        addr : unsigned(31 downto 0);
+        len : unsigned(7 downto 0);
+        size : unsigned(2 downto 0);
+        burst : std_ulogic_vector(1 downto 0);
+        valid : std_ulogic;
+    end record;
+
+    -- AXI W
+    type axi_write_data_t is record
+        data : std_logic_vector(511 downto 0);
+        strb : std_ulogic_vector(63 downto 0);
+        last : std_logic;
+        valid : std_ulogic;
+    end record;
+
+    -- AXI B
+    type axi_write_response_t is record
+        id : std_logic_vector(3 downto 0);
+        resp : std_logic_vector(1 downto 0);
+        valid : std_ulogic;
+    end record;
+
+    -- AXI R
+    type axi_read_data_t is record
+        id : std_logic_vector(3 downto 0);
+        data : std_logic_vector(511 downto 0);
+        resp : std_logic_vector(1 downto 0);
+        last : std_logic;
+        valid : std_ulogic;
+    end record;
+
+
+
+    -- From master to slave
+    type axi_request_t is record
+        write_address : axi_address_t;
+        write_data : axi_write_data_t;
+        write_response_ready : std_ulogic;
+        read_address : axi_address_t;
+        read_data_ready : std_ulogic;
+    end record;
+
+    -- From slave to master
+    type axi_response_t is record
+        write_address_ready : std_ulogic;
+        write_data_ready : std_ulogic;
+        write_response : axi_write_response_t;
+        read_address_ready : std_ulogic;
+        read_data : axi_read_data_t;
+    end record;
+
+
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between AXI and CTRL
 

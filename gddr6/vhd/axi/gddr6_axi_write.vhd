@@ -27,14 +27,13 @@ entity gddr6_axi_write is
         -- B
         axi_response_o : out axi_write_response_t;
         axi_response_ready_i : in std_ulogic;
+        -- Stats
+        stats_o : out raw_stats_t;
 
         -- CTRL interface
         ctrl_clk_i : in std_ulogic;
         ctrl_request_o : out axi_ctrl_write_request_t;
-        ctrl_response_i : in axi_ctrl_write_response_t;
-
-        -- Stats
-        stats_o : out raw_stats_t
+        ctrl_response_i : in axi_ctrl_write_response_t
     );
 end;
 
