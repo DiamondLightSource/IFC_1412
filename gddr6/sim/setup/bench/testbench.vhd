@@ -27,6 +27,9 @@ architecture arch of testbench is
     signal read_data_out : reg_data_array_t(GDDR6_REGS_RANGE);
     signal read_ack_out : std_ulogic_vector(GDDR6_REGS_RANGE);
 
+    signal setup_trigger : std_ulogic := '0';
+    signal ctrl_setup : ctrl_setup_t;
+
     signal phy_ca_out : phy_ca_t;
     signal phy_ca_in : phy_ca_t;
     signal phy_output_enable : std_ulogic;
@@ -57,6 +60,8 @@ begin
         read_data_o => read_data_out,
         read_ack_o => read_ack_out,
 
+        setup_trigger_i => setup_trigger,
+
         ck_reset_o => ck_reset_out,
         ck_clk_i => ck_clk_in,
         ck_clk_ok_i => ck_clk_ok_in,
@@ -75,6 +80,7 @@ begin
         setup_delay_o => setup_delay_out,
         setup_delay_i => setup_delay_in,
 
+        ctrl_setup_o => ctrl_setup,
         enable_controller_o => enable_controller_out
     );
 
@@ -214,6 +220,21 @@ begin
         read_data_words;
         read_data_words;
         read_data_words;
+
+        -- Enable the controller and trigger a full capture
+        write_reg(GDDR6_CONFIG_REG, (
+            GDDR6_CONFIG_CK_RESET_N_BIT => '1',
+            GDDR6_CONFIG_ENABLE_CONTROL_BIT => '1',
+            others => '0'));
+        clk_wait;
+        setup_trigger <= '1';
+        clk_wait;
+        setup_trigger <= '0';
+        clk_wait(70);
+        -- Do it again to check repeatability
+        setup_trigger <= '1';
+        clk_wait;
+        setup_trigger <= '0';
 
         wait;
     end process;

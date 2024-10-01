@@ -36,6 +36,8 @@ entity gddr6_setup_phy is
         read_data_o : out reg_data_array_t(GDDR6_REGS_RANGE);
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
+        setup_trigger_i : in std_ulogic;
+
         -- --------------------------------------------------------------------
         -- CTRL
         ctrl_setup_o : out ctrl_setup_t;
@@ -136,6 +138,7 @@ begin
         phy_setup_o => phy_setup,
         phy_status_i => phy_status,
 
+        setup_trigger_i => setup_trigger_i,
         ctrl_setup_o => ctrl_setup_o,
         enable_controller_o => enable_controller
     );

@@ -22,6 +22,9 @@ architecture arch of testbench is
     signal read_data : std_ulogic_vector(31 downto 0);
     signal read_ack : std_ulogic;
 
+    signal axi_stats : axi_stats_t;
+    signal setup_trigger : std_ulogic;
+
     signal s_axi_ACLK : std_logic := '0';
     signal s_axi_RESET : std_logic := '0';
     signal s_axi_AWID : std_logic_vector(3 downto 0);
@@ -107,6 +110,9 @@ begin
         read_address_i => read_address,
         read_data_o => read_data,
         read_ack_o => read_ack,
+
+        axi_stats_o => axi_stats,
+        setup_trigger_i => setup_trigger,
 
         s_axi_ACLK => s_axi_ACLK,
         s_axi_RESET_i => s_axi_RESET,

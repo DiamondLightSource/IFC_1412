@@ -41,6 +41,9 @@ entity gddr6 is
         read_data_o : out std_ulogic_vector(31 downto 0);
         read_ack_o : out std_ulogic;
 
+        axi_stats_o : out axi_stats_t;
+        setup_trigger_i : in std_ulogic;
+
         -- ---------------------------------------------------------------------
         -- AXI slave interface to 4GB GDDR6 SGRAM
         --
@@ -335,8 +338,6 @@ architecture arch of gddr6 is
     signal read_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
     signal read_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
 
-    signal axi_stats : axi_stats_t;
-
 begin
     axi : entity work.gddr6_axi generic map (
         AXI_FREQUENCY => AXI_FREQUENCY,
@@ -384,7 +385,7 @@ begin
         axi_r_o.valid => s_axi_RVALID_o,
         axi_r_ready_i => s_axi_RREADY_i,
 
-        axi_stats_o => axi_stats,
+        axi_stats_o => axi_stats_o,
 
         ck_clk_i => ck_clk,
         ctrl_read_request_o => read_request,
@@ -444,6 +445,8 @@ begin
         read_strobe_i => read_strobe,
         read_data_o => read_data,
         read_ack_o => read_ack,
+
+        setup_trigger_i => setup_trigger_i,
 
         ctrl_setup_o => ctrl_setup,
         ctrl_ca_i => ca,

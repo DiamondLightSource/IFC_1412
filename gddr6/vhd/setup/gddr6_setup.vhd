@@ -26,6 +26,8 @@ entity gddr6_setup is
         read_data_o : out reg_data_array_t(GDDR6_REGS_RANGE);
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
+        setup_trigger_i : in std_ulogic;
+
         -- CK clock, used for all other elements of the interface
         ck_reset_o : out std_ulogic;    -- Reset control for CK
         ck_clk_i : in std_ulogic;       -- CK clock
@@ -123,6 +125,8 @@ begin
         read_data_o => read_data_o(GDDR6_EXCHANGE_REGS),
         read_ack_o => read_ack_o(GDDR6_EXCHANGE_REGS),
 
+        enable_controller_i => enable_controller_o,
+        setup_trigger_i => setup_trigger_i,
         capture_edc_out_i => capture_edc_out,
 
         phy_ca_o => phy_ca_o,

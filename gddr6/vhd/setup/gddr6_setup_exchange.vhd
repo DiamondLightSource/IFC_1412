@@ -27,6 +27,8 @@ entity gddr6_setup_exchange is
         read_data_o : out reg_data_array_t(GDDR6_EXCHANGE_REGS);
         read_ack_o : out std_ulogic_vector(GDDR6_EXCHANGE_REGS);
 
+        enable_controller_i : in std_ulogic;
+        setup_trigger_i : in std_ulogic;
         capture_edc_out_i : in std_ulogic;
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
@@ -143,7 +145,9 @@ begin
     process (reg_clk_i) begin
         if rising_edge(reg_clk_i) then
             -- Write address management and strobe generation
-            if start_write then
+            if enable_controller_i then
+                exchange_count <= (others => '1');
+            elsif start_write then
                 write_address <= (others => '0');
             elsif write_ca_strobe then
                 exchange_count <= write_address;
@@ -185,7 +189,7 @@ begin
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok_i,
 
-        exchange_strobe_i => exchange_strobe,
+        exchange_strobe_i => exchange_strobe or setup_trigger_i,
         exchange_ack_o => exchange_ack,
         exchange_count_i => exchange_count,
 
