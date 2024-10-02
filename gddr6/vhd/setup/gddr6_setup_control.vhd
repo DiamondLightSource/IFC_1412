@@ -37,7 +37,8 @@ entity gddr6_setup_control is
 
         -- Controller enable
         ctrl_setup_o : out ctrl_setup_t;
-        enable_controller_o : out std_ulogic := '0'
+        ck_enable_controller_o : out std_ulogic := '0';
+        reg_enable_controller_o : out std_ulogic := '0'
     );
 end;
 
@@ -162,6 +163,8 @@ begin
     begin
         if rising_edge(reg_clk_i) then
             ck_reset_o <= not reg_config_bits(GDDR6_CONFIG_CK_RESET_N_BIT);
+            reg_enable_controller_o <=
+                reg_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
 
             reg_status_bits <= (
                 GDDR6_STATUS_CK_OK_BIT => ck_clk_ok_i,
@@ -216,7 +219,7 @@ begin
                 priority_direction =>
                     ck_config_bits(GDDR6_CONFIG_PRIORITY_DIR_BIT)
             );
-            enable_controller_o <=
+            ck_enable_controller_o <=
                 ck_config_bits(GDDR6_CONFIG_ENABLE_CONTROL_BIT);
 
             ck_status_bits <= (

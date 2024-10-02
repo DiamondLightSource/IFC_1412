@@ -105,8 +105,7 @@ begin
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
         DATA_BITS => 27,
-        INITIAL => (25 => '0', others => '1'),
-        MARK_FALSE_PATH => true
+        INITIAL => (25 => '0', others => '1')
     ) port map (
         write_clk_i => reg_clk_i,
         write_strobe_i => write_ca_strobe_i,
@@ -132,8 +131,7 @@ begin
     -- Input for capture when CTRL is alive
     ca_in : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
-        DATA_BITS => 26,
-        MARK_FALSE_PATH => true
+        DATA_BITS => 26
     ) port map (
         write_clk_i => ck_clk_i,
         write_strobe_i => exchange_active,
@@ -161,8 +159,7 @@ begin
         data_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
-            INITIAL => (others => '1'),
-            MARK_FALSE_PATH => true
+            INITIAL => (others => '1')
         ) port map (
             write_clk_i => reg_clk_i,
             write_strobe_i => write_data_strobe_i(word),
@@ -177,8 +174,7 @@ begin
 
         data_in : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
-            DATA_BITS => 32,
-            MARK_FALSE_PATH => true
+            DATA_BITS => 32
         ) port map (
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
@@ -204,8 +200,7 @@ begin
         dbi_out : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
             DATA_BITS => 32,
-            INITIAL => (others => '1'),
-            MARK_FALSE_PATH => true
+            INITIAL => (others => '1')
         ) port map (
             write_clk_i => reg_clk_i,
             write_strobe_i => write_dbi_strobe_i(word),
@@ -220,8 +215,7 @@ begin
 
         dbi_in : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
-            DATA_BITS => 32,
-            MARK_FALSE_PATH => true
+            DATA_BITS => 32
         ) port map (
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,
@@ -241,8 +235,7 @@ begin
     begin
         edc : entity work.memory_array_dual generic map (
             ADDR_BITS => 6,
-            DATA_BITS => 32,
-            MARK_FALSE_PATH => true
+            DATA_BITS => 32
         ) port map (
             write_clk_i => ck_clk_i,
             write_strobe_i => exchange_active,

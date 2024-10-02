@@ -59,6 +59,7 @@ end;
 architecture arch of gddr6_setup is
     signal ck_clk_ok : std_ulogic;
     signal capture_edc_out : std_ulogic;
+    signal reg_enable_controller : std_ulogic;
 
 begin
     sync_ck_ok : entity work.sync_bit port map (
@@ -88,7 +89,8 @@ begin
 
         capture_edc_out_o => capture_edc_out,
         ctrl_setup_o => ctrl_setup_o,
-        enable_controller_o => enable_controller_o
+        ck_enable_controller_o => enable_controller_o,
+        reg_enable_controller_o => reg_enable_controller
     );
 
 
@@ -125,7 +127,7 @@ begin
         read_data_o => read_data_o(GDDR6_EXCHANGE_REGS),
         read_ack_o => read_ack_o(GDDR6_EXCHANGE_REGS),
 
-        enable_controller_i => enable_controller_o,
+        enable_controller_i => reg_enable_controller,
         setup_trigger_i => setup_trigger_i,
         capture_edc_out_i => capture_edc_out,
 
