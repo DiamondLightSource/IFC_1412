@@ -5,6 +5,8 @@ set bench_dir $env(BENCH_DIR)
 set common_sim $env(COMMON_SIM)
 set gddr6_dir $env(GDDR6_DIR)
 
+set gddr6_common_sim $bench_dir/../../../../gddr6/sim/common
+
 vlib work
 vlib msim
 vlib msim/xil_defaultlib
@@ -18,6 +20,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/sync_pulse.vhd \
     $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/flow_control.vhd \
+    $common_vhd/util/fifo.vhd \
     $common_vhd/util/memory_array_dual.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
@@ -30,6 +34,9 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/cross_clocks_read.vhd \
     $common_vhd/util/cross_clocks_write_read.vhd \
     $common_vhd/util/strobe_ack.vhd \
+    $common_vhd/async_fifo/async_fifo_address.vhd \
+    $common_vhd/async_fifo/async_fifo_reset.vhd \
+    $common_vhd/async_fifo/async_fifo.vhd \
     $common_vhd/register/register_defs.vhd \
     $common_vhd/register/register_buffer.vhd \
     $common_vhd/register/register_mux_strobe.vhd \
@@ -71,32 +78,88 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/setup/gddr6_setup_delay.vhd \
     $gddr6_dir/setup/gddr6_setup.vhd \
     $gddr6_dir/gddr6_setup_phy.vhd \
-    $vhd_dir/system_registers.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_command_defs.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_defs.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_delay_defs.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_tuning_defs.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_read.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_write.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_lookahead.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_admin.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_refresh.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_bank.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_banks.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_mux.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_request.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_command.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_data.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl.vhd \
+    $gddr6_dir/axi/gddr6_axi_defs.vhd \
+    $gddr6_dir/axi/gddr6_axi_address.vhd \
+    $gddr6_dir/axi/gddr6_axi_address_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_command_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_ctrl.vhd \
+    $gddr6_dir/axi/gddr6_axi_read_data.vhd \
+    $gddr6_dir/axi/gddr6_axi_read_data_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_read.vhd \
+    $gddr6_dir/axi/gddr6_axi_write_response_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_write_response.vhd \
+    $gddr6_dir/axi/gddr6_axi_write_data_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_write_status_fifo.vhd \
+    $gddr6_dir/axi/gddr6_axi_write_data.vhd \
+    $gddr6_dir/axi/gddr6_axi_write.vhd \
+    $gddr6_dir/axi/gddr6_axi_stats.vhd \
+    $gddr6_dir/axi/gddr6_axi.vhd \
+    $gddr6_dir/gddr6.vhd \
     $vhd_dir/lmk04616/lmk04616_io.vhd \
     $vhd_dir/lmk04616/lmk04616_control.vhd \
     $vhd_dir/lmk04616/lmk04616.vhd \
+    $vhd_dir/axi_data.vhd \
+    $vhd_dir/axi_address.vhd \
+    $vhd_dir/axi_stats.vhd \
+    $vhd_dir/axi.vhd \
     $vhd_dir/test_gddr6_phy.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
+    $gddr6_common_sim/decode_command_defs.vhd \
+    $gddr6_common_sim/decode_commands.vhd \
     $common_sim/sim_support.vhd \
     $bench_dir/testbench.vhd
 
 vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
+source groups.tcl
+
 view wave
 
-add wave -group "PHY IO" test/setup_phy/phy/io/*
-add wave -group "PHY Clocking" test/setup_phy/phy/clocking/*
-add wave -group "PHY CA" test/setup_phy/phy/ca/*
-add wave -group "PHY DQ" test/setup_phy/phy/dq/*
-add wave -group "PHY Delay" test/setup_phy/phy/delay/*
-add wave -group "PHY" test/setup_phy/phy/*
-add wave -group "Setup Control" test/setup_phy/setup/control/*
-add wave -group "Setup Exchange" test/setup_phy/setup/exchange/*
-add wave -group "Setup Delay" test/setup_phy/setup/delay/*
-add wave -group "Setup" test/setup_phy/setup/*
-add wave -group "Setup PHY" test/setup_phy/*
-add wave -group "Test" test/*
+with_group GDDR6 test/gddr6 {
+    with_group PHY setup_phy/phy {
+        add_wave IO io
+        add_wave signals
+    }
+    with_group SETUP setup_phy/setup {
+        add_wave Control control
+        add_wave Exchange exchange
+        add_wave Exchange.Buffers exchange/buffers
+        add_wave Delay delay
+        add_wave signals
+    }
+    with_group CTRL ctrl {
+        add_wave signals
+    }
+    with_group AXI axi {
+        add_wave signals
+    }
+    add_wave signals
+}
+
+with_group TEST test {
+    add_wave AXI.DATA axi/data
+    add_wave AXI axi
+    add_wave signals
+}
+
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

@@ -39,14 +39,14 @@ architecture arch of top is
     signal DSP_REGS_bvalid : std_ulogic;
 
     -- Internal register path from AXI conversion
-    signal regs_write_strobe : std_ulogic;
-    signal regs_write_address : unsigned(13 downto 0);
-    signal regs_write_data : std_ulogic_vector(31 downto 0);
-    signal regs_write_ack : std_ulogic;
-    signal regs_read_strobe : std_ulogic;
-    signal regs_read_address : unsigned(13 downto 0);
-    signal regs_read_data : std_ulogic_vector(31 downto 0);
-    signal regs_read_ack : std_ulogic;
+    signal write_strobe : std_ulogic;
+    signal write_address : unsigned(13 downto 0);
+    signal write_data : std_ulogic_vector(31 downto 0);
+    signal write_ack : std_ulogic;
+    signal read_strobe : std_ulogic;
+    signal read_address : unsigned(13 downto 0);
+    signal read_data : std_ulogic_vector(31 downto 0);
+    signal read_ack : std_ulogic;
 
 begin
     -- Clocks and resets
@@ -132,14 +132,14 @@ begin
         bvalid_o => DSP_REGS_bvalid,
 
         -- Internal register interface
-        read_strobe_o => regs_read_strobe,
-        read_address_o => regs_read_address,
-        read_data_i => regs_read_data,
-        read_ack_i => regs_read_ack,
-        write_strobe_o => regs_write_strobe,
-        write_address_o => regs_write_address,
-        write_data_o => regs_write_data,
-        write_ack_i => regs_write_ack
+        read_strobe_o => read_strobe,
+        read_address_o => read_address,
+        read_data_i => read_data,
+        read_ack_i => read_ack,
+        write_strobe_o => write_strobe,
+        write_address_o => write_address,
+        write_data_o => write_data,
+        write_ack_i => write_ack
     );
 
 
@@ -148,14 +148,14 @@ begin
     ) port map (
         clk_i => clk,
 
-        regs_write_strobe_i => regs_write_strobe,
-        regs_write_address_i => regs_write_address,
-        regs_write_data_i => regs_write_data,
-        regs_write_ack_o => regs_write_ack,
-        regs_read_strobe_i => regs_read_strobe,
-        regs_read_address_i => regs_read_address,
-        regs_read_data_o => regs_read_data,
-        regs_read_ack_o => regs_read_ack,
+        write_strobe_i => write_strobe,
+        write_address_i => write_address,
+        write_data_i => write_data,
+        write_ack_o => write_ack,
+        read_strobe_i => read_strobe,
+        read_address_i => read_address,
+        read_data_o => read_data,
+        read_ack_o => read_ack,
 
         pad_LMK_CTL_SEL_o => pad_LMK_CTL_SEL,
         pad_LMK_SCL_o => pad_LMK_SCL,
