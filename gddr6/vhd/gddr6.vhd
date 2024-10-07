@@ -31,16 +31,15 @@ entity gddr6 is
         -- Register Setup Interface
         setup_clk_i : in std_ulogic;
 
-        write_strobe_i : in std_ulogic;
-        write_address_i : in unsigned(9 downto 0);
-        write_data_i : in std_ulogic_vector(31 downto 0);
-        write_ack_o : out std_ulogic;
-        read_strobe_i : in std_ulogic;
-        read_address_i : in unsigned(9 downto 0);
-        read_data_o : out std_ulogic_vector(31 downto 0);
-        read_ack_o : out std_ulogic;
+        write_strobe_i : in std_ulogic_vector(GDDR6_REGS_RANGE);
+        write_data_i : in reg_data_array_t(GDDR6_REGS_RANGE);
+        write_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
+        read_strobe_i : in std_ulogic_vector(GDDR6_REGS_RANGE);
+        read_data_o : out reg_data_array_t(GDDR6_REGS_RANGE);
+        read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
         setup_trigger_i : in std_ulogic;
+
 
         -- AXI slave interface to 4GB GDDR6 SGRAM
         axi_clk_i : in std_ulogic;
@@ -48,6 +47,7 @@ entity gddr6 is
         axi_request_i : in axi_request_t;
         axi_response_o : out axi_response_t;
         axi_stats_o : out axi_stats_t;
+
 
         -- GDDR6 PHY Interface
         pad_SG1_RESET_N_o : out std_logic;
@@ -100,13 +100,6 @@ architecture arch of gddr6 is
     signal dq_out : phy_dq_out_t;
     signal dq_in : phy_dq_in_t;
 
-    signal write_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
-    signal write_data : reg_data_array_t(GDDR6_REGS_RANGE);
-    signal write_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
-    signal read_data : reg_data_array_t(GDDR6_REGS_RANGE);
-    signal read_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
-    signal read_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
-
 begin
     axi : entity work.gddr6_axi generic map (
         AXI_FREQUENCY => AXI_FREQUENCY,
@@ -141,27 +134,6 @@ begin
     );
 
 
-    register_mux : entity work.register_mux port map (
-        clk_i => setup_clk_i,
-
-        write_strobe_i => write_strobe_i,
-        write_address_i => write_address_i,
-        write_data_i => write_data_i,
-        write_ack_o => write_ack_o,
-        read_strobe_i => read_strobe_i,
-        read_address_i => read_address_i,
-        read_data_o => read_data_o,
-        read_ack_o => read_ack_o,
-
-        write_strobe_o => write_strobe,
-        write_data_o => write_data,
-        write_ack_i => write_ack,
-        read_data_i => read_data,
-        read_strobe_o => read_strobe,
-        read_ack_i => read_ack
-    );
-
-
     setup_phy : entity work.gddr6_setup_phy generic map (
         CK_FREQUENCY => CK_FREQUENCY,
         REG_FREQUENCY => REG_FREQUENCY
@@ -169,12 +141,12 @@ begin
         reg_clk_i => setup_clk_i,
         ck_clk_o => ck_clk,
 
-        write_strobe_i => write_strobe,
-        write_data_i => write_data,
-        write_ack_o => write_ack,
-        read_strobe_i => read_strobe,
-        read_data_o => read_data,
-        read_ack_o => read_ack,
+        write_strobe_i => write_strobe_i,
+        write_data_i => write_data_i,
+        write_ack_o => write_ack_o,
+        read_strobe_i => read_strobe_i,
+        read_data_o => read_data_o,
+        read_ack_o => read_ack_o,
 
         setup_trigger_i => setup_trigger_i,
 

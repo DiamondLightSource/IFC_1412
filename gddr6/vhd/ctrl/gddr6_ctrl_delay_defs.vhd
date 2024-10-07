@@ -13,9 +13,9 @@ use work.gddr6_ctrl_timing_defs.all;
 package gddr6_ctrl_delay_defs is
     -- The following delays are measured from input to the appropriate BITSLICE
     -- input in _phy_nibble to the corresponding output.
-    constant TX_BITSLICE_DELAY : natural := 1;
-    constant RX_BITSLICE_DELAY : natural := 1;
-    constant TRI_BITSLICE_DELAY : natural := 2;
+    constant TX_BITSLICE_DELAY : natural := 3;
+    constant RX_BITSLICE_DELAY : natural := 3;
+    constant TRI_BITSLICE_DELAY : natural := TX_BITSLICE_DELAY + 1;
 
 
     -- These capture delays between CTRL and PHY used for SETUP multiplexing

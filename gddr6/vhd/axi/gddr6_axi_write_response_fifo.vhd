@@ -11,7 +11,7 @@ use work.gddr6_axi_defs.all;
 
 entity gddr6_axi_write_response_fifo is
     generic (
-        COMMAND_FIFO_BITS : natural := 10
+        COMMAND_FIFO_BITS : natural
     );
     port (
         clk_i : in std_ulogic;

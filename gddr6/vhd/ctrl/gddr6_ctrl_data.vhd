@@ -50,7 +50,7 @@ architecture arch of gddr6_ctrl_data is
         CA_OUTPUT_DELAY + WLmrs - OE_OUTPUT_DELAY;
     -- Output enable needs to be active one tick early, one tick late, and for
     -- two ticks during the write, so we stretch the enable to 4 ticks total.
-    constant OUTPUT_ENABLE_STRETCH : natural := 3;
+    constant OUTPUT_ENABLE_STRETCH : natural := 4;
 
     -- Delays for read
     --
@@ -174,7 +174,9 @@ begin
     );
 
     stretch_output_enable : entity work.stretch_pulse generic map (
-        DELAY => OUTPUT_ENABLE_STRETCH
+        -- Subtract one to account for register
+        DELAY => OUTPUT_ENABLE_STRETCH - 1,
+        REGISTER_OUT => true
     ) port map (
         clk_i => clk_i,
         pulse_i => output_enable,

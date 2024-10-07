@@ -73,11 +73,6 @@ package gddr6_axi_defs is
     end record;
 
 
-    constant IDLE_AXI_ADDRESS : axi_address_t;
-    constant IDLE_AXI_READ_DATA : axi_read_data_t;
-    constant IDLE_AXI_WRITE_DATA : axi_write_data_t;
-    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t;
-
     constant IDLE_ADDRESS : address_t;
     constant IDLE_BURST_COMMAND : burst_command_t;
     constant IDLE_BURST_RESPONSE : burst_response_t;
@@ -86,36 +81,6 @@ package gddr6_axi_defs is
 end;
 
 package body gddr6_axi_defs is
-    constant IDLE_AXI_ADDRESS : axi_address_t := (
-        id => (others => '0'),
-        addr => (others => '0'),
-        len => (others => '0'),
-        size => (others => '0'),
-        burst => (others => '0'),
-        valid => '0'
-    );
-
-    constant IDLE_AXI_READ_DATA : axi_read_data_t := (
-        id => (others => '0'),
-        data => (others => '0'),
-        resp => (others => '0'),
-        last => '0',
-        valid => '0'
-    );
-
-    constant IDLE_AXI_WRITE_DATA : axi_write_data_t := (
-        data => (others => '0'),
-        strb => (others => '0'),
-        last => '0',
-        valid => '0'
-    );
-
-    constant IDLE_AXI_WRITE_RESPONSE : axi_write_response_t := (
-        id => (others => '0'),
-        resp => (others => '0'),
-        valid => '0'
-    );
-
     constant IDLE_ADDRESS : address_t := (
         address => (others => '0'),
         count => (others => '0'),
@@ -151,4 +116,4 @@ package body gddr6_axi_defs is
         ok => '0',
         valid => '0'
     );
- end;
+end;
