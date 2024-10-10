@@ -90,16 +90,10 @@ architecture arch of gddr6_ctrl_data is
     signal read_check_edc : std_ulogic := '0';
 
     -- Write
-    -- A couple of complications relative to read: first, we need to transmit
-    -- the write_advance signal at the same time as data ready, and second, the
-    -- channel enables need to guard the EDC check as disabled channels won't
-    -- generate a valid EDC signal.
+    -- Note that channel enables are needed to guard the EDC check as disabled
+    -- channels won't generate a valid EDC signal.
     signal write_complete_in : std_ulogic;
-    signal write_start : std_ulogic;
-    signal write_delay : std_ulogic := '0';
-    signal write_advance : std_ulogic;
     signal write_edc_in : phy_edc_t;
-
     -- Relevant request signals delayed align with EDC: write_start_edc should
     -- be valid one tick before edc_in_i and write_edc_in become valid
     signal write_start_edc_in : std_ulogic;
@@ -217,14 +211,16 @@ begin
     -- Write processing
 
     delay_write_start_inst : entity work.fixed_delay generic map (
+        -- axi_wd_{ready,advance}_o need to be presented one tick earlier than
+        -- axi_wd_data_i needs to be valid, see gddr6_axi_data_fifo for details.
         DELAY => WRITE_START_DELAY - 1,
         WIDTH => 2
     ) port map (
         clk_i => clk_i,
         data_i(0) => write_complete_in,
         data_i(1) => request_completion_i.advance,
-        data_o(0) => write_start,
-        data_o(1) => write_advance
+        data_o(0) => axi_wd_ready_o,
+        data_o(1) => axi_wd_advance_o
     );
 
     delay_write_edc_inst : entity work.fixed_delay generic map (
@@ -283,14 +279,6 @@ begin
                 axi_rd_ok_o <= axi_rd_ok_o and read_edc_in_ok;
             end if;
             axi_rd_ok_valid_o <= read_check_edc;
-
-
-            -- Write generation: two ticks of write from start
-            write_delay <= write_start;
-            if write_start then
-                axi_wd_advance_o <= write_advance;
-            end if;
-            axi_wd_ready_o <= write_start or write_delay;
 
             -- Write CRC check
             -- Capture write and advance state

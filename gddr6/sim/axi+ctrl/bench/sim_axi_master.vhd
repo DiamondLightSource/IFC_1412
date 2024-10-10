@@ -131,6 +131,9 @@ begin
         -- Bank 3, Row 6, Column 7
         send(X"0", X"0018_C300", X"01", "110");
         send(X"0", X"0018_C380", X"03", "110");
+
+        send(X"0", X"0018_0300", X"01", "110");
+        send(X"0", X"0018_0380", X"03", "110");
 wait;
 
         send(X"0", X"0001_0080", X"03", "101");
@@ -288,19 +291,19 @@ wait;
 
         send_data(dtype => DATA_BYTES);
         send_data(dtype => DATA_BYTES, last => '1');
--- wait;
         send_data(dtype => DATA_RANDOM);
         send_data(dtype => DATA_RANDOM);
         send_data(dtype => DATA_RANDOM);
         send_data(dtype => DATA_RANDOM, last => '1');
---         send_data(X"FF0F_FFFF_0010_0000", dtype => DATA_BYTES);
---         send_data(X"FFFF_FFFF_0000_0000", '1', dtype => DATA_BYTES);
-wait;
+
+        send_data(X"FF0F_FFFF_0010_0000", dtype => DATA_BYTES);
+        send_data(X"FFFF_FFFF_0000_0000", '1', dtype => DATA_BYTES);
 
         send_data(X"0000_0000_FFFF_FFFF");
         send_data(X"FFFF_FFFF_0000_0000");
         send_data(X"0000_0000_FFFF_FFFF");
         send_data(X"FFFF_FFFF_0000_0000", '1');
+wait;
 
         -- Simple burst: one SG, two AXI
         send_data_burst(1, dtype => DATA_BYTES);
@@ -363,6 +366,7 @@ wait;
         wait_for_write(1);
         send(X"C", X"0018_C300", X"01", "110");
         send(X"C", X"0018_C380", X"03", "110");
+        send(X"C", X"0018_0300", X"05", "110");
 --         send(X"C", X"0018_C380", X"FF", "010");
 --         send(X"C", X"0018_C380", X"FF", "010");
 --         send(X"C", X"0018_C380", X"FF", "010");

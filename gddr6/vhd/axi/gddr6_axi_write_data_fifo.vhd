@@ -31,11 +31,21 @@ entity gddr6_axi_write_data_fifo is
         ctrl_byte_mask_valid_o : out std_ulogic := '0';
         ctrl_byte_mask_ready_i : in std_ulogic;
 
-        -- ctrl_data_o will be valid as soon as the corresponding byte mask is
-        -- available, and must not be read before.  If ctrl_data_advance_i is
-        -- not set while ctrl_data_ready_i is asserted the data will be
-        -- replayed: this is designed to be used with separate writes to
-        -- multiple channels.
+        -- ctrl_data_ready_i and ctrl_data_advance_i must be asserted for one
+        -- tick immediately *before* ctrl_data_o must be consumed, and _ready_i
+        -- must be deasserted on the next tick.  If _advance_i is not asserted
+        -- the same data will be replayed on the next data cycle.  Timing:
+        --
+        --  ctrl_clk_i  /   /   /   /   /   /   /   /   /   /
+        --                   ___     ___     ___
+        --  _ready_i    ____/   \___/   \___/   \____________
+        --                           ___     ___
+        --  _advance_i  xxxxx___xxxxx   xxxxx   xxxxxxxxxxxxx
+        --                       ___ ___ ___ ___ ___ ___
+        --  _data_o     xxxxxxxx|_0_|_1_|_0_|_1_|_2_|_3_|xxxx
+        --
+        -- Note that ctrl_data_o must not be read until a couple of ticks after
+        -- the corresponding byte mask is available.
         ctrl_data_o : out ctrl_data_t;
         ctrl_data_advance_i : in std_ulogic;
         ctrl_data_ready_i : in std_ulogic
@@ -43,30 +53,46 @@ entity gddr6_axi_write_data_fifo is
 end;
 
 architecture arch of gddr6_axi_write_data_fifo is
-    subtype ADDRESS_RANGE is natural range DATA_FIFO_BITS-1 downto 0;
-    signal write_data_address : unsigned(ADDRESS_RANGE);
-    signal read_data_address : unsigned(ADDRESS_RANGE);
+    subtype ADDRESS_RANGE is natural range DATA_FIFO_BITS - 2 downto 0;
+    constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
+        := (others => '0');
 
+    -- Byte mask interface
+    --
+    -- Write to the byte mask FIFO and advance the data FIFO address when an
+    -- valid write advance is received
     signal write_fifo_valid : std_ulogic;
+    -- Byte mask associated with the current write
+    signal byte_mask_in : std_ulogic_vector(127 downto 0);
+    -- This signal should never need to be tested!
     signal write_byte_mask_ready : std_ulogic;
-
-    signal read_phase : std_ulogic := '0';
-    signal read_data_valid : std_ulogic;
-    signal data_valid : std_ulogic := '0';
-
     -- The byte mask can be accumulated over several write cycles
     signal saved_byte_mask : std_ulogic_vector(127 downto 0) := (others => '0');
 
-    -- Three separate FIFO buffers: one for the byte mask, and two separate
-    -- FIFOs to support data interleaving
-    subtype DATA_FIFO_RANGE is natural range 0 to 2**(DATA_FIFO_BITS + 1) - 1;
-    signal even_data_fifo : vector_array(DATA_FIFO_RANGE)(255 downto 0);
-    signal odd_data_fifo  : vector_array(DATA_FIFO_RANGE)(255 downto 0);
+    -- Data FIFO address control
+    signal write_data_address : unsigned(ADDRESS_RANGE);
+    signal read_data_address : unsigned(ADDRESS_RANGE);
+    signal advance_read_address : std_ulogic;
+    signal read_address_valid : std_ulogic;
 
-    -- Byte mask associated with the current write
-    constant EMPTY_BYTE_MASK : std_ulogic_vector(63 downto 0)
-        := (others => '0');
-    signal byte_mask_in : std_ulogic_vector(127 downto 0);
+    -- Data FIFO access
+    signal even_write_mask : std_ulogic_vector(31 downto 0);
+    signal odd_write_mask : std_ulogic_vector(31 downto 0);
+    signal even_write_data : std_ulogic_vector(255 downto 0);
+    signal odd_write_data : std_ulogic_vector(255 downto 0);
+    signal even_read_data : vector_array(0 to 1)(127 downto 0);
+    signal odd_read_data : vector_array(0 to 1)(127 downto 0);
+
+    -- Read control
+    signal read_phase : std_ulogic := '0';
+    -- Data needs to propagate from read_data_address => {even,odd}_read_data
+    -- to ctrl_data_o, for each stage need to keep track of data validity
+    signal read_data_valid : std_ulogic := '0'; -- {even,odd}_read_data valid
+    -- Tick after data ready
+    signal next_data_ready : std_ulogic := '0';
+
+    signal read_data_consumed : std_ulogic;
+    signal read_data_strobe : std_ulogic;
 
 begin
     -- Advance writes to both FIFOs on the same tick
@@ -84,7 +110,7 @@ begin
     -- FIFO: we write to this FIFO when advancing the data FIFO pointer, and
     -- data is never read without first reading the associated byte mask.
     mask_fifo : entity work.async_fifo generic map (
-        FIFO_BITS => DATA_FIFO_BITS,
+        FIFO_BITS => DATA_FIFO_BITS - 1,
         DATA_WIDTH => 128,
         MAX_DELAY => MAX_DELAY
     ) port map (
@@ -99,10 +125,14 @@ begin
         read_data_o => ctrl_byte_mask_o
     );
 
+
+    -- Advance the data read address at the start of a read cycle
+    advance_read_address <= ctrl_data_ready_i and ctrl_data_advance_i;
+
     -- Address management for data FIFO.  We need to separate the address from
     -- the stored data to support the complex two phase update process.
     data_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => DATA_FIFO_BITS,
+        ADDRESS_WIDTH => DATA_FIFO_BITS - 1,
         ENABLE_WRITE_RESERVE => false,
         ENABLE_READ_RESERVE => false,
         MAX_DELAY => MAX_DELAY
@@ -113,62 +143,104 @@ begin
         write_access_address_o => write_data_address,
 
         read_clk_i => ctrl_clk_i,
-        read_access_i =>
-            ctrl_data_ready_i and read_phase and ctrl_data_advance_i,
-        read_valid_o => read_data_valid,
+        read_access_i => advance_read_address,
+        read_valid_o => read_address_valid,
         read_access_address_o => read_data_address
     );
 
+    -- Dual FIFO buffers.  Channels are distributed among the FIFOs so that bits
+    -- 255:0 of the first tick are written to channel 0, 511:256 to channel 1,
+    -- bits 255:0 of the second tick are written to channel 2, and 511:256 to
+    -- channel 3.
+    --
+    --              bit 511                             0
+    --                  |  11  :  10  :  01  :  00  |    phase = 0
+    --  AXI             +------+------+------+------+
+    --                  |  31  :  30  :  21  :  30  |    phase = 1
+    --
+    --                     odd_fifo        even_fifo
+    --         wr ph 1 |  30  :  20  |  |  10  |  00  | wr ph 0
+    --  FIFO           +------+------+  +------+------+
+    --         wr ph 0 |  11  :  01  |  |  31  |  21  | wr ph 1
+    --
+    --                  ch 3     ch 2     ch 1     ch 0
+    --                |  30  | |  20  | |  10  | |  00  |
+    --  CTRL          +------+ +------+ +------+ +------+
+    --                |  31  | |  21  | |  11  | |  01  |
 
-    -- Ensure that the mask FIFO is never less full than the data FIFO
-    assert axi_ready_o or not write_byte_mask_ready
-        report "Invalid FIFO state"
-        severity failure;
+    even_fifo : entity work.memory_array_dual_bytes generic map (
+        ADDR_BITS => DATA_FIFO_BITS,
+        DATA_BITS => 256
+    ) port map (
+        write_clk_i => axi_clk_i,
+        write_strobe_i => even_write_mask,
+        write_addr_i => write_data_address & axi_write_i.phase,
+        write_data_i => even_write_data,
 
+        read_clk_i => ctrl_clk_i,
+        read_strobe_i => read_data_strobe,
+        read_addr_i => read_data_address & read_phase,
+        read_data_o(127 downto 0) => even_read_data(0),
+        read_data_o(255 downto 128) => even_read_data(1)
+    );
+
+    odd_fifo : entity work.memory_array_dual_bytes generic map (
+        ADDR_BITS => DATA_FIFO_BITS,
+        DATA_BITS => 256
+    ) port map (
+        write_clk_i => axi_clk_i,
+        write_strobe_i => odd_write_mask,
+        write_addr_i => write_data_address & not axi_write_i.phase,
+        write_data_i => odd_write_data,
+
+        read_clk_i => ctrl_clk_i,
+        read_strobe_i => read_data_strobe,
+        read_addr_i => read_data_address & read_phase,
+        read_data_o(127 downto 0) => odd_read_data(0),
+        read_data_o(255 downto 128) => odd_read_data(1)
+    );
+
+
+    -- Assemble write data and strobes as appropriate
+    process (all)
+        variable data_out : ctrl_data_t;
+        variable mask_out : vector_array(0 to 3)(15 downto 0);
+    begin
+        data_out := (
+            0 => axi_write_i.data(127 downto 0),
+            1 => axi_write_i.data(255 downto 128),
+            2 => axi_write_i.data(383 downto 256),
+            3 => axi_write_i.data(511 downto 384));
+        mask_out := (
+            0 => axi_write_i.byte_mask(15 downto 0),
+            1 => axi_write_i.byte_mask(31 downto 16),
+            2 => axi_write_i.byte_mask(47 downto 32),
+            3 => axi_write_i.byte_mask(63 downto 48));
+
+        case axi_write_i.phase is
+            when '0' =>
+                even_write_data <= data_out(2) & data_out(0);
+                even_write_mask <= mask_out(2) & mask_out(0);
+                odd_write_data  <= data_out(3) & data_out(1);
+                odd_write_mask  <= mask_out(3) & mask_out(1);
+            when '1' =>
+                even_write_data <= data_out(3) & data_out(1);
+                even_write_mask <= mask_out(3) & mask_out(1);
+                odd_write_data  <= data_out(2) & data_out(0);
+                odd_write_mask  <= mask_out(2) & mask_out(0);
+            when others =>
+        end case;
+    end process;
+
+
+    read_data_consumed <= ctrl_data_ready_i or next_data_ready;
+    read_data_strobe <= not read_data_valid or read_data_consumed;
 
     process (axi_clk_i)
-        procedure write_byte(
-            signal fifo : inout vector_array; phase : std_ulogic;
-            fifo_byte : natural; data_byte : natural)
-        is
-            variable address : natural;
-        begin
-            address := to_integer(write_data_address & phase);
-            if axi_write_i.byte_mask(data_byte) then
-                fifo(address)(8*fifo_byte + 7 downto 8*fifo_byte) <=
-                    axi_write_i.data(8*data_byte + 7 downto 8*data_byte);
-            end if;
-        end;
-
-        -- Distribute byte writes to the odd and even FIFOs according to phase
-        procedure distribute_writes(
-            signal first_fifo : inout vector_array;
-            signal second_fifo : inout vector_array) is
-        begin
-            for byte in 0 to 63 loop
-                if 0 <= byte and byte < 16 then
-                    write_byte(first_fifo, '0', byte, byte);
-                elsif 16 <= byte and byte < 32 then
-                    write_byte(second_fifo, '1', byte - 16, byte);
-                elsif 32 <= byte and byte < 48 then
-                    write_byte(first_fifo, '0', byte - 16, byte);
-                elsif 48 <= byte and byte < 64 then
-                    write_byte(second_fifo, '1', byte - 32, byte);
-                end if;
-            end loop;
-        end;
-
     begin
         if rising_edge(axi_clk_i) then
             if axi_write_i.valid and axi_ready_o then
-                case axi_write_i.phase is
-                    when '0' =>
-                        distribute_writes(even_data_fifo, odd_data_fifo);
-                    when '1' =>
-                        distribute_writes(odd_data_fifo, even_data_fifo);
-                    when others =>
-                end case;
-
+                -- Accumulate written bytes
                 if axi_write_i.advance then
                     saved_byte_mask <= (others => '0');
                 else
@@ -180,40 +252,45 @@ begin
 
 
     -- Must not request data when not actually valid!
-    process (ctrl_clk_i)
-        subtype LOWER_HALF is natural range 127 downto 0;
-        subtype UPPER_HALF is natural range 255 downto 128;
-        variable address : natural;
-    begin
+    process (ctrl_clk_i) begin
         if rising_edge(ctrl_clk_i) then
-            assert data_valid or not ctrl_data_ready_i severity failure;
+            -- Can we link read_phase and ctrl_data_ready_i?  Can we ensure they
+            -- are always in step?
+            assert not advance_read_address or read_phase severity failure;
+            -- Ensure that the mask FIFO is never less full than the data FIFO
+            assert axi_ready_o or not write_byte_mask_ready
+                report "Invalid FIFO state"
+                severity failure;
 
-            if ctrl_data_ready_i or not data_valid then
-                address := to_integer(read_data_address & read_phase);
-                case read_phase is
-                    when '0' =>
-                        ctrl_data_o <= (
-                            0 => even_data_fifo(address)(LOWER_HALF),
-                            1 => even_data_fifo(address)(UPPER_HALF),
-                            2 => odd_data_fifo(address)(LOWER_HALF),
-                            3 => odd_data_fifo(address)(UPPER_HALF)
-                        );
-                    when '1' =>
-                        ctrl_data_o <= (
-                            0 => odd_data_fifo(address)(LOWER_HALF),
-                            1 => odd_data_fifo(address)(UPPER_HALF),
-                            2 => even_data_fifo(address)(LOWER_HALF),
-                            3 => even_data_fifo(address)(UPPER_HALF)
-                        );
-                    when others =>
-                end case;
+            -- A number of conditions must hold when ctrl_data_ready_i is
+            -- asserted
+            if ctrl_data_ready_i then
+                -- Data must be valid and loaded
+                assert read_data_valid severity failure;
+                -- Strobes must be separated by at least one tick
+                assert not next_data_ready severity failure;
+                -- Read phase must be high
+                assert read_phase severity failure;
+            end if;
 
-                -- There is valid data in the buffer whenever the byte mask
-                -- buffer is ready, and this test is early enough for us.
-                data_valid <= read_data_valid;
-                if read_data_valid then
-                    read_phase <= not read_phase;
-                end if;
+            next_data_ready <= ctrl_data_ready_i;
+
+            -- Use _ready_i and _ready_next to determine phase of loaded data
+            if ctrl_data_ready_i then
+                -- On first tick deliver in direct order
+                ctrl_data_o <= even_read_data & odd_read_data;
+            elsif next_data_ready then
+                -- On second tick swap halves
+                ctrl_data_o <= odd_read_data & even_read_data;
+            end if;
+
+            -- Toggle phase on successful consumption of data
+            if read_data_strobe and read_address_valid then
+                read_phase <= not read_phase;
+            end if;
+            -- Maintain state of read_data_valid
+            if read_data_strobe then
+                read_data_valid <= read_address_valid;
             end if;
         end if;
     end process;
