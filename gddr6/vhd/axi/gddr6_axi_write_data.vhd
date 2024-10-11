@@ -45,10 +45,10 @@ begin
             -- Advance the command counter and state or load a fresh command
             advance_state_machine_and_ping_pong(
                 command_i.valid, command_ready,
-                command.count ?= 0, command.valid,
+                to_std_ulogic(command.count = 0), command.valid,
                 command_ready_o, load_value);
             if load_value then
-                if command.valid and command.count ?> 0 then
+                if command.valid and to_std_ulogic(command.count > 0) then
                     command.count <= command.count - 1;
                     command.offset <= command.offset + command.step;
                 else
@@ -83,9 +83,9 @@ begin
                     data => next_data.data,
                     byte_mask => next_data.strb,
                     phase => command.offset(6),
-                    advance =>
-                        command.count ?= 0 or
-                        command.offset + command.step ?= 0,
+                    advance => to_std_ulogic(
+                        command.count = 0 or
+                        command.offset + command.step = 0),
                     valid => fifo_valid
                 );
             end if;

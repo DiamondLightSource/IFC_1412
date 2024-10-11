@@ -89,7 +89,7 @@ begin
         begin
             load_new_response :=
                 not response.valid or response.invalid_burst or
-                (response.count ?= 0 and burst_ok_valid);
+                (to_std_ulogic(response.count = 0) and burst_ok_valid);
             advance_state_machine_and_ping_pong(
                 response_i.valid, response_ready, load_new_response,
                 response.valid, response_ready_o,

@@ -63,7 +63,6 @@ architecture arch of axi_data is
 
     signal axi_in_address : unsigned(5 downto 0) := (others => '0');
     signal axi_out_address : unsigned(5 downto 0) := (others => '0');
-    signal next_axi_out_address : unsigned(5 downto 0);
     signal axi_out_busy : std_ulogic := '0';
     signal axi_out_data_taken : std_ulogic;
     signal axi_out_strobe : std_ulogic;
@@ -132,11 +131,7 @@ begin
     axi_out_strobe <=
         (axi_out_busy and not axi_out_o.valid) or   -- Initial priming state
         axi_out_data_taken;
-    -- This is meant to be simply
-    --     last_data_out <= axi_out_address + 1 ?= reg_write_address;
-    -- but unfortunately this form triggers some very strange Vivado bugs
-    next_axi_out_address <= axi_out_address + 1;
-    last_data_out <= to_std_ulogic(next_axi_out_address = reg_write_address);
+    last_data_out <= to_std_ulogic(axi_out_address + 1 = reg_write_address);
 
     process (clk_i) begin
         if rising_edge(clk_i) then
@@ -179,7 +174,8 @@ begin
                 if axi_in_i.last then
                     axi_in_ready_o <= '0';
                 end if;
-                axi_in_ok_o <= axi_in_ok_o and axi_in_i.resp ?= "00";
+                axi_in_ok_o <=
+                    axi_in_ok_o and to_std_ulogic(axi_in_i.resp = "00");
             end if;
 
 
@@ -213,7 +209,7 @@ begin
 
             -- Manage response
             if axi_out_response_ready_o and axi_out_response_i.valid then
-                axi_out_ok_o <= axi_out_response_i.resp ?= "00";
+                axi_out_ok_o <= to_std_ulogic(axi_out_response_i.resp = "00");
                 axi_out_response_ready_o <= '0';
             elsif axi_out_start_i then
                 axi_out_response_ready_o <= '1';

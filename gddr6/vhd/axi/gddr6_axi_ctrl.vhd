@@ -84,10 +84,10 @@ begin
         begin
             advance_state_machine(
                 next_address.valid, next_ready,
-                address.count ?= 0, address.valid,
+                to_std_ulogic(address.count = 0), address.valid,
                 next_address_ready, load_value);
             if load_value then
-                if address.valid and address.count ?> 0 then
+                if address.valid and to_std_ulogic(address.count > 0) then
                     -- This assert checks against a harmless AXI protocol error,
                     -- not an error in the controller: address crosses 4K
                     -- boundary, but number of transfers is still correct

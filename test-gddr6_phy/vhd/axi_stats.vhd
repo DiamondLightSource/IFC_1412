@@ -45,7 +45,8 @@ begin
                 stats <= (others => (others => '0'));
             else
                 for i in STATS_RANGE loop
-                    if events(i) and stats(i) ?/= max_uint(32) then
+                    if events(i) and
+                       to_std_ulogic(stats(i) /= max_uint(32)) then
                         stats(i) <= stats(i) + 1;
                     end if;
                 end loop;

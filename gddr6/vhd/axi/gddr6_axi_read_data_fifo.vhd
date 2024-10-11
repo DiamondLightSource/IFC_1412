@@ -194,8 +194,8 @@ begin
 
 
     read_data_strobe <= not read_data_valid or axi_ready_i;
-    read_ok_strobe <= read_data_strobe and read_phase ?= '0';
-    advance_read_address <= read_data_strobe and read_phase ?= '1';
+    read_ok_strobe <= read_data_strobe and not read_phase;
+    advance_read_address <= read_data_strobe and read_phase;
 
     process (axi_clk_i) begin
         if rising_edge(axi_clk_i) then

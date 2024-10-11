@@ -145,7 +145,7 @@ begin
                     id => command.id,
                     resp => resp,
                     data => data.data,
-                    last => command.count ?= 0,
+                    last => to_std_ulogic(command.count = 0),
                     valid => command.valid and axi_valid
                 );
             end if;
@@ -155,7 +155,8 @@ begin
                 command.valid and axi_valid;
             stats_crc_error_o <=
                 stats_valid and not data.ok and not command.invalid_burst;
-            stats_transfer_o  <= stats_valid and command.count ?= 0;
+            stats_transfer_o  <=
+                stats_valid and to_std_ulogic(command.count = 0);
             stats_data_beat_o <= stats_valid;
         end;
 
@@ -166,7 +167,8 @@ begin
             variable next_offset : unsigned(6 downto 0);
         begin
             next_offset := command.offset + command.step;
-            return command.count ?= 0 or next_offset(5 downto 0) ?= 0;
+            return to_std_ulogic(
+                command.count = 0 or next_offset(5 downto 0) = 0);
         end;
 
 
