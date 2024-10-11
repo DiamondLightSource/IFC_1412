@@ -112,7 +112,8 @@ begin
     mask_fifo : entity work.async_fifo generic map (
         FIFO_BITS => DATA_FIFO_BITS - 1,
         DATA_WIDTH => 128,
-        MAX_DELAY => MAX_DELAY
+        MAX_DELAY => MAX_DELAY,
+        MEM_STYLE => "BLOCK"
     ) port map (
         write_clk_i => axi_clk_i,
         write_valid_i => write_fifo_valid,
@@ -261,17 +262,15 @@ begin
             assert axi_ready_o or not write_byte_mask_ready
                 report "Invalid FIFO state"
                 severity failure;
-
             -- A number of conditions must hold when ctrl_data_ready_i is
             -- asserted
-            if ctrl_data_ready_i then
-                -- Data must be valid and loaded
-                assert read_data_valid severity failure;
-                -- Strobes must be separated by at least one tick
-                assert not next_data_ready severity failure;
-                -- Read phase must be high
-                assert read_phase severity failure;
-            end if;
+            -- Data must be valid and loaded
+            assert not ctrl_data_ready_i or read_data_valid severity failure;
+            -- Strobes must be separated by at least one tick
+            assert not ctrl_data_ready_i or not next_data_ready
+                severity failure;
+            -- Read phase must be high
+            assert not ctrl_data_ready_i or read_phase severity failure;
 
             next_data_ready <= ctrl_data_ready_i;
 

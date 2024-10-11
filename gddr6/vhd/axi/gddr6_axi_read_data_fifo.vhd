@@ -92,7 +92,8 @@ begin
 
     ok_fifo : entity work.memory_array_dual generic map (
         ADDR_BITS => DATA_FIFO_BITS - 1,
-        DATA_BITS => 1
+        DATA_BITS => 1,
+        MEM_STYLE => "BLOCK"
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_strobe_i => ctrl_data_ok_valid_i,
@@ -111,7 +112,8 @@ begin
 
     even_fifo : entity work.memory_array_dual generic map (
         ADDR_BITS => DATA_FIFO_BITS,
-        DATA_BITS => 256
+        DATA_BITS => 256,
+        MEM_STYLE => "BLOCK"
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_strobe_i => ctrl_data_valid_i,
@@ -126,7 +128,8 @@ begin
 
     odd_fifo : entity work.memory_array_dual generic map (
         ADDR_BITS => DATA_FIFO_BITS,
-        DATA_BITS => 256
+        DATA_BITS => 256,
+        MEM_STYLE => "BLOCK"
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_strobe_i => ctrl_data_valid_i,

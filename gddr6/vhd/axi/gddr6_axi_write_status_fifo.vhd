@@ -59,22 +59,29 @@ begin
         read_access_address_o => read_address
     );
 
+    fifo : entity work.memory_array_dual generic map (
+        ADDR_BITS => DATA_FIFO_BITS,
+        DATA_BITS => 1,
+        MEM_STYLE => "BLOCK"
+    ) port map (
+        write_clk_i => ctrl_clk_i,
+        write_strobe_i => ctrl_ok_valid_i,
+        write_addr_i => write_address,
+        write_data_i(0) => ctrl_ok_i,
+
+        read_clk_i => axi_clk_i,
+        read_strobe_i => read_enable,
+        read_addr_i => read_address,
+        read_data_o(0) => axi_ok_o
+    );
+
     read_enable <= read_valid and (axi_ok_ready_i or not axi_ok_valid_o);
     process (axi_clk_i) begin
         if rising_edge(axi_clk_i) then
             if read_enable then
-                axi_ok_o <= ok_fifo(to_integer(read_address));
                 axi_ok_valid_o <= '1';
             elsif axi_ok_ready_i then
                 axi_ok_valid_o <= '0';
-            end if;
-        end if;
-    end process;
-
-    process (ctrl_clk_i) begin
-        if rising_edge(ctrl_clk_i) then
-            if ctrl_ok_valid_i then
-                ok_fifo(to_integer(write_address)) <= ctrl_ok_i;
             end if;
         end if;
     end process;
