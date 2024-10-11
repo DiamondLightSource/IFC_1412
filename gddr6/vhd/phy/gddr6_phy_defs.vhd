@@ -57,6 +57,9 @@ package gddr6_phy_defs is
     -- Returns '1' if more than half the bits in input are zeros, which means
     -- that bit inversion is worth invoking
     function compute_bus_inversion(input : std_ulogic_vector) return std_ulogic;
+
+    constant IDLE_BITSLICE_DELAY_CONTROL : bitslice_delay_control_t;
+    constant IDLE_BITSLIP_DELAY_CONTROL : bitslip_delay_control_t;
 end;
 
 package body gddr6_phy_defs is
@@ -72,4 +75,22 @@ package body gddr6_phy_defs is
         -- If more than half the bits are zeros it will be worth inverting them
         return to_std_ulogic(zero_count > input'LENGTH / 2);
     end;
+
+    constant IDLE_BITSLICE_DELAY_CONTROL : bitslice_delay_control_t := (
+        up_down_n => '0',
+        dq_rx_ce => (others => '0'),
+        dq_tx_ce => (others => '0'),
+        dbi_rx_ce => (others => '0'),
+        dbi_tx_ce => (others => '0'),
+        edc_rx_ce => (others => '0')
+    );
+
+    constant IDLE_BITSLIP_DELAY_CONTROL : bitslip_delay_control_t := (
+        dq_tx_strobe => (others => '0'),
+        dbi_tx_strobe => (others => '0'),
+        dq_rx_strobe => (others => '0'),
+        dbi_rx_strobe => (others => '0'),
+        edc_rx_strobe => (others => '0'),
+        delay => (others => '0')
+    );
 end;

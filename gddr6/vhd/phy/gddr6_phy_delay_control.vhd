@@ -18,9 +18,11 @@ entity gddr6_phy_delay_control is
         setup_o : out setup_delay_result_t;
 
         -- Delay controls and readbacks
-        bitslice_control_o : out bitslice_delay_control_t;
+        bitslice_control_o : out bitslice_delay_control_t
+            := IDLE_BITSLICE_DELAY_CONTROL;
         bitslice_delays_i : in bitslice_delay_readbacks_t;
-        bitslip_control_o : out bitslip_delay_control_t;
+        bitslip_control_o : out bitslip_delay_control_t
+            := IDLE_BITSLIP_DELAY_CONTROL;
         bitslip_delays_i : in bitslip_delay_readbacks_t
     );
 end;
@@ -91,28 +93,6 @@ architecture arch of gddr6_phy_delay_control is
     end;
 
 begin
-    -- Map output strobes according to addressing
-    bitslice_control_o <= (
-        up_down_n => up_down_n,
-
-        -- CE for IDELAY and ODELAY following the address map above
-        dq_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
-        dq_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
-        dbi_rx_ce => ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
-        dbi_tx_ce => ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
-        edc_rx_ce => ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
-    );
-
-    bitslip_control_o <= (
-        dq_rx_strobe =>  ce_out(TARGET_IBITSLIP)(DELAY_DQ_RANGE),
-        dq_tx_strobe =>  ce_out(TARGET_OBITSLIP)(DELAY_DQ_RANGE),
-        dbi_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_DBI_RANGE),
-        dbi_tx_strobe => ce_out(TARGET_OBITSLIP)(DELAY_DBI_RANGE),
-        edc_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_EDC_RANGE),
-        delay => bitslip_delay
-    );
-
-
     -- This helper allows us to overlap processing and acknowledge
     write_strobe_ack : entity work.strobe_ack port map (
         clk_i => clk_i,
@@ -246,6 +226,28 @@ begin
                     DELAY_DBI_RANGE => resize(bitslip_delays_i.dbi_tx_delay),
                     others => (others => '0')),
                 others => (others => (others => '0'))
+            );
+
+
+            -- Map output strobes according to addressing
+            bitslice_control_o <= (
+                up_down_n => up_down_n,
+
+                -- CE for IDELAY and ODELAY following the address map above
+                dq_rx_ce =>  ce_out(TARGET_IDELAY)(DELAY_DQ_RANGE),
+                dq_tx_ce =>  ce_out(TARGET_ODELAY)(DELAY_DQ_RANGE),
+                dbi_rx_ce => ce_out(TARGET_IDELAY)(DELAY_DBI_RANGE),
+                dbi_tx_ce => ce_out(TARGET_ODELAY)(DELAY_DBI_RANGE),
+                edc_rx_ce => ce_out(TARGET_IDELAY)(DELAY_EDC_RANGE)
+            );
+
+            bitslip_control_o <= (
+                dq_rx_strobe =>  ce_out(TARGET_IBITSLIP)(DELAY_DQ_RANGE),
+                dq_tx_strobe =>  ce_out(TARGET_OBITSLIP)(DELAY_DQ_RANGE),
+                dbi_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_DBI_RANGE),
+                dbi_tx_strobe => ce_out(TARGET_OBITSLIP)(DELAY_DBI_RANGE),
+                edc_rx_strobe => ce_out(TARGET_IBITSLIP)(DELAY_EDC_RANGE),
+                delay => bitslip_delay
             );
         end if;
     end process;
