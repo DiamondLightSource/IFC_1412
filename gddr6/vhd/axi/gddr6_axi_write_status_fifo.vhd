@@ -31,18 +31,16 @@ entity gddr6_axi_write_status_fifo is
 end;
 
 architecture arch of gddr6_axi_write_status_fifo is
-    subtype ADDRESS_RANGE is natural range DATA_FIFO_BITS-1 downto 0;
+    subtype ADDRESS_RANGE is natural range DATA_FIFO_BITS-2 downto 0;
     signal write_address : unsigned(ADDRESS_RANGE);
     signal read_address : unsigned(ADDRESS_RANGE);
 
-    subtype SG_FIFO_RANGE is natural range 0 to 2**DATA_FIFO_BITS - 1;
-    signal ok_fifo : std_ulogic_vector(SG_FIFO_RANGE);
     signal read_enable : std_ulogic;
     signal read_valid : std_ulogic;
 
 begin
     async_address : entity work.async_fifo_address generic map (
-        ADDRESS_WIDTH => DATA_FIFO_BITS,
+        ADDRESS_WIDTH => DATA_FIFO_BITS - 1,
         ENABLE_READ_RESERVE => false,
         ENABLE_WRITE_RESERVE => true,
         MAX_DELAY => MAX_DELAY
@@ -60,9 +58,9 @@ begin
     );
 
     fifo : entity work.memory_array_dual generic map (
-        ADDR_BITS => DATA_FIFO_BITS,
+        ADDR_BITS => DATA_FIFO_BITS - 1,
         DATA_BITS => 1,
-        MEM_STYLE => "BLOCK"
+        MEM_STYLE => "DISTRIBUTED"
     ) port map (
         write_clk_i => ctrl_clk_i,
         write_strobe_i => ctrl_ok_valid_i,

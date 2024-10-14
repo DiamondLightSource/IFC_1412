@@ -74,8 +74,13 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 view wave
 
 add wave -group "AXI" axi/*
-add wave -group "AXI.WD FIFO" axi/axi_write/data_fifo/*
-add wave -group "AXI.RD FIFO" axi/axi_read/data_fifo/*
+add wave -group "AXI.W command FIFO" axi/axi_write/command_fifo/fifo/*
+add wave -group "AXI.W FIFO" axi/axi_write/data_fifo/*
+add wave -group "AXI.W W" axi/axi_write/data/*
+add wave -group "AXI.W B" axi/axi_write/response/*
+add wave -group "AXI.R command FIFO" axi/axi_read/command_fifo/fifo/*
+add wave -group "AXI.R FIFO" axi/axi_read/data_fifo/*
+add wave -group "AXI.R R" axi/axi_read/data/*
 add wave -group "CTRL" ctrl/*
 add wave -group "CTRL.DATA" ctrl/data/*
 add wave -group "PHY Command" phy/command/* phy/command/vars/*
