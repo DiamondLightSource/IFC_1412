@@ -25,10 +25,9 @@ entity sim_phy is
 end;
 
 architecture arch of sim_phy is
-    -- Closing the loop for writes.  The transmitter _ctrl_data should be using
-    -- the following delay calculation:
-    --  CA_OUTPUT_DELAY + WLmrs - TX_OUTPUT_DELAY
-    -- Our write processing actually takes place 4 ticks after we see
+    -- The CA output from CTRL is one tick later than the reference used by
+    -- _ctrl_data.
+    constant CA_OFFSET_DELAY : natural := 1;
 
     -- Delay from RD/WxM command to corresponding read or write strobe from
     -- command interpreter.  Data is written on the strobe, updated on the tick
@@ -38,25 +37,12 @@ architecture arch of sim_phy is
     constant READ_MEMORY_DELAY : natural := 1;
 
     -- Align read and write data with model
-    constant READ_DELAY : natural :=
+
+    -- Delay from read strobe to when read data is expected by CTRL
+    constant SIM_READ_DELAY : natural :=
         RLmrs + RX_INPUT_DELAY - READ_STROBE_DELAY - READ_MEMORY_DELAY;
     -- edc_read is sent at the same time as received data
-    constant READ_EDC_DELAY : natural := READ_DELAY;
-    -- Delay EDC from read data to expected EDC in
-    constant READ_EDC_IN_DELAY : natural :=
-        RLmrs + CRCRL + EDC_INPUT_DELAY - READ_STROBE_DELAY - READ_MEMORY_DELAY;
-    constant SELECT_READ_EDC_IN_DELAY : natural :=
-        RLmrs + CRCRL + EDC_INPUT_DELAY - READ_STROBE_DELAY;
-
-    constant WRITE_DELAY : natural :=
-        WRITE_STROBE_DELAY - WLmrs + TX_OUTPUT_DELAY;
-    -- Delay from dq_i.data
-    constant WRITE_EDC_DELAY : natural := TX_EDC_DELAY;
-    constant WRITE_EDC_IN_DELAY : natural :=
-        TX_EDC_DELAY + CRCWL + EDC_INPUT_DELAY;
-    -- Delay from write strobe to write_edc_in valid
-    constant SELECT_WRITE_EDC_IN_DELAY : natural :=
-        WLmrs + CRCWL + EDC_INPUT_DELAY - WRITE_STROBE_DELAY;
+    constant SIM_READ_EDC_DELAY : natural := SIM_READ_DELAY;
 
 
     signal read_address : sg_address_t;
@@ -81,11 +67,6 @@ architecture arch of sim_phy is
     signal edc_in : phy_edc_t;
 
 
-    -- The CA output from CTRL is one tick later than the reference above, we
-    -- need to take this into account in the SG simulation here by delaying ca_i
-    -- by one tick.  We might as well turn ca_phy_t back into ca_command_t at
-    -- the same time.
-    constant CA_DELAY_OFFSET : natural := 1;
     signal ca_in : ca_command_t;
 
 
@@ -164,25 +145,9 @@ begin
     );
 
 
-    -- EDC computation on read and write data
-    write_edc_inst : entity work.gddr6_phy_crc port map (
-        clk_i => clk_i,
-        data_i => dq_i.data,
-        dbi_n_i => (others => (others => '1')),
-        edc_o => write_edc
-    );
-
-    read_edc_inst : entity work.gddr6_phy_crc port map (
-        clk_i => clk_i,
-        data_i => read_data,
-        dbi_n_i => (others => (others => '1')),
-        edc_o => read_edc
-    );
-
-
     -- Delay CA to match delay at SG
     delay_ca_sg : entity work.fixed_delay generic map (
-        DELAY => CA_OUTPUT_DELAY - CA_DELAY_OFFSET,
+        DELAY => CA_OUTPUT_DELAY - CA_OFFSET_DELAY,
         WIDTH => 24,
         INITIAL => '1'
     ) port map (
@@ -197,12 +162,15 @@ begin
 
 
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    -- Write delay alignment
+    -- Write delay and CRC alignment
 
     -- Align write data for when we're ready to process it
     delay_write : entity work.fixed_delay generic map (
         WIDTH => 512,
-        DELAY => WRITE_DELAY,
+        -- write_strobe is generated at CA_OUTPUT_DELAY+WRITE_STROBE_DELAY,
+        -- dq_i.data arrives at WRITE_START_DELAY; both delays relative to the
+        -- CTRL CA WxM command tick
+        DELAY => CA_OUTPUT_DELAY + WRITE_STROBE_DELAY - WRITE_START_DELAY,
         INITIAL => 'U'
     ) port map (
         clk_i => clk_i,
@@ -210,11 +178,19 @@ begin
         to_vector_array(data_o) => write_data
     );
 
+    -- EDC computation on read and write data
+    write_edc_inst : entity work.gddr6_phy_crc port map (
+        clk_i => clk_i,
+        data_i => dq_i.data,
+        dbi_n_i => (others => (others => '1')),
+        edc_o => write_edc
+    );
+
     -- Generate EDC in response to write and delay as required
     delay_write_edc_out : entity work.fixed_delay generic map (
         WIDTH => 64,
         -- Subtract one tick to allow for computation of write_edc
-        DELAY => WRITE_EDC_DELAY - 1
+        DELAY => TX_EDC_DELAY - 1
     ) port map (
         clk_i => clk_i,
         data_i => to_std_ulogic_vector(write_edc),
@@ -223,18 +199,22 @@ begin
 
     delay_write_edc_in : entity work.fixed_delay generic map (
         WIDTH => 64,
-        -- Subtract one tick to allow for computation of write_edc, one tick
-        -- for output assignment
-        DELAY => WRITE_EDC_IN_DELAY - 2
+        -- Subtract one tick for output assignment
+        DELAY => WRITE_EDC_DELAY - 1
     ) port map (
         clk_i => clk_i,
-        data_i => to_std_ulogic_vector(write_edc),
+        data_i => to_std_ulogic_vector(write_edc_out),
         to_vector_array(data_o) => write_edc_in
     );
 
     delay_write_edc_select : entity work.fixed_delay generic map (
-        -- Allow one tick for output assignment
-        DELAY => SELECT_WRITE_EDC_IN_DELAY - 1
+        -- Delay from write strobe to EDC in for write, components are:
+        --  write_strobe at CA_OUTPUT + WRITE_STROBE
+        --  three stages of write: WRITE_START, TX_EDC, WRITE_EDC
+        -- Also allow one tick for selection
+        DELAY =>
+            WRITE_START_DELAY + TX_EDC_DELAY + WRITE_EDC_DELAY
+            - CA_OUTPUT_DELAY - WRITE_STROBE_DELAY - 1
     ) port map (
         clk_i => clk_i,
         data_i(0) => write_strobe,
@@ -243,12 +223,19 @@ begin
 
 
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    -- Read delay alignment
+    -- Read delay and CRC alignment
+
+    read_edc_inst : entity work.gddr6_phy_crc port map (
+        clk_i => clk_i,
+        data_i => read_data,
+        dbi_n_i => (others => (others => '1')),
+        edc_o => read_edc
+    );
 
     -- Ensure read data arrives when expected by CTRL
     delay_read : entity work.fixed_delay generic map (
         WIDTH => 512,
-        DELAY => READ_DELAY,
+        DELAY => SIM_READ_DELAY,
         INITIAL => 'U'
     ) port map (
         clk_i => clk_i,
@@ -260,7 +247,7 @@ begin
     delay_read_edc_out : entity work.fixed_delay generic map (
         WIDTH => 64,
         -- Subtract one tick to allow for computation of read_edc
-        DELAY => READ_EDC_DELAY - 1
+        DELAY => SIM_READ_EDC_DELAY - 1
     ) port map (
         clk_i => clk_i,
         data_i => to_std_ulogic_vector(read_edc),
@@ -269,18 +256,17 @@ begin
 
     delay_read_edc_in : entity work.fixed_delay generic map (
         WIDTH => 64,
-        -- Subtract one tick to allow for computation of read_edc, plus one more
-        -- tick for output assignment
-        DELAY => READ_EDC_IN_DELAY - 2
+        -- Less one tick for selection
+        DELAY => READ_EDC_DELAY - 1
     ) port map (
         clk_i => clk_i,
-        data_i => to_std_ulogic_vector(read_edc),
+        data_i => to_std_ulogic_vector(read_edc_out),
         to_vector_array(data_o) => read_edc_in
     );
 
     delay_read_edc_select : entity work.fixed_delay generic map (
-        -- Allow one tick for output assignment
-        DELAY => SELECT_READ_EDC_IN_DELAY - 1
+        -- Delay from read strobe to edc_in, less one tick for selection
+        DELAY => READ_STROBE_DELAY + SIM_READ_DELAY + READ_EDC_DELAY - 1
     ) port map (
         clk_i => clk_i,
         data_i(0) => read_strobe,

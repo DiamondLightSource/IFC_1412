@@ -45,38 +45,6 @@ entity gddr6_ctrl_data is
 end;
 
 architecture arch of gddr6_ctrl_data is
-    -- Delay for Output Enable
-    constant OUTPUT_ENABLE_DELAY : natural :=
-        CA_OUTPUT_DELAY + WLmrs - OE_OUTPUT_DELAY;
-    -- Output enable needs to be active one tick early, one tick late, and for
-    -- two ticks during the write, so we stretch the enable to 4 ticks total.
-    constant OUTPUT_ENABLE_STRETCH : natural := 4;
-
-    -- Delays for read
-    --
-    -- Time of arrival of read data after command completion
-    constant READ_START_DELAY : natural :=
-        CA_OUTPUT_DELAY + RLmrs + RX_INPUT_DELAY;
-    -- Time of arrival of read EDC response from SG after completion
-    constant READ_CHECK_DELAY : natural :=
-        CA_OUTPUT_DELAY + RLmrs + CRCRL + EDC_INPUT_DELAY;
-    -- Delay to align PHY and SG EDC signals
-    constant READ_EDC_DELAY : natural :=
-        READ_CHECK_DELAY - READ_START_DELAY;
-
-    -- Delays for write
-    --
-    -- Time to send write data after command completion
-    constant WRITE_START_DELAY : natural :=
-        CA_OUTPUT_DELAY + WLmrs - TX_OUTPUT_DELAY;
-    -- Time of arrival of write EDC response from SG after completion
-    constant WRITE_CHECK_DELAY : natural :=
-        CA_OUTPUT_DELAY + WLmrs + CRCWL + EDC_INPUT_DELAY;
-    -- Delay to align PHY and SG EDC signals
-    constant WRITE_EDC_DELAY : natural :=
-        WRITE_CHECK_DELAY - WRITE_START_DELAY - TX_EDC_DELAY;
-
-
     -- Output enable
     signal output_enable : std_ulogic;
 
