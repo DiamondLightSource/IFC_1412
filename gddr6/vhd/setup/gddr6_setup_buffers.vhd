@@ -256,13 +256,13 @@ begin
         clk_in_i => reg_clk_i,
         strobe_i => exchange_strobe_i,
         ack_o => exchange_ack_o,
-        data_i(exchange_count'RANGE) => std_ulogic_vector(exchange_count_i),
+        data_i(5 downto 0) => std_ulogic_vector(exchange_count_i),
 
         clk_out_i => ck_clk_i,
         clk_out_ok_i => ck_clk_ok_i,
         strobe_o => exchange_strobe,
         ack_i => exchange_ack,
-        unsigned(data_o(exchange_count'RANGE)) => exchange_count
+        unsigned(data_o(5 downto 0)) => exchange_count
     );
 
     process (ck_clk_i) begin
