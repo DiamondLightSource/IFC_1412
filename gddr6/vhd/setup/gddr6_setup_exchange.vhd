@@ -30,6 +30,7 @@ entity gddr6_setup_exchange is
         enable_controller_i : in std_ulogic;
         setup_trigger_i : in std_ulogic;
         capture_edc_out_i : in std_ulogic;
+        edc_select_i : in std_ulogic;
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out phy_ca_t;
@@ -204,7 +205,6 @@ begin
             ca3 => reverse(ca_bits(GDDR6_CA_CA3_BITS)),
             cke_n => ca_bits(GDDR6_CA_CKE_N_BIT)),
         write_output_enable_i => ca_bits(GDDR6_CA_OUTPUT_ENABLE_BIT),
-        write_edc_select_i => ca_bits(GDDR6_CA_EDC_SELECT_BIT),
 
         read_ca_o.ca(0) => read_ca_data(GDDR6_CA_RISING_BITS),
         read_ca_o.ca(1) => read_ca_data(GDDR6_CA_FALLING_BITS),
@@ -223,6 +223,7 @@ begin
         reg_data_array_t(read_edc_o) => read_edc_data,
 
         capture_edc_out_i => capture_edc_out_i,
+        edc_select_i => edc_select_i,
 
         phy_ca_o => phy_ca_o,
         phy_ca_i => phy_ca_i,

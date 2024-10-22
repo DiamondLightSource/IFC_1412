@@ -37,6 +37,9 @@
             .DBI_TRAINING
             # Set to enable capture of EDC_OUT to DBI
             .CAPTURE_EDC_OUT
+            # Select EDC out capture option when CONFIG.CAPTURE_EDC_OUT is not
+            # set.  Set to 0 to capture EDC from read data, 1 from write data
+            .EDC_SELECT
 
         STATUS          R
             # Set if CK clock is locked, otherwise all access to GDDR6 registers
@@ -114,9 +117,6 @@
             .CKE_N
             # DQ tristate control
             .OUTPUT_ENABLE
-            # Select EDC out capture option when CONFIG.CAPTURE_EDC_OUT is set.
-            # Set to 0 to capture EDC from incoming data, 1 from outgoing data
-            .EDC_SELECT
 
         # Write to the register up to 16 times to fill the DQ output buffer from
         # low order bits to high order bits.  Further writes will overwrite

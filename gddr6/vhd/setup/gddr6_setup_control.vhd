@@ -34,6 +34,7 @@ entity gddr6_setup_control is
 
         -- Local configuration
         capture_edc_out_o : out std_ulogic;
+        edc_select_o : out std_ulogic;
 
         -- Controller enable
         ctrl_setup_o : out ctrl_setup_t;
@@ -208,6 +209,8 @@ begin
             );
             capture_edc_out_o <=
                 ck_config_bits(GDDR6_CONFIG_CAPTURE_EDC_OUT_BIT);
+            edc_select_o <=
+                ck_config_bits(GDDR6_CONFIG_EDC_SELECT_BIT);
 
             ctrl_setup_o <= (
                 enable_axi =>

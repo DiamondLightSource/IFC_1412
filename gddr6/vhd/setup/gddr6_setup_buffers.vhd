@@ -32,7 +32,6 @@ entity gddr6_setup_buffers is
         write_ca_strobe_i : in std_ulogic;
         write_ca_i : in phy_ca_t;
         write_output_enable_i : in std_ulogic;
-        write_edc_select_i : in std_ulogic;
         read_ca_o : out phy_ca_t;
         read_output_enable_o : out std_ulogic;
 
@@ -49,6 +48,7 @@ entity gddr6_setup_buffers is
         read_edc_o : out vector_array(0 to 1)(31 downto 0);
 
         capture_edc_out_i : in std_ulogic;
+        edc_select_i : in std_ulogic;
 
         -- PHY interface on ck_clk_i, connected to gddr6_phy
         phy_ca_o : out phy_ca_t;
@@ -68,7 +68,6 @@ architecture arch of gddr6_setup_buffers is
     signal exchange_address : unsigned(5 downto 0) := (others => '0');
     signal exchange_active : std_ulogic := '0';
 
-    signal edc_select : std_ulogic;
     signal dbi_capture_data : vector_array(7 downto 0)(7 downto 0);
 
 
@@ -104,7 +103,7 @@ begin
     -- Output for writing
     ca_out : entity work.memory_array_dual generic map (
         ADDR_BITS => 6,
-        DATA_BITS => 27,
+        DATA_BITS => 26,
         INITIAL => (25 => '0', others => '1')
     ) port map (
         write_clk_i => reg_clk_i,
@@ -115,7 +114,6 @@ begin
         write_data_i(23 downto 20) => write_ca_i.ca3,
         write_data_i(24) => write_ca_i.cke_n,
         write_data_i(25) => write_output_enable_i,
-        write_data_i(26) => write_edc_select_i,
 
         read_clk_i => ck_clk_i,
         read_strobe_i => exchange_active,
@@ -124,8 +122,7 @@ begin
         read_data_o(19 downto 10) => phy_ca_o.ca(1),
         read_data_o(23 downto 20) => phy_ca_o.ca3,
         read_data_o(24) => phy_ca_o.cke_n,
-        read_data_o(25) => phy_dq_o.output_enable,
-        read_data_o(26) => edc_select
+        read_data_o(25) => phy_dq_o.output_enable
     );
 
     -- Input for capture when CTRL is alive
@@ -192,7 +189,7 @@ begin
     -- DBI or computed EDC
     dbi_capture_data <=
         phy_dbi_n_i when not capture_edc_out_i else
-        phy_dq_i.edc_write when edc_select else
+        phy_dq_i.edc_write when edc_select_i else
         phy_dq_i.edc_read;
     gen_dbi : for word in 0 to 1 generate
         subtype BYTE_RANGE is natural range 4*word + 3 downto 4*word;

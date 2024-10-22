@@ -59,6 +59,7 @@ end;
 architecture arch of gddr6_setup is
     signal ck_clk_ok : std_ulogic;
     signal capture_edc_out : std_ulogic;
+    signal edc_select : std_ulogic;
     signal reg_enable_controller : std_ulogic;
 
 begin
@@ -88,6 +89,7 @@ begin
         phy_status_i => phy_status_i,
 
         capture_edc_out_o => capture_edc_out,
+        edc_select_o => edc_select,
         ctrl_setup_o => ctrl_setup_o,
         ck_enable_controller_o => enable_controller_o,
         reg_enable_controller_o => reg_enable_controller
@@ -130,6 +132,7 @@ begin
         enable_controller_i => reg_enable_controller,
         setup_trigger_i => setup_trigger_i,
         capture_edc_out_i => capture_edc_out,
+        edc_select_i => edc_select,
 
         phy_ca_o => phy_ca_o,
         phy_ca_i => phy_ca_i,
