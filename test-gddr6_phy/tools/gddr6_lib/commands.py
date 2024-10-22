@@ -84,7 +84,7 @@ INIT_MR1  = MRS(1, 0b0_0_0_0_0_0_00_01_00)
 # 10    Enable self refresh during CA training (does this matter?)
 # 11    Controls EDC hold pattern output (1 => half data rate pattern)
 #                   11   9 8  6 5:3 2:0
-INIT_MR2  = MRS(2, 0b0_1_0_1_00_000_000)
+INIT_MR2  = MRS(2, 0b0_1_0_0_00_000_000)
 
 #  2:0  Data and WCK termination offset
 #  5:3  CA termination offset
