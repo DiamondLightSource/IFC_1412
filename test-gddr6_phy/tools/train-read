@@ -30,13 +30,18 @@ args = parser.parse_args()
 
 
 
-# For the prototype card we need the sticky CA6 workaround
-sg.CONFIG.ENABLE_CABI = 1
+sg.CONFIG._write_fields_rw(
+    # Can't have controller in charge
+    ENABLE_CONTROL = 0,
+    ENABLE_REFRESH = 0,
+    ENABLE_AXI = 0,
+    # Send commands unmodified
+    ENABLE_CABI = 0,
+    # Want to disable DBI for reception
+    ENABLE_DBI = 0,
+    # Ensure DBI register captures DBI
+    CAPTURE_EDC_OUT = 0)
 
-# Want to disable DBI for reception
-sg.CONFIG.ENABLE_DBI = 0
-# Ensure DBI register captures DBI
-sg.CONFIG.CAPTURE_EDC_OUT = 0
 
 exchange = _Exchange(sg)
 stream = Stream(exchange, 4)    # tLTLTR is minimum LDFF interval

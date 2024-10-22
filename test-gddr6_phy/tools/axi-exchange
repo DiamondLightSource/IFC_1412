@@ -1,0 +1,265 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+import numpy
+
+from registers import regs, sg
+
+from gddr6_lib.commands import *
+from gddr6_lib.exchange import send_command
+
+axi = regs.SYS.AXI
+
+def int0(x):
+    return int(x, 0)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--address', default = 0, type = int0)
+parser.add_argument('-w', '--write', type = int0)
+parser.add_argument('-r', '--read', type = int0)
+parser.add_argument('-k', '--constant', type = int0)
+parser.add_argument('-n', '--enable_dbi',
+    default = True, action = 'store_false')
+parser.add_argument('-c', '--capture_dbi',
+    default = False, action = 'store_true')
+args = parser.parse_args()
+
+
+def get_axi_stats():
+    names = [
+        'write_frame_error',
+        'write_crc_error',
+        'write_last_error',
+        'write_address',
+        'write_transfer',
+        'write_data_beat',
+        'read_frame_error',
+        'read_crc_error',
+        'read_address',
+        'read_transfer',
+        'read_data_beat',
+    ]
+    return [(names[i], axi.STATS[i]._value) for i in range(11)]
+
+
+class DecodeCA:
+    def __init__(self, report_nop = False):
+        self.tick_count = 0
+        self.mask_count = 0
+        self.report_nop = report_nop
+
+
+    def __decode_command(self, ca0, ca1, ca3):
+        ca0_98 = ca0 >> 8
+        ca1_98 = ca1 >> 8
+        ca1_76 = (ca1 >> 6) & 3
+
+        if ca0_98 == 0 or ca0_98 == 1:
+            # Lx/xx -- ACT
+            self.report('ACT {:X} {:04X}'.format(
+                (ca0 >> 4) & 0xF,
+                (ca0 & 0xF) | (ca1 << 4)))
+        elif ca0_98 == 2:
+            # HL/xx -- NOP/MRS/REF/PRE
+            if ca1_98 == 0:
+                # HL/LL -- PRE
+                if (ca1 >> 4) & 1:
+                    self.report('PREab')
+                else:
+                    self.report('PREpb {:X}'.format((ca0 >> 4) & 0xF))
+            elif ca1_98 == 1:
+                # HL/LH -- REF
+                if (ca1 >> 4) & 1:
+                    self.report('REFab')
+                else:
+                    self.report('REFp2b {:X}'.format((ca0 >> 4) & 0xF))
+            elif ca1_98 == 2:
+                # HL/HL -- MRS
+                self.report('MRS {:X} {:03X}'.format(
+                    (ca0 >> 4) & 0xF,
+                    (ca0 & 0xF) | ((ca1 & 0xFF) << 4)))
+            elif ca1_98 == 3:
+                # HL/HH -- NOP
+                self.nop()
+        else: # 3
+            # HH/xx -- NOP/others
+            if ca1_98 == 0:
+                # HH/LL -- WRTR/WDM/WSM/WOM
+                if ca1_76 == 0:
+                    # HH/LLLL -- WOM
+                    self.report('WOM{:s} {:X} {:02X} {:04b}'.format(
+                        'A' if (ca1 >> 4) & 1 else '',
+                        (ca0 >> 4) & 0xF,
+                        (ca0 & 0xF) | ((ca1 & 7) << 4),
+                        ca3))
+                elif ca1_76 == 1:
+                    # HH/LLLH -- WSM
+                    self.report('WSM{:s} {:X} {:02X} {:04b}'.format(
+                        'A' if (ca1 >> 4) & 1 else '',
+                        (ca0 >> 4) & 0xF,
+                        (ca0 & 0xF) | ((ca1 & 7) << 4),
+                        ca3))
+                    self.mask_count = 2
+                elif ca1_76 == 2:
+                    # HH/LLHL -- WDM
+                    self.report('WDM{:s} {:X} {:02X} {:04b}'.format(
+                        'A' if (ca1 >> 4) & 1 else '',
+                        (ca0 >> 4) & 0xF,
+                        (ca0 & 0xF) | ((ca1 & 7) << 4),
+                        ca3))
+                    self.mask_count = 1
+                elif ca1_76 == 3:
+                    # HH/LLHH -- WRTR
+                    self.report('WRTR')
+            elif ca1_98 == 1:
+                # HH/LH -- RDTR/LDFF/RD
+                if ca1_76 == 0:
+                    # HH/LHLL -- RD
+                    self.report('RD{:s} {:X} {:02X}'.format(
+                        'A' if (ca1 >> 4) & 1 else '',
+                        (ca0 >> 4) & 0xF,
+                        (ca0 & 0xF) | ((ca1 & 7) << 4)))
+                elif ca1_76 == 1:
+                    # HH/LHLH -- invalid coding
+                    self.report('UNKNOWN')
+                elif ca1_76 == 2:
+                    # HH/LHHL -- LDFF
+                    self.report('LDFF {:X} {:03X}'.format(
+                        (ca0 >> 4) & 0xF,
+                        (ca0 & 0xF) | (ca1 & 0x3F) << 4))
+                elif ca1_76 == 3:
+                    # HH/LHHH -- RDTR
+                    self.report('RDTR')
+            elif ca1_98 == 2 or ca1_98 == 3:
+                # HH/Hx -- NOP
+                self.nop()
+
+    def __decode_mask(self, ca0, ca1):
+        if ca0 >> 8 == 3 and ca1 >> 8 == 3:
+            self.report('mask: {:04X}'.format(
+                (ca0 & 0xFF) | ((ca1 & 0xFF) << 8)))
+        else:
+            self.report('Malformed mask {:03X}:{:03X}'.format(ca0, ca1))
+        self.mask_count -= 1
+
+    def decode(self, ca):
+        ca0 = ca.RISING
+        ca1 = ca.FALLING
+        ca3 = ca.CA3
+
+#         print('{:03X}:{:03X}'.format(ca0, ca1))
+        if self.mask_count > 0:
+            self.__decode_mask(ca0, ca1)
+        else:
+            self.__decode_command(ca0, ca1, ca3)
+
+        self.tick_count += 1
+
+    def report(self, string):
+        print('@{:2d}  {:s}'.format(self.tick_count, string))
+
+    def nop(self):
+        if self.report_nop:
+            report('NOP')
+
+def read_data():
+    data = numpy.empty(16, dtype = numpy.uint32)
+    for i in range(16):
+        data[i] = sg.DQ._value
+    return data.view('uint8')
+
+def read_edc():
+    edc = numpy.empty(2, dtype = numpy.uint32)
+    for i in range(2):
+        edc[i] = sg.EDC._value
+    return edc.view('uint8')
+
+def read_dbi():
+    dbi = numpy.empty(2, dtype = numpy.uint32)
+    for i in range(2):
+        dbi[i] = sg.DBI._value
+    return dbi.view('uint8')
+
+def show_bits(bytes):
+    return ' '.join(f'{byte:08b}' for byte in bytes)
+
+
+def write_axi_buffer(data, byte_mask = 0xF):
+    data = numpy.require(data, dtype = numpy.uint8).view(numpy.uint32)
+    rows, columns = data.shape
+    axi.COMMAND.START_WRITE = 1
+    axi.SETUP.BYTE_MASK = byte_mask
+    for row in data:
+        for word in row:
+            axi.DATA._value = word
+        axi.COMMAND.STEP_WRITE = 1
+
+def read_axi_buffer(count):
+    data = numpy.empty((count, 16), dtype = numpy.uint32)
+    axi.COMMAND.START_READ = 1
+    for i in range(count):
+        for j in range(16):
+            data[i, j] = axi.DATA._value
+        axi.COMMAND.STEP_READ = 1
+    return data.view(numpy.uint8)
+
+def show_bytes(data):
+    return ' '.join('{:02X}'.format(byte) for byte in data[::-1])
+
+def show_channels(data):
+    data = data.reshape((4, 16))
+    return '  '.join(show_bytes(ch) for ch in data[::-1])
+
+
+def get_ca_commands(count = 64):
+    decode = DecodeCA()
+    sg.COMMAND.START_READ = 1
+    for i in range(count):
+        ca = sg.CA._get_fields()
+        data = read_data()
+        edc = read_edc()
+        dbi = read_dbi()
+        sg.COMMAND.STEP_READ = 1
+        decode.decode(ca)
+        if (data != 0xFF).any() or (edc != 0xAA).any():
+            print(i, '',
+                show_channels(data), '-', show_bytes(edc), '', show_bytes(dbi))
+
+def enable_controller(enable_dbi, capture_dbi):
+    sg.CONFIG._write_fields_rw(
+        ENABLE_CONTROL = 1,
+        ENABLE_REFRESH = 1,
+        ENABLE_AXI = 1,
+        DBI_TRAINING = 0,
+        ENABLE_DBI = enable_dbi,
+        CAPTURE_EDC_OUT = int(not capture_dbi))
+
+def do_axi_exchange(do_write, do_read, address = 0, read_count = 1):
+    axi.REQUEST._write_fields_rw(ADDRESS = address, LENGTH = read_count)
+    axi.COMMAND._write_fields_wo(
+        CAPTURE = 1, START_AXI_WRITE = do_write, START_AXI_READ = do_read)
+    get_ca_commands()
+    for name, value in get_axi_stats():
+        print(f'{name:20s}{value}')
+
+enable_controller(args.enable_dbi, args.capture_dbi)
+sg.CONFIG.EDC_SELECT = 0
+
+if args.write:
+    if args.constant is None:
+        data_out = numpy.arange(
+            args.write * 64, dtype = numpy.uint8).reshape((-1, 64))
+    else:
+        data_out = numpy.empty((args.write, 64), dtype = numpy.uint8)
+        data_out[:, :] = args.constant
+    write_axi_buffer(data_out)
+    do_axi_exchange(1, 0, args.address)
+
+if args.read:
+    do_axi_exchange(0, 1, args.address, args.read - 1)
+    for row in read_axi_buffer(args.read):
+        print(show_channels(row))
+
+print(axi.STATUS)
+print(sg.CONFIG)

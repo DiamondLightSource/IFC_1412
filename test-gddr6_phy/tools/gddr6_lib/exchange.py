@@ -109,3 +109,9 @@ class Stream:
             self.exchange.reset()
         self.exchange.command(command)
         self.exchange.delay(self.delay - 1)
+
+
+def send_command(sg, command):
+    exchange = _Exchange(sg)
+    exchange.command(command)
+    exchange.exchange()

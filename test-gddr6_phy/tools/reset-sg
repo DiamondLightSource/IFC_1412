@@ -11,6 +11,10 @@ from gddr6_lib.exchange import _Exchange, Stream
 
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 
+# Ensure we disable the memory
+sg.CONFIG._write_fields_rw(
+    ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
+
 if sg.CONFIG.SG_RESET_N != 3:
     print('Resetting SG ram')
     sg.CONFIG.SG_RESET_N = 0
