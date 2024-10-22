@@ -170,7 +170,7 @@ package body gddr6_ctrl_command_defs is
         return ca_command_t is
     begin
         return ((
-            0 => "11" & byte_mask(7 downto 0),
-            1 => "11" & byte_mask(15 downto 8)), "0000");
+            0 => "11" & not byte_mask(7 downto 0),
+            1 => "11" & not byte_mask(15 downto 8)), "0000");
     end;
 end;

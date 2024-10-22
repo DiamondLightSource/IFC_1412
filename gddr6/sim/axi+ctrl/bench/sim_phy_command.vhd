@@ -98,7 +98,8 @@ architecture arch of sim_phy_command is
         assert command.ca(1)(9 downto 8) & command.ca(0)(9 downto 8) = "1111"
             report "Invalid mask"
             severity failure;
-        return command.ca(1)(7 downto 0) & command.ca(0)(7 downto 0);
+        return not (
+            command.ca(1)(7 downto 0) & command.ca(0)(7 downto 0));
     end;
 
 
