@@ -101,7 +101,7 @@ INIT_MR3  = MRS(3, 0b00_00_00_000_000)
 # 10    Enable Write CRC (0 => on)
 # 11    Set to invert EDC hold pattern
 #                     10 9  7 6:4 3 :0
-INIT_MR4  = MRS(4, 0b0_0_0_10_011_1110)
+INIT_MR4  = MRS(4, 0b0_0_0_10_011_1010)
 
 #  1    LP2 allows WCK to turn off
 #  2    LP3 enable training during REFab, needed for read training
