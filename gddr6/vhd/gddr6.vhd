@@ -95,6 +95,7 @@ architecture arch of gddr6 is
     signal ctrl_write_response : axi_ctrl_write_response_t;
 
     signal ctrl_setup : ctrl_setup_t;
+    signal temperature : sg_temperature_t;
 
     signal ca : phy_ca_t;
     signal dq_out : phy_dq_out_t;
@@ -122,6 +123,7 @@ begin
         clk_i => ck_clk,
 
         ctrl_setup_i => ctrl_setup,
+        temperature_o => temperature,
 
         axi_read_request_i => ctrl_read_request,
         axi_read_response_o => ctrl_read_response,
@@ -154,6 +156,7 @@ begin
         ctrl_ca_i => ca,
         ctrl_dq_i => dq_out,
         ctrl_dq_o => dq_in,
+        temperature_i => temperature,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

@@ -30,6 +30,7 @@ entity gddr6_ctrl_command is
         lookahead_i : in bank_open_t;
 
         -- Bypass channel for other commands
+        refresh_start_o : out std_ulogic;
         bypass_command_i : in ca_command_t;
         bypass_valid_i : in std_ulogic;
 
@@ -130,6 +131,7 @@ begin
         lookahead_i => lookahead_i,
         refresh_i => refresh_i,
         refresh_ack_o => refresh_ack_o,
+        refresh_start_o => refresh_start_o,
 
         status_i => banks_status_o,
 

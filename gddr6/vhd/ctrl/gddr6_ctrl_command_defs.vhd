@@ -22,6 +22,10 @@ package gddr6_ctrl_command_defs is
         mode : std_ulogic_vector(3 downto 0);
         op : std_ulogic_vector(11 downto 0)) return ca_command_t;
 
+    -- Access to temperatures
+    constant SG_READ_TEMPS : ca_command_t;
+    constant SG_VENDOR_OFF : ca_command_t;
+
     -- Refresh all banks or selected pair of banks
     function SG_REFp2b(bank_pair : unsigned(2 downto 0)) return ca_command_t;
     constant SG_REFab : ca_command_t
@@ -72,6 +76,11 @@ package body gddr6_ctrl_command_defs is
             0 => "10" & mode & op(3 downto 0),
             1 => "10" & op(11 downto 4)), "0000");
     end;
+
+    constant SG_READ_TEMPS : ca_command_t
+        := SG_MRS("0011", b"00_00_10_000_000");
+    constant SG_VENDOR_OFF : ca_command_t
+        := SG_MRS("0011", b"00_00_00_000_000");
 
     function SG_REFp2b(bank_pair : unsigned(2 downto 0)) return ca_command_t
     is

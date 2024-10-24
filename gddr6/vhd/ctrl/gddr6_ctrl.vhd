@@ -38,6 +38,7 @@ entity gddr6_ctrl is
 
         -- Configuration and setup control
         ctrl_setup_i : in ctrl_setup_t;
+        temperature_o : out sg_temperature_t;
 
         -- Connection from AXI receiver
         axi_read_request_i : in axi_ctrl_read_request_t;
@@ -67,6 +68,10 @@ architecture arch of gddr6_ctrl is
     signal refresh_command : refresh_request_t;
     signal refresh_ack : std_ulogic;
     signal stall_requests : std_ulogic;
+
+    signal refresh_start : std_ulogic;
+    signal bypass_command : ca_command_t;
+    signal bypass_valid : std_ulogic;
 
 begin
     -- Generate read requests from AXI addresses
@@ -149,8 +154,9 @@ begin
         refresh_i => refresh_command,
         refresh_ack_o => refresh_ack,
 
-        bypass_command_i => SG_NOP,
-        bypass_valid_i => '0',
+        refresh_start_o => refresh_start,
+        bypass_command_i => bypass_command,
+        bypass_valid_i => bypass_valid,
 
         enable_mux_i => ctrl_setup_i.enable_axi and not stall_requests,
         priority_mode_i => ctrl_setup_i.priority_mode,
@@ -163,6 +169,18 @@ begin
         ca_command_o.ca3 => phy_ca_o.ca3
     );
     phy_ca_o.cke_n <= '0';
+
+
+    temps : entity work.gddr6_ctrl_temps port map (
+        clk_i => clk_i,
+
+        refresh_start_i => refresh_start,
+        command_o => bypass_command,
+        command_valid_o => bypass_valid,
+        data_i => phy_dq_i.data,
+
+        temperature_o => temperature_o
+    );
 
     -- Manages data timing and EDC checking
     data : entity work.gddr6_ctrl_data port map (

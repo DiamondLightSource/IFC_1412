@@ -286,6 +286,18 @@ package gddr6_defs is
         --  '1' => write take priority over reads
         priority_direction : std_ulogic;
     end record;
+
+    type sg_temperature_t is record
+        -- Each temperature is encoded as 0.5*(degrees+40) in Centigrade, so
+        -- display as 2*t-40.
+        temperature : unsigned_array(0 to 3)(7 downto 0);
+        -- This interface is designed to be used asynchronously: use the rising
+        -- edge of valid (after synchronising to the target clock) to locally
+        -- register temperature.  This is updated every millisecond.
+        valid : std_ulogic;
+    end record;
+
+    constant INVALID_TEMPERATURE : sg_temperature_t;
 end;
 
 package body gddr6_defs is
@@ -352,5 +364,10 @@ package body gddr6_defs is
         wd_ready => '0',
         wr_ok => '0',
         wr_ok_valid => '0'
+    );
+
+    constant INVALID_TEMPERATURE : sg_temperature_t := (
+        temperature => (others => (others => '0')),
+        valid => '0'
     );
 end;

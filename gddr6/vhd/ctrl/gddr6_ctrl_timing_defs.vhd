@@ -65,4 +65,8 @@ package gddr6_ctrl_timing_defs is
     constant t_REFI : natural := 475;           -- 1.9 microseconds
     -- Interval for periodic full refresh in multiples of t_REFI
     constant t_ABREF_REFI : natural := 526;     -- 1 ms / 1.9 microseconds
+
+    -- Delays for temperature measurement
+    constant t_KO : natural := 4;               -- tCK + 10 ns
+    constant t_WRIDON : natural := 4;           -- 2 tCK + 5 ns
 end;

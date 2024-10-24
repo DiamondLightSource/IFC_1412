@@ -44,6 +44,7 @@ entity gddr6_setup_phy is
         ctrl_ca_i : in phy_ca_t;
         ctrl_dq_i : in phy_dq_out_t;
         ctrl_dq_o : out phy_dq_in_t;
+        temperature_i : in sg_temperature_t;
 
         -- --------------------------------------------------------------------
         -- GDDR pins

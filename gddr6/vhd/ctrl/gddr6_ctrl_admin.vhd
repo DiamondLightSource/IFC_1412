@@ -28,6 +28,8 @@ entity gddr6_ctrl_admin is
         -- Refresh requests, serviced and acknowledged when free
         refresh_i : in refresh_request_t;
         refresh_ack_o : out std_ulogic := '0';
+        -- Pulsed when REFab command issued
+        refresh_start_o : out std_ulogic := '0';
 
         -- Banks status
         status_i : in banks_status_t;
@@ -244,6 +246,11 @@ begin
                         command_o <= SG_REFp2b(admin_o.bank(2 downto 0));
                     end if;
             end case;
+
+            -- Pulse refresh_start_o on REFab
+            refresh_start_o <=
+                admin_ack_i and admin_o.all_banks and
+                to_std_ulogic(admin_o.command = CMD_REF);
         end if;
     end process;
 
