@@ -43,6 +43,7 @@ architecture arch of testbench is
     signal setup_delay_out : setup_delay_t;
     signal setup_delay_in : setup_delay_result_t;
     signal enable_controller_out : std_ulogic;
+    signal temperature : sg_temperature_t;
 
 begin
     reg_clk_in <= not reg_clk_in after 2.3 ns;
@@ -60,8 +61,6 @@ begin
         read_data_o => read_data_out,
         read_ack_o => read_ack_out,
 
-        setup_trigger_i => setup_trigger,
-
         ck_reset_o => ck_reset_out,
         ck_clk_i => ck_clk_in,
         ck_clk_ok_i => ck_clk_ok_in,
@@ -74,14 +73,16 @@ begin
         phy_dbi_n_o => phy_dbi_n_out,
         phy_dbi_n_i => phy_dbi_n_in,
 
-        phy_setup_o => phy_setup_out,
-        phy_status_i => phy_status_in,
-
         setup_delay_o => setup_delay_out,
         setup_delay_i => setup_delay_in,
 
+        phy_setup_o => phy_setup_out,
+        phy_status_i => phy_status_in,
+
+        setup_trigger_i => setup_trigger,
         ctrl_setup_o => ctrl_setup,
-        enable_controller_o => enable_controller_out
+        enable_controller_o => enable_controller_out,
+        temperature_i => temperature
     );
 
     process (ck_clk_in) begin
@@ -221,6 +222,8 @@ begin
         read_data_words;
         read_data_words;
 
+        read_reg(GDDR6_TEMPS_REG);
+
         -- Enable the controller and trigger a full capture
         write_reg(GDDR6_CONFIG_REG, (
             GDDR6_CONFIG_CK_RESET_N_BIT => '1',
@@ -235,6 +238,23 @@ begin
         setup_trigger <= '1';
         clk_wait;
         setup_trigger <= '0';
+
+        wait;
+    end process;
+
+    process
+        procedure clk_wait(count : natural := 1) is
+        begin
+            clk_wait(ck_clk_in, count);
+        end;
+
+    begin
+        temperature <= INVALID_TEMPERATURE;
+
+        clk_wait(20);
+        temperature.temperature <= (X"12", X"23", X"34", X"45");
+        clk_wait(5);
+        temperature.valid <= '1';
 
         wait;
     end process;

@@ -20,6 +20,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/short_delay.vhd \
     $common_vhd/util/memory_array.vhd \
     $common_vhd/util/memory_array_dual.vhd \
+    $common_vhd/util/memory_array_dual_bytes.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
@@ -78,6 +79,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_mux.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_request.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_temps.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_data.vhd \
     $vhd_dir/ctrl/gddr6_ctrl.vhd \
     $vhd_dir/axi/gddr6_axi_defs.vhd \

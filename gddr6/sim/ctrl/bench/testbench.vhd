@@ -30,7 +30,7 @@ architecture arch of testbench is
     constant LONG_REFRESH_COUNT : natural := 10;
 
     signal ctrl_setup : ctrl_setup_t;
-    signal ctrl_status : ctrl_status_t;
+    signal temperature : sg_temperature_t;
     signal axi_read_request   : axi_ctrl_read_request_t;
     signal axi_read_response  : axi_ctrl_read_response_t;
     signal axi_write_request  : axi_ctrl_write_request_t;
@@ -82,7 +82,7 @@ begin
     ) port map (
         clk_i => clk,
         ctrl_setup_i => ctrl_setup,
-        ctrl_status_o => ctrl_status,
+        temperature_o => temperature,
         axi_read_request_i => axi_read_request,
         axi_read_response_o => axi_read_response,
         axi_write_request_i => axi_write_request,
@@ -102,6 +102,7 @@ begin
 
     process begin
         ctrl_setup <= (
+            enable_axi => '1',
             enable_refresh => '1',
             priority_mode => '0',
             priority_direction => '1'

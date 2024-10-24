@@ -15,10 +15,13 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
+    $common_vhd/util/stretch_pulse.vhd \
+    $vhd_dir/gddr6_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_timing_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_tuning_defs.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_delay_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_read.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_write.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_lookahead.vhd \
@@ -29,8 +32,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_mux.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_request.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_temps.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_data.vhd \
-    $vhd_dir/gddr6_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl.vhd
 
 vcom -64 -2008 -work xil_defaultlib \
@@ -54,6 +57,7 @@ add wave -group "Request" ctrl/command/request/*
 add wave -group "Admin" ctrl/command/admin/*
 add wave -group "Command" ctrl/command/*
 add wave -group "Data" ctrl/data/*
+add wave -group "Temps" ctrl/temps/*
 add wave -group "Ctrl" ctrl/*
 add wave -group "Bench" sim:*
 

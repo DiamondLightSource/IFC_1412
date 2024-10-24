@@ -42,6 +42,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/ctrl/gddr6_ctrl_request.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_data.vhd \
+    $vhd_dir/ctrl/gddr6_ctrl_temps.vhd \
     $vhd_dir/ctrl/gddr6_ctrl.vhd \
     $vhd_dir/axi/gddr6_axi_defs.vhd \
     $vhd_dir/axi/gddr6_axi_address.vhd \
