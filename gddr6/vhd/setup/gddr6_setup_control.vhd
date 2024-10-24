@@ -32,6 +32,8 @@ entity gddr6_setup_control is
         phy_setup_o : out phy_setup_t;
         phy_status_i : in phy_status_t;
 
+        temperature_i : in sg_temperature_t;
+
         -- Local configuration
         capture_edc_out_o : out std_ulogic;
         edc_select_o : out std_ulogic;
@@ -65,6 +67,7 @@ architecture arch of gddr6_setup_control is
     signal ck_status_bits : reg_data_t := (others => '0');
     signal reg_event_bits : reg_data_t := (others => '0');
     signal ck_event_bits : reg_data_t := (others => '0');
+    signal temps_bits : reg_data_t;
 
     -- Because this signal is being used as an asynchronous reset we need to
     -- mark it accordingly.
@@ -72,6 +75,9 @@ architecture arch of gddr6_setup_control is
     attribute FALSE_PATH_FROM : string;
     attribute KEEP of ck_reset_o : signal is "TRUE";
     attribute FALSE_PATH_FROM of ck_reset_o : signal is "TRUE";
+
+    signal temp_valid_in : std_ulogic;
+    signal read_temps : std_ulogic;
 
 begin
     -- CONFIG
@@ -156,6 +162,24 @@ begin
     write_ack_o(GDDR6_STATUS_REG) <= '1';
 
 
+    -- TEMPS
+    read_data_o(GDDR6_TEMPS_REG) <= temps_bits;
+    read_ack_o(GDDR6_TEMPS_REG) <= '1';
+    write_ack_o(GDDR6_TEMPS_REG) <= '1';
+
+    sync_temps : entity work.sync_bit port map (
+        clk_i => reg_clk_i,
+        bit_i => temperature_i.valid,
+        bit_o => temp_valid_in
+    );
+
+    sync_edge : entity work.edge_detect port map (
+        clk_i => reg_clk_i,
+        data_i(0) => temp_valid_in,
+        edge_o(0) => read_temps
+    );
+
+
     -- -------------------------------------------------------------------------
 
     process (reg_clk_i)
@@ -191,6 +215,19 @@ begin
             read_status_ack <=
                 (need_reg_ack or need_ck_ack) and
                 not next_need_reg_ack and not next_need_ck_ack;
+
+            if read_temps then
+                temps_bits <= (
+                    GDDR6_TEMPS_CH0_BITS =>
+                        std_ulogic_vector(temperature_i.temperature(0)),
+                    GDDR6_TEMPS_CH1_BITS =>
+                        std_ulogic_vector(temperature_i.temperature(1)),
+                    GDDR6_TEMPS_CH2_BITS =>
+                        std_ulogic_vector(temperature_i.temperature(2)),
+                    GDDR6_TEMPS_CH3_BITS =>
+                        std_ulogic_vector(temperature_i.temperature(3))
+                );
+            end if;
         end if;
     end process;
 

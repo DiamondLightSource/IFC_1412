@@ -52,6 +52,12 @@
             # Set if FIFO not OK event seen since last read
             .FIFO_OK_EVENT  2
 
+        TEMPS           R
+            .CH0        8
+            .CH1        8
+            .CH2        8
+            .CH3        8
+
     # Delay control.  Writing updates selected delay control, reading
     # returns current delay for selected output
     DELAY           RW

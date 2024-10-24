@@ -52,7 +52,8 @@ entity gddr6_setup is
 
         -- Controller enable
         ctrl_setup_o : out ctrl_setup_t;
-        enable_controller_o : out std_ulogic
+        enable_controller_o : out std_ulogic;
+        temperature_i : in sg_temperature_t
     );
 end;
 
@@ -87,6 +88,8 @@ begin
 
         phy_setup_o => phy_setup_o,
         phy_status_i => phy_status_i,
+
+        temperature_i => temperature_i,
 
         capture_edc_out_o => capture_edc_out,
         edc_select_o => edc_select,

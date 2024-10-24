@@ -141,7 +141,8 @@ begin
 
         setup_trigger_i => setup_trigger_i,
         ctrl_setup_o => ctrl_setup_o,
-        enable_controller_o => enable_controller
+        enable_controller_o => enable_controller,
+        temperature_i => temperature_i
     );
 
 
