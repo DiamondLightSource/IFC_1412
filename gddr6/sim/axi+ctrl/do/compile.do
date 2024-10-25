@@ -83,6 +83,7 @@ add wave -group "AXI.R command FIFO" axi/axi_read/command_fifo/fifo/*
 add wave -group "AXI.R FIFO" axi/axi_read/data_fifo/*
 add wave -group "AXI.R R" axi/axi_read/data/*
 add wave -group "CTRL" ctrl/*
+add wave -group "CTRL.TEMP" ctrl/temps/*
 add wave -group "CTRL.DATA" ctrl/data/*
 add wave -group "PHY Command" phy/command/* phy/command/vars/*
 add wave -group "PHY Memory" phy/memory/*

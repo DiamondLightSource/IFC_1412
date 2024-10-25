@@ -12,6 +12,7 @@ raw_regs = driver.RawRegisters('ifc_1412-gddr6', 0)
 
 regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
 sg = regs.SYS.GDDR6
+axi = regs.SYS.AXI
 
 
 TARGET_IDELAY = 0
