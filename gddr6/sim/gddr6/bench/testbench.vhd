@@ -12,21 +12,26 @@ entity testbench is
 end testbench;
 
 architecture arch of testbench is
-    signal setup_clk : std_ulogic := '0';
-    signal write_strobe : std_ulogic := '0';
-    signal write_address : unsigned(9 downto 0);
-    signal write_data : std_ulogic_vector(31 downto 0);
-    signal write_ack : std_ulogic;
-    signal read_strobe : std_ulogic := '0';
-    signal read_address : unsigned(9 downto 0);
-    signal read_data : std_ulogic_vector(31 downto 0);
-    signal read_ack : std_ulogic;
-
-    signal axi_stats : axi_stats_t;
-    signal setup_trigger : std_ulogic;
+    signal s_reg_ACLK : std_ulogic;
+    signal s_reg_ARADDR : std_ulogic_vector(11 downto 0);
+    signal s_reg_ARVALID : std_ulogic;
+    signal s_reg_ARREADY : std_ulogic;
+    signal s_reg_AWADDR : std_ulogic_vector(11 downto 0);
+    signal s_reg_AWVALID : std_ulogic;
+    signal s_reg_AWREADY : std_ulogic;
+    signal s_reg_BRESP : std_ulogic_vector(1 downto 0);
+    signal s_reg_BVALID : std_ulogic;
+    signal s_reg_BREADY : std_ulogic;
+    signal s_reg_RDATA : std_ulogic_vector(31 downto 0);
+    signal s_reg_RRESP : std_ulogic_vector(1 downto 0);
+    signal s_reg_RVALID : std_ulogic;
+    signal s_reg_RREADY : std_ulogic;
+    signal s_reg_WDATA : std_ulogic_vector(31 downto 0);
+    signal s_reg_WSTRB : std_ulogic_vector(3 downto 0);
+    signal s_reg_WVALID : std_ulogic;
+    signal s_reg_WREADY : std_ulogic;
 
     signal s_axi_ACLK : std_logic := '0';
-    signal s_axi_RESET : std_logic := '0';
     signal s_axi_AWID : std_logic_vector(3 downto 0);
     signal s_axi_AWADDR : std_logic_vector(31 downto 0);
     signal s_axi_AWLEN : std_logic_vector(7 downto 0);
@@ -97,25 +102,30 @@ architecture arch of testbench is
     signal pad_SG2_EDC_B : std_logic_vector(1 downto 0);
 
 begin
-    setup_clk <= not setup_clk after 2 ns;
+    s_reg_ACLK <= not s_reg_ACLK after 2 ns;
     s_axi_ACLK <= not s_axi_ACLK after 2.3 ns;
 
     gddr6 : entity work.gddr6_ip port map (
-        setup_clk_i => setup_clk,
-        write_strobe_i => write_strobe,
-        write_address_i => write_address,
-        write_data_i => write_data,
-        write_ack_o => write_ack,
-        read_strobe_i => read_strobe,
-        read_address_i => read_address,
-        read_data_o => read_data,
-        read_ack_o => read_ack,
-
-        axi_stats_o => axi_stats,
-        setup_trigger_i => setup_trigger,
+        s_reg_ACLK => s_reg_ACLK,
+        s_reg_ARADDR_i => s_reg_ARADDR,
+        s_reg_ARVALID_i => s_reg_ARVALID,
+        s_reg_ARREADY_o => s_reg_ARREADY,
+        s_reg_AWADDR_i => s_reg_AWADDR,
+        s_reg_AWVALID_i => s_reg_AWVALID,
+        s_reg_AWREADY_o => s_reg_AWREADY,
+        s_reg_BRESP_o => s_reg_BRESP,
+        s_reg_BVALID_o => s_reg_BVALID,
+        s_reg_BREADY_i => s_reg_BREADY,
+        s_reg_RDATA_o => s_reg_RDATA,
+        s_reg_RRESP_o => s_reg_RRESP,
+        s_reg_RVALID_o => s_reg_RVALID,
+        s_reg_RREADY_i => s_reg_RREADY,
+        s_reg_WDATA_i => s_reg_WDATA,
+        s_reg_WSTRB_i => s_reg_WSTRB,
+        s_reg_WVALID_i => s_reg_WVALID,
+        s_reg_WREADY_o => s_reg_WREADY,
 
         s_axi_ACLK => s_axi_ACLK,
-        s_axi_RESET_i => s_axi_RESET,
         s_axi_AWID_i => s_axi_AWID,
         s_axi_AWADDR_i => s_axi_AWADDR,
         s_axi_AWLEN_i => s_axi_AWLEN,
@@ -185,4 +195,37 @@ begin
         pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B,
         pad_SG2_EDC_B_io => pad_SG2_EDC_B
     );
+
+    -- Assign sensible defaults
+    -- Register interface
+    s_reg_ARVALID <= '0';
+    s_reg_AWVALID <= '0';
+    s_reg_BREADY <= '1';
+    s_reg_RREADY <= '1';
+    s_reg_WVALID <= '0';
+    -- Memory interface
+    s_axi_ARVALID <= '0';
+    s_axi_AWVALID <= '0';
+    s_axi_BREADY <= '1';
+    s_axi_RREADY <= '1';
+    s_axi_WVALID <= '0';
+    -- SG interface
+    pad_SG12_CK_P <= '0';
+    pad_SG12_CK_N <= '1';
+    pad_SG1_WCK_P <= '0';
+    pad_SG1_WCK_N <= '1';
+    pad_SG2_WCK_P <= '0';
+    pad_SG2_WCK_N <= '1';
+    pad_SG1_DQ_A <= (others => 'H');
+    pad_SG1_DBI_N_A <= (others => 'H');
+    pad_SG1_EDC_A <= (others => 'H');
+    pad_SG1_DQ_B <= (others => 'H');
+    pad_SG1_DBI_N_B <= (others => 'H');
+    pad_SG1_EDC_B <= (others => 'H');
+    pad_SG2_DQ_A <= (others => 'H');
+    pad_SG2_DBI_N_A <= (others => 'H');
+    pad_SG2_EDC_A <= (others => 'H');
+    pad_SG2_DQ_B <= (others => 'H');
+    pad_SG2_DBI_N_B <= (others => 'H');
+    pad_SG2_EDC_B <= (others => 'H');
 end;

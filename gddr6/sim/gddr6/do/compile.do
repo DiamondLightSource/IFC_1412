@@ -26,6 +26,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fixed_delay.vhd \
     $common_vhd/util/dlyreg.vhd \
     $common_vhd/util/stretch_pulse.vhd \
+    $common_vhd/util/edge_detect.vhd \
     $common_vhd/util/strobe_ack.vhd \
     $common_vhd/util/cross_clocks.vhd \
     $common_vhd/util/cross_clocks_write.vhd \
@@ -105,7 +106,9 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/setup/gddr6_setup_delay.vhd \
     $vhd_dir/setup/gddr6_setup.vhd \
     $vhd_dir/gddr6_setup_phy.vhd \
-    $vhd_dir/gddr6.vhd \
+    $vhd_dir/gddr6.vhd
+
+vcom -64 -93 -work xil_defaultlib \
     $vhd_dir/gddr6_ip.vhd
 
 vcom -64 -2008 -work xil_defaultlib \

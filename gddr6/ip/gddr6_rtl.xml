@@ -9,9 +9,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_RESET_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isReset>true</spirit:isReset>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -27,9 +25,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_RESET_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isReset>true</spirit:isReset>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -45,9 +41,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CKE_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -63,9 +57,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CK_P</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -81,9 +73,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CK_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -99,9 +89,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CABI_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -117,9 +105,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CAL</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>3</spirit:width>
@@ -135,9 +121,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_CA3_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -153,9 +137,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_CA3_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -171,9 +153,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_CA3_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -189,9 +169,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_CA3_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -207,9 +185,7 @@
     <spirit:port>
       <spirit:logicalName>SG12_CAU</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isAddress>true</spirit:isAddress>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>6</spirit:width>
@@ -225,9 +201,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_WCK_P</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -243,9 +217,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_WCK_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -261,9 +233,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_DQ_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>16</spirit:width>
@@ -280,9 +250,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_DBI_N_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -299,9 +267,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_EDC_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -318,9 +284,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_DQ_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>16</spirit:width>
@@ -337,9 +301,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_DBI_N_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -356,9 +318,7 @@
     <spirit:port>
       <spirit:logicalName>SG1_EDC_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -375,9 +335,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_DQ_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>16</spirit:width>
@@ -394,9 +352,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_DBI_N_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -413,9 +369,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_EDC_A</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -432,9 +386,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_DQ_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>16</spirit:width>
@@ -451,9 +403,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_DBI_N_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -470,9 +420,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_EDC_B</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isData>true</spirit:isData>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>2</spirit:width>
@@ -489,9 +437,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_WCK_P</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>
@@ -507,9 +453,7 @@
     <spirit:port>
       <spirit:logicalName>SG2_WCK_N</spirit:logicalName>
       <spirit:wire>
-        <spirit:qualifier>
-          <spirit:isClock>true</spirit:isClock>
-        </spirit:qualifier>
+        <spirit:qualifier/>
         <spirit:onMaster>
           <spirit:presence>required</spirit:presence>
           <spirit:width>1</spirit:width>

@@ -24,25 +24,36 @@ entity gddr6_ip is
         -- ---------------------------------------------------------------------
         -- Register Setup Interface
         --
-        setup_clk_i : in std_ulogic;
-        write_strobe_i : in std_ulogic;
-        write_address_i : in unsigned(9 downto 0);
-        write_data_i : in std_ulogic_vector(31 downto 0);
-        write_ack_o : out std_ulogic;
-        read_strobe_i : in std_ulogic;
-        read_address_i : in unsigned(9 downto 0);
-        read_data_o : out std_ulogic_vector(31 downto 0);
-        read_ack_o : out std_ulogic;
+        s_reg_ACLK : in std_ulogic;
+        -- AR
+        s_reg_ARADDR_i : in std_ulogic_vector(11 downto 0);
+        s_reg_ARVALID_i : in std_ulogic;
+        s_reg_ARREADY_o : out std_ulogic;
+        -- AW
+        s_reg_AWADDR_i : in std_ulogic_vector(11 downto 0);
+        s_reg_AWVALID_i : in std_ulogic;
+        s_reg_AWREADY_o : out std_ulogic;
+        -- B
+        s_reg_BRESP_o : out std_ulogic_vector(1 downto 0);
+        s_reg_BVALID_o : out std_ulogic;
+        s_reg_BREADY_i : in std_ulogic;
+        -- R
+        s_reg_RDATA_o : out std_ulogic_vector(31 downto 0);
+        s_reg_RRESP_o : out std_ulogic_vector(1 downto 0);
+        s_reg_RVALID_o : out std_ulogic;
+        s_reg_RREADY_i : in std_ulogic;
+        -- W
+        s_reg_WDATA_i : in std_ulogic_vector(31 downto 0);
+        s_reg_WSTRB_i : in std_ulogic_vector(3 downto 0);
+        s_reg_WVALID_i : in std_ulogic;
+        s_reg_WREADY_o : out std_ulogic;
 
-        axi_stats_o : out axi_stats_t;
-        setup_trigger_i : in std_ulogic;
 
         -- ---------------------------------------------------------------------
         -- AXI slave interface to 4GB GDDR6 SGRAM
         --
         -- Clock and reset
         s_axi_ACLK : in std_logic;      -- See note below on naming
-        s_axi_RESET_i : in std_logic;
         -- AW
         s_axi_AWID_i : in std_logic_vector(3 downto 0);
         s_axi_AWADDR_i : in std_logic_vector(31 downto 0);
@@ -124,49 +135,69 @@ entity gddr6_ip is
         pad_SG2_DBI_N_B_io : inout std_logic_vector(1 downto 0);
         pad_SG2_EDC_B_io : inout std_logic_vector(1 downto 0)
     );
+end;
 
+architecture arch of gddr6_ip is
     -- X-Interface attributes for correct IP Integrator inference
-
     attribute X_INTERFACE_INFO : string;
     attribute X_INTERFACE_PARAMETER : string;
-    attribute X_INTERFACE_IGNORE : string;
 
-    -- Register setup interface
-    attribute X_INTERFACE_INFO of setup_clk_i : signal
-        is "xilinx.com:signal:clock:1.0 setup_clk clk";
-    attribute X_INTERFACE_PARAMETER of setup_clk_i : signal
-        is "ASSOCIATED_BUSIF setup";
-    attribute X_INTERFACE_INFO of write_strobe_i : signal
-        is "dls:user:strobe_ack:1.0 setup write_strobe";
-    attribute X_INTERFACE_INFO of write_address_i : signal
-        is "dls:user:address_ack:1.0 setup write_address";
-    attribute X_INTERFACE_INFO of write_data_i : signal
-        is "dls:user:strobe_ack:1.0 setup write_data";
-    attribute X_INTERFACE_INFO of write_ack_o : signal
-        is "dls:user:strobe_ack:1.0 setup write_ack";
-    attribute X_INTERFACE_INFO of read_strobe_i : signal
-        is "dls:user:strobe_ack:1.0 setup read_strobe";
-    attribute X_INTERFACE_INFO of read_address_i : signal
-        is "dls:user:address_ack:1.0 setup read_address";
-    attribute X_INTERFACE_INFO of read_data_o : signal
-        is "dls:user:strobe_ack:1.0 setup read_data";
-    attribute X_INTERFACE_INFO of read_ack_o : signal
-        is "dls:user:strobe_ack:1.0 setup read_ack";
+    -- Note that the AXI clock signal cannot use the _i suffix as the Xilinx IP
+    -- packager relies on its inferencing by port name to assign function.
+
+
+    -- AXI-Lite Slave Interface
+    --
+    attribute X_INTERFACE_INFO of s_reg_ACLK : signal
+        is "xilinx.com:signal:clock:1.0 s_reg_clock clk";
+    attribute X_INTERFACE_PARAMETER of s_reg_ACLK : signal
+        is "ASSOCIATED_BUSIF s_reg";
+    -- AR
+    attribute X_INTERFACE_INFO of s_reg_ARADDR_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg ARADDR";
+    attribute X_INTERFACE_INFO of s_reg_ARVALID_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg ARVALID";
+    attribute X_INTERFACE_INFO of s_reg_ARREADY_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg ARREADY";
+    attribute X_INTERFACE_INFO of s_reg_AWADDR_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg AWADDR";
+    -- AW
+    attribute X_INTERFACE_INFO of s_reg_AWVALID_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg AWVALID";
+    attribute X_INTERFACE_INFO of s_reg_AWREADY_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg AWREADY";
+    attribute X_INTERFACE_INFO of s_reg_BRESP_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg BRESP";
+    -- B
+    attribute X_INTERFACE_INFO of s_reg_BVALID_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg BVALID";
+    attribute X_INTERFACE_INFO of s_reg_BREADY_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg BREADY";
+    attribute X_INTERFACE_INFO of s_reg_RDATA_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg RDATA";
+    -- R
+    attribute X_INTERFACE_INFO of s_reg_RRESP_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg RRESP";
+    attribute X_INTERFACE_INFO of s_reg_RVALID_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg RVALID";
+    attribute X_INTERFACE_INFO of s_reg_RREADY_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg RREADY";
+    -- W
+    attribute X_INTERFACE_INFO of s_reg_WDATA_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg WDATA";
+    attribute X_INTERFACE_INFO of s_reg_WSTRB_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg WSTRB";
+    attribute X_INTERFACE_INFO of s_reg_WVALID_i : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg WVALID";
+    attribute X_INTERFACE_INFO of s_reg_WREADY_o : signal
+        is "xilinx.com:interface:aximm:1.0 s_reg WREADY";
 
     -- AXI slave interface to memory
     --
-    -- Clock and reset
-    -- Alas, this signal cannot use the _i suffix as the Xilinx IP packager
-    -- relies on its inferencing by port name to assign function.  This _IGNORE
-    -- attribute has no effect, but is left here in case one day it works...
-    attribute X_INTERFACE_IGNORE of s_axi_ACLK : signal is "TRUE";
     attribute X_INTERFACE_INFO of s_axi_ACLK : signal
-        is "xilinx.com:signal:clock:1.0 axi_clock clk";
-    attribute X_INTERFACE_INFO of s_axi_RESET_i : signal
-        is "xilinx.com:signal:reset:1.0 axi_reset rst";
+        is "xilinx.com:signal:clock:1.0 s_axi_clock clk";
     attribute X_INTERFACE_PARAMETER of s_axi_ACLK : signal
-        is "ASSOCIATED_RESET s_axi_RESET_i, " &
-           "ASSOCIATED_BUSIF s_axi";
+        is "ASSOCIATED_BUSIF s_axi";
     -- AW
     attribute X_INTERFACE_INFO of s_axi_AWID_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi AWID";
@@ -252,6 +283,7 @@ entity gddr6_ip is
         is "xilinx.com:interface:aximm:1.0 s_axi RDATA";
 
     -- SG Memory Interface
+    --
     attribute X_INTERFACE_INFO of pad_SG1_RESET_N_o : signal
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG1_RESET_N";
     attribute X_INTERFACE_INFO of pad_SG2_RESET_N_o : signal
@@ -308,97 +340,96 @@ entity gddr6_ip is
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_DBI_N_B";
     attribute X_INTERFACE_INFO of pad_SG2_EDC_B_io : signal
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_EDC_B";
-end;
 
-architecture arch of gddr6_ip is
 begin
-    gddr6 : entity work.gddr6 generic map (
-        AXI_FREQUENCY => AXI_FREQUENCY,
-        CK_FREQUENCY => CK_FREQUENCY
-    ) port map (
-        setup_clk_i => setup_clk_i,
 
-        write_strobe_i => write_strobe_i,
-        write_address_i => write_address_i,
-        write_data_i => write_data_i,
-        write_ack_o => write_ack_o,
-        read_strobe_i => read_strobe_i,
-        read_address_i => read_address_i,
-        read_data_o => read_data_o,
-        read_ack_o => read_ack_o,
-
-        setup_trigger_i => setup_trigger_i,
-
-        axi_clk_i => s_axi_ACLK,
-
-        axi_request_i => (
-            write_address => (
-                id => s_axi_AWID_i,
-                addr => unsigned(s_axi_AWADDR_i),
-                len => unsigned(s_axi_AWLEN_i),
-                size => unsigned(s_axi_AWSIZE_i),
-                burst => s_axi_AWBURST_i,
-                valid => s_axi_AWVALID_i
-            ),
-            write_data => (
-                data => s_axi_WDATA_i,
-                strb => s_axi_WSTRB_i,
-                last => s_axi_WLAST_i,
-                valid => s_axi_WVALID_i
-            ),
-            write_response_ready => s_axi_BREADY_i,
-            read_address => (
-                id => s_axi_ARID_i,
-                addr => unsigned(s_axi_ARADDR_i),
-                len => unsigned(s_axi_ARLEN_i),
-                size => unsigned(s_axi_ARSIZE_i),
-                burst => s_axi_ARBURST_i,
-                valid => s_axi_ARVALID_i
-            ),
-            read_data_ready => s_axi_RREADY_i
-        ),
-
-        axi_response_o.write_address_ready => s_axi_AWREADY_o,
-        axi_response_o.write_data_ready => s_axi_WREADY_o,
-        axi_response_o.write_response.id => s_axi_BID_o,
-        axi_response_o.write_response.resp => s_axi_BRESP_o,
-        axi_response_o.write_response.valid => s_axi_BVALID_o,
-        axi_response_o.read_address_ready => s_axi_ARREADY_o,
-        axi_response_o.read_data.id => s_axi_RID_o,
-        axi_response_o.read_data.data => s_axi_RDATA_o,
-        axi_response_o.read_data.resp => s_axi_RRESP_o,
-        axi_response_o.read_data.last => s_axi_RLAST_o,
-        axi_response_o.read_data.valid => s_axi_RVALID_o,
-
-        axi_stats_o => axi_stats_o,
-
-        pad_SG12_CK_P_i => pad_SG12_CK_P_i,
-        pad_SG12_CK_N_i => pad_SG12_CK_N_i,
-        pad_SG1_WCK_P_i => pad_SG1_WCK_P_i,
-        pad_SG1_WCK_N_i => pad_SG1_WCK_N_i,
-        pad_SG2_WCK_P_i => pad_SG2_WCK_P_i,
-        pad_SG2_WCK_N_i => pad_SG2_WCK_N_i,
-        pad_SG1_RESET_N_o => pad_SG1_RESET_N_o,
-        pad_SG2_RESET_N_o => pad_SG2_RESET_N_o,
-        pad_SG12_CKE_N_o => pad_SG12_CKE_N_o,
-        pad_SG12_CABI_N_o => pad_SG12_CABI_N_o,
-        pad_SG12_CAL_o => pad_SG12_CAL_o,
-        pad_SG1_CA3_A_o => pad_SG1_CA3_A_o,
-        pad_SG1_CA3_B_o => pad_SG1_CA3_B_o,
-        pad_SG2_CA3_A_o => pad_SG2_CA3_A_o,
-        pad_SG2_CA3_B_o => pad_SG2_CA3_B_o,
-        pad_SG12_CAU_o => pad_SG12_CAU_o,
-        pad_SG1_DQ_A_io => pad_SG1_DQ_A_io,
-        pad_SG1_DQ_B_io => pad_SG1_DQ_B_io,
-        pad_SG2_DQ_A_io => pad_SG2_DQ_A_io,
-        pad_SG2_DQ_B_io => pad_SG2_DQ_B_io,
-        pad_SG1_DBI_N_A_io => pad_SG1_DBI_N_A_io,
-        pad_SG1_DBI_N_B_io => pad_SG1_DBI_N_B_io,
-        pad_SG2_DBI_N_A_io => pad_SG2_DBI_N_A_io,
-        pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B_io,
-        pad_SG1_EDC_A_io => pad_SG1_EDC_A_io,
-        pad_SG1_EDC_B_io => pad_SG1_EDC_B_io,
-        pad_SG2_EDC_A_io => pad_SG2_EDC_A_io,
-        pad_SG2_EDC_B_io => pad_SG2_EDC_B_io
-    );
+--     gddr6 : entity work.gddr6 generic map (
+--         AXI_FREQUENCY => AXI_FREQUENCY,
+--         CK_FREQUENCY => CK_FREQUENCY
+--     ) port map (
+--         setup_clk_i => setup_clk_i,
+-- 
+--         write_strobe_i => write_strobe_i,
+--         write_address_i => write_address_i,
+--         write_data_i => write_data_i,
+--         write_ack_o => write_ack_o,
+--         read_strobe_i => read_strobe_i,
+--         read_address_i => read_address_i,
+--         read_data_o => read_data_o,
+--         read_ack_o => read_ack_o,
+-- 
+--         setup_trigger_i => setup_trigger_i,
+-- 
+--         axi_clk_i => s_axi_ACLK,
+-- 
+--         axi_request_i => (
+--             write_address => (
+--                 id => s_axi_AWID_i,
+--                 addr => unsigned(s_axi_AWADDR_i),
+--                 len => unsigned(s_axi_AWLEN_i),
+--                 size => unsigned(s_axi_AWSIZE_i),
+--                 burst => s_axi_AWBURST_i,
+--                 valid => s_axi_AWVALID_i
+--             ),
+--             write_data => (
+--                 data => s_axi_WDATA_i,
+--                 strb => s_axi_WSTRB_i,
+--                 last => s_axi_WLAST_i,
+--                 valid => s_axi_WVALID_i
+--             ),
+--             write_response_ready => s_axi_BREADY_i,
+--             read_address => (
+--                 id => s_axi_ARID_i,
+--                 addr => unsigned(s_axi_ARADDR_i),
+--                 len => unsigned(s_axi_ARLEN_i),
+--                 size => unsigned(s_axi_ARSIZE_i),
+--                 burst => s_axi_ARBURST_i,
+--                 valid => s_axi_ARVALID_i
+--             ),
+--             read_data_ready => s_axi_RREADY_i
+--         ),
+-- 
+--         axi_response_o.write_address_ready => s_axi_AWREADY_o,
+--         axi_response_o.write_data_ready => s_axi_WREADY_o,
+--         axi_response_o.write_response.id => s_axi_BID_o,
+--         axi_response_o.write_response.resp => s_axi_BRESP_o,
+--         axi_response_o.write_response.valid => s_axi_BVALID_o,
+--         axi_response_o.read_address_ready => s_axi_ARREADY_o,
+--         axi_response_o.read_data.id => s_axi_RID_o,
+--         axi_response_o.read_data.data => s_axi_RDATA_o,
+--         axi_response_o.read_data.resp => s_axi_RRESP_o,
+--         axi_response_o.read_data.last => s_axi_RLAST_o,
+--         axi_response_o.read_data.valid => s_axi_RVALID_o,
+-- 
+--         axi_stats_o => axi_stats_o,
+-- 
+--         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
+--         pad_SG12_CK_N_i => pad_SG12_CK_N_i,
+--         pad_SG1_WCK_P_i => pad_SG1_WCK_P_i,
+--         pad_SG1_WCK_N_i => pad_SG1_WCK_N_i,
+--         pad_SG2_WCK_P_i => pad_SG2_WCK_P_i,
+--         pad_SG2_WCK_N_i => pad_SG2_WCK_N_i,
+--         pad_SG1_RESET_N_o => pad_SG1_RESET_N_o,
+--         pad_SG2_RESET_N_o => pad_SG2_RESET_N_o,
+--         pad_SG12_CKE_N_o => pad_SG12_CKE_N_o,
+--         pad_SG12_CABI_N_o => pad_SG12_CABI_N_o,
+--         pad_SG12_CAL_o => pad_SG12_CAL_o,
+--         pad_SG1_CA3_A_o => pad_SG1_CA3_A_o,
+--         pad_SG1_CA3_B_o => pad_SG1_CA3_B_o,
+--         pad_SG2_CA3_A_o => pad_SG2_CA3_A_o,
+--         pad_SG2_CA3_B_o => pad_SG2_CA3_B_o,
+--         pad_SG12_CAU_o => pad_SG12_CAU_o,
+--         pad_SG1_DQ_A_io => pad_SG1_DQ_A_io,
+--         pad_SG1_DQ_B_io => pad_SG1_DQ_B_io,
+--         pad_SG2_DQ_A_io => pad_SG2_DQ_A_io,
+--         pad_SG2_DQ_B_io => pad_SG2_DQ_B_io,
+--         pad_SG1_DBI_N_A_io => pad_SG1_DBI_N_A_io,
+--         pad_SG1_DBI_N_B_io => pad_SG1_DBI_N_B_io,
+--         pad_SG2_DBI_N_A_io => pad_SG2_DBI_N_A_io,
+--         pad_SG2_DBI_N_B_io => pad_SG2_DBI_N_B_io,
+--         pad_SG1_EDC_A_io => pad_SG1_EDC_A_io,
+--         pad_SG1_EDC_B_io => pad_SG1_EDC_B_io,
+--         pad_SG2_EDC_A_io => pad_SG2_EDC_A_io,
+--         pad_SG2_EDC_B_io => pad_SG2_EDC_B_io
+--     );
 end;
