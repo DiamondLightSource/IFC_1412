@@ -72,6 +72,8 @@ architecture arch of testbench is
     signal s_axi_RID : std_logic_vector(3 downto 0);
     signal s_axi_RDATA : std_logic_vector(511 downto 0);
 
+    signal axi_stats : std_ulogic_vector(0 to 10);
+
     signal pad_SG1_RESET_N : std_logic;
     signal pad_SG2_RESET_N : std_logic;
     signal pad_SG12_CKE_N : std_logic;
@@ -165,6 +167,8 @@ begin
         s_axi_RRESP_o => s_axi_RRESP,
         s_axi_RID_o => s_axi_RID,
         s_axi_RDATA_o => s_axi_RDATA,
+
+        axi_stats_o => axi_stats,
 
         pad_SG1_RESET_N_o => pad_SG1_RESET_N,
         pad_SG2_RESET_N_o => pad_SG2_RESET_N,

@@ -14,6 +14,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/iodefs/ibuf_array.vhd \
     $common_vhd/iodefs/obuf_array.vhd \
     $common_vhd/iodefs/iobuf_array.vhd \
+    $common_vhd/axi/axi_lite_slave.vhd \
     $common_vhd/util/flow_control.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/fifo.vhd \
