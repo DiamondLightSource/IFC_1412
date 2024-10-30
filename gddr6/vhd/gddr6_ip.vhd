@@ -1,4 +1,12 @@
 -- Wrapper interface to gddr6 designed to support Xilinx IP generation
+--
+-- The following requirements ensure that the Viviado IP Packager works:
+--  * This file must be VHDL-1993 compatible.
+--  * Generics cannot be reals.
+--  * The X_INTERFACE_INFO attributes guide the packager, and must be in the
+--    architecture part.
+--  * Ports can only be std_ulogic or std_ulogic_vector, no structures or higher
+--    dimensional arrays.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -11,22 +19,26 @@ use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
 entity gddr6_ip is
+    -- Note that the parameters below *should* be real values, but as documented
+    -- in https://adaptivesupport.amd.com/s/article/58038 this is not supported
+    -- by the Vivado IP Packager.
     generic (
         -- Default SG interface to run at CK=250 MHz, WCK = 1GHz, but support
         -- option to run at 300 MHz/1.2 GHz on speed-grade -2 FPGA
-        CK_FREQUENCY : real := 250.0;
+        CK_FREQUENCY : natural := 250;
         -- In the unlikely case that setup_clk_i is running faster than ck_clk_o
         -- this should be configured so that the correct clock domain crossing
         -- delays are set.  Otherwise leave at the default value.
-        REG_FREQUENCY : real := 250.0;
+        REG_FREQUENCY : natural := 250;
         -- Similarly, if the AXI clock is running fast this should be set
-        AXI_FREQUENCY : real := 250.0
+        AXI_FREQUENCY : natural := 250
     );
     port (
         -- ---------------------------------------------------------------------
         -- Register Setup Interface
         --
         s_reg_ACLK : in std_ulogic;
+        s_reg_RESETN_i : in std_ulogic := '1';
         -- AR
         s_reg_ARADDR_i : in std_ulogic_vector(11 downto 0);
         s_reg_ARVALID_i : in std_ulogic;
@@ -60,6 +72,7 @@ entity gddr6_ip is
         --
         -- Clock and reset
         s_axi_ACLK : in std_logic;      -- See note below on naming
+        s_axi_RESETN_i : in std_ulogic := '1';
         -- AW
         s_axi_AWID_i : in std_logic_vector(3 downto 0);
         s_axi_AWADDR_i : in std_logic_vector(31 downto 0);
@@ -160,9 +173,12 @@ architecture arch of gddr6_ip is
     -- AXI-Lite Slave Interface
     --
     attribute X_INTERFACE_INFO of s_reg_ACLK : signal
-        is "xilinx.com:signal:clock:1.0 s_reg_clock clk";
+        is "xilinx.com:signal:clock:1.0 s_reg_ACLK clk";
+    attribute X_INTERFACE_INFO of s_reg_RESETN_i : signal
+        is "xilinx.com:signal:reset:1.0 s_reg_RESETN_i rst";
     attribute X_INTERFACE_PARAMETER of s_reg_ACLK : signal
-        is "ASSOCIATED_BUSIF s_reg";
+        is "ASSOCIATED_RESET s_reg_RESETN_i, " &
+           "ASSOCIATED_BUSIF s_reg";
     -- AR
     attribute X_INTERFACE_INFO of s_reg_ARADDR_i : signal
         is "xilinx.com:interface:aximm:1.0 s_reg ARADDR";
@@ -203,12 +219,16 @@ architecture arch of gddr6_ip is
     attribute X_INTERFACE_INFO of s_reg_WREADY_o : signal
         is "xilinx.com:interface:aximm:1.0 s_reg WREADY";
 
+
     -- AXI slave interface to memory
     --
     attribute X_INTERFACE_INFO of s_axi_ACLK : signal
-        is "xilinx.com:signal:clock:1.0 s_axi_clock clk";
+        is "xilinx.com:signal:clock:1.0 s_axi_ACLK clk";
+    attribute X_INTERFACE_INFO of s_axi_RESETN_i : signal
+        is "xilinx.com:signal:reset:1.0 s_axi_RESETN_i rst";
     attribute X_INTERFACE_PARAMETER of s_axi_ACLK : signal
-        is "ASSOCIATED_BUSIF s_axi";
+        is "ASSOCIATED_RESET s_axi_RESETN_i, " &
+           "ASSOCIATED_BUSIF s_axi";
     -- AW
     attribute X_INTERFACE_INFO of s_axi_AWID_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi AWID";
@@ -293,6 +313,7 @@ architecture arch of gddr6_ip is
     attribute X_INTERFACE_INFO of s_axi_RDATA_o : signal
         is "xilinx.com:interface:aximm:1.0 s_axi RDATA";
 
+
     -- SG Memory Interface
     --
     attribute X_INTERFACE_INFO of pad_SG1_RESET_N_o : signal
@@ -353,6 +374,7 @@ architecture arch of gddr6_ip is
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_EDC_B";
 
 
+    -- AXI-Lite decoded to strobe/ack + address register interface
     signal raw_read_strobe : std_ulogic;
     signal raw_read_address : unsigned(8 downto 0);
     signal raw_read_data : std_ulogic_vector(31 downto 0);
@@ -362,6 +384,7 @@ architecture arch of gddr6_ip is
     signal raw_write_data : std_ulogic_vector(31 downto 0);
     signal raw_write_ack : std_ulogic;
 
+    -- Register interface decoded to GDDR6 control registers
     signal write_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
     signal write_data : reg_data_array_t(GDDR6_REGS_RANGE);
     signal write_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
@@ -369,14 +392,15 @@ architecture arch of gddr6_ip is
     signal read_strobe : std_ulogic_vector(GDDR6_REGS_RANGE);
     signal read_ack : std_ulogic_vector(GDDR6_REGS_RANGE);
 
+    -- Intermediate signals needed for adaption to IP support
     signal axi_request : axi_request_t;
-
     signal axi_stats : axi_stats_t;
 
 begin
     -- Decode AXI-Lite as Strobe/Ack
     axi : entity work.axi_lite_slave port map (
         clk_i => s_reg_ACLK,
+        rstn_i => s_reg_RESETN_i,
 
         araddr_i => s_reg_ARADDR_i,
         arprot_i => "000",
@@ -431,6 +455,7 @@ begin
     );
 
 
+    -- Plumbing of incoming AXI request
     axi_request <= (
         write_address => (
             id => s_axi_AWID_i,
@@ -458,9 +483,15 @@ begin
         read_data_ready => s_axi_RREADY_i
     );
 
+
+    -- Do we want to support s_axi_RESETN_i?  This is only needed if there is
+    -- the possibility of invalid incoming requests during reset.
+
+    -- Core memory controller
     gddr6 : entity work.gddr6 generic map (
-        AXI_FREQUENCY => AXI_FREQUENCY,
-        CK_FREQUENCY => CK_FREQUENCY
+        AXI_FREQUENCY => AXI_FREQUENCY * 1.0,
+        REG_FREQUENCY => REG_FREQUENCY * 1.0,
+        CK_FREQUENCY => CK_FREQUENCY * 1.0
     ) port map (
         setup_clk_i => s_reg_ACLK,
 
@@ -521,7 +552,7 @@ begin
         pad_SG2_EDC_B_io => pad_SG2_EDC_B_io
     );
 
-    -- Flatten the AXI statistics
+    -- Flatten the AXI statistics for IP output
     axi_stats_o <= (
         0 => axi_stats.write_frame_error,
         1 => axi_stats.write_crc_error,
