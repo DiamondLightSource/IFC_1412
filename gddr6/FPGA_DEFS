@@ -1,0 +1,8 @@
+BUILT = gddr6_register_defines.vhd
+DEFAULT = make_gddr6_ip
+
+# Location of generated IP in built project
+IP_DIR = $(BUILD_TOP)/$(PROJECT_NAME)/gddr6_ip
+
+
+# vim: set filetype=make:
