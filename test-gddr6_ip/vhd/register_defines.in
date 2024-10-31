@@ -1,0 +1,90 @@
+## Register definitions for test
+
+
+# This register is only valid on the IFC_1412 and is used to talk to the
+# on-board LMK controllers
+:LMK04616        RW
+    # Data to write, returns data returned as part of last SPI transaction
+    # when read
+    .DATA           8
+    .ADDRESS        15
+    # Set to 0 to write, 1 to read
+    .R_WN
+    # This bit must be set to perform an SPI transaction, otherwise the SPI
+    # fields .DATA, .ADDRESS, .R_WN are all ignored
+    .ENABLE
+    # Selects which LMK to address: 0 => SYS LMK, 1 => ACQ LMK.  The selection
+    # also affects the .RESET, .SYNC, .STATUS fields
+    .SELECT
+    # Resets selected LMK
+    .RESET
+    # Drives SYNC bit on LMK
+    .SYNC
+    # Ignored on write, returns currently selected status bits
+    .STATUS         2
+
+
+:!AXI
+    *RW
+        STATUS          R
+            # Number of read transfers captured
+            .IN_COUNT       6
+            # Number of write transfers written to data
+            .OUT_COUNT      6
+            # Set while corresponding data transfer is pending
+            .WRITE_BUSY
+            .READ_BUSY
+            # Result of last read and write
+            .WRITE_OK
+            .READ_OK
+
+        # Commands
+        COMMAND         WP
+            # Requests capture of SG exchange
+            .CAPTURE
+            # Resets AXI counters
+            .RESET_STATS
+
+            # Reset DATA readout counter
+            .START_READ
+            # Advance read to next row
+            .STEP_READ
+
+            # Reset DATA write counter
+            .START_WRITE
+            # Advance write to next row
+            .STEP_WRITE
+
+            # Initiates the corresponding AXI transaction.  Read and write can
+            # be triggered simultaneously, but the same address will be used
+            .START_AXI_WRITE
+            .START_AXI_READ
+
+    !!CONFIG
+        # Configuration of AXI transaction
+        REQUEST         RW
+            # Start address of burst to generate
+            .ADDRESS        26
+            # Length of requested read burst
+            .LENGTH         6
+
+        SETUP           RW
+            # Sets the byte mask for each word written
+            .BYTE_MASK      4
+
+    # AXI event counters
+    STATS           R   11
+
+    # Writing to this register loads words into the AXI write buffer, reading
+    # returns words read from any AXI transactions
+    DATA            RW
+
+!SYS
+    GIT_VERSION     R
+        .SHA        28
+        -           3
+        .DIRTY
+
+    :LMK04616
+
+    :AXI
