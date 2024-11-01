@@ -1,0 +1,18 @@
+# Ensures that ifc_lib can be imported by adding the top directory to PYTHONPATH
+#
+# Must be sourced from bash
+
+get_top_dir()
+{
+    local HERE="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+    readlink -f "$HERE"/..
+}
+
+if ! python -c 'import ifc_lib' 2>/dev/null; then
+    export PYTHONPATH="$PYTHONPATH${PYTHONPATH:+:}$(get_top_dir)"
+    echo >&2 "Added path to ifc_lib to PYTHONPATH"
+fi
+
+unset get_top_dir
+
+# vim: set filetype=sh:
