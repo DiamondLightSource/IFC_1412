@@ -5,9 +5,9 @@ import argparse
 import numpy
 
 import registers
-from gddr6_lib.commands import *
-from gddr6_lib.exchange import send_command
-from gddr6_lib.decode import DecodeCA
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib.exchange import send_command
+from ifc_lib.gddr6_lib.decode import DecodeCA
 
 
 regs, sg = registers.open()

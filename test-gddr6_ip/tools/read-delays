@@ -6,7 +6,7 @@ import time
 import itertools
 
 import registers
-from gddr6_lib.delays import \
+from ifc_lib.gddr6_lib.delays import \
     read_idelay, read_odelay, read_obitslip, read_ibitslip
 
 parser = argparse.ArgumentParser()

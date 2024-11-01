@@ -7,9 +7,9 @@ import numpy
 
 import registers
 
-from gddr6_lib.commands import *
-from gddr6_lib import exchange
-from gddr6_lib.display import *
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib import exchange
+from ifc_lib.gddr6_lib.display import *
 
 
 _, sg = registers.open()

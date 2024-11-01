@@ -7,10 +7,10 @@ import time
 import numpy
 
 import registers
-from gddr6_lib.commands import *
-from gddr6_lib.exchange import _Exchange
-from gddr6_lib.display import *
-from gddr6_lib.delays import *
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib.exchange import _Exchange
+from ifc_lib.gddr6_lib.display import *
+from ifc_lib.gddr6_lib.delays import *
 
 
 _, sg = registers.open()
