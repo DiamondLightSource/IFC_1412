@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+
+# Brings SG out of reset
+
+import time
+
+import registers
+
+from gddr6_lib.commands import *
+from gddr6_lib.exchange import _Exchange, Stream
+
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+
+# Ensure we disable the memory
+sg.CONFIG._write_fields_rw(
+    ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
+
+if sg.CONFIG.SG_RESET_N != 3:
+    print('Resetting SG ram')
+    sg.CONFIG.SG_RESET_N = 0
+    time.sleep(0.1)
+
+
+# During reset need to ensure data is sent as requested
+sg.CONFIG.ENABLE_CABI = 0
+# Perform reset with EDC driven high
+sg.CONFIG.EDC_T = 0
+
+exchange = _Exchange(sg)
+set_ca = exchange.set_ca
+
+
+time.sleep(0.01)
+set_ca(RESET_SG1_CA, 1)
+sg.CONFIG.SG_RESET_N = 1
+
+time.sleep(0.01)
+set_ca(RESET_SG2_CA, 1)
+sg.CONFIG.SG_RESET_N = 3
+
+# Now allow EDC_T to be driven by SG RAM
+sg.CONFIG.EDC_T = 1
+
+# Complete initialisation by sending NOP and pulling CKEn low
+time.sleep(0.01)
+set_ca(NOP, 0)
+
+
+# Go straight into Mode Register configuration
+def send_init_command(command):
+    if exchange.capacity() < 10:
+        exchange.exchange()
+        exchange.reset()
+    exchange.command(command)
+    exchange.delay(9)
+
+stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
+
+
+# Initialise all the MR registers
+exchange.reset()
+stream.command(INIT_MR0)
+stream.command(INIT_MR1)
+stream.command(INIT_MR2)
+stream.command(INIT_MR3)
+stream.command(INIT_MR4)
+stream.command(INIT_MR5)
+stream.command(INIT_MR6_B0_VREF)
+stream.command(INIT_MR6_B1_VREF)
+stream.command(INIT_MR6_B0_TXEQ)
+stream.command(INIT_MR6_B1_TXEQ)
+stream.command(INIT_MR7)
+stream.command(INIT_MR8)
+stream.command(INIT_MR9_B0_DEF)
+stream.command(INIT_MR9_B1_DEF)
+stream.command(INIT_MR10)
+stream.command(INIT_MR12)
+exchange.exchange()
+
+# Finally perform WCK training
+exchange.reset()
+exchange.command(INIT_MR10_WCK2CK)
+exchange.command(NOP)
+exchange.exchange()
+
+# The delay between exchanges should be enough to complete this
+exchange.reset()
+exchange.command(INIT_MR10)
+exchange.command(NOP)
+exchange.exchange()
