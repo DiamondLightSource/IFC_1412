@@ -43,7 +43,9 @@ entity gddr6_ip is
         s_reg_WREADY_o : out std_ulogic;
 
 
-        -- Optional trigger (synchronised to reg clock), capture SG transactions
+        -- Asynchronous trigger to capture SG activity.  Triggering is on the
+        -- rising edge of this signal which must be held high for more than two
+        -- REG_FREQUENCY ticks.
         setup_trigger_i : in std_ulogic := '0';
 
 

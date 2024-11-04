@@ -74,6 +74,7 @@ architecture arch of gddr6_setup_exchange is
     signal read_edc_data : reg_data_array_t(0 to 1);
     signal read_ca_data : reg_data_t := (others => '0');
 
+    signal setup_trigger_sync : std_ulogic;
     signal setup_trigger_in : std_ulogic;
 
 begin
@@ -136,7 +137,13 @@ begin
     sync_trigger : entity work.sync_bit port map (
         clk_i => reg_clk_i,
         bit_i => setup_trigger_i,
-        bit_o => setup_trigger_in
+        bit_o => setup_trigger_sync
+    );
+
+    trigger_edge : entity work.edge_detect port map (
+        clk_i => reg_clk_i,
+        data_i(0) => setup_trigger_sync,
+        edge_o(0) => setup_trigger_in
     );
 
 

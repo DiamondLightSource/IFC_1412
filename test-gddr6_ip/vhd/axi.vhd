@@ -42,6 +42,8 @@ architecture arch of axi is
     signal reset_stats : std_ulogic := '0';
     signal cmd_reset_stats : std_ulogic;
 
+    signal capture_trigger : std_ulogic;
+
     -- Transaction request
     signal request_address : unsigned(25 downto 0);
     signal request_length : unsigned(5 downto 0);
@@ -88,7 +90,7 @@ begin
         strobed_bits_o => command_bits
     );
 
-    capture_trigger_o <= command_bits(AXI_COMMAND_CAPTURE_BIT);
+    capture_trigger <= command_bits(AXI_COMMAND_CAPTURE_BIT);
     cmd_reset_stats <= command_bits(AXI_COMMAND_RESET_STATS_BIT);
 
     start_read <= command_bits(AXI_COMMAND_START_READ_BIT);
@@ -98,6 +100,14 @@ begin
 
     start_axi_write <= command_bits(AXI_COMMAND_START_AXI_WRITE_BIT);
     start_axi_read <= command_bits(AXI_COMMAND_START_AXI_READ_BIT);
+
+    stretch : entity work.stretch_pulse generic map (
+        DELAY => 8
+    ) port map (
+        clk_i => clk_i,
+        pulse_i => capture_trigger,
+        pulse_o => capture_trigger_o
+    );
 
 
     -- CONFIG
