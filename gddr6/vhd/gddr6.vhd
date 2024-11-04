@@ -38,6 +38,7 @@ entity gddr6 is
         read_data_o : out reg_data_array_t(GDDR6_REGS_RANGE);
         read_ack_o : out std_ulogic_vector(GDDR6_REGS_RANGE);
 
+        -- Asynchronous trigger to capture SG activity
         setup_trigger_i : in std_ulogic;
 
 

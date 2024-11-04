@@ -43,7 +43,7 @@ entity gddr6_ip is
         s_reg_WREADY_o : out std_ulogic;
 
 
-        -- Optional trigger (on reg clock) to capture SG transactions
+        -- Optional trigger (synchronised to reg clock), capture SG transactions
         setup_trigger_i : in std_ulogic := '0';
 
 

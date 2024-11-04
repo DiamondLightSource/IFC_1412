@@ -74,6 +74,8 @@ architecture arch of gddr6_setup_exchange is
     signal read_edc_data : reg_data_array_t(0 to 1);
     signal read_ca_data : reg_data_t := (others => '0');
 
+    signal setup_trigger_in : std_ulogic;
+
 begin
     -- COMMAND
     command : entity work.register_command port map (
@@ -129,6 +131,13 @@ begin
         registers_i => read_edc_data
     );
     write_ack_o(GDDR6_EDC_REG) <= '1';
+
+
+    sync_trigger : entity work.sync_bit port map (
+        clk_i => reg_clk_i,
+        bit_i => setup_trigger_i,
+        bit_o => setup_trigger_in
+    );
 
 
     -- Decode of command bits
@@ -190,7 +199,7 @@ begin
         ck_clk_i => ck_clk_i,
         ck_clk_ok_i => ck_clk_ok_i,
 
-        exchange_strobe_i => exchange_strobe or setup_trigger_i,
+        exchange_strobe_i => exchange_strobe or setup_trigger_in,
         exchange_ack_o => exchange_ack,
         exchange_count_i => exchange_count,
 
