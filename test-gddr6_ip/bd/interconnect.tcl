@@ -125,7 +125,7 @@ xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:axi_pcie3:3.0\
 xilinx.com:ip:blk_mem_gen:8.4\
 xilinx.com:ip:util_ds_buf:2.2\
-diamond.ac.uk:user:gddr6_ip:1.0\
+diamond.ac.uk:user:gddr6_ip:0.0.0\
 "
 
    set list_ips_missing ""
@@ -314,7 +314,7 @@ proc create_root_design { parentCell } {
 
 
   # Create instance: gddr6_ip_0, and set properties
-  set gddr6_ip_0 [ create_bd_cell -type ip -vlnv diamond.ac.uk:user:gddr6_ip:1.0 gddr6_ip_0 ]
+  set gddr6_ip_0 [ create_bd_cell -type ip -vlnv diamond.ac.uk:user:gddr6_ip:0.0.0 gddr6_ip_0 ]
 
   # Create interface connections
   connect_bd_intf_net -intf_net CLK_IN_D_0_1 [get_bd_intf_ports FCLKA] [get_bd_intf_pins fclka_buf/CLK_IN_D]
