@@ -328,10 +328,10 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net s_axi_1 [get_bd_intf_ports s_axi] [get_bd_intf_pins gddr6_ip_0/s_axi]
 
   # Create port connections
-  connect_bd_net -net M01_ACLK_0_1 [get_bd_ports DSP_CLK_i] [get_bd_pins axi_lite_interconnect/M01_ACLK] [get_bd_pins axi_lite_interconnect/M02_ACLK] [get_bd_pins gddr6_ip_0/s_reg_ACLK]
-  connect_bd_net -net M01_ARESETN_0_1 [get_bd_ports DSP_RESETN_i] [get_bd_pins axi_lite_interconnect/M01_ARESETN] [get_bd_pins axi_lite_interconnect/M02_ARESETN] [get_bd_pins gddr6_ip_0/s_reg_RESETN_i]
-  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_lite_interconnect/ACLK] [get_bd_pins axi_lite_interconnect/M00_ACLK] [get_bd_pins axi_lite_interconnect/S00_ACLK] [get_bd_pins axi_pcie3_bridge/axi_aclk]
-  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_lite_interconnect/ARESETN] [get_bd_pins axi_lite_interconnect/M00_ARESETN] [get_bd_pins axi_lite_interconnect/S00_ARESETN] [get_bd_pins axi_pcie3_bridge/axi_aresetn]
+  connect_bd_net -net M01_ACLK_0_1 [get_bd_ports DSP_CLK_i] [get_bd_pins axi_lite_interconnect/M01_ACLK]
+  connect_bd_net -net M01_ARESETN_0_1 [get_bd_ports DSP_RESETN_i] [get_bd_pins axi_lite_interconnect/M01_ARESETN]
+  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_lite_interconnect/ACLK] [get_bd_pins axi_lite_interconnect/M00_ACLK] [get_bd_pins axi_lite_interconnect/M02_ACLK] [get_bd_pins axi_lite_interconnect/S00_ACLK] [get_bd_pins axi_pcie3_bridge/axi_aclk] [get_bd_pins gddr6_ip_0/s_reg_ACLK]
+  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_lite_interconnect/ARESETN] [get_bd_pins axi_lite_interconnect/M00_ARESETN] [get_bd_pins axi_lite_interconnect/M02_ARESETN] [get_bd_pins axi_lite_interconnect/S00_ARESETN] [get_bd_pins axi_pcie3_bridge/axi_aresetn] [get_bd_pins gddr6_ip_0/s_reg_RESETN_i]
   connect_bd_net -net fclka_buf_IBUF_DS_ODIV2 [get_bd_pins axi_pcie3_bridge/refclk] [get_bd_pins fclka_buf/IBUF_DS_ODIV2]
   connect_bd_net -net fclka_buf_IBUF_OUT [get_bd_pins axi_pcie3_bridge/sys_clk_gt] [get_bd_pins fclka_buf/IBUF_OUT]
   connect_bd_net -net gddr6_ip_0_axi_stats_o [get_bd_ports axi_stats_o] [get_bd_pins gddr6_ip_0/axi_stats_o]
