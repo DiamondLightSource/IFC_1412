@@ -20,7 +20,6 @@ entity axi_master_wrapper is
         s_axi_arqos_o : out std_logic_vector(3 downto 0);
         s_axi_arready_i : in std_logic;
         s_axi_arsize_o : out std_logic_vector(2 downto 0);
-        s_axi_aruser_o : out std_logic_vector(3 downto 0);
         s_axi_arvalid_o : out std_logic;
         -- R
         s_axi_rdata_i : in std_logic_vector(511 downto 0);
@@ -40,7 +39,6 @@ entity axi_master_wrapper is
         s_axi_awqos_o : out std_logic_vector(3 downto 0);
         s_axi_awready_i : in std_logic;
         s_axi_awsize_o : out std_logic_vector(2 downto 0);
-        s_axi_awuser_o : out std_logic_vector(3 downto 0);
         s_axi_awvalid_o : out std_logic;
         -- W
         s_axi_wdata_o : out std_logic_vector(511 downto 0);
@@ -71,7 +69,6 @@ begin
     s_axi_awprot_o  <= "010";           -- Unprivileged non-secure data access
     s_axi_awqos_o   <= "0000";          -- Default QoS
     s_axi_awsize_o  <= std_ulogic_vector(axi_request_i.write_address.size);
-    s_axi_awuser_o  <= "0000";          -- No user data
     s_axi_awvalid_o <= axi_request_i.write_address.valid;
     -- W
     s_axi_wdata_o   <= axi_request_i.write_data.data;
@@ -90,7 +87,6 @@ begin
     s_axi_arprot_o  <= "010";           -- Unprivileged non-secure data access
     s_axi_arqos_o   <= "0000";          -- Default QoS
     s_axi_arsize_o  <= std_ulogic_vector(axi_request_i.read_address.size);
-    s_axi_aruser_o  <= "0000";          -- No user data
     s_axi_arvalid_o <= axi_request_i.read_address.valid;
     -- R
     s_axi_rready_o  <= axi_request_i.read_data_ready;

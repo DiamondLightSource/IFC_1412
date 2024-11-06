@@ -17,28 +17,73 @@ architecture arch of top is
 
 
     -- -------------------------------------------------------------------------
-    -- Register interface
+    -- Wiring to Interconnect
+    --
+    -- There are some strange port definitions here, these declarations are
+    -- meant to directly match the output from the IP Generator, which makes
+    -- some very odd choices in certain places.
 
-    -- Wiring from AXI-Lite master to register slave
-    signal DSP_REGS_araddr : std_ulogic_vector(16 downto 0);     -- AR
-    signal DSP_REGS_arprot : std_ulogic_vector(2 downto 0);
-    signal DSP_REGS_arready : std_ulogic;
-    signal DSP_REGS_arvalid : std_ulogic;
-    signal DSP_REGS_rdata : std_ulogic_vector(31 downto 0);      -- R
-    signal DSP_REGS_rresp : std_ulogic_vector(1 downto 0);
-    signal DSP_REGS_rready : std_ulogic;
-    signal DSP_REGS_rvalid : std_ulogic;
-    signal DSP_REGS_awaddr : std_ulogic_vector(16 downto 0);     -- AW
-    signal DSP_REGS_awprot : std_ulogic_vector(2 downto 0);
-    signal DSP_REGS_awready : std_ulogic;
-    signal DSP_REGS_awvalid : std_ulogic;
-    signal DSP_REGS_wdata : std_ulogic_vector(31 downto 0);      -- W
-    signal DSP_REGS_wstrb : std_ulogic_vector(3 downto 0);
-    signal DSP_REGS_wready : std_ulogic;
-    signal DSP_REGS_wvalid : std_ulogic;
-    signal DSP_REGS_bresp : std_ulogic_vector(1 downto 0);
-    signal DSP_REGS_bready : std_ulogic;                         -- B
-    signal DSP_REGS_bvalid : std_ulogic;
+    -- M_DSP from AXI-Lite master
+    signal M_DSP_REGS_araddr : STD_LOGIC_VECTOR ( 16 downto 0 );
+    signal M_DSP_REGS_arprot : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal M_DSP_REGS_arready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_arvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_awaddr : STD_LOGIC_VECTOR ( 16 downto 0 );
+    signal M_DSP_REGS_awprot : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal M_DSP_REGS_awready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_awvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_bready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_bresp : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal M_DSP_REGS_bvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_rdata : STD_LOGIC_VECTOR ( 31 downto 0 );
+    signal M_DSP_REGS_rready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_rresp : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal M_DSP_REGS_rvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_wdata : STD_LOGIC_VECTOR ( 31 downto 0 );
+    signal M_DSP_REGS_wready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal M_DSP_REGS_wstrb : STD_LOGIC_VECTOR ( 3 downto 0 );
+    signal M_DSP_REGS_wvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    -- s_axi to SGRAM GDDR6 AXI slave
+    signal s_axi_araddr : STD_LOGIC_VECTOR ( 47 downto 0 );
+    signal s_axi_arburst : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal s_axi_arcache : STD_LOGIC_VECTOR ( 3 downto 0 );
+    signal s_axi_arid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_arlen : STD_LOGIC_VECTOR ( 7 downto 0 );
+    signal s_axi_arlock : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_arprot : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal s_axi_arqos : STD_LOGIC_VECTOR ( 3 downto 0 );
+    signal s_axi_arready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_arsize : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal s_axi_arvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_awaddr : STD_LOGIC_VECTOR ( 47 downto 0 );
+    signal s_axi_awburst : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal s_axi_awcache : STD_LOGIC_VECTOR ( 3 downto 0 );
+    signal s_axi_awid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_awlen : STD_LOGIC_VECTOR ( 7 downto 0 );
+    signal s_axi_awlock : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_awprot : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal s_axi_awqos : STD_LOGIC_VECTOR ( 3 downto 0 );
+    signal s_axi_awready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_awsize : STD_LOGIC_VECTOR ( 2 downto 0 );
+    signal s_axi_awvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_bid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_bready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_bresp : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal s_axi_bvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_rdata : STD_LOGIC_VECTOR ( 511 downto 0 );
+    signal s_axi_rid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_rlast : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_rready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_rresp : STD_LOGIC_VECTOR ( 1 downto 0 );
+    signal s_axi_rvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_wdata : STD_LOGIC_VECTOR ( 511 downto 0 );
+    signal s_axi_wlast : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_wready : STD_LOGIC_VECTOR ( 0 to 0 );
+    signal s_axi_wstrb : STD_LOGIC_VECTOR ( 63 downto 0 );
+    signal s_axi_wvalid : STD_LOGIC_VECTOR ( 0 to 0 );
+
+    -- -------------------------------------------------------------------------
+    -- Register interface
 
     -- Internal register path from AXI conversion
     signal write_strobe : std_ulogic;
@@ -49,47 +94,6 @@ architecture arch of top is
     signal read_address : unsigned(13 downto 0);
     signal read_data : std_ulogic_vector(31 downto 0);
     signal read_ack : std_ulogic;
-
-    -- Wiring to SG RAM slave
-    signal s_axi_araddr : std_logic_vector(31 downto 0);
-    signal s_axi_arburst : std_logic_vector(1 downto 0);
-    signal s_axi_arcache : std_logic_vector(3 downto 0);
-    signal s_axi_arid : std_logic_vector(3 downto 0);
-    signal s_axi_arlen : std_logic_vector(7 downto 0);
-    signal s_axi_arlock : std_logic;
-    signal s_axi_arprot : std_logic_vector(2 downto 0);
-    signal s_axi_arqos : std_logic_vector(3 downto 0);
-    signal s_axi_arready : std_logic;
-    signal s_axi_arsize : std_logic_vector(2 downto 0);
-    signal s_axi_aruser : std_logic_vector(3 downto 0);
-    signal s_axi_arvalid : std_logic;
-    signal s_axi_awaddr : std_logic_vector(31 downto 0);
-    signal s_axi_awburst : std_logic_vector(1 downto 0);
-    signal s_axi_awcache : std_logic_vector(3 downto 0);
-    signal s_axi_awid : std_logic_vector(3 downto 0);
-    signal s_axi_awlen : std_logic_vector(7 downto 0);
-    signal s_axi_awlock : std_logic;
-    signal s_axi_awprot : std_logic_vector(2 downto 0);
-    signal s_axi_awqos : std_logic_vector(3 downto 0);
-    signal s_axi_awready : std_logic;
-    signal s_axi_awsize : std_logic_vector(2 downto 0);
-    signal s_axi_awuser : std_logic_vector(3 downto 0);
-    signal s_axi_awvalid : std_logic;
-    signal s_axi_bid : std_logic_vector(3 downto 0);
-    signal s_axi_bready : std_logic;
-    signal s_axi_bresp : std_logic_vector(1 downto 0);
-    signal s_axi_bvalid : std_logic;
-    signal s_axi_rdata : std_logic_vector(511 downto 0);
-    signal s_axi_rid : std_logic_vector(3 downto 0);
-    signal s_axi_rlast : std_logic;
-    signal s_axi_rready : std_logic;
-    signal s_axi_rresp : std_logic_vector(1 downto 0);
-    signal s_axi_rvalid : std_logic;
-    signal s_axi_wdata : std_logic_vector(511 downto 0);
-    signal s_axi_wlast : std_logic;
-    signal s_axi_wready : std_logic;
-    signal s_axi_wstrb : std_logic_vector(63 downto 0);
-    signal s_axi_wvalid : std_logic;
 
     signal capture_trigger : std_ulogic;
     signal axi_request : axi_request_t;
@@ -126,25 +130,25 @@ begin
         DSP_RESETN_i => reset_n,
 
         -- AXI-Lite register master to REGS slave interface
-        M_DSP_REGS_araddr => DSP_REGS_araddr,
-        M_DSP_REGS_arprot => DSP_REGS_arprot,
-        M_DSP_REGS_arready => DSP_REGS_arready,
-        M_DSP_REGS_arvalid => DSP_REGS_arvalid,
-        M_DSP_REGS_rdata => DSP_REGS_rdata,
-        M_DSP_REGS_rresp => DSP_REGS_rresp,
-        M_DSP_REGS_rready => DSP_REGS_rready,
-        M_DSP_REGS_rvalid => DSP_REGS_rvalid,
-        M_DSP_REGS_awaddr => DSP_REGS_awaddr,
-        M_DSP_REGS_awprot => DSP_REGS_awprot,
-        M_DSP_REGS_awready => DSP_REGS_awready,
-        M_DSP_REGS_awvalid => DSP_REGS_awvalid,
-        M_DSP_REGS_wdata => DSP_REGS_wdata,
-        M_DSP_REGS_wstrb => DSP_REGS_wstrb,
-        M_DSP_REGS_wready => DSP_REGS_wready,
-        M_DSP_REGS_wvalid => DSP_REGS_wvalid,
-        M_DSP_REGS_bresp => DSP_REGS_bresp,
-        M_DSP_REGS_bready => DSP_REGS_bready,
-        M_DSP_REGS_bvalid => DSP_REGS_bvalid,
+        M_DSP_REGS_araddr => M_DSP_REGS_araddr,
+        M_DSP_REGS_arprot => M_DSP_REGS_arprot,
+        M_DSP_REGS_arready => M_DSP_REGS_arready,
+        M_DSP_REGS_arvalid => M_DSP_REGS_arvalid,
+        M_DSP_REGS_rdata => M_DSP_REGS_rdata,
+        M_DSP_REGS_rresp => M_DSP_REGS_rresp,
+        M_DSP_REGS_rready => M_DSP_REGS_rready,
+        M_DSP_REGS_rvalid => M_DSP_REGS_rvalid,
+        M_DSP_REGS_awaddr => M_DSP_REGS_awaddr,
+        M_DSP_REGS_awprot => M_DSP_REGS_awprot,
+        M_DSP_REGS_awready => M_DSP_REGS_awready,
+        M_DSP_REGS_awvalid => M_DSP_REGS_awvalid,
+        M_DSP_REGS_wdata => M_DSP_REGS_wdata,
+        M_DSP_REGS_wstrb => M_DSP_REGS_wstrb,
+        M_DSP_REGS_wready => M_DSP_REGS_wready,
+        M_DSP_REGS_wvalid => M_DSP_REGS_wvalid,
+        M_DSP_REGS_bresp => M_DSP_REGS_bresp,
+        M_DSP_REGS_bready => M_DSP_REGS_bready,
+        M_DSP_REGS_bvalid => M_DSP_REGS_bvalid,
 
         axi_stats_o => axi_stats,
         setup_trigger_i => capture_trigger,
@@ -162,7 +166,6 @@ begin
         s_axi_arqos => s_axi_arqos,
         s_axi_arready => s_axi_arready,
         s_axi_arsize => s_axi_arsize,
-        s_axi_aruser => s_axi_aruser,
         s_axi_arvalid => s_axi_arvalid,
         s_axi_awaddr => s_axi_awaddr,
         s_axi_awburst => s_axi_awburst,
@@ -174,7 +177,6 @@ begin
         s_axi_awqos => s_axi_awqos,
         s_axi_awready => s_axi_awready,
         s_axi_awsize => s_axi_awsize,
-        s_axi_awuser => s_axi_awuser,
         s_axi_awvalid => s_axi_awvalid,
         s_axi_bid => s_axi_bid,
         s_axi_bready => s_axi_bready,
@@ -225,49 +227,51 @@ begin
 
     -- Condense the slave interface
     axi_wrapper : entity work.axi_master_wrapper port map (
-        s_axi_araddr_o => s_axi_araddr,
+        s_axi_araddr_o => s_axi_araddr(31 downto 0),
         s_axi_arburst_o => s_axi_arburst,
         s_axi_arcache_o => s_axi_arcache,
-        s_axi_arid_o => s_axi_arid,
+        s_axi_arid_o(0 downto 0) => s_axi_arid,
+        s_axi_arid_o(3 downto 1) => "000",
         s_axi_arlen_o => s_axi_arlen,
-        s_axi_arlock_o => s_axi_arlock,
+        s_axi_arlock_o => s_axi_arlock(0),
         s_axi_arprot_o => s_axi_arprot,
         s_axi_arqos_o => s_axi_arqos,
-        s_axi_arready_i => s_axi_arready,
+        s_axi_arready_i => s_axi_arready(0),
         s_axi_arsize_o => s_axi_arsize,
-        s_axi_aruser_o => s_axi_aruser,
-        s_axi_arvalid_o => s_axi_arvalid,
+        s_axi_arvalid_o => s_axi_arvalid(0),
         s_axi_rdata_i => s_axi_rdata,
-        s_axi_rid_i => s_axi_rid,
-        s_axi_rlast_i => s_axi_rlast,
-        s_axi_rready_o => s_axi_rready,
+        s_axi_rid_i => (0 to 0 => s_axi_rid, others => '0'),
+        s_axi_rlast_i => s_axi_rlast(0),
+        s_axi_rready_o => s_axi_rready(0),
         s_axi_rresp_i => s_axi_rresp,
-        s_axi_rvalid_i => s_axi_rvalid,
-        s_axi_awaddr_o => s_axi_awaddr,
+        s_axi_rvalid_i => s_axi_rvalid(0),
+        s_axi_awaddr_o => s_axi_awaddr(31 downto 0),
         s_axi_awburst_o => s_axi_awburst,
         s_axi_awcache_o => s_axi_awcache,
-        s_axi_awid_o => s_axi_awid,
+        s_axi_awid_o(0 downto 0) => s_axi_awid,
+        s_axi_awid_o(3 downto 1) => "000",
         s_axi_awlen_o => s_axi_awlen,
-        s_axi_awlock_o => s_axi_awlock,
+        s_axi_awlock_o => s_axi_awlock(0),
         s_axi_awprot_o => s_axi_awprot,
         s_axi_awqos_o => s_axi_awqos,
-        s_axi_awready_i => s_axi_awready,
+        s_axi_awready_i => s_axi_awready(0),
         s_axi_awsize_o => s_axi_awsize,
-        s_axi_awuser_o => s_axi_awuser,
-        s_axi_awvalid_o => s_axi_awvalid,
+        s_axi_awvalid_o => s_axi_awvalid(0),
         s_axi_wdata_o => s_axi_wdata,
-        s_axi_wlast_o => s_axi_wlast,
-        s_axi_wready_i => s_axi_wready,
+        s_axi_wlast_o => s_axi_wlast(0),
+        s_axi_wready_i => s_axi_wready(0),
         s_axi_wstrb_o => s_axi_wstrb,
-        s_axi_wvalid_o => s_axi_wvalid,
-        s_axi_bid_i => s_axi_bid,
-        s_axi_bready_o => s_axi_bready,
+        s_axi_wvalid_o => s_axi_wvalid(0),
+        s_axi_bid_i => (0 to 0 => s_axi_bid, others => '0'),
+        s_axi_bready_o => s_axi_bready(0),
         s_axi_bresp_i => s_axi_bresp,
-        s_axi_bvalid_i => s_axi_bvalid,
+        s_axi_bvalid_i => s_axi_bvalid(0),
 
         axi_request_i => axi_request,
         axi_response_o => axi_response
     );
+    s_axi_araddr(47 downto 32) <= X"8000";
+    s_axi_awaddr(47 downto 32) <= X"8000";
 
 
     -- -------------------------------------------------------------------------
@@ -279,27 +283,27 @@ begin
         rstn_i => reset_n,
 
         -- AXI-Lite read interface
-        araddr_i => DSP_REGS_araddr(15 downto 0),
-        arprot_i => DSP_REGS_arprot,
-        arvalid_i => DSP_REGS_arvalid,
-        arready_o => DSP_REGS_arready,
-        rdata_o => DSP_REGS_rdata,
-        rresp_o => DSP_REGS_rresp,
-        rvalid_o => DSP_REGS_rvalid,
-        rready_i => DSP_REGS_rready,
+        araddr_i => M_DSP_REGS_araddr(15 downto 0),
+        arprot_i => M_DSP_REGS_arprot,
+        arvalid_i => M_DSP_REGS_arvalid(0),
+        arready_o => M_DSP_REGS_arready(0),
+        rdata_o => M_DSP_REGS_rdata,
+        rresp_o => M_DSP_REGS_rresp,
+        rvalid_o => M_DSP_REGS_rvalid(0),
+        rready_i => M_DSP_REGS_rready(0),
 
         -- AXI-Lite write interface
-        awaddr_i => DSP_REGS_awaddr(15 downto 0),
-        awprot_i => DSP_REGS_awprot,
-        awvalid_i => DSP_REGS_awvalid,
-        awready_o => DSP_REGS_awready,
-        wdata_i => DSP_REGS_wdata,
-        wstrb_i => DSP_REGS_wstrb,
-        wvalid_i => DSP_REGS_wvalid,
-        wready_o => DSP_REGS_wready,
-        bready_i => DSP_REGS_bready,
-        bresp_o => DSP_REGS_bresp,
-        bvalid_o => DSP_REGS_bvalid,
+        awaddr_i => M_DSP_REGS_awaddr(15 downto 0),
+        awprot_i => M_DSP_REGS_awprot,
+        awvalid_i => M_DSP_REGS_awvalid(0),
+        awready_o => M_DSP_REGS_awready(0),
+        wdata_i => M_DSP_REGS_wdata,
+        wstrb_i => M_DSP_REGS_wstrb,
+        wvalid_i => M_DSP_REGS_wvalid(0),
+        wready_o => M_DSP_REGS_wready(0),
+        bresp_o => M_DSP_REGS_bresp,
+        bvalid_o => M_DSP_REGS_bvalid(0),
+        bready_i => M_DSP_REGS_bready(0),
 
         -- Internal register interface
         read_strobe_o => read_strobe,
