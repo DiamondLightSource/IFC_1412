@@ -1,9 +1,1 @@
-#!/usr/bin/env bash
-
-cd "$(dirname "$0")"  &&
-
-./reset-ck  &&
-./reset-sg  &&
-./read-vid  &&
-./train-read -frR -sv  &&
-./train-write -frR -sv
+../../ifc_lib/tools/setup-sgram

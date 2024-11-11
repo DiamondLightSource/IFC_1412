@@ -25,6 +25,33 @@ def read_delay(sg, target, address):
     return sg.DELAY.DELAY
 
 
+def step_phase(sg, up_down_n):
+    sg.DELAY._write_fields_wo(UP_DOWN_N = up_down_n, STEP_PHASE = 1)
+
+def advance_phase(sg, amount):
+    if amount >= 0:
+        up_down_n = 1
+    else:
+        up_down_n = 0
+        amount = - amount
+    for i in range(amount):
+        step_phase(sg, up_down_n)
+
+def read_phase(sg):
+    phase = sg.DELAY.PHASE
+    if phase >= 112:
+        phase -= 224
+    return phase
+
+def set_phase(sg, target):
+    delta = target - read_phase(sg)
+    if delta > 112:
+        delta -= 224
+    elif delta < -112:
+        delta += 224
+    advance_phase(sg, delta)
+
+
 
 def set_idelay(sg, address, delay):
     step_delay(sg, TARGET_IDELAY, address, delay - read_idelay(sg, address))

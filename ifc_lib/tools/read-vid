@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+
+# Read Vendor IDs and temperatures
+
+import time
+import numpy
+
+import registers
+
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib import exchange
+from ifc_lib.gddr6_lib.display import *
+
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+
+
+exchange = exchange._Exchange(sg)
+
+# Read the Vendor ID registers
+exchange.command(VENDOR_ID1)
+exchange.delay(3)
+exchange.command(VENDOR_ID2)
+exchange.delay(3)
+exchange.command(READ_TEMPS)
+exchange.delay(3)
+exchange.command(VENDOR_OFF)
+exchange.delay(15)
+data = exchange.run()
+
+offset = 14
+print_condensed_data(data, offset = offset)
+
+ID1, id1_good = condense_data(data[offset + 3])
+ID2, id2_good = condense_data(data[offset + 7])
+temps, t_good = condense_data(data[offset + 11])
+
+assert id1_good.all(), 'Bad ID1 reading'
+assert (ID1[0] == ID1).all(), 'Inconsistent ID1: %s' % ID1
+assert id2_good.all(), 'Bad ID2 reading'
+assert (ID2[0] == ID2).all(), 'Inconsistent ID2: %s' % ID2
+assert t_good.all(), 'Bad temperature reading'
+assert (temps & 0xFF == temps >> 8).all(), \
+    'Inconstent temperature readings: %s' % temps
+
+print(
+    'ID1: %04X, ID2: %04X,' % (ID1[0], ID2[0]),
+    'Temperatures:', 2 * (temps & 0xFF) - 40, 'degrees')
+
+# We expect ID1 = EB1F, ID2 = FFFC
+assert ID1[0] == 0xEB1F and ID2[0] == 0xFFFC, 'Unexpected ID1 or ID2'

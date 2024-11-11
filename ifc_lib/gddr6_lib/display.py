@@ -48,7 +48,11 @@ def print_condensed_data(data, offset = 0):
                 for v, g in zip(values, good)]))
 
 def print_condensed_data_edc(data, dbi, edc, offset = 0):
-    for n, (dq, di, eo) in enumerate(zip(data[offset:], dbi, edc), offset):
+    data = data[offset:]
+    dbi = dbi[offset:]
+    if offset:
+        edc = edc[offset-1:]
+    for n, (dq, di, eo) in enumerate(zip(data, dbi, edc), offset):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]
@@ -63,7 +67,9 @@ def print_condensed_data_edc(data, dbi, edc, offset = 0):
             '%02X' % e_out if e_out_good else '--')
 
 def print_condensed_data_dbi(data, dbi, offset = 0):
-    for n, (dq, di) in enumerate(zip(data[offset:], dbi), offset):
+    data = data[offset:]
+    dbi = dbi[offset:]
+    for n, (dq, di) in enumerate(zip(data, dbi), offset):
         result = []
         for channel in range(4):
             selection = dq[16*channel : 16*(channel + 1)]

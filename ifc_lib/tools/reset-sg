@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+# Brings SG out of reset
+
+import time
+
+import registers
+
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
+
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+
+# Ensure we disable the memory
+sg.CONFIG._write_fields_rw(
+    ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
+
+if sg.CONFIG.SG_RESET_N != 3:
+    print('Resetting SG ram')
+    sg.CONFIG.SG_RESET_N = 0
+    time.sleep(0.1)
+
+
+# During reset need to ensure data is sent as requested
+sg.CONFIG.ENABLE_CABI = 0
+# Perform reset with EDC driven high
+sg.CONFIG.EDC_T = 0
+
+exchange = _Exchange(sg)
+set_ca = exchange.set_ca
+
+
+time.sleep(0.01)
+set_ca(RESET_SG1_CA, 1)
+sg.CONFIG.SG_RESET_N = 1
+
+time.sleep(0.01)
+set_ca(RESET_SG2_CA, 1)
+sg.CONFIG.SG_RESET_N = 3
+
+# Now allow EDC_T to be driven by SG RAM
+sg.CONFIG.EDC_T = 1
+
+# Complete initialisation by sending NOP and pulling CKEn low
+time.sleep(0.01)
+set_ca(NOP, 0)

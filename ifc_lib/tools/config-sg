@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+# Initialise MR registers after SG reset
+
+import registers
+
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG still in reset'
+
+
+exchange = _Exchange(sg)
+
+# Go straight into Mode Register configuration
+def send_init_command(command):
+    if exchange.capacity() < 10:
+        exchange.exchange()
+        exchange.reset()
+    exchange.command(command)
+    exchange.delay(9)
+
+stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
+
+
+# Initialise all the MR registers
+exchange.reset()
+stream.command(INIT_MR0)
+stream.command(INIT_MR1)
+stream.command(INIT_MR2)
+stream.command(INIT_MR3)
+stream.command(INIT_MR4)
+stream.command(INIT_MR5)
+stream.command(INIT_MR6_B0_VREF)
+stream.command(INIT_MR6_B1_VREF)
+stream.command(INIT_MR6_B0_TXEQ)
+stream.command(INIT_MR6_B1_TXEQ)
+stream.command(INIT_MR7)
+stream.command(INIT_MR8)
+stream.command(INIT_MR9_B0_DEF)
+stream.command(INIT_MR9_B1_DEF)
+stream.command(INIT_MR10)
+stream.command(INIT_MR12)
+exchange.exchange()
+
+# Finally perform WCK training
+exchange.reset()
+exchange.command(INIT_MR10_WCK2CK)
+exchange.command(NOP)
+exchange.exchange()
+
+# The delay between exchanges should be enough to complete this
+exchange.reset()
+exchange.command(INIT_MR10)
+exchange.command(NOP)
+exchange.exchange()

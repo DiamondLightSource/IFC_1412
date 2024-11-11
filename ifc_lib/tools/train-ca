@@ -1,0 +1,170 @@
+#!/usr/bin/env python
+
+# CA training
+
+import sys
+import argparse
+import numpy
+
+import registers
+
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib import exchange
+from ifc_lib.gddr6_lib.display import *
+from ifc_lib.gddr6_lib.delays import read_phase, set_phase
+
+parser = argparse.ArgumentParser()
+# parser.add_argument('-t', '--timestamp', action = 'store_true')
+# parser.add_argument('-i', '--idelays', action = 'store_true')
+# parser.add_argument('-o', '--odelays', action = 'store_true')
+# parser.add_argument('-b', '--brief', action = 'store_true')
+# parser.add_argument('interval', nargs = '?', type = float)
+args = parser.parse_args()
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+
+
+print('Initial phase =', read_phase(sg))
+
+exchange = exchange._Exchange(sg)
+
+
+def enter_cat():
+    exchange.reset()
+    exchange.command(CAT_PASS1)
+    exchange.command(CAT_PASS1)
+    exchange.delay(10)
+    exchange.command(NOP, cke_n = 1)
+    exchange.command(NOP)
+    exchange.run()
+
+# Must be called with one of CAT_EXIT, CAT_PASS1, CAT_PASS2
+def change_cat(command = CAT_EXIT):
+    exchange.reset()
+    exchange.command(command, cke_n = 1)
+    exchange.command(command, cke_n = 1)
+    exchange.command(NOP)
+    exchange.run()
+
+
+# # Sets a new test pattern.  In this special case we strobe CKE_N high to
+# # indicate a CAT transfer
+# def cat(pattern):
+#     exchange.command(pattern, cke_n = 1)
+
+# Used to set background pattern
+def idle(count, pattern = NOP):
+    for i in range(count):
+        exchange.command(pattern)
+
+def test_pattern(phase, pattern):
+    # Compute complementary pattern
+    complement = ~pattern & 0x3FF
+    idle_pattern = (complement, complement)
+    idle(1, idle_pattern)
+    if phase:
+        exchange.command((complement, pattern), cke_n = 1)
+    else:
+        exchange.command((pattern, complement), cke_n = 1)
+    idle(1, idle_pattern)
+
+
+def get_raw_result(exch, offset):
+    data, dbi, edc = exch
+    d = data[offset]
+    db = dbi[offset]
+    e = edc[offset - 1]
+    e_db = numpy.stack((e, db)).T
+
+    # Extract the values.  We expect each byte to be either all zeros or all
+    # ones, where a byte represents the result of reading 8 WCK ticks of raw
+    # data from each incoming wire.  We gather these into values according to
+    # the CA to Data Mapping in CA Training Mode.
+    d_val = numpy.packbits((d == 255)[::-1]).astype(numpy.uint16)
+    de_val = numpy.packbits(e_db == 255, 1).astype(numpy.uint16)
+    values = d_val + (de_val[:, 0] << 2)
+
+    # Check that each value is as expected
+    d_good = ((d == 255) | (d == 0)).all()
+    e_db_good = ((e_db == 255) | (e_db == 0)).all()
+    good = d_good and e_db_good
+    return (values, good)
+
+def check_result(exch, offset, expected):
+    values, good = get_raw_result(exch, offset)
+    all_good = good and (values == expected).all()
+#     if not all_good:
+#         print(values, good, all_good)
+    return all_good
+
+
+def load_test_pattern():
+    exchange.reset()
+
+    test_pattern(0, 0)
+    test_pattern(0, 0x3FF)
+    test_pattern(0, 0x155)
+    test_pattern(0, 0x2AA)
+    test_pattern(0, 0x3FF)
+
+    idle(14)
+
+
+def run_test():
+#     exchange.reset()
+# 
+#     test_pattern(0, 0)
+#     test_pattern(0, 0x3FF)
+#     test_pattern(0, 0x155)
+#     test_pattern(0, 0x2AA)
+#     test_pattern(0, 0x3FF)
+# 
+#     idle(14)
+    data = exchange.run()
+    dbi, edc = exchange.read_dbi_edc()
+    result = (data, dbi, edc)
+
+#     print_condensed_data_edc(data, dbi, edc, offset = 14)
+
+    return \
+        check_result(result, 17, 0) and \
+        check_result(result, 20, 0x3FF) and \
+        check_result(result, 23, 0x155) and \
+        check_result(result, 26, 0x2AA)
+
+
+def scan_ca():
+    phases = numpy.arange(112)
+    good = numpy.empty(112, dtype = bool)
+    first_good = -1
+    for ph in phases:
+        set_phase(sg, -ph)
+        ok = run_test()
+        good[ph] = ok
+        if ok:
+            last_good = ph
+            if first_good == -1:
+                first_good = ph
+
+#     print(first_good, last_good, (first_good + last_good) // 2)
+    print('Window:', last_good - first_good)
+    centre = -(first_good + last_good) // 2
+    print('Window: [{:d}..{:d}] = ({:d} / {:d})'.format(
+        first_good, last_good, centre, last_good - first_good))
+    return centre
+
+
+# Enable CA Training (CAT)
+enter_cat()
+load_test_pattern()
+# Inspect all CA phases in the range 0 to -180 degrees
+ca_phase = scan_ca()
+# Restore normal operation (exit CAT)
+change_cat(CAT_EXIT)
+
+set_phase(sg, ca_phase)
+phase = read_phase(sg)
+print('Final phase =', phase, '=', phase / 56 * 90, 'degrees')

@@ -19,5 +19,4 @@ def open(addr = 0):
     sg_regs = driver.Registers(raw_regs, gddr6_defines, range = SG_RANGE)
     return (sys_regs.SYS, sg_regs.GDDR6)
 
-
-# __all__ = ['regs', 'sg']
+__all__ = ['open']

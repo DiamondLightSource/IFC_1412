@@ -1,0 +1,280 @@
+#!/usr/bin/env python
+
+# Write training
+
+import argparse
+import time
+import numpy
+
+import registers
+from ifc_lib.gddr6_lib.commands import *
+from ifc_lib.gddr6_lib.exchange import _Exchange
+from ifc_lib.gddr6_lib.display import *
+from ifc_lib.gddr6_lib.delays import *
+
+
+_, sg = registers.open()
+
+assert sg.STATUS.CK_OK, 'CK is not running and enabled'
+assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+
+parser = argparse.ArgumentParser()
+# parser.add_argument('-l', '--load', action = 'store_true')
+parser.add_argument('-s', '--scan', action = 'store_true')
+parser.add_argument('-b', '--scan_bitslips', action = 'store_true')
+parser.add_argument('-x', '--exchange', action = 'store_true')
+parser.add_argument('-o', '--data_out', action = 'store_true')
+parser.add_argument('-c', '--channel', default = 0, type = int)
+parser.add_argument('-f', '--find_bitslip', action = 'store_true')
+parser.add_argument('-r', '--reset_bitslip', action = 'store_true')
+parser.add_argument('-R', '--reset_odelay', action = 'store_true')
+parser.add_argument('-B', '--set_bitslip', type = int)
+parser.add_argument('-v', '--validate', action = 'store_true')
+# parser.add_argument('-c', '--check', action = 'store_true')
+# parser.add_argument('read_count', default = 6, type = int, nargs = '?')
+args = parser.parse_args()
+
+
+sg.CONFIG.DBI_TRAINING = 1
+
+
+exchange = _Exchange(sg)
+
+test_patterns = [0xFF00, 0xCC3C, 0x55AC, 0x5555, 0xA555, 0x00AA]
+# test_patterns = [0, 0, 0xFFFF, 0xFFFF, 0, 0]
+
+
+def write_dq(byte):
+    pattern = byte | (byte << 8) | (byte << 16) | (byte << 24)
+    for _ in range(16):
+        sg.DQ._value = pattern
+    for _ in range(2):
+        sg.DBI._value = pattern
+
+
+# Iterator to generate DQ pattern at the correct place.  Returns appropriate
+# output enable setting
+def write_dq_array(delay):
+    for n in range(delay-1):
+        write_dq(0xFF)
+        yield False
+
+    write_dq(0xFF)
+    yield True
+
+    for i in range(6):
+        write_dq(test_patterns[i] & 0xFF)
+        yield True
+
+        write_dq(test_patterns[i] >> 8)
+        yield True
+
+    write_dq(0xFF)
+    yield True
+
+    while True:
+        write_dq(0xFF)
+        yield False
+
+
+def load_exchange():
+    exchange.reset()
+    exchange.command(ACT(0, 0))
+    dq = write_dq_array(3)
+    # Use WRTR to load the training pattern
+    for _ in range(6):
+        exchange.command(WRTR, oe = next(dq))
+        exchange.command(NOP, oe = next(dq))
+    # Use RDTR to read the pattern back
+    for _ in range(6):
+        exchange.command(RDTR, oe = next(dq))
+        exchange.command(NOP, oe = next(dq))
+    # Run out for long enough to see the response
+    for _ in range(21):
+        exchange.command(NOP, oe = next(dq))
+    exchange.command(NOP)
+
+
+load_exchange()
+
+def write_test():
+    data = exchange.run()
+    dbi = exchange.read_dbi()
+    return (data, dbi)
+
+if args.set_bitslip is not None:
+    for n in range(72):
+        set_obitslip(sg, n, args.set_bitslip)
+elif args.reset_bitslip:
+    for n in range(72):
+        set_obitslip(sg, n, 0)
+
+if args.reset_odelay:
+    for n in range(72):
+        set_odelay(sg, n, 0)
+
+
+data, dbi = write_test()
+if args.exchange:
+    print_condensed_data_dbi(data, dbi)
+
+def print_bits(offset, bytes):
+    print('%2d' % offset, ' '.join(f'{byte:08b}'[::-1] for byte in bytes))
+
+def show_channel(data, channel):
+    for n in range(0, 16):
+        ix = n + 16 * channel
+        print_bits(ix, data[:, ix])
+
+def show_data(data, dbi, name, offset, channel):
+    data_range = numpy.s_[offset-1:offset+13]
+    print('Data %s:' % name)
+    for n in range(0, 16):
+        ix = n + 16 * channel
+        print_bits(ix, data[data_range, ix])
+    print('DBI %s:' % name)
+    for n in range(8):
+        print_bits(n, dbi[data_range, n])
+
+
+if args.data_out:
+    show_data(data, dbi, 'Out', 17, args.channel)
+
+data_offset = 34
+data_range = numpy.s_[data_offset:data_offset+12]
+
+show_data(data, dbi, 'In', data_offset, args.channel)
+
+
+
+
+def show_match(match):
+    # Convert array of booleans into a string of 0 or 1
+    show = ''.join('1' if m else '0' for m in match)
+    # Split the string into four groups of 16 and two of 8 for ease of display
+    splits = [0, 16, 32, 48, 64, 72, 80]
+    return ' '.join(show[l:r] for l, r in zip(splits[:-1], splits[1:]))
+
+def match_data(data, dbi):
+    data = numpy.concatenate((data, dbi), axis = 1)
+    data = data[data_range]
+    pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
+    return (data == pattern[:, None]).all(0)
+
+print(show_match(match_data(data, dbi)))
+
+
+
+def sweep_delays(max_delay):
+    matches = numpy.zeros((max_delay, 72), dtype = numpy.bool)
+    for delay in range(max_delay):
+        for pin in range(72):
+            set_odelay(sg, pin, delay)
+        data, dbi = write_test()
+        matches[delay] = match_data(data, dbi)
+    return matches
+
+
+# Returns a list of intervals as a list of tuples    (length, mid-point)
+def find_intervals(scan):
+    # This is kind of tricksy: we convert the array of bools scan into integers,
+    # and then use diff() and where() to find the start and end of the window,
+    # which is defined by a contiguous block of True.
+    diffs = numpy.diff(numpy.int8(numpy.concatenate(([0], scan, [0]))))
+    starts = numpy.where(diffs == 1)[0]
+    ends = numpy.where(diffs == -1)[0]
+    return [
+        (end - start, (start + end) // 2)
+        for start, end in zip(starts, ends)]
+
+def find_longest_interval(intervals):
+    if intervals:
+        best = intervals[0]
+        for interval in intervals[1:]:
+            if interval[0] > best[0]:
+                best = interval
+        return best
+    else:
+        return (0, 0)
+
+def find_eyes(matches):
+    best = [
+        find_longest_interval(find_intervals(scan))
+        for scan in matches.T]
+    lengths = numpy.array([l for l, _ in best])
+    centres = numpy.array([c for _, c in best])
+    return (centres, lengths)
+
+
+def print_matlab_value(value):
+    if len(value.shape) == 0:
+        print(value, end = ', ')
+    else:
+        print('[ ', end = '')
+        for row in value:
+            print_matlab_value(row)
+        print(']; ...')
+
+# Prints array in format that can be loaded into matlab
+def print_matlab(name, array):
+    print(name, '=', '...')
+    print_matlab_value(array)
+    print()
+
+def count_offset(byte):
+    for n in range(8):
+        if byte == 0:
+            return n
+        else:
+            byte = (byte << 1) & 0xFF
+    assert False, 'Unable to find bitslip offset'
+
+
+if args.find_bitslip:
+    # Search for best bitslip
+    data, dbi = write_test()
+    data = numpy.concatenate((data, dbi), axis = 1)
+    last_column = data[data_offset + 11]
+    offsets = [count_offset(b) for b in last_column]
+    print(offsets)
+    for n, o in enumerate(offsets):
+        set_obitslip(sg, n, max(0, o - 1))
+
+
+if args.scan_bitslips:
+    bitslips = list(range(8))
+    odelays = numpy.zeros((len(bitslips), 72), dtype = numpy.int64)
+    windows = numpy.zeros((len(bitslips), 72), dtype = numpy.int64)
+
+    for ix, bitslip in enumerate(bitslips):
+        print('bitslip', bitslip)
+        for pin in range(72):
+            set_obitslip(sg, pin, bitslip)
+        matches = sweep_delays(500)
+        odelays[ix], windows[ix] = find_eyes(matches)
+
+    print_matlab('odelays', odelays)
+    print_matlab('windows', windows)
+    print(windows.max(axis = 0))
+
+    print(numpy.argmax(windows, axis = 0))
+
+    for pin in range(72):
+        ix = numpy.argmax(windows[:, pin])
+        bitslip = bitslips[ix]
+        set_obitslip(sg, pin, bitslip)
+        set_odelay(sg, pin, odelays[ix, pin])
+
+elif args.scan:
+    matches = sweep_delays(500)
+    odelays, windows = find_eyes(matches)
+    print(list(odelays), ';')
+    print(list(windows), ';')
+    for pin in range(72):
+        set_odelay(sg, pin, odelays[pin])
+
+
+if args.validate:
+    read_odelay(sg, 0)      # Read back an odelay to synchronise with setting
+    data, dbi = write_test()
+    print(show_match(match_data(data, dbi)))
