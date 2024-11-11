@@ -37,9 +37,10 @@ architecture arch of gddr6_setup_delay is
     -- Entire control is on ck clock
     signal write_strobe : std_ulogic;
     signal write_data : reg_data_t;
-    signal write_ack : std_ulogic := '0';
+    signal write_ack : std_ulogic;
     signal read_strobe : std_ulogic;
     signal read_data : reg_data_t;
+
     signal read_ack : std_ulogic := '0';
 
 begin
@@ -73,7 +74,8 @@ begin
         up_down_n => write_data(GDDR6_DELAY_UP_DOWN_N_BIT),
         enable_write => write_data(GDDR6_DELAY_ENABLE_WRITE_BIT),
         write_strobe => write_strobe,
-        read_strobe => read_strobe
+        read_strobe => read_strobe,
+        phase_strobe => write_strobe and write_data(GDDR6_DELAY_STEP_PHASE_BIT)
     );
 
     write_ack <= setup_delay_i.write_ack;
@@ -87,6 +89,8 @@ begin
                 read_data <= (
                     GDDR6_DELAY_DELAY_BITS =>
                         std_ulogic_vector(setup_delay_i.delay),
+                    GDDR6_DELAY_PHASE_BITS =>
+                        std_ulogic_vector(setup_delay_i.phase),
                     others => '0');
             end if;
         end if;

@@ -31,6 +31,13 @@ entity gddr6_phy_clocking is
         -- Set to enable the PLL PHY clocks
         enable_pll_phy_i : in std_ulogic;
 
+        -- Control over phase shift of ck_clk_delay_o
+        phase_direction_i : in std_ulogic;
+        phase_step_i : in std_ulogic;
+        phase_step_ack_o : out std_ulogic;
+        -- Current phase offset in range 0 to 223 (4 x 56)
+        phase_o : out unsigned(7 downto 0);
+
         -- Set when PLL is locked, synchronous to CK clock
         pll_locked_o : out std_ulogic;
         -- Set when MMCM is locked, asynchronous.  Used to detect CK dropout
@@ -39,14 +46,6 @@ entity gddr6_phy_clocking is
 end;
 
 architecture arch of gddr6_phy_clocking is
-    -- Advance CK clock to help align the CA output eye with the centre of the
-    -- CK clock.  I think we have 11.25 degrees of resolution here from 45
-    -- degrees resolution on the VCO clock divided by 4 for the CK clock.
-    --
-    -- At present a phase shift of -90 works for 250 MHz, but for 300 MHz we
-    -- appear to need something closer to -135.
-    constant CA_PHASE_SHIFT : real := -90.0;
-
     -- Input clock and MMCM
     signal io_ck_in : std_ulogic;
     signal mmcm_clkfbout : std_ulogic;
@@ -66,22 +65,79 @@ architecture arch of gddr6_phy_clocking is
     alias ck_clk : std_ulogic is ck_clk_o;
     alias riu_clk : std_ulogic is riu_clk_o;
 
+    -- Clock phase control
+    signal phase_direction : std_ulogic;
+    signal phase_step : std_ulogic;
+    signal phase_step_ack : std_ulogic;
+    -- As documented in ug572 a single phase increment steps the phase of the
+    -- target output clock by one part in 56 (this is quite a strange number,
+    -- being 1/7 of 45 degrees), which corresponds to 1/4 of this amount (or
+    -- just over 1.6 degrees) for the output clock at 4x VCO frequency.  Hence
+    -- the valid range of phases is 0 to 233 (=4*56-1).
+    constant MAX_PHASE : unsigned(7 downto 0) := to_unsigned(223, 8);
+    signal phase : unsigned(7 downto 0) := (others => '0');
+
 begin
     bufg_in : BUFG port map (
         I => io_ck_i,
         O => io_ck_in
     );
 
+
+    -- Bring clock phase adjustments over to the io_ck_in clock domain
+    write_phase : entity work.cross_clocks_write port map (
+        clk_in_i => ck_clk,
+        strobe_i => phase_step_i,
+        ack_o => phase_step_ack_o,
+        data_i(0) => phase_direction_i,
+
+        clk_out_i => io_ck_in,
+        strobe_o => phase_step,
+        ack_i => phase_step_ack,
+        data_o(0) => phase_direction
+    );
+
+    -- Keep track of the phase as it is adjusted.
+    process (ck_reset_i, ck_clk) begin
+        if ck_reset_i then
+            phase <= (others => '0');
+        elsif rising_edge(ck_clk) then
+            if phase_step_i then
+                case phase_direction_i is
+                    when '0' =>     -- Decrement phase
+                        if phase > 0 then
+                            phase <= phase - 1;
+                        else
+                            phase <= MAX_PHASE;
+                        end if;
+                    when '1' =>     -- Increment phase
+                        if phase < MAX_PHASE then
+                            phase <= phase + 1;
+                        else
+                            phase <= (others => '0');
+                        end if;
+                    when others =>
+                end case;
+            end if;
+        end if;
+    end process;
+    phase_o <= phase;
+
+
     -- We need to run ck_clk in phase with CK; apparently this cannot be done
     -- with a PLL and so use an MMCM to generate our clocks.  We'll still need
     -- PLLs for the high speed bitslice output clocks.
-    mmcm : MMCME3_BASE generic map (
+    --    The CA output clock (ck_clk_delay_o) runs at a configurable phase
+    -- offset relative to the original CK clock: this is required so that we can
+    -- reliably align our CA commands with the SG CK clock.
+    mmcm : MMCME3_ADV generic map (
         CLKFBOUT_MULT_F => 4.0,     -- Input clock at 250 MHz, run VCO at 1GHz
         CLKIN1_PERIOD => 1000.0 / CK_FREQUENCY,
+        CLKIN2_PERIOD => 1000.0 / CK_FREQUENCY,
         CLKOUT0_DIVIDE_F => 4.0,    -- ck_clk at 250 MHz
         CLKOUT1_DIVIDE => 8,        -- riu_clk at 125 MHz
         CLKOUT2_DIVIDE => 4,        -- ck_clk_delay for ODDR clocking
-        CLKOUT2_PHASE => CA_PHASE_SHIFT
+        CLKOUT2_USE_FINE_PS => "TRUE"
     ) port map (
         CLKIN1 => io_ck_in,
         CLKOUT0 => ck_clk_out,
@@ -90,8 +146,22 @@ begin
         CLKFBOUT => mmcm_clkfbout,
         CLKFBIN => mmcm_clkfbin,
         LOCKED => mmcm_locked,
-        PWRDWN => '0',
-        RST => ck_reset_i
+        RST => ck_reset_i,
+        -- Fine phase control
+        PSCLK => io_ck_in,
+        PSINCDEC => phase_direction,
+        PSEN => phase_step,
+        PSDONE => phase_step_ack,
+        -- Unused ports
+        CLKIN2 => '0',
+        CLKINSEL => '1',
+        CDDCREQ => '0',
+        DCLK => '0',
+        DADDR => (others => '0'),
+        DI => (others => '0'),
+        DEN => '0',
+        DWE => '0',
+        PWRDWN => '0'
     );
     mmcm_locked_o <= mmcm_locked;
 

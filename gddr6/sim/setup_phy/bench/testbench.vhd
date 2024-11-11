@@ -57,6 +57,7 @@ architecture arch of testbench is
     signal ctrl_ca : phy_ca_t;
     signal ctrl_dq_in : phy_dq_out_t;
     signal ctrl_dq_out : phy_dq_in_t;
+    signal temperature_in : sg_temperature_t;
 
     signal clk : std_ulogic := '0';
 
@@ -86,6 +87,7 @@ begin
         ctrl_ca_i => ctrl_ca,
         ctrl_dq_i => ctrl_dq_in,
         ctrl_dq_o => ctrl_dq_out,
+        temperature_i => temperature_in,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P,
         pad_SG12_CK_N_i => pad_SG12_CK_N,

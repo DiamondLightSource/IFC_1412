@@ -50,7 +50,8 @@ architecture arch of testbench is
         up_down_n => 'U',
         enable_write => 'U',
         write_strobe => '0',
-        read_strobe => '0'
+        read_strobe => '0',
+        phase_strobe => '0'
     );
 
     signal pad_SG12_CK_P : std_ulogic := '0';
@@ -180,7 +181,8 @@ begin
                 up_down_n => up_down_n,
                 enable_write => '1',
                 write_strobe => '1',
-                read_strobe => '0'
+                read_strobe => '0',
+                phase_strobe => '0'
             );
             loop
                 clk_wait;
@@ -206,7 +208,8 @@ begin
                 up_down_n => 'U',
                 enable_write => 'U',
                 write_strobe => '0',
-                read_strobe => '1'
+                read_strobe => '1',
+                phase_strobe => '0'
             );
             loop
                 clk_wait;
@@ -231,7 +234,8 @@ begin
                 up_down_n => '0',   -- Must be valid for ODELAY
                 enable_write => '0',
                 write_strobe => '1',
-                read_strobe => '0'
+                read_strobe => '0',
+                phase_strobe => '0'
             );
             loop
                 clk_wait;
@@ -240,6 +244,19 @@ begin
             end loop;
             setup_delay_in <= SETUP_DELAY_IDLE;
             readback_delay;
+        end;
+
+        procedure step_phase(direction : std_ulogic) is
+        begin
+            setup_delay_in.up_down_n <= direction;
+            setup_delay_in.phase_strobe <= '1';
+            loop
+                clk_wait;
+                setup_delay_in.phase_strobe <= '0';
+                exit when setup_delay_out.phase_ack;
+            end loop;
+            setup_delay_in <= SETUP_DELAY_IDLE;
+            write("phase => " & to_string(to_integer(setup_delay_out.phase)));
         end;
 
     begin
@@ -271,6 +288,10 @@ begin
         wait until ck_ok_out;
 
         clk_wait(10);
+
+        for i in 1 to 10 loop
+            step_phase('0');
+        end loop;
 
 
         -- Test alignment of DQ and OE.  Test pattern sequence is:

@@ -176,6 +176,11 @@ architecture arch of gddr6_phy is
     signal bitslip_delay_control : bitslip_delay_control_t;
     signal bitslip_delay_readbacks : bitslip_delay_readbacks_t;
 
+    signal dly_phase_direction : std_ulogic;
+    signal dly_phase_step : std_ulogic;
+    signal dly_phase_step_ack : std_ulogic;
+    signal dly_phase : unsigned(7 downto 0);
+
 begin
     -- Map pads to IO buffers and gather related signals
     io : entity work.gddr6_phy_io port map (
@@ -242,6 +247,11 @@ begin
         riu_clk_o => riu_clk,
 
         enable_pll_phy_i => enable_pll_phy,
+
+        phase_direction_i => dly_phase_direction,
+        phase_step_i => dly_phase_step,
+        phase_step_ack_o => dly_phase_step_ack,
+        phase_o => dly_phase,
 
         pll_locked_o => pll_locked,
         mmcm_locked_o => mmcm_locked
@@ -372,7 +382,12 @@ begin
         bitslice_control_o => bitslice_delay_control,
         bitslice_delays_i => bitslice_delay_readbacks,
         bitslip_control_o => bitslip_delay_control,
-        bitslip_delays_i => bitslip_delay_readbacks
+        bitslip_delays_i => bitslip_delay_readbacks,
+
+        phase_direction_o => dly_phase_direction,
+        phase_step_o => dly_phase_step,
+        phase_step_ack_i => dly_phase_step_ack,
+        phase_i => dly_phase
     );
 
 

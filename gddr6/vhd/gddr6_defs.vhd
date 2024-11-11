@@ -224,7 +224,7 @@ package gddr6_defs is
         -- stepped by the selected amount rather than updated, for bitslip the
         -- delay is written directly (from delay[0:2]).
         delay : unsigned(8 downto 0);
-        -- For IDELAY and ODELAY controls direction of stepping
+        -- For IDELAY and ODELAY and phase controls direction of stepping
         up_down_n : std_ulogic;
         -- Set this to enable writing the delay, otherwise only the readback is
         -- updated (where appropriate).
@@ -233,6 +233,9 @@ package gddr6_defs is
         -- Strobes for read and write.
         write_strobe : std_ulogic;
         read_strobe : std_ulogic;
+
+        -- Trigger step of phase
+        phase_strobe : std_ulogic;
     end record;
 
     -- Readback and handshakes from delays
@@ -243,6 +246,9 @@ package gddr6_defs is
         -- completed before reading delay.
         read_ack : std_ulogic;
         delay : unsigned(8 downto 0);
+        -- Acknowledge and readback for fine clock phase control
+        phase_ack : std_ulogic;
+        phase : unsigned(7 downto 0);
     end record;
 
 

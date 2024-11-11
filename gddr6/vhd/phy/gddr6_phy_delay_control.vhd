@@ -23,7 +23,12 @@ entity gddr6_phy_delay_control is
         bitslice_delays_i : in bitslice_delay_readbacks_t;
         bitslip_control_o : out bitslip_delay_control_t
             := IDLE_BITSLIP_DELAY_CONTROL;
-        bitslip_delays_i : in bitslip_delay_readbacks_t
+        bitslip_delays_i : in bitslip_delay_readbacks_t;
+
+        phase_direction_o : out std_ulogic;
+        phase_step_o : out std_ulogic;
+        phase_step_ack_i : in std_ulogic;
+        phase_i : in unsigned(7 downto 0)
     );
 end;
 
@@ -255,6 +260,10 @@ begin
     setup_o <= (
         write_ack => write_ack,
         read_ack => read_ack,
-        delay => delay_out
+        delay => delay_out,
+        phase_ack => phase_step_ack_i,
+        phase => phase_i
     );
+    phase_direction_o <= setup_i.up_down_n;
+    phase_step_o <= setup_i.phase_strobe;
 end;

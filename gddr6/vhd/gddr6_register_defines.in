@@ -83,6 +83,13 @@
         # If this is not set only .ADDRESS is used to read back without writing
         .ENABLE_WRITE
 
+        # When written steps the CK output phase by one tick
+        .STEP_PHASE
+        # Reads back the current phase: 224 steps for a full 360 degress, or
+        # around 1.6 degrees per step
+        .PHASE          8
+
+
     # The EXCHANGE registers are used to exchange up to 64 ticks of data with
     # the SG GDDR6 memory.  Buffers containing CA commands and DQ data to write
     # are first loaded by writing to the DQ and CA registers: up to 16 writes to

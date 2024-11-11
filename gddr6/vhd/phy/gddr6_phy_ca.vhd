@@ -52,6 +52,15 @@ architecture arch of gddr6_phy_ca is
     -- CKEn needs to straddle two ticks to align its centre with the rising edge
     signal cke_n_in : std_ulogic := '0';
 
+    -- Account for the variable phase from ck_clk_i to ck_clk_delay_i
+    attribute max_delay_from : string;
+    attribute max_delay_from of d1 : signal is "2.0";
+    attribute max_delay_from of d2 : signal is "2.0";
+    attribute KEEP : string;
+    attribute KEEP of d1 : signal is "TRUE";
+    attribute KEEP of d2 : signal is "TRUE";
+
+
     -- Special treatment of CA3: in the second tick of a command CA3 can be
     -- used as a chip select.
     function ca3_in(
