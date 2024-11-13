@@ -130,19 +130,21 @@ begin
     --    The CA output clock (ck_clk_delay_o) runs at a configurable phase
     -- offset relative to the original CK clock: this is required so that we can
     -- reliably align our CA commands with the SG CK clock.
-    mmcm : MMCME3_ADV generic map (
+    --
+    -- The name of this instance is used in sgram.tcl to apply special clocking
+    -- constraints to this MMCM
+    sg_dram_mmcm : MMCME3_ADV generic map (
         CLKFBOUT_MULT_F => 4.0,     -- Input clock at 250 MHz, run VCO at 1GHz
         CLKIN1_PERIOD => 1000.0 / CK_FREQUENCY,
-        CLKIN2_PERIOD => 1000.0 / CK_FREQUENCY,
-        CLKOUT0_DIVIDE_F => 4.0,    -- ck_clk at 250 MHz
-        CLKOUT1_DIVIDE => 8,        -- riu_clk at 125 MHz
-        CLKOUT2_DIVIDE => 4,        -- ck_clk_delay for ODDR clocking
-        CLKOUT2_USE_FINE_PS => "TRUE"
+        CLKOUT0_DIVIDE_F => 4.0,    -- ck_clk_delay for ODDR clocking
+        CLKOUT0_USE_FINE_PS => "TRUE",
+        CLKOUT1_DIVIDE => 4,        -- ck_clk at 250 MHz
+        CLKOUT2_DIVIDE => 8         -- riu_clk at 125 MHz
     ) port map (
         CLKIN1 => io_ck_in,
-        CLKOUT0 => ck_clk_out,
-        CLKOUT1 => riu_clk_out,
-        CLKOUT2 => ck_clk_delay_out,
+        CLKOUT0 => ck_clk_delay_out,
+        CLKOUT1 => ck_clk_out,
+        CLKOUT2 => riu_clk_out,
         CLKFBOUT => mmcm_clkfbout,
         CLKFBIN => mmcm_clkfbin,
         LOCKED => mmcm_locked,

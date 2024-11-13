@@ -54,8 +54,8 @@ architecture arch of gddr6_phy_ca is
 
     -- Account for the variable phase from ck_clk_i to ck_clk_delay_i
     attribute max_delay_from : string;
-    attribute max_delay_from of d1 : signal is "2.0";
-    attribute max_delay_from of d2 : signal is "2.0";
+    attribute max_delay_from of d1 : signal is "1.5";
+    attribute max_delay_from of d2 : signal is "1.5";
     attribute KEEP : string;
     attribute KEEP of d1 : signal is "TRUE";
     attribute KEEP of d2 : signal is "TRUE";

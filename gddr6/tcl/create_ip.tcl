@@ -17,14 +17,19 @@ set_param project.enableVHDL2008 1
 set_property target_language VHDL [current_project]
 
 
-# Add all the files listed in the source file
+# Read gddr6-ip-files into a list.  The search skips blank lines and lines
+# starting with #
 set infile [open $fpga_top/gddr6-ip-files]
-while { [gets $infile line] >= 0 } {
-    set newfile [add_files [subst $line]]
-    set_property FILE_TYPE "VHDL 2008" $newfile
-}
+set files [lsearch -regexp -inline -all [split [read $infile]] {^[^#]}]
 close $infile
+
+# Add all the files listed in the source file
+set newfiles [add_files [subst $files]]
+set_property FILE_TYPE "VHDL 2008" $newfiles
 set_property top gddr6_ip_netlist [current_fileset]
+
+# Add constraints to try and help with clock alignment
+add_files -fileset constrs_1 $ip_dir/gddr6_ip/constr
 
 
 # Build the design and write the netlist
