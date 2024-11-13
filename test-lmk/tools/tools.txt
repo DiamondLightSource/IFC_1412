@@ -1,0 +1,27 @@
+bind_lmk.py
+    Import this library for LMK python binding
+
+dump-lmk
+    Dumps current LMK register state
+
+lmk
+    Read or write LMK register
+
+program-lmk
+    Uploads given register file to LMK
+
+reg
+    Dumps raw registers
+
+setup-lmk
+    Initialises SYS LMK and checks for lock
+
+setup_lmk.py
+    LMK initialisation implementation
+
+show-clocks
+    Prints measured clock frequencies
+
+test-lmk
+test-sync
+    Not sure...

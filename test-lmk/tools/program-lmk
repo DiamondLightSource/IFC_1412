@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+# Upload register file to LMK
+
+import sys
+import os
+import numpy
+import re
+
+from fpga_lib.driver import driver
+from fpga_lib.devices import LMK04616
+
+
+here = os.path.dirname(__file__)
+register_defines = os.path.join(here, '../vhd', 'register_defines.in')
+
+raw_regs = driver.RawRegisters('ifc_1412-lmk', 0)
+regs = driver.Registers(raw_regs, register_defines)
+top = regs.TOP
+
+def write_lmk(reg, value):
+    top.LMK04616._write_fields_wo(
+        ADDRESS = reg, R_WN = 0, SELECT = 0, DATA = value)
+
+
+write_lmk(0, 0x81)
+for line in open(sys.argv[1]).readlines():
+    address, value = [
+        int(g, 16) for g in re.match(r'PLL\[(...)] => (..)', line).groups()]
+    write_lmk(address, value)
+write_lmk(0x011, 1)
