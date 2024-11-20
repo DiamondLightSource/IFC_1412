@@ -1,0 +1,6 @@
+BUILT += register_defines.vhd
+
+# Path to gddr6 files
+export GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
+
+# vim: set filetype=make:

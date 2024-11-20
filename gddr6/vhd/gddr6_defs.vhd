@@ -85,6 +85,10 @@ package gddr6_defs is
     end record;
 
 
+    constant IDLE_AXI_REQUEST : axi_request_t;
+    constant IDLE_AXI_RESPONSE : axi_response_t;
+
+
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between AXI and CTRL
 
@@ -335,6 +339,23 @@ package body gddr6_defs is
         id => (others => '0'),
         resp => (others => '0'),
         valid => '0'
+    );
+
+
+    constant IDLE_AXI_REQUEST : axi_request_t := (
+        write_address => IDLE_AXI_ADDRESS,
+        write_data => IDLE_AXI_WRITE_DATA,
+        write_response_ready => '0',
+        read_address => IDLE_AXI_ADDRESS,
+        read_data_ready => '0'
+    );
+
+    constant IDLE_AXI_RESPONSE : axi_response_t := (
+        write_address_ready => '0',
+        write_data_ready => '0',
+        write_response => IDLE_AXI_WRITE_RESPONSE,
+        read_address_ready => '0',
+        read_data => IDLE_AXI_READ_DATA
     );
 
 
