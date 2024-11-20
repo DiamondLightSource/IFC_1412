@@ -56,8 +56,6 @@ def parse_args():
         default = 2**64-1, type = parse_event_mask)
     parser.add_argument('-s', '--show_stats',
         default = False, action = 'store_true')
-    parser.add_argument('-q', '--quiet',
-        default = False, action = 'store_true')
     return parser.parse_args()
 
 
@@ -111,7 +109,6 @@ def write_axi_buffer(data, byte_mask):
     data = numpy.require(data, dtype = numpy.uint8).view(numpy.uint32)
     rows, columns = data.shape
     axi.COMMAND.START_WRITE = 1
-#     axi.SETUP.BYTE_MASK = byte_mask
     for row in data:
         for n, word in enumerate(row):
             axi.SETUP.BYTE_MASK = (byte_mask >> (4 * n)) & 0xF
@@ -204,7 +201,7 @@ if args.show_stats:
     for name, value in show_axi_stats():
         print(f'{name:20s}{value}')
 
-if not args.quiet:
+if args.verbose:
     print('AXI STATUS:', show_fields(axi.STATUS))
     print('SG STATUS:', show_fields(sg.STATUS))
     print('SG CONFIG:', show_fields(sg.CONFIG))
