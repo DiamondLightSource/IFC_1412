@@ -61,11 +61,6 @@ entity gddr6_ip is
         s_axi_AWLEN_i : in std_logic_vector(7 downto 0);
         s_axi_AWSIZE_i : in std_logic_vector(2 downto 0);
         s_axi_AWBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_AWLOCK_i : in std_logic;
-        s_axi_AWCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_AWPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_AWQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_AWUSER_i : in std_logic_vector(3 downto 0);
         s_axi_AWVALID_i : in std_logic;
         s_axi_AWREADY_o : out std_logic;
         -- W
@@ -85,11 +80,6 @@ entity gddr6_ip is
         s_axi_ARLEN_i : in std_logic_vector(7 downto 0);
         s_axi_ARSIZE_i : in std_logic_vector(2 downto 0);
         s_axi_ARBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_ARLOCK_i : in std_logic;
-        s_axi_ARCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_ARPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_ARQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_ARUSER_i : in std_logic_vector(3 downto 0);
         s_axi_ARVALID_i : in std_logic;
         s_axi_ARREADY_o : out std_logic;
         -- R
@@ -222,16 +212,6 @@ architecture arch of gddr6_ip is
         is "xilinx.com:interface:aximm:1.0 s_axi AWSIZE";
     attribute X_INTERFACE_INFO of s_axi_AWBURST_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi AWBURST";
-    attribute X_INTERFACE_INFO of s_axi_AWLOCK_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi AWLOCK";
-    attribute X_INTERFACE_INFO of s_axi_AWCACHE_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi AWCACHE";
-    attribute X_INTERFACE_INFO of s_axi_AWPROT_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi AWPROT";
-    attribute X_INTERFACE_INFO of s_axi_AWQOS_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi AWQOS";
-    attribute X_INTERFACE_INFO of s_axi_AWUSER_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi AWUSER";
     attribute X_INTERFACE_INFO of s_axi_AWVALID_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi AWVALID";
     attribute X_INTERFACE_INFO of s_axi_AWREADY_o : signal
@@ -267,16 +247,6 @@ architecture arch of gddr6_ip is
         is "xilinx.com:interface:aximm:1.0 s_axi ARSIZE";
     attribute X_INTERFACE_INFO of s_axi_ARBURST_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi ARBURST";
-    attribute X_INTERFACE_INFO of s_axi_ARLOCK_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi ARLOCK";
-    attribute X_INTERFACE_INFO of s_axi_ARCACHE_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi ARCACHE";
-    attribute X_INTERFACE_INFO of s_axi_ARPROT_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi ARPROT";
-    attribute X_INTERFACE_INFO of s_axi_ARQOS_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi ARQOS";
-    attribute X_INTERFACE_INFO of s_axi_ARUSER_i : signal
-        is "xilinx.com:interface:aximm:1.0 s_axi ARUSER";
     attribute X_INTERFACE_INFO of s_axi_ARVALID_i : signal
         is "xilinx.com:interface:aximm:1.0 s_axi ARVALID";
     attribute X_INTERFACE_INFO of s_axi_ARREADY_o : signal
@@ -294,6 +264,16 @@ architecture arch of gddr6_ip is
         is "xilinx.com:interface:aximm:1.0 s_axi RID";
     attribute X_INTERFACE_INFO of s_axi_RDATA_o : signal
         is "xilinx.com:interface:aximm:1.0 s_axi RDATA";
+    -- Interface parameters.  It's not terribly clear what the role of these
+    -- parameters is, but they are documented in PG373 as part of the AXI
+    -- Register Slice documentation, so it seems to make sense to provide these.
+    attribute X_INTERFACE_PARAMETER of s_axi_ARADDR_i : signal
+        is "XIL_INTERFACENAME s_axi, " &
+           "NUM_READ_OUTSTANDING 64, " &    -- Depth of address FIFOs
+           "NUM_WRITE_OUTSTANDING 64, " &
+           "SUPPORTS_NARROW_BURST 1, " &    -- Yes, we support weird bursts
+           "HAS_BURST 0, " &                -- Only INCR bursts supported
+           "MAX_BURST_LENGTH 256";          -- (Only with narrow bursts)
 
 
     -- SG Memory Interface
@@ -387,11 +367,6 @@ architecture arch of gddr6_ip is
             s_axi_AWLEN_i : in std_logic_vector(7 downto 0);
             s_axi_AWSIZE_i : in std_logic_vector(2 downto 0);
             s_axi_AWBURST_i : in std_logic_vector(1 downto 0);
-            s_axi_AWLOCK_i : in std_logic;
-            s_axi_AWCACHE_i : in std_logic_vector(3 downto 0);
-            s_axi_AWPROT_i : in std_logic_vector(2 downto 0);
-            s_axi_AWQOS_i : in std_logic_vector(3 downto 0);
-            s_axi_AWUSER_i : in std_logic_vector(3 downto 0);
             s_axi_AWVALID_i : in std_logic;
             s_axi_AWREADY_o : out std_logic;
             s_axi_WDATA_i : in std_logic_vector(511 downto 0);
@@ -408,11 +383,6 @@ architecture arch of gddr6_ip is
             s_axi_ARLEN_i : in std_logic_vector(7 downto 0);
             s_axi_ARSIZE_i : in std_logic_vector(2 downto 0);
             s_axi_ARBURST_i : in std_logic_vector(1 downto 0);
-            s_axi_ARLOCK_i : in std_logic;
-            s_axi_ARCACHE_i : in std_logic_vector(3 downto 0);
-            s_axi_ARPROT_i : in std_logic_vector(2 downto 0);
-            s_axi_ARQOS_i : in std_logic_vector(3 downto 0);
-            s_axi_ARUSER_i : in std_logic_vector(3 downto 0);
             s_axi_ARVALID_i : in std_logic;
             s_axi_ARREADY_o : out std_logic;
             s_axi_RREADY_i : in std_logic;
@@ -486,11 +456,6 @@ begin
         s_axi_AWLEN_i => s_axi_AWLEN_i,
         s_axi_AWSIZE_i => s_axi_AWSIZE_i,
         s_axi_AWBURST_i => s_axi_AWBURST_i,
-        s_axi_AWLOCK_i => s_axi_AWLOCK_i,
-        s_axi_AWCACHE_i => s_axi_AWCACHE_i,
-        s_axi_AWPROT_i => s_axi_AWPROT_i,
-        s_axi_AWQOS_i => s_axi_AWQOS_i,
-        s_axi_AWUSER_i => s_axi_AWUSER_i,
         s_axi_AWVALID_i => s_axi_AWVALID_i,
         s_axi_AWREADY_o => s_axi_AWREADY_o,
         s_axi_WDATA_i => s_axi_WDATA_i,
@@ -507,11 +472,6 @@ begin
         s_axi_ARLEN_i => s_axi_ARLEN_i,
         s_axi_ARSIZE_i => s_axi_ARSIZE_i,
         s_axi_ARBURST_i => s_axi_ARBURST_i,
-        s_axi_ARLOCK_i => s_axi_ARLOCK_i,
-        s_axi_ARCACHE_i => s_axi_ARCACHE_i,
-        s_axi_ARPROT_i => s_axi_ARPROT_i,
-        s_axi_ARQOS_i => s_axi_ARQOS_i,
-        s_axi_ARUSER_i => s_axi_ARUSER_i,
         s_axi_ARVALID_i => s_axi_ARVALID_i,
         s_axi_ARREADY_o => s_axi_ARREADY_o,
         s_axi_RREADY_i => s_axi_RREADY_i,

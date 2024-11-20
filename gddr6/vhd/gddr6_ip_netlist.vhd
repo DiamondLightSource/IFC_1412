@@ -59,11 +59,6 @@ entity gddr6_ip_netlist is
         s_axi_AWLEN_i : in std_logic_vector(7 downto 0);
         s_axi_AWSIZE_i : in std_logic_vector(2 downto 0);
         s_axi_AWBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_AWLOCK_i : in std_logic;
-        s_axi_AWCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_AWPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_AWQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_AWUSER_i : in std_logic_vector(3 downto 0);
         s_axi_AWVALID_i : in std_logic;
         s_axi_AWREADY_o : out std_logic;
         -- W
@@ -83,11 +78,6 @@ entity gddr6_ip_netlist is
         s_axi_ARLEN_i : in std_logic_vector(7 downto 0);
         s_axi_ARSIZE_i : in std_logic_vector(2 downto 0);
         s_axi_ARBURST_i : in std_logic_vector(1 downto 0);
-        s_axi_ARLOCK_i : in std_logic;
-        s_axi_ARCACHE_i : in std_logic_vector(3 downto 0);
-        s_axi_ARPROT_i : in std_logic_vector(2 downto 0);
-        s_axi_ARQOS_i : in std_logic_vector(3 downto 0);
-        s_axi_ARUSER_i : in std_logic_vector(3 downto 0);
         s_axi_ARVALID_i : in std_logic;
         s_axi_ARREADY_o : out std_logic;
         -- R
