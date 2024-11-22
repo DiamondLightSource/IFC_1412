@@ -3,4 +3,4 @@ Name: ifc_1412-gddr6
 # The length below should be 1_0000_0000 but this is too long for the current
 # version of the driver
 # Similarly, the base address should be 1_0000_0000_0000, but again too long
-DMA: sgram R 8000_0000_0000 8000_0000
+Region: sgram RW 1_0000_0000_0000 1_0000_0000

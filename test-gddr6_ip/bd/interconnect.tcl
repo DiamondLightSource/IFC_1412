@@ -127,10 +127,10 @@ xilinx.com:ip:blk_mem_gen:8.4\
 xilinx.com:ip:axi_pcie3:3.0\
 xilinx.com:ip:util_ds_buf:2.2\
 xilinx.com:ip:axi_cdma:4.1\
+xilinx.com:ip:axi_dwidth_converter:2.1\
 xilinx.com:ip:axi_register_slice:2.1\
 xilinx.com:ip:axi_crossbar:2.1\
 diamond.ac.uk:user:gddr6_ip:0.0.0\
-xilinx.com:ip:axi_dwidth_converter:2.1\
 "
 
    set list_ips_missing ""
@@ -218,18 +218,39 @@ proc create_hier_cell_memory { parentCell nameHier } {
   # Create instance: axi_cdma_0, and set properties
   set axi_cdma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_cdma:4.1 axi_cdma_0 ]
   set_property -dict [list \
-    CONFIG.C_ADDR_WIDTH {48} \
+    CONFIG.C_ADDR_WIDTH {49} \
+    CONFIG.C_INCLUDE_SF {1} \
     CONFIG.C_INCLUDE_SG {0} \
     CONFIG.C_M_AXI_DATA_WIDTH {256} \
     CONFIG.C_M_AXI_MAX_BURST_LEN {32} \
   ] $axi_cdma_0
 
 
+  # Create instance: axi_dwidth_converter_0, and set properties
+  set axi_dwidth_converter_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dwidth_converter:2.1 axi_dwidth_converter_0 ]
+  set_property -dict [list \
+    CONFIG.ADDR_WIDTH {49} \
+    CONFIG.FIFO_MODE {2} \
+    CONFIG.MI_DATA_WIDTH {512} \
+    CONFIG.SI_DATA_WIDTH {256} \
+  ] $axi_dwidth_converter_0
+
+
   # Create instance: axi_register_slice_0, and set properties
   set axi_register_slice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_register_slice:2.1 axi_register_slice_0 ]
+  set_property -dict [list \
+    CONFIG.REG_AR {7} \
+    CONFIG.REG_AW {7} \
+  ] $axi_register_slice_0
+
 
   # Create instance: cdma_crossbar, and set properties
   set cdma_crossbar [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_crossbar:2.1 cdma_crossbar ]
+  set_property -dict [list \
+    CONFIG.S00_READ_ACCEPTANCE {16} \
+    CONFIG.S00_WRITE_ACCEPTANCE {16} \
+  ] $cdma_crossbar
+
 
   # Create instance: gddr6_ip_0, and set properties
   set gddr6_ip_0 [ create_bd_cell -type ip -vlnv diamond.ac.uk:user:gddr6_ip:0.0.0 gddr6_ip_0 ]
@@ -242,30 +263,25 @@ proc create_hier_cell_memory { parentCell nameHier } {
   ] $sgram_crossbar
 
 
-  # Create instance: width_converter, and set properties
-  set width_converter [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dwidth_converter:2.1 width_converter ]
-  set_property CONFIG.FIFO_MODE {2} $width_converter
-
-
   # Create interface connections
   connect_bd_intf_net -intf_net axi_cdma_0_M_AXI [get_bd_intf_pins axi_cdma_0/M_AXI] [get_bd_intf_pins cdma_crossbar/S00_AXI]
-  connect_bd_intf_net -intf_net axi_crossbar_1_M01_AXI [get_bd_intf_pins cdma_crossbar/M01_AXI] [get_bd_intf_pins width_converter/S_AXI]
+  connect_bd_intf_net -intf_net axi_dwidth_converter_0_M_AXI [get_bd_intf_pins axi_dwidth_converter_0/M_AXI] [get_bd_intf_pins axi_register_slice_0/S_AXI]
   connect_bd_intf_net -intf_net axi_interconnect_0_M00_AXI [get_bd_intf_pins cdma_ctrl] [get_bd_intf_pins axi_cdma_0/S_AXI_LITE]
   connect_bd_intf_net -intf_net axi_interconnect_0_M03_AXI [get_bd_intf_pins sgram_ctrl] [get_bd_intf_pins gddr6_ip_0/s_reg]
   connect_bd_intf_net -intf_net axi_register_slice_0_M_AXI [get_bd_intf_pins axi_register_slice_0/M_AXI] [get_bd_intf_pins sgram_crossbar/S00_AXI]
   connect_bd_intf_net -intf_net cdma_crossbar_M00_AXI [get_bd_intf_pins M00_AXI] [get_bd_intf_pins cdma_crossbar/M00_AXI]
+  connect_bd_intf_net -intf_net cdma_crossbar_M01_AXI [get_bd_intf_pins axi_dwidth_converter_0/S_AXI] [get_bd_intf_pins cdma_crossbar/M01_AXI]
   connect_bd_intf_net -intf_net gddr6_ip_0_phy [get_bd_intf_pins phy] [get_bd_intf_pins gddr6_ip_0/phy]
   connect_bd_intf_net -intf_net s_axi_1 [get_bd_intf_pins s_axi] [get_bd_intf_pins sgram_crossbar/S01_AXI]
   connect_bd_intf_net -intf_net sgram_crossbar_M00_AXI [get_bd_intf_pins gddr6_ip_0/s_axi] [get_bd_intf_pins sgram_crossbar/M00_AXI]
-  connect_bd_intf_net -intf_net width_converter_M_AXI [get_bd_intf_pins axi_register_slice_0/S_AXI] [get_bd_intf_pins width_converter/M_AXI]
 
   # Create port connections
   connect_bd_net -net axi_cdma_0_cdma_introut [get_bd_pins cdma_introut] [get_bd_pins axi_cdma_0/cdma_introut]
-  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_aclk] [get_bd_pins axi_cdma_0/m_axi_aclk] [get_bd_pins axi_cdma_0/s_axi_lite_aclk] [get_bd_pins cdma_crossbar/aclk] [get_bd_pins gddr6_ip_0/s_reg_ACLK] [get_bd_pins width_converter/s_axi_aclk]
-  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_aresetn] [get_bd_pins axi_cdma_0/s_axi_lite_aresetn] [get_bd_pins cdma_crossbar/aresetn] [get_bd_pins gddr6_ip_0/s_reg_RESETN_i] [get_bd_pins width_converter/s_axi_aresetn]
+  connect_bd_net -net axi_pcie3_bridge_axi_aclk [get_bd_pins axi_aclk] [get_bd_pins axi_cdma_0/m_axi_aclk] [get_bd_pins axi_cdma_0/s_axi_lite_aclk] [get_bd_pins axi_dwidth_converter_0/s_axi_aclk] [get_bd_pins cdma_crossbar/aclk] [get_bd_pins gddr6_ip_0/s_reg_ACLK]
+  connect_bd_net -net axi_pcie3_bridge_axi_aresetn [get_bd_pins axi_aresetn] [get_bd_pins axi_cdma_0/s_axi_lite_aresetn] [get_bd_pins axi_dwidth_converter_0/s_axi_aresetn] [get_bd_pins cdma_crossbar/aresetn] [get_bd_pins gddr6_ip_0/s_reg_RESETN_i]
   connect_bd_net -net gddr6_ip_0_axi_stats_o [get_bd_pins axi_stats_o] [get_bd_pins gddr6_ip_0/axi_stats_o]
-  connect_bd_net -net s_axi_ACLK_1 [get_bd_pins sgram_clk] [get_bd_pins axi_register_slice_0/aclk] [get_bd_pins gddr6_ip_0/s_axi_ACLK] [get_bd_pins sgram_crossbar/aclk] [get_bd_pins width_converter/m_axi_aclk]
-  connect_bd_net -net s_axi_RESETN_i_1 [get_bd_pins sgram_reset] [get_bd_pins axi_register_slice_0/aresetn] [get_bd_pins gddr6_ip_0/s_axi_RESETN_i] [get_bd_pins sgram_crossbar/aresetn] [get_bd_pins width_converter/m_axi_aresetn]
+  connect_bd_net -net s_axi_ACLK_1 [get_bd_pins sgram_clk] [get_bd_pins axi_dwidth_converter_0/m_axi_aclk] [get_bd_pins axi_register_slice_0/aclk] [get_bd_pins gddr6_ip_0/s_axi_ACLK] [get_bd_pins sgram_crossbar/aclk]
+  connect_bd_net -net s_axi_RESETN_i_1 [get_bd_pins sgram_reset] [get_bd_pins axi_dwidth_converter_0/m_axi_aresetn] [get_bd_pins axi_register_slice_0/aresetn] [get_bd_pins gddr6_ip_0/s_axi_RESETN_i] [get_bd_pins sgram_crossbar/aresetn]
   connect_bd_net -net setup_trigger_i_1 [get_bd_pins setup_trigger_i] [get_bd_pins gddr6_ip_0/setup_trigger_i]
 
   # Restore current instance
@@ -535,7 +551,7 @@ proc create_root_design { parentCell } {
 
   set s_axi [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 s_axi ]
   set_property -dict [ list \
-   CONFIG.ADDR_WIDTH {48} \
+   CONFIG.ADDR_WIDTH {49} \
    CONFIG.ARUSER_WIDTH {0} \
    CONFIG.AWUSER_WIDTH {0} \
    CONFIG.BUSER_WIDTH {0} \
@@ -551,9 +567,9 @@ proc create_root_design { parentCell } {
    CONFIG.HAS_WSTRB {1} \
    CONFIG.ID_WIDTH {0} \
    CONFIG.MAX_BURST_LENGTH {256} \
-   CONFIG.NUM_READ_OUTSTANDING {2} \
+   CONFIG.NUM_READ_OUTSTANDING {16} \
    CONFIG.NUM_READ_THREADS {1} \
-   CONFIG.NUM_WRITE_OUTSTANDING {2} \
+   CONFIG.NUM_WRITE_OUTSTANDING {16} \
    CONFIG.NUM_WRITE_THREADS {1} \
    CONFIG.PROTOCOL {AXI4} \
    CONFIG.READ_WRITE_MODE {READ_WRITE} \
@@ -616,13 +632,9 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x00020000 -range 0x00001000 -target_address_space [get_bd_addr_spaces axi_pcie/axi_pcie3_bridge/M_AXI] [get_bd_addr_segs memory/axi_cdma_0/S_AXI_LITE/Reg] -force
   assign_bd_address -offset 0x00021000 -range 0x00001000 -target_address_space [get_bd_addr_spaces axi_pcie/axi_pcie3_bridge/M_AXI] [get_bd_addr_segs axi_lite/axi_intc_0/S_AXI/Reg] -force
   assign_bd_address -offset 0x00011000 -range 0x00001000 -target_address_space [get_bd_addr_spaces axi_pcie/axi_pcie3_bridge/M_AXI] [get_bd_addr_segs memory/gddr6_ip_0/s_reg/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x800000000000 -target_address_space [get_bd_addr_spaces memory/axi_cdma_0/Data] [get_bd_addr_segs axi_pcie/axi_pcie3_bridge/S_AXI/BAR0] -force
-  assign_bd_address -offset 0x800000000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces memory/axi_cdma_0/Data] [get_bd_addr_segs memory/gddr6_ip_0/s_axi/reg0] -force
-  assign_bd_address -offset 0x800000000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces s_axi] [get_bd_addr_segs memory/gddr6_ip_0/s_axi/reg0] -force
-
-  # Exclude Address Segments
-  exclude_bd_addr_seg -target_address_space [get_bd_addr_spaces s_axi] [get_bd_addr_segs axi_pcie/axi_pcie3_bridge/S_AXI/BAR0]
-  exclude_bd_addr_seg -target_address_space [get_bd_addr_spaces s_axi] [get_bd_addr_segs axi_pcie/axi_pcie3_bridge/S_AXI_CTL/CTL0]
+  assign_bd_address -offset 0x00000000 -range 0x0001000000000000 -target_address_space [get_bd_addr_spaces memory/axi_cdma_0/Data] [get_bd_addr_segs axi_pcie/axi_pcie3_bridge/S_AXI/BAR0] -force
+  assign_bd_address -offset 0x0001000000000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces memory/axi_cdma_0/Data] [get_bd_addr_segs memory/gddr6_ip_0/s_axi/reg0] -force
+  assign_bd_address -offset 0x0001000000000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces s_axi] [get_bd_addr_segs memory/gddr6_ip_0/s_axi/reg0] -force
 
 
   # Restore current instance
