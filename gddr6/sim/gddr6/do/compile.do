@@ -119,9 +119,7 @@ vsim -t 1ps -voptargs=+acc -lib xil_defaultlib testbench
 
 view wave
 
-add wave -group "AXI" gddr6/gddr6/axi/*
-add wave -group "CTRL" gddr6/gddr6/ctrl/*
-add wave -group "SETUP PHY" gddr6/gddr6/setup_phy/*
+add wave -group "GDDR6" gddr6/*
 add wave -group "Bench" sim:*
 
 quietly set NumericStdNoWarnings 1

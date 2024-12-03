@@ -12,6 +12,7 @@
 --          gddr6_axi_ctrl                  Sends SG request to CTRL
 --          gddr6_axi_read_data_fifo        FIFO for read data from CTRL
 --              async_fifo_address          Cross clocks FIFO address control
+--              memory_array_dual           Dual port BRAM for data FIFO
 --          gddr6_axi_read_data             Process R bursts
 --      gddr6_axi_write                     Process AXI Write transactions
 --          gddr6_axi_address               Process WA requests
@@ -22,10 +23,12 @@
 --          gddr6_axi_write_data_fifo       FIFO for write data to CTRL
 --              async_fifo
 --              async_fifo_address
+--              memory_array_dual_bytes
 --          gddr6_axi_write_response_fifo   FIFO for B request control
 --              fifo
 --          gddr6_axi_write_status_fifo     FIFO for write completion status
 --              async_fifo_address
+--              memory_array_dual
 --          gddr6_axi_write_response        Process B requests on write complete
 
 library ieee;
