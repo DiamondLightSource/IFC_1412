@@ -6,11 +6,25 @@ import registers
 
 _, sg = registers.open()
 
+assert sg.CONFIG._value != 0xFFFFFFFF, 'Probably need to rescan PCIe bus'
+
+
+# Ensure the controller is disabled and put SG into reset.  Need to do this
+# before resetting CK as once CK is in reset communication will stop.
 # Start by putting CK and SG in reset
-sg.CONFIG._write_fields_rw(CK_RESET_N = 0, SG_RESET_N = 0)
+sg.CONFIG._write_fields_rw(
+    # Put memory into reset
+    SG_RESET_N = 0,
+    # Can't have controller in charge!
+    ENABLE_CONTROL = 0,
+    ENABLE_REFRESH = 0,
+    ENABLE_AXI = 0)
+
+# Reset CK and the entire PHY
+sg.CONFIG._write_fields_rw(CK_RESET_N = 0)
 time.sleep(0.1)
 
-# Now take CK out of reset
+# Take CK out of reset
 sg.CONFIG.CK_RESET_N = 1
 time.sleep(0.1)
 print(sg.STATUS)
