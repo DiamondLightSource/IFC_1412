@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+import os
+import numpy
+import time
+
+# Create an array of 2^20 = 1M zeroed bytes
+buffer = numpy.zeros(2**18, dtype = numpy.uint32)
+
+dev = os.open('/dev/ifc_1412-gddr6.0.sgram', os.O_RDWR)
+
+count = 0
+while True:
+    # Write 4GB to memory
+    tic = time.time()
+    for i in range(2**12):
+        buffer[:] = count
+        count = (count + 1) & 0xFFFFFFFF
+        os.write(dev, buffer.tobytes())
+    toc = time.time() - tic
+    print('Wrote 4GB in {:.2f}s ({:.2f}GB/s)'.format(toc, 4/toc))
+
+    # Read 4GB from memory
+    tic = time.time()
+    for i in range(2**12):
+        os.read(dev, 2**20)
+    toc = time.time() - tic
+    print('Read  4GB in {:.2f}s ({:.2f}GB/s)'.format(toc, 4/toc))
