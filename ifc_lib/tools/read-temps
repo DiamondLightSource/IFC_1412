@@ -15,6 +15,12 @@ def parse_args():
     parser.add_argument(
         '-t', dest = 'timestamp', default = False, action = 'store_true',
         help = 'Add timestamp to temperature readings')
+    parser.add_argument(
+        '-m', dest = 'mean_count', default = 1, type = int,
+        help = 'Samples to average over')
+    parser.add_argument(
+        '-d', dest = 'delay', default = 0, type = float,
+        help = 'Delay between readings')
     return parser.parse_args()
 
 
@@ -24,6 +30,14 @@ _, sg = registers.open(args.addr)
 
 assert sg.CONFIG.ENABLE_CONTROL, 'Controller must be enabled first!'
 
+def read_temp_array(count):
+    temps_array = numpy.empty((count, 4))
+    for i in range(count):
+        temps = sg.TEMPS._get_fields()
+        temps_array[i] = [temps.CH0, temps.CH1, temps.CH2, temps.CH3]
+        time.sleep(1e-3)
+    return 2 * temps_array.mean(axis = 0) - 40
+
 
 ctrl_c_seen = False
 def handler(sig, frame):
@@ -32,14 +46,17 @@ def handler(sig, frame):
 signal.signal(signal.SIGINT, handler)
 
 
-def read_temps(delay):
+def read_temps():
     while not ctrl_c_seen:
-        temps = sg.TEMPS._get_fields()
-        raw = numpy.array([temps.CH0, temps.CH1, temps.CH2, temps.CH3])
-        line = ' '.join(map(str, 2 * raw - 40))
+        temps = read_temp_array(args.mean_count)
+        line = ' '.join('{:.1f}'.format(t) for t in temps)
         if args.timestamp:
             line = '{:f} {:s}'.format(time.time(), line)
         print(line)
-        time.sleep(delay)
+        if args.delay:
+            time.sleep(args.delay)
+        # If single shot reading (no delay, no averaging) return immediately
+        if not args.delay and args.mean_count <= 1:
+            break
 
-read_temps(0.01)
+read_temps()

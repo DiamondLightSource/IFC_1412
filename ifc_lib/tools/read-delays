@@ -95,7 +95,6 @@ def log_delays(args):
             print(time.time(), end = ' ')
         delays = get_idelays() + get_odelays()
         print_array(delays)
-#         print(' '.join(map(str, delays)))
         time.sleep(args.interval)
 
 def brief_print_delays():

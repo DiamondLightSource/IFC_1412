@@ -47,6 +47,8 @@ def parse_args():
     parser.add_argument('-c', '--capture',
         default = False, action = 'store_true')
     parser.add_argument('-r', '--read', type = int0)
+    parser.add_argument('-R', '--show_read',
+        default = False, action = 'store_true')
     parser.add_argument('-k', '--constant', type = int0)
     parser.add_argument('-n', '--enable_dbi',
         default = True, action = 'store_false')
@@ -55,6 +57,8 @@ def parse_args():
     parser.add_argument('-m', '--byte_mask',
         default = 2**64-1, type = parse_event_mask)
     parser.add_argument('-s', '--show_stats',
+        default = False, action = 'store_true')
+    parser.add_argument('-S', '--reset_stats',
         default = False, action = 'store_true')
     return parser.parse_args()
 
@@ -179,6 +183,9 @@ args = parse_args()
 enable_controller(args.enable_dbi, args.capture_dbi)
 sg.CONFIG.EDC_SELECT = 0
 
+if args.reset_stats:
+    axi.COMMAND.RESET_STATS = 1
+
 if args.write:
     if args.constant is None:
         data_out = numpy.arange(
@@ -188,11 +195,14 @@ if args.write:
         data_out[:, :] = args.constant
     write_axi_buffer(data_out, args.byte_mask)
     do_axi_exchange(1, 0, args.address)
+    assert axi.STATUS.WRITE_OK, 'Unexpected write error'
 
 if args.read:
     do_axi_exchange(0, 1, args.address, args.read - 1)
-    for n, row in enumerate(read_axi_buffer(args.read)):
-        print('{:04X}:'.format(args.address + n), show_channels(row))
+    if args.show_read:
+        for n, row in enumerate(read_axi_buffer(args.read)):
+            print('{:04X}:'.format(args.address + n), show_channels(row))
+    assert axi.STATUS.READ_OK, 'Unexpected read error'
 
 if args.capture:
     do_axi_exchange(0, 0)
