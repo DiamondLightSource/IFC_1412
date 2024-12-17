@@ -15,6 +15,10 @@ To use the memory controller:
 *   Run `tools/setup-lmk` followed by `tools/setup-sgram` to initialise the
     memory
 
+Please refer to the discussion in
+https://github.com/DiamondLightSource/IFC_1412/discussions/1 for more detailed
+instructions and a channel for feedback.
+
 The following repositories are dependencies:
 
 https://github.com/DiamondLightSource/fpga-common/
