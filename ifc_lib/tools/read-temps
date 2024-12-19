@@ -4,11 +4,14 @@ import signal
 import numpy
 import time
 import argparse
+import sys
+
+from ifc_lib.gddr6_lib import setup
 
 import registers
 
 def parse_args():
-    parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+    parser = argparse.ArgumentParser(description = 'Read SGRAM temperatures')
     parser.add_argument(
         '-a', dest = 'addr', default = 0,
         help = 'Set physical address of card.  If not specified then card 0')
@@ -27,8 +30,9 @@ def parse_args():
 args = parse_args()
 
 _, sg = registers.open(args.addr)
+setup.check_ctrl_ready(sg)
 
-assert sg.CONFIG.ENABLE_CONTROL, 'Controller must be enabled first!'
+
 
 def read_temp_array(count):
     temps_array = numpy.empty((count, 4))
@@ -42,6 +46,8 @@ def read_temp_array(count):
 ctrl_c_seen = False
 def handler(sig, frame):
     global ctrl_c_seen
+    if ctrl_c_seen:
+        sys.exit(1)
     ctrl_c_seen = True
 signal.signal(signal.SIGINT, handler)
 

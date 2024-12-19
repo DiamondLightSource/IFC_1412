@@ -11,12 +11,9 @@ from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange
 from ifc_lib.gddr6_lib.display import *
 from ifc_lib.gddr6_lib.delays import *
+from ifc_lib.gddr6_lib import setup
 
 
-_, sg = registers.open()
-
-assert sg.STATUS.CK_OK, 'CK is not running and enabled'
-assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('-l', '--load', action = 'store_true')
@@ -30,9 +27,14 @@ parser.add_argument('-r', '--reset_bitslip', action = 'store_true')
 parser.add_argument('-R', '--reset_odelay', action = 'store_true')
 parser.add_argument('-B', '--set_bitslip', type = int)
 parser.add_argument('-v', '--validate', action = 'store_true')
+parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 # parser.add_argument('-c', '--check', action = 'store_true')
 # parser.add_argument('read_count', default = 6, type = int, nargs = '?')
 args = parser.parse_args()
+
+
+_, sg = registers.open()
+setup.check_sg_ready(sg)
 
 
 sg.CONFIG.DBI_TRAINING = 1
@@ -143,7 +145,8 @@ if args.data_out:
 data_offset = 34
 data_range = numpy.s_[data_offset:data_offset+12]
 
-show_data(data, dbi, 'In', data_offset, args.channel)
+if not args.quiet:
+    show_data(data, dbi, 'In', data_offset, args.channel)
 
 
 
@@ -161,7 +164,8 @@ def match_data(data, dbi):
     pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
     return (data == pattern[:, None]).all(0)
 
-print(show_match(match_data(data, dbi)))
+if not args.quiet:
+    print(show_match(match_data(data, dbi)))
 
 
 
@@ -236,7 +240,8 @@ if args.find_bitslip:
     data = numpy.concatenate((data, dbi), axis = 1)
     last_column = data[data_offset + 11]
     offsets = [count_offset(b) for b in last_column]
-    print(offsets)
+    if not args.quiet:
+        print(offsets)
     for n, o in enumerate(offsets):
         set_obitslip(sg, n, max(0, o - 1))
 
@@ -268,8 +273,11 @@ if args.scan_bitslips:
 elif args.scan:
     matches = sweep_delays(500)
     odelays, windows = find_eyes(matches)
-    print(list(odelays), ';')
-    print(list(windows), ';')
+    if not args.quiet:
+        print(list(odelays), ';')
+        print(list(windows), ';')
+    if args.quiet < 2:
+        print('Minimum write window:', windows.min())
     for pin in range(72):
         set_odelay(sg, pin, odelays[pin])
 
@@ -277,4 +285,7 @@ elif args.scan:
 if args.validate:
     read_odelay(sg, 0)      # Read back an odelay to synchronise with setting
     data, dbi = write_test()
-    print(show_match(match_data(data, dbi)))
+    match = match_data(data, dbi)
+    if not args.quiet:
+        print(show_match(match_data))
+    assert match.all(), 'Write training failed'

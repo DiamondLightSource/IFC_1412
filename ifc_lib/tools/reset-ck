@@ -11,7 +11,6 @@ assert sg.CONFIG._value != 0xFFFFFFFF, 'Probably need to rescan PCIe bus'
 
 # Ensure the controller is disabled and put SG into reset.  Need to do this
 # before resetting CK as once CK is in reset communication will stop.
-# Start by putting CK and SG in reset
 sg.CONFIG._write_fields_rw(
     # Put memory into reset
     SG_RESET_N = 0,
@@ -27,5 +26,4 @@ time.sleep(0.1)
 # Take CK out of reset
 sg.CONFIG.CK_RESET_N = 1
 time.sleep(0.1)
-print(sg.STATUS)
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'

@@ -2,20 +2,22 @@
 
 # Read Vendor IDs and temperatures
 
-import time
-import numpy
+import argparse
 
 import registers
 
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib import exchange
 from ifc_lib.gddr6_lib.display import *
+from ifc_lib.gddr6_lib import setup
 
+
+parser = argparse.ArgumentParser(description = 'Read Vendor IDs etc')
+parser.add_argument('-q', '--quiet', action = 'store_true')
+args = parser.parse_args()
 
 _, sg = registers.open()
-
-assert sg.STATUS.CK_OK, 'CK is not running and enabled'
-assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+setup.check_sg_ready(sg)
 
 
 exchange = exchange._Exchange(sg)
@@ -32,7 +34,8 @@ exchange.delay(15)
 data = exchange.run()
 
 offset = 14
-print_condensed_data(data, offset = offset)
+if not args.quiet:
+    print_condensed_data(data, offset = offset)
 
 ID1, id1_good = condense_data(data[offset + 3])
 ID2, id2_good = condense_data(data[offset + 7])

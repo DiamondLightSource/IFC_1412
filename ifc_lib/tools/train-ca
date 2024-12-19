@@ -12,22 +12,22 @@ from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib import exchange
 from ifc_lib.gddr6_lib.display import *
 from ifc_lib.gddr6_lib.delays import read_phase, set_phase
+from ifc_lib.gddr6_lib import setup
 
-parser = argparse.ArgumentParser()
-# parser.add_argument('-t', '--timestamp', action = 'store_true')
-# parser.add_argument('-i', '--idelays', action = 'store_true')
-# parser.add_argument('-o', '--odelays', action = 'store_true')
-# parser.add_argument('-b', '--brief', action = 'store_true')
-# parser.add_argument('interval', nargs = '?', type = float)
+parser = argparse.ArgumentParser(description = 'Read Vendor IDs etc')
+parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 args = parser.parse_args()
 
 _, sg = registers.open()
+setup.check_sg_ready(sg)
 
-assert sg.STATUS.CK_OK, 'CK is not running and enabled'
-assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
+# For CA training we need to ensure that all the training configuration
+# parameters are reset
+setup.reset_training_control(sg)
 
 
-print('Initial phase =', read_phase(sg))
+if not args.quiet:
+    print('Initial phase =', read_phase(sg))
 
 exchange = exchange._Exchange(sg)
 
@@ -49,11 +49,6 @@ def change_cat(command = CAT_EXIT):
     exchange.command(NOP)
     exchange.run()
 
-
-# # Sets a new test pattern.  In this special case we strobe CKE_N high to
-# # indicate a CAT transfer
-# def cat(pattern):
-#     exchange.command(pattern, cke_n = 1)
 
 # Used to set background pattern
 def idle(count, pattern = NOP):
@@ -96,8 +91,6 @@ def get_raw_result(exch, offset):
 def check_result(exch, offset, expected):
     values, good = get_raw_result(exch, offset)
     all_good = good and (values == expected).all()
-#     if not all_good:
-#         print(values, good, all_good)
     return all_good
 
 
@@ -114,20 +107,9 @@ def load_test_pattern():
 
 
 def run_test():
-#     exchange.reset()
-# 
-#     test_pattern(0, 0)
-#     test_pattern(0, 0x3FF)
-#     test_pattern(0, 0x155)
-#     test_pattern(0, 0x2AA)
-#     test_pattern(0, 0x3FF)
-# 
-#     idle(14)
     data = exchange.run()
     dbi, edc = exchange.read_dbi_edc()
     result = (data, dbi, edc)
-
-#     print_condensed_data_edc(data, dbi, edc, offset = 14)
 
     return \
         check_result(result, 17, 0) and \
@@ -149,12 +131,16 @@ def scan_ca():
             if first_good == -1:
                 first_good = ph
 
-#     print(first_good, last_good, (first_good + last_good) // 2)
-    print('Window:', last_good - first_good)
+    assert first_good >= 0, 'Unable to find any good phase'
     centre = -(first_good + last_good) // 2
-    print('Window: [{:d}..{:d}] = ({:d} / {:d})'.format(
-        first_good, last_good, centre, last_good - first_good))
+    if not args.quiet:
+        print('Window: [{:d}..{:d}] = ({:d} / {:d})'.format(
+            first_good, last_good, centre, last_good - first_good))
     return centre
+
+def test_one():
+    set_phase(sg, 55)
+    run_test()
 
 
 # Enable CA Training (CAT)
@@ -162,9 +148,11 @@ enter_cat()
 load_test_pattern()
 # Inspect all CA phases in the range 0 to -180 degrees
 ca_phase = scan_ca()
+# test_one()
 # Restore normal operation (exit CAT)
 change_cat(CAT_EXIT)
 
 set_phase(sg, ca_phase)
 phase = read_phase(sg)
-print('Final phase =', phase, '=', phase / 56 * 90, 'degrees')
+if args.quiet < 2:
+    print('CA phase: {:d} = {:.1f} degrees'.format(phase, phase / 56 * 90))

@@ -8,20 +8,20 @@ import registers
 
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
+from ifc_lib.gddr6_lib import setup
 
 
 _, sg = registers.open()
+setup.check_ck_ready(sg)
 
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
 
-# Ensure we disable the memory
+# Ensure the memory controller is inactive
 sg.CONFIG._write_fields_rw(
     ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
 
-if sg.CONFIG.SG_RESET_N != 3:
-    print('Resetting SG ram')
-    sg.CONFIG.SG_RESET_N = 0
-    time.sleep(0.1)
+sg.CONFIG.SG_RESET_N = 0
+time.sleep(0.1)
 
 
 # During reset need to ensure data is sent as requested

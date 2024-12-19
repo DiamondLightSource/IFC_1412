@@ -4,25 +4,14 @@
 
 import registers
 
+from ifc_lib.gddr6_lib.setup import check_sg_ready
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 
 _, sg = registers.open()
-
-assert sg.STATUS.CK_OK, 'CK is not running and enabled'
-assert sg.CONFIG.SG_RESET_N == 3, 'SG still in reset'
-
+check_sg_ready(sg)
 
 exchange = _Exchange(sg)
-
-# Go straight into Mode Register configuration
-def send_init_command(command):
-    if exchange.capacity() < 10:
-        exchange.exchange()
-        exchange.reset()
-    exchange.command(command)
-    exchange.delay(9)
-
 stream = Stream(exchange, 10)   # tMRS is minimum interval between MRS commands
 
 

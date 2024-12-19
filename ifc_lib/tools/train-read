@@ -11,25 +11,26 @@ from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 from ifc_lib.gddr6_lib.display import *
 from ifc_lib.gddr6_lib.delays import set_idelay, set_ibitslip
+from ifc_lib.gddr6_lib import setup
 
 
-_, sg = registers.open()
-
-assert sg.STATUS.CK_OK, 'CK is not running and enabled'
-assert sg.CONFIG.SG_RESET_N == 3, 'SG RAM in reset'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-L', '--no_load', action = 'store_true')
 parser.add_argument('-s', '--sweep', action = 'store_true')
 parser.add_argument('-c', '--channel', default = 0, type = int)
-parser.add_argument('-C', '--check', action = 'store_true')
 parser.add_argument('-f', '--find_bitslip', action = 'store_true')
 parser.add_argument('-B', '--set_bitslip', type = int)
 parser.add_argument('-r', '--reset_bitslip', action = 'store_true')
 parser.add_argument('-R', '--reset_idelay', action = 'store_true')
 parser.add_argument('-v', '--validate', action = 'store_true')
 parser.add_argument('-x', '--exchange', action = 'store_true')
+parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 args = parser.parse_args()
+
+
+_, sg = registers.open()
+setup.check_sg_ready(sg)
 
 
 
@@ -106,11 +107,9 @@ if args.reset_idelay:
 
 data, dbi, edc = read_test()
 
-if args.exchange:
+if args.exchange and not args.quiet:
     print_condensed_data_edc(data, dbi, edc, offset = 29)
 
-def print_bits(bytes):
-    print(' '.join(f'{byte:08b}' for byte in bytes))
 
 def print_bits(offset, bytes):
     print('%2d' % offset, ' '.join(f'{byte:08b}'[::-1] for byte in bytes))
@@ -131,14 +130,15 @@ data_range = numpy.s_[data_offset:data_offset + data_length]
 edc_range = numpy.s_[data_offset+1:data_offset + 1 + data_length]
 
 
-print('Data:')
-show_channel(data[extend(data_range)], args.channel)
-print('DBI:')
-for ix in range(8):
-    print_bits(ix, dbi[extend(data_range), ix])
-print('EDC:')
-for ix in range(8):
-    print_bits(ix, edc[extend(edc_range), ix])
+if not args.quiet:
+    print('Data:')
+    show_channel(data[extend(data_range)], args.channel)
+    print('DBI:')
+    for ix in range(8):
+        print_bits(ix, dbi[extend(data_range), ix])
+    print('EDC:')
+    for ix in range(8):
+        print_bits(ix, edc[extend(edc_range), ix])
 
 
 def show_match(match):
@@ -157,7 +157,8 @@ def match_data(data, dbi, edc):
     pattern = numpy.array(test_patterns, dtype = 'uint16').view('uint8')
     return (data == pattern[:, None]).all(0)
 
-print(show_match(match_data(data, dbi, edc)))
+if not args.quiet:
+    print(show_match(match_data(data, dbi, edc)))
 
 
 def set_idelays(delays):
@@ -189,7 +190,7 @@ def find_intervals(scan):
         for start, end in zip(starts, ends)]
 
 def find_longest_interval(intervals):
-    if len(intervals) > 1:
+    if len(intervals) > 1 and not args.quiet:
         print('intervals:', intervals)
     best = intervals[0]
     for interval in intervals[1:]:
@@ -203,8 +204,9 @@ def find_eyes(matches):
         for scan in matches.T]
     lengths = numpy.array([l for l, _ in best])
     centres = [c for _, c in best]
-    print(list(lengths))
-    print(centres)
+    if not args.quiet:
+        print(list(lengths))
+        print(centres)
     return (centres, min(lengths))
 
 
@@ -222,7 +224,8 @@ if args.find_bitslip:
     data = numpy.concatenate(
         (data[data_offset + 11], dbi[data_offset + 11], edc[data_offset + 12]))
     offsets = [count_offset(b) for b in data]
-    print(offsets)
+    if not args.quiet:
+        print(offsets)
     for n, o in enumerate(offsets):
         set_ibitslip(sg, n, max(0, o - 1))
 
@@ -231,7 +234,8 @@ if args.sweep:
     matches = sweep_delays(500)
     if matches.any(axis = 0).all():
         delays, min_window = find_eyes(matches)
-        print('Minimum window:', min_window)
+        if args.quiet < 2:
+            print('Minimum read window:', min_window)
         set_idelays(delays)
     elif args.sweep:
         print('Not enough data eyes found')
@@ -247,12 +251,6 @@ def check_read_data():
 if args.validate:
     data, dbi, edc = read_test()
     match = match_data(data, dbi, edc)
-    print(show_match(match))
+    if not args.quiet or not match.all():
+        print(show_match(match))
     assert match.all(), 'Read training failed'
-
-if args.check:
-    i = 0
-    while True:
-        check_read_data()
-        i += 1
-        print(i, end = '\r')

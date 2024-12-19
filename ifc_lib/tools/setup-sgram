@@ -2,11 +2,12 @@
 
 cd "$(dirname "$0")"  &&
 
+./enable-ctrl -d  &&
 ./reset-ck  &&
 ./reset-sg  &&
-./train-ca  &&
-./read-vid  &&
+./train-ca -q  &&
+./read-vid -q  &&
 ./config-sg  &&
-./train-read -frR -sv  &&
-./train-write -frR -sv  &&
-./axi-exchange
+./train-read -frR -sv -q  &&
+./train-write -frR -sv -q  &&
+./enable-ctrl -e
