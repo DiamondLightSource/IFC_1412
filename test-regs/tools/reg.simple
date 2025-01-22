@@ -2,6 +2,7 @@
 
 import os
 
+import ifc_lib
 from fpga_lib.driver import driver
 
 here = os.path.dirname(__file__)
