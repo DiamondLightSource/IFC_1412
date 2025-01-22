@@ -187,7 +187,7 @@ begin
                 request_out => out_request_o,
                 ready_in => out_request_ok_i,
                 ready_out => out_request_ready,
-                guard => bank_open_ok_i or last_bank_open_ok);
+                guard => bank_open_ok);
 
             -- Request concurrently loaded with out_request_o
             -- Generates stage_ready(3) flag
