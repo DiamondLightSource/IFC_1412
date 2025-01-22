@@ -3,7 +3,7 @@
 BUILD_TOP = /scratch/$(USER)/tmp/$(BOARD)
 
 # Architecture of board
-BOARD = IFC_1412.pre
+BOARD = IFC_1412
 
 
 # Definitions needed for FPGA build
