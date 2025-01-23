@@ -43,6 +43,7 @@ import numpy
 import time
 import argparse
 
+import ifc_lib
 from fpga_lib.driver import driver
 from fpga_lib.boards import ifc_1412
 

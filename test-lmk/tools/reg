@@ -2,6 +2,7 @@
 
 import argparse
 
+import ifc_lib
 from fpga_lib.driver import driver
 
 
