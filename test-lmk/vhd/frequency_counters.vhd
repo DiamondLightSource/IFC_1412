@@ -8,7 +8,9 @@ use work.support.all;
 
 entity frequency_counters is
     generic (
-        UPDATE_INTERVAL : natural := 25000000;
+        -- With a fabric clock of 250 MHz this divider means that each frequency
+        -- counter counts for 100ms.
+        UPDATE_INTERVAL : natural := 25_000_000;
         COUNT : natural
     );
     port (

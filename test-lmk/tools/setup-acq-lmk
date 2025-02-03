@@ -55,6 +55,9 @@ parser.add_argument(
     '-a', dest = 'addr', default = 0,
     help = 'Set physical address of card.  If not specified then card 0')
 parser.add_argument(
+    '-i', dest = 'input', default = 1, type = int,
+    help = 'Select input source')
+parser.add_argument(
     '-d', dest = 'dummy', default = False, action = 'store_true',
     help = 'Use dummy LMK')
 args = parser.parse_args()
@@ -83,10 +86,9 @@ class AcqConfig(ifc_1412.Config):
     #   CLKIN1  <= AMC TCLKA
     #   CLKIN2  <= AMC TCLKC
     #   CLKIN3  <= FMC clock multiplexer
-    clkin = 1
+    clkin = args.input
 #     clkin = None
 #     oscin = True
-    single_ended = False
 #     pll1 = Pll1
     outputs = OUTPUTS
 
