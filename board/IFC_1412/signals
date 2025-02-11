@@ -1,0 +1,224 @@
+# Interface to system and acquisition LMK04616 clock distribution devices
+# Set LMK_CTL_SEL = 0 to select sys LMK U169 and = 1 to select acq LMK U173
+pad_LMK_CTL_SEL                 out
+# SPI interface
+pad_LMK_SCL                     out
+pad_LMK_SCS_L                   out
+pad_LMK_SDIO                    inout
+# Reset, sync, and status readbacks
+pad_LMK_RESET_L                 out
+pad_LMK_SYNC                    inout
+pad_LMK_STATUS[0..1]            inout
+
+# FPGA RS232.  Multiplexed with MMC UART interface on FPGA connector, selection
+# controlled by MMC (on U204 IO0_2)
+pad_FPGA_UART_RX                in
+pad_FPGA_UART_TX                out
+
+# SPI interface to SPI flash U105 (512Mbit) for custom state.  This is not
+# connected anywhere else
+pad_USER_SPI_CS_L               out
+pad_USER_SPI_SCK                out
+pad_USER_SPI_D[0..3]            inout
+
+# Control interface for on-board SD card (J102)
+pad_SDIO_CLK                    out
+pad_SDIO_CMD                    out
+pad_SDIO_DATA[0..3]             inout
+pad_SDIO_DIR_0                  out
+pad_SDIO_DIR_123                out
+pad_SDIO_DIR_CMD                out
+pad_SDIO_CD                     in
+
+# SPI interface to configuration FLASH (U101, U102, U103, U104).  Clocked by the
+# FPGA configuration clock, CCLK_0 from Bank 0.  Configuration data bits are
+# also driven from Bank 0, from pins D00_MOSI_0, D01_DIN_0, D02_0, D03_0
+# respectively.
+#   See sheet 5 for details
+pad_FPGA_CFG_FCS2_B             inout
+pad_FPGA_CFG_FCS_B              inout
+pad_FPGA_CFG_D[7..0]            inout
+
+# Front panel LEDs LD102 and LD103.  2A is green, 2B is red.
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out
+
+# Front panel LEDs under FMC
+pad_FMC{1,2}_LED[1..8]              out
+
+# DIP switch readings from SW101 and SW102, also controlled by MMC
+pad_DIP_SW_L[0..7]              in
+
+# Slave I2C interface from MMC I2C switch
+pad_FPGA_SLAVE_{SCL,SDA}             inout
+
+# I2C interface to Shared Payload bus (provides access to FMC power supply
+# hot-swap controllers, the Acquisition VCXO, the DCDC controller.
+pad_SHARED_PAYLOAD_{SCL,SDA}    inout
+
+# Connected to MMC GPIO U202 IO1_6, unknown function, not in original .xdc,
+# pulled up by default
+pad_PERSTN0                     in
+
+# Connected to MMC GPIO U202 I01_5, unknwon function, pulled up by default
+# Probably intended to be used as system reset under MMC control?
+pad_SYSRESET_L                  in
+
+
+# Clocks - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# AMC FCLKA (100MHz) via fanout U166, also routed to LMK U169 as reference.
+# This appears to be the only clock available before configuring the LMK devices
+pad_SYSCLK100_{P,N}             in
+# to AMC[4..7]
+pad_MGT224_REFCLK_{P,N}         in
+
+# Acquisition clock from LMK U173 CLKOUT0
+pad_FPGA_ACQCLK_{P,N}           in
+
+# AMC TCLKB routeable from backplane
+pad_AMC_TCLKB_IN_{P,N}          in
+
+pad_E10G_CLK{1,2,3}_{P,N}       in
+
+# Reference clock at 156.25 MHz to MGT126 (AMC[0..1] and RTM[12..13]
+pad_MGT126_CLK0_{P,N}           in
+
+
+# From system clock LMK U169, generates the following clock outputs:
+#   CLKOUT0 => RTM GTP12-15_CLK_OUT
+#   CLKOUT1 => (unused)
+#   CLKOUT2 => MGT227_REFCLK to FMC1[8..11]
+#   CLKOUT3 => MGT229_REFCLK to FMC1[12..15]
+#   CLKOUT4 => MGT127_REFCLK to FMC2[8..11]
+#   CLKOUT5 => MGT230_REFCLK to FMC2[0..3]
+#   CLKOUT6 => MGT232_REFCLK to RTM[0..3]
+#   CLKOUT7 => RTM GTP0-3_CLK_OUT
+#   CLKOUT8 => GDDR WCK{0,1}_{t,c}_A
+#   CLKOUT9 => pad_SG1_WCK_A_{P,N}
+#   CLKOUT10 => GDDR WCK{0,1}_{t,c}_B
+#   CLKOUT11 => pad_SG2_WCK_B_{P,N}
+#   CLKOUT12 => GDDR CK_{t,c}
+#   CLKOUT13 => (unused)
+#   CLKOUT14 => pad_SG12_CK_{P,N}
+#   CLKOUT15 => (unused)
+#
+#   CLKOUT2 to quad 227: FMC1[8..11]
+pad_MGT227_REFCLK_{P,N}         in
+#   CLKOUT3 to quad 229: FMC1[12..15]
+pad_MGT229_REFCLK_{P,N}         in
+#   CLKOUT5 to quad 230: FMC2[0..3]
+pad_MGT230_REFCLK_{P,N}         in
+#   CLKOUT4 to quad 127: FMC2[8..11]
+pad_MGT127_REFCLK_{P,N}         in
+#   CLKOUT6 to quad 232: RTM[0..3]
+pad_MGT232_REFCLK_{P,N}         in
+
+# Other reference clocks MGT banks listed under appropriate section below
+
+
+# AMC  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# AMC Ethernet interface
+pad_AMC_ETH_RX_{P,N}[0..1]      in
+pad_AMC_ETH_TX_{P,N}[0..1]      out
+
+# AMC PCIe fat pipes
+pad_AMC_PCI_RX_{P,N}[11..4]     in
+pad_AMC_PCI_TX_{P,N}[11..4]     out
+
+# AMC ports 12-15 (point to point LVDS links)
+pad_AMC_LVDS_RX_{P,N}[15..12]   in
+pad_AMC_LVDS_TX_{P,N}[15..12]   out
+
+# AMC M-LVDS interface
+pad_AMC_MLVDS_{RX,TX}_DATA[20..17]      inout
+pad_AMC_MLVDS_{RX,TX}_WEN[20..17]       out
+
+
+# RTM  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# RTM GPIO (note that RTM_IO_CC[7] happens to be on Bank 64 above)
+# Need to cross-check with RTM spec
+pad_RTM_IO_CC_{P,N}[0..7]       inout
+pad_RTM_OUT_{P,N}[0..2]         out
+
+# Links 0 to 3 to RTM
+pad_RTM_GTP_3_0_RX_{P,N}[0..3]  in
+pad_RTM_GTP_3_0_TX_{P,N}[0..3]  out
+
+# Links 12 and 13 to RTM
+pad_RTM_GTP{12,13}_RX_{P,N}     in
+pad_RTM_GTP{12,13}_TX_{P,N}     out
+
+# RTM MGT reference clocks
+# From RTM GTP0-3_CLK_IN to quad 232
+pad_RTM_GTP_CLK0_IN_{P,N}       in
+# From RTM GTP12-15_CLK_IN to quad 126
+pad_RTM_GTP_CLK3_IN_{P,N}       in
+
+
+# FMC  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# FMC presence pins, pulled to ground when card is present.  Note that there
+# doesn't appear to be a pull-up on these signals, so may need to be pulled up
+# by the IO port
+pad_FMC{1,2}_PRSNT_L                in
+pad_FMC{1,2}_HSPC_PRSNT_L           in
+
+# Status bits
+pad_FMC{1,2}_CLK_DIR                in
+pad_FMC{1,2}_PG_C2M                 in
+pad_FMC{1,2}_PG_M2C                 in
+
+# I2C interface to FMC2
+pad_FMC{1,2}_{SCL,SDA}              inout
+
+# Clocks from FMC
+pad_FMC{1,2}_CLK_{P,N}[0..3]        inout
+
+# Need to document pin swaps and unusual clock bank assignments for these
+pad_FMC{1,2}_LA_{P,N}[0..33]        inout
+pad_FMC{1,2}_HA_{P,N}[0..23]        inout
+pad_FMC{1,2}_HB_{P,N}[0..21]        inout
+
+# Sync function for FMC+ ?
+# See sheet 80 for multiplexing associated with these signals
+pad_FMC{1,2}_SYNC_{P,N}             inout
+
+# FMC MGT interface
+pad_FMC{1,2}_DP_M2C_{P,N}[0..15]    in
+pad_FMC{1,2}_DP_C2M_{P,N}[0..15]    out
+
+# MGT reference clocks from FMC
+pad_FMC{1,2}_GBTCLK_{P,N}[0..3]      in
+
+
+# EXT  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# FPGA I2C to Customm Extension Connector
+pad_EXT_{SCL,SDA}               inout
+
+# Extension Connector present
+pad_EXT_PRESENT_L               in
+# Extension connector IO
+pad_EXT_{A,B}[2..11]            inout
+
+
+# SGRAM (banks 24, 25) - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Clocks and clock enable
+pad_SG12_CK_{P,N}               in
+pad_SG{1,2}_WCK_{P,N}           in
+pad_SG12_CKE_N                  out
+# Command address.  All bits except for bit 3 are shared between devices
+pad_SG12_CAL[2..0]              out
+pad_SG{1,2}_CA3_{A,B}           out
+pad_SG12_CAU[9..4]              out
+pad_SG12_CABI_N                 out
+# Data bus and error detect
+pad_SG{1,2}_DQ_{A,B}[15..0]     inout
+pad_SG{1,2}_DBI_N_{A,B}[1..0]   inout
+pad_SG{1,2}_EDC_{A,B}[1..0]     inout
+# Chip reset
+pad_SG{1,2}_RESET_N             out

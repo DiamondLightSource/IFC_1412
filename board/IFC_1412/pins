@@ -1,0 +1,969 @@
+# Bank 0   2.5V  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FPGA_CFG_FCS_B                  AB9     LVCMOS25    PULLUP
+pad_FPGA_CFG_D[3]                   AD9     LVCMOS25
+pad_FPGA_CFG_D[2]                   AC9     LVCMOS25
+pad_FPGA_CFG_D[1]                  AD10     LVCMOS25
+pad_FPGA_CFG_D[0]                  AE11     LVCMOS25
+
+
+# Bank 44  VADJ1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_SDIO_DIR_CMD                   AE23     LVCMOS18
+pad_SDIO_DIR_123                   AG20     LVCMOS18    PULLUP
+pad_SDIO_DIR_0                     AF23     LVCMOS18    PULLUP
+pad_SDIO_DATA[3]                   AG21     LVCMOS18
+pad_SDIO_DATA[2]                   AE22     LVCMOS18
+pad_SDIO_DATA[1]                   AF22     LVCMOS18
+pad_SDIO_DATA[0]                   AE21     LVCMOS18
+pad_SDIO_CMD                       AE20     LVCMOS18    PULLUP
+pad_SDIO_CLK                       AG22     LVCMOS18
+
+pad_FMC1_PRSNT_L                   AP20     LVCMOS18    PULLUP
+pad_FMC1_HSPC_PRSNT_L              AJ23     LVCMOS18    PULLUP
+
+pad_FMC1_LED[8]                    AH21     LVCMOS18
+pad_DIP_SW_L[3]                    AF20     LVCMOS18    PULLUP
+
+pad_FMC1_LA_P[33]                  AV21
+pad_FMC1_LA_N[33]                  AW21
+pad_FMC1_LA_P[32]                  AV23
+pad_FMC1_LA_N[32]                  AW23
+pad_FMC1_LA_P[31]                  AT22
+pad_FMC1_LA_N[31]                  AU22
+pad_FMC1_LA_P[30]                  AU21
+pad_FMC1_LA_N[30]                  AV22
+pad_FMC1_LA_P[29]                  AP21
+pad_FMC1_LA_N[29]                  AR21
+pad_FMC1_LA_P[28]                  AT24
+pad_FMC1_LA_N[28]                  AT23
+pad_FMC1_LA_P[27]                  AK20
+pad_FMC1_LA_N[27]                  AK21
+pad_FMC1_LA_P[26]                  AL20
+pad_FMC1_LA_N[26]                  AM20
+pad_FMC1_LA_P[25]                  AN23
+pad_FMC1_LA_N[25]                  AP23
+pad_FMC1_LA_P[24]                  AR23
+pad_FMC1_LA_N[24]                  AR22
+pad_FMC1_LA_P[23]                  AD21
+pad_FMC1_LA_N[23]                  AD20
+pad_FMC1_LA_P[22]                  AJ21
+pad_FMC1_LA_N[22]                  AJ20
+pad_FMC1_LA_P[21]                  AN24
+pad_FMC1_LA_N[21]                  AP24
+pad_FMC1_LA_P[20]                  AH23
+pad_FMC1_LA_N[20]                  AH22
+pad_FMC1_LA_P[19]                  AW24
+pad_FMC1_LA_N[19]                  AV24
+pad_FMC1_LA_P[18]                  AM21
+pad_FMC1_LA_N[18]                  AN21
+pad_FMC1_LA_P[17]                  AM22
+pad_FMC1_LA_N[17]                  AN22
+
+pad_FMC1_CLK_P[1]                  AK22     LVDS
+pad_FMC1_CLK_N[1]                  AL22     LVDS
+pad_FMC1_CLK_P[0]                  AK23     LVDS
+pad_FMC1_CLK_N[0]                  AL23     LVDS
+
+
+# Bank 45  VADJ2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_DIP_SW_L[7]                    AD25     LVCMOS18    PULLUP
+
+pad_LMK_RESET_L                    AE25     LVCMOS18    PULLUP
+pad_LMK_SCL                        AD26     LVCMOS18    PULLUP
+pad_LMK_SCS_L                      AE26     LVCMOS18    PULLUP
+pad_LMK_STATUS[0]                  AF25     LVCMOS18    PULLUP
+pad_LMK_STATUS[1]                  AG25     LVCMOS18    PULLUP
+
+pad_FMC2_CLK_N[0]                  AK28     LVDS
+pad_FMC2_CLK_N[1]                  AL28     LVDS
+pad_FMC2_CLK_P[0]                  AK27     LVDS
+pad_FMC2_CLK_P[1]                  AL27     LVDS
+
+pad_FMC2_PRSNT_L                   AV28     LVCMOS18    PULLUP
+pad_FMC2_HSPC_PRSNT_L              AW28     LVCMOS18    PULLUP
+
+pad_FMC2_LED[1]                    AP26     LVCMOS18
+pad_FMC2_LED[5]                    AK25     LVCMOS18
+pad_FMC2_LED[6]                    AJ25     LVCMOS18
+pad_FMC2_LED[7]                    AH27     LVCMOS18
+pad_FMC2_LED[8]                    AK26     LVCMOS18
+
+pad_FMC2_LA_N[0]                   AN26
+pad_FMC2_LA_N[10]                  AP25
+pad_FMC2_LA_N[11]                  AW25
+pad_FMC2_LA_N[12]                  AL25
+pad_FMC2_LA_N[13]                  AH26
+pad_FMC2_LA_N[14]                  AE27
+pad_FMC2_LA_N[15]                  AF24
+pad_FMC2_LA_N[16]                  AH24
+pad_FMC2_LA_N[1]                   AN27
+pad_FMC2_LA_N[2]                   AV26
+pad_FMC2_LA_N[3]                   AU26
+pad_FMC2_LA_N[4]                   AT27
+pad_FMC2_LA_N[5]                   AP28
+pad_FMC2_LA_N[6]                   AR28
+pad_FMC2_LA_N[7]                   AR26
+pad_FMC2_LA_N[8]                   AG26
+pad_FMC2_LA_N[9]                   AM24
+pad_FMC2_LA_P[0]                   AM26
+pad_FMC2_LA_P[10]                  AR25
+pad_FMC2_LA_P[11]                  AW26
+pad_FMC2_LA_P[12]                  AL24
+pad_FMC2_LA_P[13]                  AJ26
+pad_FMC2_LA_P[14]                  AF27
+pad_FMC2_LA_P[15]                  AG24
+pad_FMC2_LA_P[16]                  AJ24
+pad_FMC2_LA_P[1]                   AM27
+pad_FMC2_LA_P[2]                   AV27
+pad_FMC2_LA_P[3]                   AU25
+pad_FMC2_LA_P[4]                   AU27
+pad_FMC2_LA_P[5]                   AN28
+pad_FMC2_LA_P[6]                   AT28
+pad_FMC2_LA_P[7]                   AR27
+pad_FMC2_LA_P[8]                   AG27
+pad_FMC2_LA_P[9]                   AM25
+
+
+# Bank 46  VADJ2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_LMK_CTL_SEL                     E37     LVCMOS18
+pad_LMK_SDIO                        A33     LVCMOS18
+pad_LMK_SYNC                        D38     LVCMOS18
+
+pad_DIP_SW_L[4]                     F35     LVCMOS18    PULLUP
+pad_DIP_SW_L[5]                     H39     LVCMOS18    PULLUP
+pad_DIP_SW_L[6]                     G39     LVCMOS18    PULLUP
+
+pad_FMC2_LED[2]                     G35     LVCMOS18
+pad_FMC2_LED[3]                     J39     LVCMOS18
+pad_FMC2_LED[4]                     J38     LVCMOS18
+
+pad_FMC2_SCL                        F34     LVCMOS18
+pad_FMC2_SDA                        F39     LVCMOS18
+
+pad_FMC2_CLK_N[2]                   E38     LVDS
+pad_FMC2_CLK_P[2]                   F38     LVDS
+
+pad_FMC2_LA_N[17]                   F37
+pad_FMC2_LA_N[18]                   G36
+pad_FMC2_LA_N[19]                   C34
+pad_FMC2_LA_N[20]                   D36
+pad_FMC2_LA_N[21]                   B37
+pad_FMC2_LA_N[22]                   B39
+pad_FMC2_LA_N[23]                   C39
+pad_FMC2_LA_N[24]                   A34
+pad_FMC2_LA_N[25]                   A35
+pad_FMC2_LA_N[26]                   B36
+pad_FMC2_LA_N[27]                   A37
+pad_FMC2_LA_N[28]                   H34
+pad_FMC2_LA_N[29]                   E35
+pad_FMC2_LA_N[30]                   K36
+pad_FMC2_LA_N[31]                   J34
+pad_FMC2_LA_N[32]                   L37
+pad_FMC2_LA_N[33]                   L35
+pad_FMC2_LA_P[17]                   G37
+pad_FMC2_LA_P[18]                   H36
+pad_FMC2_LA_P[19]                   D34
+pad_FMC2_LA_P[20]                   E36
+pad_FMC2_LA_P[21]                   C37
+pad_FMC2_LA_P[22]                   C38
+pad_FMC2_LA_P[23]                   D39
+pad_FMC2_LA_P[24]                   B34
+pad_FMC2_LA_P[25]                   B35
+pad_FMC2_LA_P[26]                   C36
+pad_FMC2_LA_P[27]                   A38
+pad_FMC2_LA_P[28]                   G34
+pad_FMC2_LA_P[29]                   D35
+pad_FMC2_LA_P[30]                   J36
+pad_FMC2_LA_P[31]                   J35
+pad_FMC2_LA_P[32]                   K37
+pad_FMC2_LA_P[33]                   K35
+
+
+# Bank 47  VADJ2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC2_HA_P[23]                   C29
+pad_FMC2_HA_N[23]                   D29
+pad_FMC2_HA_P[22]                   A29
+pad_FMC2_HA_N[22]                   A28
+pad_FMC2_HA_P[21]                   A30
+pad_FMC2_HA_N[21]                   B30
+pad_FMC2_HA_P[20]                   A32
+pad_FMC2_HA_N[20]                   B32
+pad_FMC2_HA_P[19]                   B31
+pad_FMC2_HA_N[19]                   C31
+pad_FMC2_HA_P[18]                   F32
+pad_FMC2_HA_N[18]                   E32
+pad_FMC2_HA_P[17]                   F33
+pad_FMC2_HA_N[17]                   E33
+pad_FMC2_HA_P[16]                   E31
+pad_FMC2_HA_N[16]                   D31
+pad_FMC2_HA_P[15]                   E30
+pad_FMC2_HA_N[15]                   D30
+pad_FMC2_HA_P[14]                   C32
+pad_FMC2_HA_N[14]                   C33
+pad_FMC2_HA_P[13]                   G29
+pad_FMC2_HA_N[13]                   F29
+pad_FMC2_HA_P[12]                   G30
+pad_FMC2_HA_N[12]                   F30
+pad_FMC2_HA_P[11]                   L32
+pad_FMC2_HA_N[11]                   L33
+pad_FMC2_HA_P[10]                   J33
+pad_FMC2_HA_N[10]                   H33
+pad_FMC2_HA_P[9]                    K31
+pad_FMC2_HA_N[9]                    K32
+pad_FMC2_HA_P[8]                    J29
+pad_FMC2_HA_N[8]                    H29
+pad_FMC2_HA_P[7]                    R30
+pad_FMC2_HA_N[7]                    P30
+pad_FMC2_HA_P[6]                    N29
+pad_FMC2_HA_N[6]                    P29
+pad_FMC2_HA_P[5]                    J30
+pad_FMC2_HA_N[5]                    J31
+pad_FMC2_HA_P[4]                    M31
+pad_FMC2_HA_N[4]                    M32
+pad_FMC2_HA_P[3]                    L30
+pad_FMC2_HA_N[3]                    M30
+pad_FMC2_HA_P[2]                    M29
+pad_FMC2_HA_N[2]                    L29
+pad_FMC2_HA_P[1]                    H32
+pad_FMC2_HA_N[1]                    G32
+pad_FMC2_HA_P[0]                    H31
+pad_FMC2_HA_N[0]                    G31
+
+
+# Bank 48  FMC2_VIOB - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC2_PG_C2M                     A27     LVCMOS18
+pad_FMC2_PG_M2C                     J25     LVCMOS18
+pad_FMC2_SYNC_N                     A25     LVDS
+pad_FMC2_SYNC_P                     B25     LVDS
+
+pad_FMC2_CLK_DIR                    L28     LVCMOS18
+pad_FMC2_CLK_N[3]                   H28     LVDS
+pad_FMC2_CLK_P[3]                   H27     LVDS
+
+pad_FMC2_HB_N[0]                    J28
+pad_FMC2_HB_N[10]                   R25
+pad_FMC2_HB_N[11]                   E27
+pad_FMC2_HB_N[12]                   E25
+pad_FMC2_HB_N[13]                   E28
+pad_FMC2_HB_N[14]                   D25
+pad_FMC2_HB_N[15]                   C28
+pad_FMC2_HB_N[16]                   B26
+pad_FMC2_HB_N[17]                   H26
+pad_FMC2_HB_N[18]                   N24
+pad_FMC2_HB_N[19]                   C26
+pad_FMC2_HB_N[1]                    P25
+pad_FMC2_HB_N[20]                   L25
+pad_FMC2_HB_N[21]                   G25
+pad_FMC2_HB_N[2]                    R28
+pad_FMC2_HB_N[3]                    R27
+pad_FMC2_HB_N[4]                    N26
+pad_FMC2_HB_N[5]                    N28
+pad_FMC2_HB_N[6]                    K27
+pad_FMC2_HB_N[7]                    L27
+pad_FMC2_HB_N[8]                    G27
+pad_FMC2_HB_N[9]                    M25
+pad_FMC2_HB_P[0]                    K28
+pad_FMC2_HB_P[10]                   T25
+pad_FMC2_HB_P[11]                   F27
+pad_FMC2_HB_P[12]                   E26
+pad_FMC2_HB_P[13]                   F28
+pad_FMC2_HB_P[14]                   D26
+pad_FMC2_HB_P[15]                   D28
+pad_FMC2_HB_P[16]                   B27
+pad_FMC2_HB_P[17]                   J26
+pad_FMC2_HB_P[18]                   M24
+pad_FMC2_HB_P[19]                   C27
+pad_FMC2_HB_P[1]                    P24
+pad_FMC2_HB_P[20]                   K25
+pad_FMC2_HB_P[21]                   F25
+pad_FMC2_HB_P[2]                    T28
+pad_FMC2_HB_P[3]                    R26
+pad_FMC2_HB_P[4]                    P26
+pad_FMC2_HB_P[5]                    P28
+pad_FMC2_HB_P[6]                    K26
+pad_FMC2_HB_P[7]                    M27
+pad_FMC2_HB_P[8]                    G26
+pad_FMC2_HB_P[9]                    M26
+
+
+# Bank 64  2.5V  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_AMC_TCLKB_IN_N                 AN17     LVDS_25
+pad_AMC_TCLKB_IN_P                 AN18     LVDS_25
+
+pad_EXT_SCL                        AD18     LVCMOS25
+pad_EXT_SDA                        AU20     LVCMOS25
+
+pad_FPGA_SLAVE_SCL                 AN16     LVCMOS25
+pad_FPGA_SLAVE_SDA                 AM16     LVCMOS25
+pad_FPGA_UART_RX                   AP19     LVCMOS25
+pad_FPGA_UART_TX                   AP18     LVCMOS25
+
+pad_FPGA_ACQCLK_N                  AM17     LVDS_25
+pad_FPGA_ACQCLK_P                  AL17     LVDS_25
+pad_RTM_IO_CC_N[7]                 AL18
+pad_RTM_IO_CC_P[7]                 AL19
+pad_SYSCLK100_N                    AN19     LVDS_25
+pad_SYSCLK100_P                    AM19     LVDS_25
+
+pad_USER_SPI_CS_L                  AG16     LVCMOS25    PULLUP
+pad_USER_SPI_D[0]                  AE17     LVCMOS25
+pad_USER_SPI_D[1]                  AF17     LVCMOS25
+pad_USER_SPI_D[2]                  AH16     LVCMOS25
+pad_USER_SPI_D[3]                  AH18     LVCMOS25
+pad_USER_SPI_SCK                   AG19     LVCMOS25
+
+pad_AMC_LVDS_RX_N[12]              AU16     LVDS_25
+pad_AMC_LVDS_RX_N[13]              AV17     LVDS_25
+pad_AMC_LVDS_RX_N[14]              AT17     LVDS_25
+pad_AMC_LVDS_RX_N[15]              AR17     LVDS_25
+pad_AMC_LVDS_RX_P[12]              AU17     LVDS_25
+pad_AMC_LVDS_RX_P[13]              AV18     LVDS_25
+pad_AMC_LVDS_RX_P[14]              AT18     LVDS_25
+pad_AMC_LVDS_RX_P[15]              AR18     LVDS_25
+pad_AMC_LVDS_TX_N[12]              AW19     LVDS_25
+pad_AMC_LVDS_TX_N[13]              AW18     LVDS_25
+pad_AMC_LVDS_TX_N[14]              AU19     LVDS_25
+pad_AMC_LVDS_TX_N[15]              AT20     LVDS_25
+pad_AMC_LVDS_TX_P[12]              AW20     LVDS_25
+pad_AMC_LVDS_TX_P[13]              AV19     LVDS_25
+pad_AMC_LVDS_TX_P[14]              AT19     LVDS_25
+pad_AMC_LVDS_TX_P[15]              AR20     LVDS_25
+
+pad_AMC_MLVDS_RX_DATA[17]          AR16     LVCMOS25
+pad_AMC_MLVDS_RX_DATA[18]          AK16     LVCMOS25
+pad_AMC_MLVDS_RX_DATA[19]          AJ19     LVCMOS25
+pad_AMC_MLVDS_RX_DATA[20]          AF19     LVCMOS25
+pad_AMC_MLVDS_RX_WEN[17]           AP16     LVCMOS25
+pad_AMC_MLVDS_RX_WEN[18]           AJ16     LVCMOS25
+pad_AMC_MLVDS_RX_WEN[19]           AG17     LVCMOS25
+pad_AMC_MLVDS_RX_WEN[20]           AE18     LVCMOS25
+pad_AMC_MLVDS_TX_DATA[17]          AK17     LVCMOS25
+pad_AMC_MLVDS_TX_DATA[18]          AJ18     LVCMOS25
+pad_AMC_MLVDS_TX_DATA[19]          AH19     LVCMOS25
+pad_AMC_MLVDS_TX_DATA[20]          AE16     LVCMOS25
+pad_AMC_MLVDS_TX_WEN[17]           AK18     LVCMOS25
+pad_AMC_MLVDS_TX_WEN[18]           AH17     LVCMOS25
+pad_AMC_MLVDS_TX_WEN[19]           AF18     LVCMOS25
+pad_AMC_MLVDS_TX_WEN[20]           AD16     LVCMOS25
+
+
+# Bank 65  2.5V  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_SHARED_PAYLOAD_SCL             AE12     LVCMOS25
+pad_SHARED_PAYLOAD_SDA             AF12     LVCMOS25
+pad_SYSRESET_L                     AD13     LVCMOS25
+
+pad_EXT_A[10]                      AG12     LVCMOS25
+pad_EXT_A[11]                      AU15     LVCMOS25
+pad_EXT_A[2]                       AR15     LVCMOS25
+pad_EXT_A[3]                       AU14     LVCMOS25
+pad_EXT_A[4]                       AR12     LVCMOS25
+pad_EXT_A[5]                       AT14     LVCMOS25
+pad_EXT_A[6]                       AP15     LVCMOS25
+pad_EXT_A[7]                       AJ13     LVCMOS25
+pad_EXT_A[8]                       AH12     LVCMOS25
+pad_EXT_A[9]                       AH13     LVCMOS25
+pad_EXT_B[10]                      AE15     LVCMOS25
+pad_EXT_B[11]                      AH14     LVCMOS25
+pad_EXT_B[2]                       AT12     LVCMOS25
+pad_EXT_B[3]                       AK13     LVCMOS25
+pad_EXT_B[4]                       AW15     LVCMOS25
+pad_EXT_B[5]                       AK12     LVCMOS25
+pad_EXT_B[6]                       AD14     LVCMOS25
+pad_EXT_B[7]                       AV16     LVCMOS25
+pad_EXT_B[8]                       AL15     LVCMOS25
+pad_EXT_B[9]                       AT15     LVCMOS25
+pad_EXT_PRESENT_L                  AJ14     LVCMOS25    PULLUP
+
+pad_FPGA_CFG_D[4]                  AF14     LVCMOS25
+pad_FPGA_CFG_D[5]                  AG14     LVCMOS25
+pad_FPGA_CFG_D[6]                  AE13     LVCMOS25
+pad_FPGA_CFG_D[7]                  AF13     LVCMOS25
+pad_FPGA_CFG_FCS2_B                AW16     LVCMOS25    PULLUP
+
+pad_FP_LED2A_K                     AF15     LVCMOS25
+pad_FP_LED2B_K                     AG15     LVCMOS25
+
+pad_PERSTN0                        AM15     LVCMOS25
+
+pad_RTM_IO_CC_N[0]                 AT13
+pad_RTM_IO_CC_N[1]                 AP13
+pad_RTM_IO_CC_N[2]                 AN12
+pad_RTM_IO_CC_N[3]                 AN14
+pad_RTM_IO_CC_N[4]                 AM12
+pad_RTM_IO_CC_N[5]                 AL13
+pad_RTM_IO_CC_N[6]                 AK15
+pad_RTM_IO_CC_P[0]                 AR13
+pad_RTM_IO_CC_P[1]                 AP14
+pad_RTM_IO_CC_P[2]                 AN13
+pad_RTM_IO_CC_P[3]                 AM14
+pad_RTM_IO_CC_P[4]                 AL12
+pad_RTM_IO_CC_P[5]                 AL14
+pad_RTM_IO_CC_P[6]                 AJ15
+pad_RTM_OUT_N[0]                   AW13
+pad_RTM_OUT_N[1]                   AV12
+pad_RTM_OUT_N[2]                   AW14
+pad_RTM_OUT_P[0]                   AV13
+pad_RTM_OUT_P[1]                   AU12
+pad_RTM_OUT_P[2]                   AV14
+
+
+# Bank 66  FMC1_VIOB - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC1_PG_C2M                     C16     LVCMOS18
+pad_FMC1_PG_M2C                     G12     LVCMOS18
+pad_FMC1_SYNC_N                     B14     LVDS
+pad_FMC1_SYNC_P                     C14     LVDS
+
+pad_FMC1_CLK_DIR                    H12     LVCMOS18
+pad_FMC1_CLK_N[3]                   E15     LVDS
+pad_FMC1_CLK_P[3]                   F15     LVDS
+
+pad_FMC1_HB_N[0]                    G15
+pad_FMC1_HB_N[10]                   L15
+pad_FMC1_HB_N[11]                   E12
+pad_FMC1_HB_N[12]                   J13
+pad_FMC1_HB_N[13]                   F12
+pad_FMC1_HB_N[14]                   N12
+pad_FMC1_HB_N[15]                   K12
+pad_FMC1_HB_N[16]                   N14
+pad_FMC1_HB_N[17]                   F14
+pad_FMC1_HB_N[18]                   R13
+pad_FMC1_HB_N[19]                   L12
+pad_FMC1_HB_N[1]                    B15
+pad_FMC1_HB_N[20]                   P15
+pad_FMC1_HB_N[21]                   P13
+pad_FMC1_HB_N[2]                    D16
+pad_FMC1_HB_N[3]                    J15
+pad_FMC1_HB_N[4]                    D14
+pad_FMC1_HB_N[5]                    A14
+pad_FMC1_HB_N[6]                    H14
+pad_FMC1_HB_N[7]                    A12
+pad_FMC1_HB_N[8]                    D13
+pad_FMC1_HB_N[9]                    C12
+pad_FMC1_HB_P[0]                    G16
+pad_FMC1_HB_P[10]                   M15
+pad_FMC1_HB_P[11]                   E13
+pad_FMC1_HB_P[12]                   H13
+pad_FMC1_HB_P[13]                   F13
+pad_FMC1_HB_P[14]                   M12
+pad_FMC1_HB_P[15]                   K13
+pad_FMC1_HB_P[16]                   M14
+pad_FMC1_HB_P[17]                   G14
+pad_FMC1_HB_P[18]                   R12
+pad_FMC1_HB_P[19]                   L13
+pad_FMC1_HB_P[1]                    B16
+pad_FMC1_HB_P[20]                   P14
+pad_FMC1_HB_P[21]                   N13
+pad_FMC1_HB_P[2]                    E16
+pad_FMC1_HB_P[3]                    K15
+pad_FMC1_HB_P[4]                    D15
+pad_FMC1_HB_P[5]                    A15
+pad_FMC1_HB_P[6]                    J14
+pad_FMC1_HB_P[7]                    A13
+pad_FMC1_HB_P[8]                    C13
+pad_FMC1_HB_P[9]                    B12
+
+
+# Bank 67  VADJ1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC1_HA_P[23]                   P18
+pad_FMC1_HA_N[23]                   P19
+pad_FMC1_HA_P[22]                   T17
+pad_FMC1_HA_N[22]                   T18
+pad_FMC1_HA_P[21]                   R17
+pad_FMC1_HA_N[21]                   R18
+pad_FMC1_HA_P[20]                   N18
+pad_FMC1_HA_N[20]                   N19
+pad_FMC1_HA_P[19]                   P16
+pad_FMC1_HA_N[19]                   R16
+pad_FMC1_HA_P[18]                   H18
+pad_FMC1_HA_N[18]                   H17
+pad_FMC1_HA_P[17]                   H19
+pad_FMC1_HA_N[17]                   G19
+pad_FMC1_HA_P[16]                   K17
+pad_FMC1_HA_N[16]                   L17
+pad_FMC1_HA_P[15]                   M17
+pad_FMC1_HA_N[15]                   M16
+pad_FMC1_HA_P[14]                   J16
+pad_FMC1_HA_N[14]                   K16
+pad_FMC1_HA_P[13]                   N17
+pad_FMC1_HA_N[13]                   N16
+pad_FMC1_HA_P[12]                   L19
+pad_FMC1_HA_N[12]                   L18
+pad_FMC1_HA_P[11]                   C18
+pad_FMC1_HA_N[11]                   D18
+pad_FMC1_HA_P[10]                   F19
+pad_FMC1_HA_N[10]                   G20
+pad_FMC1_HA_P[9]                    E18
+pad_FMC1_HA_N[9]                    F18
+pad_FMC1_HA_P[8]                    E17
+pad_FMC1_HA_N[8]                    F17
+pad_FMC1_HA_P[7]                    A19
+pad_FMC1_HA_N[7]                    B19
+pad_FMC1_HA_P[6]                    D19
+pad_FMC1_HA_N[6]                    C19
+pad_FMC1_HA_P[5]                    A18
+pad_FMC1_HA_N[5]                    A17
+pad_FMC1_HA_P[4]                    B17
+pad_FMC1_HA_N[4]                    C17
+pad_FMC1_HA_P[3]                    A20
+pad_FMC1_HA_N[3]                    B20
+pad_FMC1_HA_P[2]                    E20
+pad_FMC1_HA_N[2]                    F20
+pad_FMC1_HA_P[1]                    K18
+pad_FMC1_HA_N[1]                    J18
+pad_FMC1_HA_P[0]                    J20
+pad_FMC1_HA_N[0]                    J19
+
+
+# Bank 68  VADJ1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_SDIO_CD                         A23     LVCMOS18    PULLUP
+
+pad_DIP_SW_L[2]                     F22     LVCMOS18    PULLUP
+pad_DIP_SW_L[1]                     L22     LVCMOS18    PULLUP
+pad_DIP_SW_L[0]                     P20     LVCMOS18    PULLUP
+
+pad_FMC1_LED[7]                     R20     LVCMOS18
+pad_FMC1_LED[6]                     R21     LVCMOS18
+pad_FMC1_LED[5]                     P21     LVCMOS18
+pad_FMC1_LED[4]                     N21     LVCMOS18
+pad_FMC1_LED[3]                     N22     LVCMOS18
+pad_FMC1_LED[2]                     R23     LVCMOS18
+pad_FMC1_LED[1]                     T23     LVCMOS18
+
+pad_FMC1_SDA                        H24     LVCMOS18
+pad_FMC1_SCL                        H23     LVCMOS18
+
+pad_FMC1_CLK_P[2]                   H21
+pad_FMC1_CLK_N[2]                   H22
+pad_FMC1_LA_P[16]                   K20
+pad_FMC1_LA_N[16]                   L20
+pad_FMC1_LA_P[15]                   M21
+pad_FMC1_LA_N[15]                   M20
+pad_FMC1_LA_P[14]                   J21
+pad_FMC1_LA_N[14]                   K21
+pad_FMC1_LA_P[13]                   F24
+pad_FMC1_LA_N[13]                   G24
+pad_FMC1_LA_P[12]                   G21
+pad_FMC1_LA_N[12]                   G22
+pad_FMC1_LA_P[11]                   N23
+pad_FMC1_LA_N[11]                   P23
+pad_FMC1_LA_P[10]                   E21
+pad_FMC1_LA_N[10]                   E22
+pad_FMC1_LA_P[9]                    E23
+pad_FMC1_LA_N[9]                    F23
+pad_FMC1_LA_P[8]                    C21
+pad_FMC1_LA_N[8]                    D21
+pad_FMC1_LA_P[7]                    C23
+pad_FMC1_LA_N[7]                    D23
+pad_FMC1_LA_P[6]                    A22
+pad_FMC1_LA_N[6]                    B21
+pad_FMC1_LA_P[5]                    B22
+pad_FMC1_LA_N[5]                    C22
+pad_FMC1_LA_P[4]                    C24
+pad_FMC1_LA_N[4]                    D24
+pad_FMC1_LA_P[3]                    A24
+pad_FMC1_LA_N[3]                    B24
+pad_FMC1_LA_P[2]                    L23
+pad_FMC1_LA_N[2]                    L24
+pad_FMC1_LA_P[1]                    J23
+pad_FMC1_LA_N[1]                    J24
+pad_FMC1_LA_P[0]                    K22
+pad_FMC1_LA_N[0]                    K23
+
+
+# Quad 126 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_RTM_GTP_CLK3_IN_P              AB32
+pad_RTM_GTP_CLK3_IN_N              AB33
+pad_RTM_GTP13_TX_P                 AH36
+pad_RTM_GTP13_TX_N                 AH37
+pad_RTM_GTP13_RX_P                 AG38
+pad_RTM_GTP13_RX_N                 AG39
+pad_RTM_GTP12_TX_P                 AG34
+pad_RTM_GTP12_TX_N                 AG35
+pad_RTM_GTP12_RX_P                 AF36
+pad_RTM_GTP12_RX_N                 AF37
+pad_MGT126_CLK0_P                  AD32
+pad_MGT126_CLK0_N                  AD33
+pad_AMC_ETH_TX_P[1]                AE34
+pad_AMC_ETH_TX_N[1]                AE35
+pad_AMC_ETH_TX_P[0]                AD36
+pad_AMC_ETH_TX_N[0]                AD37
+pad_AMC_ETH_RX_P[1]                AE38
+pad_AMC_ETH_RX_N[1]                AE39
+pad_AMC_ETH_RX_P[0]                AC38
+pad_AMC_ETH_RX_N[0]                AC39
+
+
+# Quad 127 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_MGT127_REFCLK_P                 Y32
+pad_MGT127_REFCLK_N                 Y33
+pad_FMC2_GBTCLK_P[2]                V32
+pad_FMC2_GBTCLK_N[2]                V33
+pad_FMC2_DP_M2C_P[11]              AB36
+pad_FMC2_DP_M2C_N[11]              AB37
+pad_FMC2_DP_C2M_P[11]              AC34
+pad_FMC2_DP_C2M_N[11]              AC35
+pad_FMC2_DP_M2C_P[10]              AA38
+pad_FMC2_DP_M2C_N[10]              AA39
+pad_FMC2_DP_C2M_P[10]              AA34
+pad_FMC2_DP_C2M_N[10]              AA35
+pad_FMC2_DP_M2C_P[9]                W38
+pad_FMC2_DP_M2C_N[9]                W39
+pad_FMC2_DP_C2M_P[9]                Y36
+pad_FMC2_DP_C2M_N[9]                Y37
+pad_FMC2_DP_M2C_P[8]                V36
+pad_FMC2_DP_M2C_N[8]                V37
+pad_FMC2_DP_C2M_P[8]                W34
+pad_FMC2_DP_C2M_N[8]                W35
+
+
+# Quad 128 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC2_GBTCLK_P[1]                P32
+pad_FMC2_GBTCLK_N[1]                P33
+pad_FMC2_DP_M2C_P[7]                U38
+pad_FMC2_DP_M2C_N[7]                U39
+pad_FMC2_DP_C2M_P[7]                U34
+pad_FMC2_DP_C2M_N[7]                U35
+pad_FMC2_DP_M2C_P[6]                R38
+pad_FMC2_DP_M2C_N[6]                R39
+pad_FMC2_DP_C2M_P[6]                T36
+pad_FMC2_DP_C2M_N[6]                T37
+pad_FMC2_DP_M2C_P[5]                P36
+pad_FMC2_DP_M2C_N[5]                P37
+pad_FMC2_DP_C2M_P[5]                R34
+pad_FMC2_DP_C2M_N[5]                R35
+pad_FMC2_DP_M2C_P[4]                N38
+pad_FMC2_DP_M2C_N[4]                N39
+pad_FMC2_DP_C2M_P[4]                N34
+pad_FMC2_DP_C2M_N[4]                N35
+pad_E10G_CLK1_P                     T32
+pad_E10G_CLK1_N                     T33
+
+
+# Quad 224 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_MGT224_REFCLK_P                AT10
+pad_MGT224_REFCLK_N                 AT9
+pad_AMC_PCI_TX_P[7]                 AT6
+pad_AMC_PCI_TX_N[7]                 AT5
+pad_AMC_PCI_TX_P[6]                 AU8
+pad_AMC_PCI_TX_N[6]                 AU7
+pad_AMC_PCI_TX_P[5]                 AV6
+pad_AMC_PCI_TX_N[5]                 AV5
+pad_AMC_PCI_TX_P[4]                 AW8
+pad_AMC_PCI_TX_N[4]                 AW7
+pad_AMC_PCI_RX_P[7]                 AT2
+pad_AMC_PCI_RX_N[7]                 AT1
+pad_AMC_PCI_RX_P[6]                 AU4
+pad_AMC_PCI_RX_N[6]                 AU3
+pad_AMC_PCI_RX_P[5]                 AV2
+pad_AMC_PCI_RX_N[5]                 AV1
+pad_AMC_PCI_RX_P[4]                 AW4
+pad_AMC_PCI_RX_N[4]                 AW3
+
+
+# Quad 225 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_E10G_CLK3_P                    AM10
+pad_E10G_CLK3_N                     AM9
+pad_AMC_PCI_TX_P[11]                AM6
+pad_AMC_PCI_TX_N[11]                AM5
+pad_AMC_PCI_TX_P[10]                AN8
+pad_AMC_PCI_TX_N[10]                AN7
+pad_AMC_PCI_TX_P[9]                 AP6
+pad_AMC_PCI_TX_N[9]                 AP5
+pad_AMC_PCI_TX_P[8]                 AR8
+pad_AMC_PCI_TX_N[8]                 AR7
+pad_AMC_PCI_RX_P[11]                AM2
+pad_AMC_PCI_RX_N[11]                AM1
+pad_AMC_PCI_RX_P[10]                AN4
+pad_AMC_PCI_RX_N[10]                AN3
+pad_AMC_PCI_RX_P[9]                 AP2
+pad_AMC_PCI_RX_N[9]                 AP1
+pad_AMC_PCI_RX_P[8]                 AR4
+pad_AMC_PCI_RX_N[8]                 AR3
+
+
+# Quad 226 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC1_GBTCLK_P[1]               AF10
+pad_FMC1_GBTCLK_N[1]                AF9
+pad_FMC1_DP_M2C_P[7]                AH2
+pad_FMC1_DP_M2C_N[7]                AH1
+pad_FMC1_DP_C2M_P[7]                AH6
+pad_FMC1_DP_C2M_N[7]                AH5
+pad_FMC1_DP_M2C_P[6]                AJ4
+pad_FMC1_DP_M2C_N[6]                AJ3
+pad_FMC1_DP_C2M_P[6]                AJ8
+pad_FMC1_DP_C2M_N[6]                AJ7
+pad_FMC1_DP_M2C_P[5]                AK2
+pad_FMC1_DP_M2C_N[5]                AK1
+pad_FMC1_DP_C2M_P[5]                AK6
+pad_FMC1_DP_C2M_N[5]                AK5
+pad_FMC1_DP_M2C_P[4]                AL4
+pad_FMC1_DP_M2C_N[4]                AL3
+pad_FMC1_DP_C2M_P[4]                AL8
+pad_FMC1_DP_C2M_N[4]                AL7
+
+
+# Quad 227 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_MGT227_REFCLK_P                 AE8
+pad_MGT227_REFCLK_N                 AE7
+pad_FMC1_GBTCLK_P[2]                AC8
+pad_FMC1_GBTCLK_N[2]                AC7
+pad_FMC1_DP_M2C_P[11]               AC4
+pad_FMC1_DP_M2C_N[11]               AC3
+pad_FMC1_DP_C2M_P[11]               AD6
+pad_FMC1_DP_C2M_N[11]               AD5
+pad_FMC1_DP_M2C_P[10]               AD2
+pad_FMC1_DP_M2C_N[10]               AD1
+pad_FMC1_DP_C2M_P[10]               AE4
+pad_FMC1_DP_C2M_N[10]               AE3
+pad_FMC1_DP_M2C_P[9]                AF2
+pad_FMC1_DP_M2C_N[9]                AF1
+pad_FMC1_DP_C2M_P[9]                AF6
+pad_FMC1_DP_C2M_N[9]                AF5
+pad_FMC1_DP_M2C_P[8]                AG4
+pad_FMC1_DP_M2C_N[8]                AG3
+pad_FMC1_DP_C2M_P[8]                AG8
+pad_FMC1_DP_C2M_N[8]                AG7
+
+
+# Quad 228 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC1_GBTCLK_P[0]                 W8
+pad_FMC1_GBTCLK_N[0]                 W7
+pad_FMC1_DP_M2C_P[3]                AB2
+pad_FMC1_DP_M2C_N[3]                AB1
+pad_FMC1_DP_C2M_P[3]                AB6
+pad_FMC1_DP_C2M_N[3]                AB5
+pad_FMC1_DP_M2C_P[2]                 Y2
+pad_FMC1_DP_M2C_N[2]                 Y1
+pad_FMC1_DP_C2M_P[2]                AA4
+pad_FMC1_DP_C2M_N[2]                AA3
+pad_FMC1_DP_M2C_P[1]                 W4
+pad_FMC1_DP_M2C_N[1]                 W3
+pad_FMC1_DP_C2M_P[1]                 Y6
+pad_FMC1_DP_C2M_N[1]                 Y5
+pad_FMC1_DP_M2C_P[0]                 V2
+pad_FMC1_DP_M2C_N[0]                 V1
+pad_FMC1_DP_C2M_P[0]                 V6
+pad_FMC1_DP_C2M_N[0]                 V5
+
+
+# Quad 229 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_MGT229_REFCLK_P                  U8
+pad_MGT229_REFCLK_N                  U7
+pad_FMC1_GBTCLK_P[3]                 R8
+pad_FMC1_GBTCLK_N[3]                 R7
+pad_FMC1_DP_M2C_P[15]                N4
+pad_FMC1_DP_M2C_N[15]                N3
+pad_FMC1_DP_C2M_P[15]                N8
+pad_FMC1_DP_C2M_N[15]                N7
+pad_FMC1_DP_M2C_P[14]                P2
+pad_FMC1_DP_M2C_N[14]                P1
+pad_FMC1_DP_C2M_P[14]                P6
+pad_FMC1_DP_C2M_N[14]                P5
+pad_FMC1_DP_M2C_P[13]                R4
+pad_FMC1_DP_M2C_N[13]                R3
+pad_FMC1_DP_C2M_P[13]                T6
+pad_FMC1_DP_C2M_N[13]                T5
+pad_FMC1_DP_M2C_P[12]                T2
+pad_FMC1_DP_M2C_N[12]                T1
+pad_FMC1_DP_C2M_P[12]                U4
+pad_FMC1_DP_C2M_N[12]                U3
+
+
+# Quad 230 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_MGT230_REFCLK_P                 P10
+pad_MGT230_REFCLK_N                  P9
+pad_FMC2_GBTCLK_P[0]                M10
+pad_FMC2_GBTCLK_N[0]                 M9
+pad_FMC2_DP_M2C_P[3]                 M2
+pad_FMC2_DP_M2C_N[3]                 M1
+pad_FMC2_DP_C2M_P[3]                 M6
+pad_FMC2_DP_C2M_N[3]                 M5
+pad_FMC2_DP_M2C_P[2]                 L4
+pad_FMC2_DP_M2C_N[2]                 L3
+pad_FMC2_DP_C2M_P[2]                 L8
+pad_FMC2_DP_C2M_N[2]                 L7
+pad_FMC2_DP_M2C_P[1]                 K2
+pad_FMC2_DP_M2C_N[1]                 K1
+pad_FMC2_DP_C2M_P[1]                 K6
+pad_FMC2_DP_C2M_N[1]                 K5
+pad_FMC2_DP_M2C_P[0]                 J4
+pad_FMC2_DP_M2C_N[0]                 J3
+pad_FMC2_DP_C2M_P[0]                 J8
+pad_FMC2_DP_C2M_N[0]                 J7
+
+
+# Quad 231 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_FMC2_GBTCLK_P[3]                H10
+pad_FMC2_GBTCLK_N[3]                 H9
+pad_FMC2_DP_M2C_P[15]                H2
+pad_FMC2_DP_M2C_N[15]                H1
+pad_FMC2_DP_C2M_P[15]                H6
+pad_FMC2_DP_C2M_N[15]                H5
+pad_FMC2_DP_M2C_P[14]                G4
+pad_FMC2_DP_M2C_N[14]                G3
+pad_FMC2_DP_C2M_P[14]                G8
+pad_FMC2_DP_C2M_N[14]                G7
+pad_FMC2_DP_M2C_P[13]                F2
+pad_FMC2_DP_M2C_N[13]                F1
+pad_FMC2_DP_C2M_P[13]                F6
+pad_FMC2_DP_C2M_N[13]                F5
+pad_FMC2_DP_M2C_P[12]                E4
+pad_FMC2_DP_M2C_N[12]                E3
+pad_FMC2_DP_C2M_P[12]                E8
+pad_FMC2_DP_C2M_N[12]                E7
+pad_E10G_CLK2_P                     K10
+pad_E10G_CLK2_N                      K9
+
+
+# Quad 232 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_RTM_GTP_CLK0_IN_P               D10
+pad_RTM_GTP_CLK0_IN_N                D9
+pad_RTM_GTP_3_0_TX_P[3]              A8
+pad_RTM_GTP_3_0_TX_N[3]              A7
+pad_RTM_GTP_3_0_RX_P[3]              A4
+pad_RTM_GTP_3_0_RX_N[3]              A3
+pad_RTM_GTP_3_0_TX_P[2]              B6
+pad_RTM_GTP_3_0_TX_N[2]              B5
+pad_RTM_GTP_3_0_RX_P[2]              B2
+pad_RTM_GTP_3_0_RX_N[2]              B1
+pad_RTM_GTP_3_0_TX_P[1]              C8
+pad_RTM_GTP_3_0_TX_N[1]              C7
+pad_RTM_GTP_3_0_RX_P[1]              C4
+pad_RTM_GTP_3_0_RX_N[1]              C3
+pad_RTM_GTP_3_0_TX_P[0]              D6
+pad_RTM_GTP_3_0_TX_N[0]              D5
+pad_RTM_GTP_3_0_RX_P[0]              D2
+pad_RTM_GTP_3_0_RX_N[0]              D1
+pad_MGT232_REFCLK_P                 F10
+pad_MGT232_REFCLK_N                  F9
+
+
+# SGRAM (banks 24, 25) VDD_SGRAM - - - - - - - - - - - - - - - - - - - - - - - -
+
+pad_SG12_CK_P                      AL30    DIFF_POD12_DCI
+pad_SG12_CK_N                      AM30    DIFF_POD12_DCI
+pad_SG1_WCK_P                      AN33    DIFF_POD12_DCI
+pad_SG1_WCK_N                      AP33    DIFF_POD12_DCI
+pad_SG2_WCK_P                      AU36    DIFF_POD12_DCI
+pad_SG2_WCK_N                      AV36    DIFF_POD12_DCI
+
+pad_SG12_CABI_N                    AL34    POD12_DCI
+pad_SG12_CAL[0]                    AH28    POD12_DCI
+pad_SG12_CAL[1]                    AT39    POD12_DCI
+pad_SG12_CAL[2]                    AK37    POD12_DCI
+pad_SG12_CAU[4]                    AL33    POD12_DCI
+pad_SG12_CAU[5]                    AN29    POD12_DCI
+pad_SG12_CAU[6]                    AW38    POD12_DCI
+pad_SG12_CAU[7]                    AP29    POD12_DCI
+pad_SG12_CAU[8]                    AL35    POD12_DCI
+pad_SG12_CAU[9]                    AG30    POD12_DCI
+pad_SG12_CKE_N                     AP35    POD12_DCI
+pad_SG1_CA3_A                      AM31    POD12_DCI
+pad_SG1_CA3_B                      AJ29    POD12_DCI
+
+pad_SG1_DBI_N_A[0]                 AW31    POD12_DCI
+pad_SG1_DBI_N_A[1]                 AR31    POD12_DCI
+pad_SG1_DBI_N_B[0]                 AK31    POD12_DCI
+pad_SG1_DBI_N_B[1]                 AG29    POD12_DCI
+pad_SG1_DQ_A[0]                    AT30    POD12_DCI
+pad_SG1_DQ_A[10]                   AU29    POD12_DCI
+pad_SG1_DQ_A[11]                   AW29    POD12_DCI
+pad_SG1_DQ_A[12]                   AR30    POD12_DCI
+pad_SG1_DQ_A[13]                   AP31    POD12_DCI
+pad_SG1_DQ_A[14]                   AP30    POD12_DCI
+pad_SG1_DQ_A[15]                   AN31    POD12_DCI
+pad_SG1_DQ_A[1]                    AM32    POD12_DCI
+pad_SG1_DQ_A[2]                    AV32    POD12_DCI
+pad_SG1_DQ_A[3]                    AN32    POD12_DCI
+pad_SG1_DQ_A[4]                    AU30    POD12_DCI
+pad_SG1_DQ_A[5]                    AV31    POD12_DCI
+pad_SG1_DQ_A[6]                    AU31    POD12_DCI
+pad_SG1_DQ_A[7]                    AW30    POD12_DCI
+pad_SG1_DQ_A[8]                    AT29    POD12_DCI
+pad_SG1_DQ_A[9]                    AV29    POD12_DCI
+pad_SG1_DQ_B[0]                    AK30    POD12_DCI
+pad_SG1_DQ_B[10]                   AF28    POD12_DCI
+pad_SG1_DQ_B[11]                   AE30    POD12_DCI
+pad_SG1_DQ_B[12]                   AH31    POD12_DCI
+pad_SG1_DQ_B[13]                   AH29    POD12_DCI
+pad_SG1_DQ_B[14]                   AJ30    POD12_DCI
+pad_SG1_DQ_B[15]                   AJ28    POD12_DCI
+pad_SG1_DQ_B[1]                    AH32    POD12_DCI
+pad_SG1_DQ_B[2]                    AK32    POD12_DCI
+pad_SG1_DQ_B[3]                    AL32    POD12_DCI
+pad_SG1_DQ_B[4]                    AJ31    POD12_DCI
+pad_SG1_DQ_B[5]                    AK33    POD12_DCI
+pad_SG1_DQ_B[6]                    AM29    POD12_DCI
+pad_SG1_DQ_B[7]                    AL29    POD12_DCI
+pad_SG1_DQ_B[8]                    AF29    POD12_DCI
+pad_SG1_DQ_B[9]                    AE28    POD12_DCI
+pad_SG1_EDC_A[0]                   AU32    POD12_DCI
+pad_SG1_EDC_A[1]                   AR32    POD12_DCI
+pad_SG1_EDC_B[0]                   AJ33    POD12_DCI
+pad_SG1_EDC_B[1]                   AF30    POD12_DCI
+pad_SG1_RESET_N                    AT32    POD12_DCI
+pad_SG2_CA3_A                      AW36    POD12_DCI
+pad_SG2_CA3_B                      AM34    POD12_DCI
+pad_SG2_DBI_N_A[0]                 AV38    POD12_DCI
+pad_SG2_DBI_N_A[1]                 AV34    POD12_DCI
+pad_SG2_DBI_N_B[0]                 AM37    POD12_DCI
+pad_SG2_DBI_N_B[1]                 AM35    POD12_DCI
+pad_SG2_DQ_A[0]                    AV37    POD12_DCI
+pad_SG2_DQ_A[10]                   AV33    POD12_DCI
+pad_SG2_DQ_A[11]                   AT33    POD12_DCI
+pad_SG2_DQ_A[12]                   AR33    POD12_DCI
+pad_SG2_DQ_A[13]                   AU34    POD12_DCI
+pad_SG2_DQ_A[14]                   AW35    POD12_DCI
+pad_SG2_DQ_A[15]                   AU35    POD12_DCI
+pad_SG2_DQ_A[1]                    AT35    POD12_DCI
+pad_SG2_DQ_A[2]                    AU37    POD12_DCI
+pad_SG2_DQ_A[3]                    AR38    POD12_DCI
+pad_SG2_DQ_A[4]                    AT37    POD12_DCI
+pad_SG2_DQ_A[5]                    AT38    POD12_DCI
+pad_SG2_DQ_A[6]                    AV39    POD12_DCI
+pad_SG2_DQ_A[7]                    AU39    POD12_DCI
+pad_SG2_DQ_A[8]                    AT34    POD12_DCI
+pad_SG2_DQ_A[9]                    AW33    POD12_DCI
+pad_SG2_DQ_B[0]                    AL37    POD12_DCI
+pad_SG2_DQ_B[10]                   AN37    POD12_DCI
+pad_SG2_DQ_B[11]                   AR36    POD12_DCI
+pad_SG2_DQ_B[12]                   AP36    POD12_DCI
+pad_SG2_DQ_B[13]                   AK35    POD12_DCI
+pad_SG2_DQ_B[14]                   AP34    POD12_DCI
+pad_SG2_DQ_B[15]                   AN34    POD12_DCI
+pad_SG2_DQ_B[1]                    AL39    POD12_DCI
+pad_SG2_DQ_B[2]                    AL38    POD12_DCI
+pad_SG2_DQ_B[3]                    AK36    POD12_DCI
+pad_SG2_DQ_B[4]                    AN39    POD12_DCI
+pad_SG2_DQ_B[5]                    AK38    POD12_DCI
+pad_SG2_DQ_B[6]                    AP39    POD12_DCI
+pad_SG2_DQ_B[7]                    AN38    POD12_DCI
+pad_SG2_DQ_B[8]                    AP38    POD12_DCI
+pad_SG2_DQ_B[9]                    AN36    POD12_DCI
+pad_SG2_EDC_A[0]                   AR37    POD12_DCI
+pad_SG2_EDC_A[1]                   AW34    POD12_DCI
+pad_SG2_EDC_B[0]                   AM39    POD12_DCI
+pad_SG2_EDC_B[1]                   AM36    POD12_DCI
+pad_SG2_RESET_N                    AJ39    POD12_DCI

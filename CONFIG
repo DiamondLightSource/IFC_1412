@@ -1,9 +1,9 @@
 # Configuration settings
 
-BUILD_TOP = /scratch/$(USER)/tmp/$(BOARD)
+BUILD_TOP = /scratch/$(USER)/tmp/IFC_1412
 
 # Architecture of board
-BOARD = IFC_1412
+BOARD_DIR = $(CONFIG_TOP)/board/IFC_1412
 
 
 # Definitions needed for FPGA build
