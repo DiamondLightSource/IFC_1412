@@ -2,9 +2,6 @@ IP_DIR = $(BUILD_TOP)/gddr6/ip
 
 VHD_FILE_LIST = $(FPGA_TOP)/file-list
 
-DEFAULT = make_target
-
-
 BUILT += metadata.coe
 BUILT += register_defines.vhd
 
