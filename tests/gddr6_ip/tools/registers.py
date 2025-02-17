@@ -7,7 +7,8 @@ from fpga_lib.driver import driver
 
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd/register_defines.in')
-gddr6_defines = os.path.join(here, '../../gddr6/vhd/gddr6_register_defines.in')
+gddr6_defines = os.path.join(here,
+    '../../../gddr6/vhd/gddr6_register_defines.in')
 
 REGS_RANGE = slice(0, 1024, None)
 SG_RANGE = slice(1024, 2408, None)
