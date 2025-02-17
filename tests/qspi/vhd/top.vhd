@@ -28,10 +28,10 @@ begin
         -- PCIe MGT interface
         FCLKA_clk_p(0) => pad_MGT224_REFCLK_P,
         FCLKA_clk_n(0) => pad_MGT224_REFCLK_N,
-        pcie_7x_mgt_0_rxn => pad_AMC_RX_7_4_N,
-        pcie_7x_mgt_0_rxp => pad_AMC_RX_7_4_P,
-        pcie_7x_mgt_0_txn => pad_AMC_TX_7_4_N,
-        pcie_7x_mgt_0_txp => pad_AMC_TX_7_4_P,
+        pcie_7x_mgt_0_rxn => pad_AMC_PCI_RX_N,
+        pcie_7x_mgt_0_rxp => pad_AMC_PCI_RX_P,
+        pcie_7x_mgt_0_txn => pad_AMC_PCI_TX_N,
+        pcie_7x_mgt_0_txp => pad_AMC_PCI_TX_P,
         -- USER QSPI flash interface
         EXT_SPI_CLK => clk,
         USER_SPI_io0_io => pad_USER_SPI_D(0),

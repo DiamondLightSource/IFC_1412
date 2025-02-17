@@ -6,8 +6,12 @@ DEFAULT = make_target
 
 
 BUILT += metadata.coe
-BUILT += version.vhd
 BUILT += register_defines.vhd
+
+# Version file support
+BUILT += version.vhd
+BUILT += make_version.tcl
+TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
 

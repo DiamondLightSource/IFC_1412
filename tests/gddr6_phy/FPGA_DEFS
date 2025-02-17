@@ -1,10 +1,14 @@
-VHD_DIRS += $(COMMON_VHD)
-VHD_DIRS += $(GDDR6_DIR)
+VHD_FILES += $(COMMON_VHD)
+VHD_FILES += $(GDDR6_DIR)
 
 BUILT += metadata.coe
-BUILT += version.vhd
 BUILT += register_defines.vhd
 BUILT += gddr6_register_defines.vhd
+
+# Version file support
+BUILT += version.vhd
+BUILT += make_version.tcl
+TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
 

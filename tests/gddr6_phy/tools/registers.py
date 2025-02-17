@@ -7,7 +7,8 @@ from fpga_lib.driver import driver
 
 here = os.path.dirname(__file__)
 register_defines = os.path.join(here, '../vhd/register_defines.in')
-gddr6_defines = os.path.join(here, '../../gddr6/vhd/gddr6_register_defines.in')
+gddr6_defines = os.path.join(here,
+    '../../../gddr6/vhd/gddr6_register_defines.in')
 
 
 def open(addr = 0):
