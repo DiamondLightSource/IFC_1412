@@ -9,15 +9,6 @@ TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 BLOCK_DESIGNS += interconnect
 
 # Add the individual VHDL support files used by this project
-VHD_FILES += $(COMMON_VHD)/support.vhd
-VHD_FILES += $(COMMON_VHD)/axi/axi_lite_slave.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_defs.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_mux.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_mux_strobe.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_buffer.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_file_rw.vhd
-VHD_FILES += $(COMMON_VHD)/register/register_file.vhd
-VHD_FILES += $(COMMON_VHD)/util/dlyreg.vhd
-VHD_FILES += $(COMMON_VHD)/util/fixed_delay_dram.vhd
+VHD_FILE_LIST = $(FPGA_TOP)/fpga-files
 
 # vim: set filetype=make:

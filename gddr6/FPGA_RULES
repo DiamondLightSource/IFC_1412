@@ -1,24 +1,20 @@
-GDDR6_IP_ARGS += PROJECT_NAME
-GDDR6_IP_ARGS += FPGA_PART
-GDDR6_IP_ARGS += FPGA_TOP
-GDDR6_IP_ARGS += VHD_DIR
-GDDR6_IP_ARGS += COMMON_VHD
-GDDR6_IP_ARGS += IP_DIR
-GDDR6_IP_ARGS += IP_VERSION
+_GDDR6_IP_ARGS += _PROJECT
+_GDDR6_IP_ARGS += IP_DIR_OUT
+_GDDR6_IP_ARGS += IP_VERSION
 
-IP_FILES += $(VHD_DIR)/gddr6_ip.vhd
+_IP_FILES += $(VHD_DIR)/gddr6_ip.vhd
 
-EXTRA_IP_FILES += built_dir/gddr6_register_defines.vhd
-EXTRA_IP_FILES += $(VHD_DIR)/gddr6_defs.vhd
-EXTRA_IP_FILES += $(wildcard $(FPGA_TOP)/interface_ip/*)
+_EXTRA_IP_FILES += built_dir/gddr6_register_defines.vhd
+_EXTRA_IP_FILES += $(VHD_DIR)/gddr6_defs.vhd
+_EXTRA_IP_FILES += $(wildcard $(FPGA_TOP)/interface_ip/*)
 
-make_gddr6_ip: $(BUILT:%=built_dir/%)
-	rm -rf $(PROJECT_NAME) $(IP_DIR)
-	mkdir -p $(IP_DIR)/gddr6_ip/src $(IP_DIR)/gddr6_ip/constr
-	cp $(IP_FILES) $(IP_DIR)/gddr6_ip/src
-	cp $(FPGA_TOP)/tcl/sgram.tcl $(IP_DIR)/gddr6_ip/src
-	cp $(EXTRA_IP_FILES) $(IP_DIR)
-	$(call EXPORT,$(GDDR6_IP_ARGS)) $(RUN_VIVADO) \
+make_gddr6_ip: $(_PROJECT)
+	rm -rf $(IP_DIR_OUT)
+	mkdir -p $(IP_DIR_OUT)/gddr6_ip/src $(IP_DIR_OUT)/gddr6_ip/constr
+	cp $(_IP_FILES) $(IP_DIR_OUT)/gddr6_ip/src
+	cp $(FPGA_TOP)/tcl/sgram.tcl $(IP_DIR_OUT)/gddr6_ip/src
+	cp $(_EXTRA_IP_FILES) $(IP_DIR_OUT)
+	$(call EXPORT,$(_GDDR6_IP_ARGS)) $(RUN_VIVADO) \
             -mode batch -source $(FPGA_TOP)/tcl/create_ip.tcl
 .PHONY: make_gddr6_ip
 
