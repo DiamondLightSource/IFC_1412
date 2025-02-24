@@ -29,6 +29,7 @@ freq_names = [
     "SG2_WCK",
     "ACQCLK",
     "TCLKB",
+    "MGT232_REF"
 ]
 
 def print_freqs(concise):

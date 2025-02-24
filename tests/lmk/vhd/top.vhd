@@ -18,7 +18,7 @@ architecture arch of top is
     signal perst_n : std_ulogic;
 
     -- Test clocks
-    constant CLOCKS_COUNT : natural := 5;
+    constant CLOCKS_COUNT : natural := 6;
     subtype CLOCKS_RANGE is natural range 0 to CLOCKS_COUNT-1;
     signal test_clocks : std_ulogic_vector(CLOCKS_RANGE);
     signal test_clock_counts : unsigned_array(CLOCKS_RANGE)(31 downto 0);
@@ -132,6 +132,27 @@ begin
         ),
         o_o => test_clocks(3 to 4)
     );
+
+    mgt_clocks : for clock in 5 to 5 generate
+        signal odiv2 : std_ulogic;
+    begin
+        ibuf : IBUFDS_GTE3 port map (
+            I => pad_MGT232_REFCLK_P,
+            IB => pad_MGT232_REFCLK_N,
+            CEB => '0',
+            O => open,
+            ODIV2 => odiv2
+        );
+        bufg : BUFG_GT port map (
+            CE => '1',
+            CEMASK => '1',
+            CLR => '0',
+            CLRMASK => '1',
+            DIV => "000",
+            I => odiv2,
+            O => test_clocks(5)
+        );
+    end generate;
 
 
     -- -------------------------------------------------------------------------
