@@ -5,6 +5,7 @@
 import argparse
 import re
 
+import bind_lmk
 from fpga_lib.devices import LMK04616
 
 
@@ -31,9 +32,6 @@ def parse_args():
 # Source of settings, either directly from hardware or from a file in one of
 # three supported formats
 
-def bind_lmk():
-    from bind_lmk import lmk
-    return lmk
 
 def load_file(loader, filename):
     lmk = LMK04616()
@@ -106,7 +104,8 @@ def main():
     if args.load_file:
         lmk = load_file(input_options[args.input_format], args.load_file)
     else:
-        lmk = bind_lmk()
+        top = bind_lmk.open()
+        lmk = bind_lmk.bind(top, 'sys')
     output_options[args.output_format](lmk)
 
 main()

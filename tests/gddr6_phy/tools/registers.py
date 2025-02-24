@@ -1,19 +1,22 @@
 # Defines mapping to test-gddr6 registers
 
-import os
-
-from ifc_lib import fpga_lib
+from ifc_lib import defs_path
 from fpga_lib.driver import driver
 
-here = os.path.dirname(__file__)
-register_defines = os.path.join(here, '../vhd/register_defines.in')
-gddr6_defines = os.path.join(here,
-    '../../../gddr6/vhd/gddr6_register_defines.in')
 
+class Registers(driver.RawRegisters):
+    NAME = 'ifc_1412-gddr6'
+
+    def __init__(self, address = 0):
+        super().__init__(self.NAME, address)
+
+        register_defines = defs_path.register_defines(__file__)
+        gddr6_defines = defs_path.gddr6_register_defines()
+
+        self.make_registers('SYS', None, gddr6_defines, register_defines)
 
 def open(addr = 0):
-    raw_regs = driver.RawRegisters('ifc_1412-gddr6', addr)
-    regs = driver.Registers(raw_regs, gddr6_defines, register_defines)
+    regs = Registers(addr)
     return (regs.SYS, regs.SYS.GDDR6)
 
 __all__ = ['open']

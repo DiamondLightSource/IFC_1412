@@ -1,23 +1,28 @@
 # Defines mapping to test-gddr6 registers
 
 import os
+import numpy
 
-from ifc_lib import fpga_lib
+from ifc_lib import defs_path
 from fpga_lib.driver import driver
 
-here = os.path.dirname(__file__)
-register_defines = os.path.join(here, '../vhd/register_defines.in')
-gddr6_defines = os.path.join(here,
-    '../../../gddr6/vhd/gddr6_register_defines.in')
 
-REGS_RANGE = slice(0, 1024, None)
-SG_RANGE = slice(1024, 2408, None)
+class Registers(driver.RawRegisters):
+    NAME = 'ifc_1412-gddr6'
+    REGS_RANGE = numpy.s_[:1024]
+    SG_RANGE   = numpy.s_[1024:]
 
+    def __init__(self, address = 0):
+        super().__init__(self.NAME, address)
+
+        register_defines = defs_path.register_defines(__file__)
+        gddr6_defines = defs_path.gddr6_register_defines()
+
+        self.make_registers('SYS', self.REGS_RANGE, register_defines)
+        self.make_registers('GDDR6', self.SG_RANGE, gddr6_defines)
 
 def open(addr = 0):
-    raw_regs = driver.RawRegisters('ifc_1412-gddr6', addr)
-    sys_regs = driver.Registers(raw_regs, register_defines, range = REGS_RANGE)
-    sg_regs = driver.Registers(raw_regs, gddr6_defines, range = SG_RANGE)
-    return (sys_regs.SYS, sg_regs.GDDR6)
+    regs = Registers(addr)
+    return (regs.SYS, regs.GDDR6)
 
 __all__ = ['open']

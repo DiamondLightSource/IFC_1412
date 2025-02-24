@@ -3,6 +3,7 @@
 import os
 import time
 
+from ifc_lib import defs_path
 from fpga_lib.driver import driver
 from fpga_lib.devices import LMK04616
 
@@ -32,33 +33,25 @@ class LMK:
             LMK_SELECT = self.__select, LMK_RESET = 0)
 
 
-class DummyLMK:
-    def write(self, reg, value):
-        print('PLL[%03X] <= %02x' % (reg, value))
+class Registers(driver.RawRegisters):
+    NAME = 'ifc_1412-lmk'
 
-    def read(self, reg):
-#         print('read[%03X]' % reg)
-        return 0
+    def __init__(self, address = 0):
+        super().__init__(self.NAME, address)
 
-    def reset(self, duration = 0.01):
-#         print('reset')
-        pass
+        register_defines = defs_path.register_defines(__file__)
+        self.make_registers('TOP', None, register_defines)
 
-
-# Opens test-lmk device and returns binding to registers
 def open(addr = 0):
-    here = os.path.dirname(__file__)
-    register_defines = os.path.join(here, '../vhd', 'register_defines.in')
-    raw_regs = driver.RawRegisters('ifc_1412-lmk', addr)
-    regs = driver.Registers(raw_regs, register_defines)
+    regs = Registers(addr)
     return regs.TOP
 
 
 # Binds LMK instance to given top, returns read/write access
 def bind(top, select):
-    lmk = LMK(top, select)
-    lmk = LMK04616(writer = lmk.write, reader = lmk.read)
+    lmk = LMK04616(LMK(top, select))
     lmk.enable_write()
     return lmk
+
 
 __all__ = ['open', 'bind', 'LMK']

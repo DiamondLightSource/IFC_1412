@@ -7,16 +7,11 @@ import os
 import numpy
 import re
 
-from fpga_lib.driver import driver
+import bind_lmk
 from fpga_lib.devices import LMK04616
 
 
-here = os.path.dirname(__file__)
-register_defines = os.path.join(here, '../vhd', 'register_defines.in')
-
-raw_regs = driver.RawRegisters('ifc_1412-lmk', 0)
-regs = driver.Registers(raw_regs, register_defines)
-top = regs.TOP
+top = bind_lmk.open()
 
 def write_lmk(reg, value):
     top.LMK04616._write_fields_wo(

@@ -4,10 +4,8 @@ import os
 import time
 import argparse
 
-from ifc_lib import fpga_lib
-from fpga_lib.driver import driver
+from ifc_lib import lmk_lib
 from fpga_lib.devices import LMK04616
-from fpga_lib.boards import ifc_1412
 
 import registers
 
@@ -49,7 +47,7 @@ class LMK:
 
 def setup_sys_lmk(top):
     lmk = LMK(top.LMK04616, 'sys')
-    lmk = ifc_1412.setup_sys_lmk(lmk)
+    lmk = lmk_lib.setup_sys_lmk(lmk)
     # Give the system time to lock
     time.sleep(0.01)
     return lmk
@@ -64,8 +62,11 @@ def main():
     args = parse_args()
     top, sg = registers.open(args.addr)
 
-    # Before messing with the LMK ensure that CK and SG are in reset
-    sg.CONFIG._write_fields_rw(CK_RESET_N = 0, SG_RESET_N = 0)
+    # Before messing with the LMK ensure that CK and SG are in reset and the
+    # controller isn't actually running
+    sg.CONFIG._write_fields_rw(
+        CK_RESET_N = 0, SG_RESET_N = 0,
+        ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
 
     lmk = setup_sys_lmk(top)
 

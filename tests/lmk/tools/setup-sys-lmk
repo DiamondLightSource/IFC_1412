@@ -5,11 +5,9 @@ import numpy
 import time
 import argparse
 
-import ifc_lib
-from fpga_lib.driver import driver
-from fpga_lib.boards import ifc_1412
-
 import bind_lmk
+from ifc_lib import lmk_lib
+
 
 
 parser = argparse.ArgumentParser(description = 'Read/write raw registers')
@@ -27,12 +25,12 @@ args = parser.parse_args()
 
 
 if args.dummy:
-    lmk = bind_lmk.DummyLMK()
+    lmk = None
 else:
     top = bind_lmk.open(args.addr)
     lmk = bind_lmk.LMK(top, 'sys')
 
-lmk = ifc_1412.setup_sys_lmk(lmk, args.config)
+lmk = lmk_lib.setup_sys_lmk(lmk, args.config)
 
 if not args.dummy:
     # Give the system time to lock

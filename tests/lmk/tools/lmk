@@ -4,7 +4,7 @@ import os
 import time
 import argparse
 
-from fpga_lib.driver import driver
+import bind_lmk
 
 
 def to_int(s):
@@ -29,12 +29,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-here = os.path.dirname(__file__)
-register_defines = os.path.join(here, '../vhd', 'register_defines.in')
-
-raw_regs = driver.RawRegisters('ifc_1412-lmk', args.addr)
-regs = driver.Registers(raw_regs, register_defines)
-top = regs.TOP
+top = bind_lmk.open(args.addr)
 
 
 def write_lmk(sel, reg, value):
