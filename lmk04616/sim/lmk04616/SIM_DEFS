@@ -1,0 +1,3 @@
+BUILT += lmk04616_defines.vhd
+
+# vim: set filetype=make:

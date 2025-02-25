@@ -1,0 +1,21 @@
+# This register is only valid on the IFC_1412 and is used to talk to the
+# on-board LMK controllers
+:LMK04616        RW
+    # Data to write, returns data returned as part of last SPI transaction
+    # when read
+    .DATA           8
+    .ADDRESS        15
+    # Set to 0 to write, 1 to read
+    .R_WN
+    # This bit must be set to perform an SPI transaction, otherwise the SPI
+    # fields .DATA, .ADDRESS, .R_WN are all ignored
+    .ENABLE
+    # Selects which LMK to address: 0 => SYS LMK, 1 => ACQ LMK.  The selection
+    # also affects the .RESET, .SYNC, .STATUS fields
+    .SELECT
+    # Resets selected LMK
+    .RESET
+    # Drives SYNC bit on LMK
+    .SYNC
+    # Ignored on write, returns currently selected status bits
+    .STATUS         2
