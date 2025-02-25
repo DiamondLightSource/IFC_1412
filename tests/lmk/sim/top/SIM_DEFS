@@ -1,5 +1,15 @@
+LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
+
 BUILT += register_defines.vhd
 BUILT += version.vhd
 BUILT += top_entity.vhd
+BUILT += lmk04616_defines.vhd
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+
+VPATH += $(LMK04616_DIR)
+
+# Perhaps a hack for now
+export LMK04616_DIR
+export FILE_LIST = $(FPGA_TOP)/file-list
 
 # vim: set filetype=make:

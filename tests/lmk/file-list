@@ -1,0 +1,33 @@
+# List of files to include in project
+$common_vhd/support.vhd
+$common_vhd/util/memory_array.vhd
+$common_vhd/util/long_delay.vhd
+$common_vhd/util/fixed_delay_dram.vhd
+$common_vhd/util/fixed_delay.vhd
+$common_vhd/util/dlyreg.vhd
+$common_vhd/util/stretch_pulse.vhd
+$common_vhd/util/strobe_ack.vhd
+$common_vhd/util/sync_bit.vhd
+$common_vhd/util/cross_clocks.vhd
+$common_vhd/util/cross_clocks_read.vhd
+$common_vhd/misc/spi_master.vhd
+$common_vhd/register/register_defs.vhd
+$common_vhd/register/register_events.vhd
+$common_vhd/register/register_buffer.vhd
+$common_vhd/register/register_mux_strobe.vhd
+$common_vhd/register/register_mux.vhd
+$common_vhd/iodefs/ibufds_array.vhd
+$common_vhd/axi/axi_lite_slave.vhd
+built_dir/lmk04616_defines.vhd
+built_dir/register_defines.vhd
+built_dir/version.vhd
+$lmk04616_dir/lmk04616_io.vhd
+$lmk04616_dir/lmk04616_control.vhd
+$lmk04616_dir/lmk04616.vhd
+$vhd_dir/system_clocking.vhd
+$vhd_dir/frequency_counters.vhd
+$vhd_dir/top_registers.vhd
+built_dir/top_entity.vhd
+$vhd_dir/top.vhd
+#
+# vim: set filetype=tcl:

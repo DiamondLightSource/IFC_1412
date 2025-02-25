@@ -1,5 +1,11 @@
+LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
+
 BUILT += metadata.coe
 BUILT += register_defines.vhd
+BUILT += lmk04616_defines.vhd
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+
+VPATH += $(LMK04616_DIR)
 
 # Version file support
 BUILT += version.vhd
@@ -8,6 +14,11 @@ TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
 
-VHD_FILES += $(COMMON_VHD)
+# Load FPGA from explicit list of files
+VHD_FILES =
+VHD_FILE_LIST = $(FPGA_TOP)/file-list
+FILE_LIST_DEFS += LMK04616_DIR
+
+TOP_ENTITY = top
 
 # vim: set filetype=make:

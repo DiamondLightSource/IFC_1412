@@ -23,8 +23,8 @@ pad_LMK_SCS_L                   out
 pad_LMK_SDIO                    inout
 # Reset, sync, and status readbacks
 pad_LMK_RESET_L                 out
-pad_LMK_SYNC                    out
-pad_LMK_STATUS[0..1]            in
+pad_LMK_SYNC                    inout
+pad_LMK_STATUS[0..1]            inout
 
 # Some miscellaneous clocks to count
 # SG12_CK from CLKOUT9
