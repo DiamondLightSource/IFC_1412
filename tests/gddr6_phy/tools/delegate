@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+
+# Binds requested command to the IFC Python support by adding both this
+# directory and the IFC_1412 directory to PYTHONPATH and then calling the
+# requested command.
+#
+# The working directory must contain a file bind_ifc_1412.py which must define
+# an open() method returning a tuple (top-registers, gddr6-registers).
+
+COMMAND="$(basename "$0")"
+HERE="$(readlink -f "$(dirname "$0")")"
+TOP="$(readlink -f "$HERE"/../../..)"
+
+export PYTHONPATH="$HERE:$TOP"
+
+exec "$TOP"/tools/"$COMMAND" "$@"
