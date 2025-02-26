@@ -4,7 +4,7 @@ import argparse
 
 from ifc_lib.gddr6_lib import setup
 
-import registers
+import bind_ifc_1412
 
 
 def parse_args():
@@ -23,7 +23,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    _, sg = registers.open()
+    _, sg = bind_ifc_1412.open()
 
     if args.enable:
         setup.enable_ctrl(sg)

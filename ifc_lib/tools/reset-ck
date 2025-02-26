@@ -2,9 +2,9 @@
 
 import time
 
-import registers
+import bind_ifc_1412
 
-_, sg = registers.open()
+_, sg = bind_ifc_1412.open()
 
 assert sg.CONFIG._value != 0xFFFFFFFF, 'Probably need to rescan PCIe bus'
 

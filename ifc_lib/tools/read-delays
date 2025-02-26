@@ -5,7 +5,7 @@ import argparse
 import time
 import itertools
 
-import registers
+import bind_ifc_1412
 from ifc_lib.gddr6_lib.delays import \
     read_idelay, read_odelay, read_obitslip, read_ibitslip
 from ifc_lib.gddr6_lib import setup
@@ -19,7 +19,7 @@ parser.add_argument('interval', nargs = '?', type = float)
 args = parser.parse_args()
 
 
-_, sg = registers.open()
+_, sg = bind_ifc_1412.open()
 setup.check_ck_ready(sg)
 
 

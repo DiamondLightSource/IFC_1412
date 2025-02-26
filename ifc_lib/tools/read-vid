@@ -4,7 +4,7 @@
 
 import argparse
 
-import registers
+import bind_ifc_1412
 
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib import exchange
@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description = 'Read Vendor IDs etc')
 parser.add_argument('-q', '--quiet', action = 'store_true')
 args = parser.parse_args()
 
-_, sg = registers.open()
+_, sg = bind_ifc_1412.open()
 setup.check_sg_ready(sg)
 
 

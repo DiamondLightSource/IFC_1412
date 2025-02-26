@@ -4,14 +4,14 @@
 
 import time
 
-import registers
+import bind_ifc_1412
 
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 from ifc_lib.gddr6_lib import setup
 
 
-_, sg = registers.open()
+_, sg = bind_ifc_1412.open()
 setup.check_ck_ready(sg)
 
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'

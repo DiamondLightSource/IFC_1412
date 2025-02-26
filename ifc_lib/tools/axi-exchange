@@ -4,14 +4,14 @@ import sys
 import argparse
 import numpy
 
-import registers
+import bind_ifc_1412
 
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import send_command
 from ifc_lib.gddr6_lib.decode import DecodeCA
 from ifc_lib.gddr6_lib import setup
 
-top, sg = registers.open()
+top, sg = bind_ifc_1412.open()
 axi = top.AXI
 
 setup.check_ctrl_ready(sg)

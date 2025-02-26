@@ -2,13 +2,13 @@
 
 # Initialise MR registers after SG reset
 
-import registers
+import bind_ifc_1412
 
 from ifc_lib.gddr6_lib.setup import check_sg_ready
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 
-_, sg = registers.open()
+_, sg = bind_ifc_1412.open()
 check_sg_ready(sg)
 
 exchange = _Exchange(sg)

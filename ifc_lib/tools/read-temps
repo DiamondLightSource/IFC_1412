@@ -8,7 +8,7 @@ import sys
 
 from ifc_lib.gddr6_lib import setup
 
-import registers
+import bind_ifc_1412
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Read SGRAM temperatures')
@@ -29,7 +29,7 @@ def parse_args():
 
 args = parse_args()
 
-_, sg = registers.open(args.addr)
+_, sg = bind_ifc_1412.open(args.addr)
 setup.check_ctrl_ready(sg)
 
 

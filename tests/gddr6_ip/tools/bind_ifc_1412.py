@@ -6,7 +6,6 @@ import numpy
 from ifc_lib import defs_path
 from fpga_lib.driver import driver
 
-
 class Registers(driver.RawRegisters):
     NAME = 'ifc_1412-gddr6'
     REGS_RANGE = numpy.s_[:1024]
@@ -17,7 +16,6 @@ class Registers(driver.RawRegisters):
 
         register_defines = defs_path.register_defines(__file__)
         gddr6_defines = defs_path.gddr6_register_defines()
-
         self.make_registers('SYS', self.REGS_RANGE, register_defines)
         self.make_registers('GDDR6', self.SG_RANGE, gddr6_defines)
 

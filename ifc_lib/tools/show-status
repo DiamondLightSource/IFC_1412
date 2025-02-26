@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import registers
+import bind_ifc_1412
 
-regs, sg = registers.open()
+regs, sg = bind_ifc_1412.open()
 
 
 COLOUR_OK = '1;32'
