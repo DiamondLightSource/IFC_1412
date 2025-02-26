@@ -1,5 +1,3 @@
-LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
-
 BUILT += register_defines.vhd
 BUILT += version.vhd
 BUILT += top_entity.vhd

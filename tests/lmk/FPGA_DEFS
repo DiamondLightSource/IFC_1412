@@ -1,5 +1,3 @@
-LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
-
 BUILT += metadata.coe
 BUILT += register_defines.vhd
 BUILT += lmk04616_defines.vhd

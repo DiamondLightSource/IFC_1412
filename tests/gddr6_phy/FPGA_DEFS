@@ -12,9 +12,6 @@ TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
 
-# Path to gddr6 files
-GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
-
 VPATH += $(GDDR6_DIR)
 
 # This allows the GDDR6 register range to be included as part of the
