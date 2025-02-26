@@ -16,7 +16,9 @@ class Registers(driver.RawRegisters):
 
         register_defines = defs_path.register_defines(__file__)
         gddr6_defines = defs_path.gddr6_register_defines()
-        self.make_registers('SYS', self.REGS_RANGE, register_defines)
+        lmk04616_defines = defs_path.lmk04616_defines()
+        self.make_registers('SYS', self.REGS_RANGE,
+            lmk04616_defines, register_defines)
         self.make_registers('GDDR6', self.SG_RANGE, gddr6_defines)
 
 def open(addr = 0):

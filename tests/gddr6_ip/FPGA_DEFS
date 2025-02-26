@@ -1,11 +1,9 @@
 GDDR6_IP = $(BUILD_TOP)/gddr6/ip
 IP_DIRS += $(GDDR6_IP)
 
-VHD_FILE_LIST = $(FPGA_TOP)/file-list
-FILE_LIST_DEFS += GDDR6_IP
-
 BUILT += metadata.coe
 BUILT += register_defines.vhd
+BUILT += lmk04616_defines.vhd
 
 # Version file support
 BUILT += version.vhd
@@ -13,6 +11,15 @@ BUILT += make_version.tcl
 TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
+
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+
+VPATH += $(LMK04616_DIR)
+
+VHD_FILES =
+VHD_FILE_LIST = $(FPGA_TOP)/file-list
+FILE_LIST_DEFS += GDDR6_IP
+FILE_LIST_DEFS += LMK04616_DIR
 
 CONSTR_FILES += $(wildcard $(BOARD_DIR)/*.xdc)
 
