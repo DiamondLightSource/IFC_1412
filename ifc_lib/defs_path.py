@@ -49,3 +49,7 @@ def register_defines(calling_file):
 # Path to GDDR6 register defs file
 def gddr6_register_defines():
     return os.path.join(top_dir(), 'gddr6/vhd/gddr6_register_defines.in')
+
+# Path to LMK04616 register defs file
+def lmk04616_defines():
+    return os.path.join(top_dir(), 'lmk04616/vhd/lmk04616_defines.in')

@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+HERE="$(readlink -f "$(dirname "$0")")"
+TOP="$(readlink -f "$HERE"/../../..)"
+
+export PYTHONPATH="$HERE:$TOP"
+
+exec "$TOP"/ifc_lib/tools/setup-lmk "$@"

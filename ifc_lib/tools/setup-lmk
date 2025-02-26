@@ -4,10 +4,10 @@ import os
 import time
 import argparse
 
-from ifc_lib import lmk_lib
-from fpga_lib.devices import LMK04616
+import bind_ifc_1412
 
-import registers
+from ifc_lib import lmk04616
+from fpga_lib.devices import LMK04616
 
 
 def parse_args():
@@ -18,36 +18,9 @@ def parse_args():
     return parser.parse_args()
 
 
-# read/write/reset bindings for LMK
-class LMK:
-    # Call with select = 'sys' for SYS LMK, 'acq' for ACQ LMK
-    def __init__(self, lmk, select):
-        self.__lmk = lmk
-        self.__select = { 'acq' : 1, 'sys' : 0 }[select]
-
-    def write(self, reg, value):
-        self.__lmk._write_fields_wo(SELECT = self.__select)
-        self.__lmk._write_fields_wo(
-            SELECT = self.__select,
-            ADDRESS = reg, R_WN = 0, DATA = value, ENABLE = 1)
-
-    def read(self, reg):
-        self.__lmk._write_fields_wo(SELECT = self.__select)
-        self.__lmk._write_fields_wo(
-            SELECT = self.__select,
-            ADDRESS = reg, R_WN = 1, ENABLE = 1)
-        return self.__lmk.DATA
-
-    def reset(self, duration = 0.01):
-        self.__lmk._write_fields_wo(SELECT = self.__select)
-        self.__lmk._write_fields_wo(SELECT = self.__select, RESET = 1)
-        time.sleep(duration)
-        self.__lmk._write_fields_wo(SELECT = self.__select, RESET = 0)
-
-
-def setup_sys_lmk(top):
-    lmk = LMK(top.LMK04616, 'sys')
-    lmk = lmk_lib.setup_sys_lmk(lmk)
+def setup_sys_lmk(lmk_reg, select):
+    raw_lmk = lmk04616.RawLMK(lmk_reg, select)
+    lmk = lmk04616.setup_sys_lmk(raw_lmk)
     # Give the system time to lock
     time.sleep(0.01)
     return lmk
@@ -60,15 +33,19 @@ def report_status(top, lmk):
 
 def main():
     args = parse_args()
-    top, sg = registers.open(args.addr)
+    top, sg = bind_ifc_1412.open(args.addr)
 
-    # Before messing with the LMK ensure that CK and SG are in reset and the
-    # controller isn't actually running
-    sg.CONFIG._write_fields_rw(
-        CK_RESET_N = 0, SG_RESET_N = 0,
-        ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
+    if sg:
+        # Before messing with the LMK ensure that CK and SG are in reset and the
+        # controller isn't actually running
+        sg.CONFIG._write_fields_rw(
+            CK_RESET_N = 0, SG_RESET_N = 0,
+            ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
 
-    lmk = setup_sys_lmk(top)
+#     lmk = setup_sys_lmk(top.LMK04616, args.select)
+
+    # At the moment only sys is suppported
+    lmk = setup_sys_lmk(top.LMK04616, 'sys')
 
     # Wait for lock before enabling ethernet and reporting status
     time.sleep(0.1)

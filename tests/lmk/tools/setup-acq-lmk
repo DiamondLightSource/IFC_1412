@@ -43,8 +43,8 @@ import numpy
 import time
 import argparse
 
-import bind_lmk
-from ifc_lib import lmk_lib
+import bind_ifc_1412
+from ifc_lib import lmk04616
 
 
 parser = argparse.ArgumentParser(description = 'Read/write raw registers')
@@ -63,22 +63,22 @@ args = parser.parse_args()
 if args.dummy:
     lmk = None
 else:
-    top = bind_lmk.open(args.addr)
-    lmk = bind_lmk.LMK(top, 'acq')
+    top, _ = bind_ifc_1412.open(args.addr)
+    lmk = lmk04616.RawLMK(top.LMK04616, 'acq')
 
 
-class Pll1(lmk_lib.Pll1Config):
+class Pll1(lmk04616.Pll1Config):
     r = 300
     n = 100
 
-class Output(lmk_lib.ClockOut):
+class Output(lmk04616.ClockOut):
     div = 1
     drv0 = 'HSDS8mA'
     slew = 0
 
 OUTPUTS = [Output] + 7 * [None]
 
-class AcqConfig(lmk_lib.Config):
+class AcqConfig(lmk04616.Config):
     #   CLKIN0  <= Front panel connector
     #   CLKIN1  <= AMC TCLKA
     #   CLKIN2  <= AMC TCLKC
@@ -89,4 +89,4 @@ class AcqConfig(lmk_lib.Config):
 #     pll1 = Pll1
     outputs = OUTPUTS
 
-lmk = lmk_lib.setup_lmk(lmk, AcqConfig)
+lmk = lmk04616.setup_lmk(lmk, AcqConfig)

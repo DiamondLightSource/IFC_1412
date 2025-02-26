@@ -5,14 +5,20 @@
 import argparse
 import re
 
-import bind_lmk
-from fpga_lib.devices import LMK04616
+import bind_ifc_1412
+from ifc_lib.lmk04616 import bind_lmk
 
 
 def parse_args():
     FORMAT_OPTIONS = ('names', 'raw', 'ti')
 
     parser = argparse.ArgumentParser(description = 'Read and save LMK state')
+    parser.add_argument(
+        '-a', dest = 'addr', default = 0,
+        help = 'Hardware address')
+    parser.add_argument(
+        '-s', dest = 'select', default = 'sys', choices = ['sys', 'acq'],
+        help = 'Select LMK to connect to')
     parser.add_argument(
         '-i', dest = 'input_format', default = 'names',
         choices = FORMAT_OPTIONS,
@@ -104,8 +110,9 @@ def main():
     if args.load_file:
         lmk = load_file(input_options[args.input_format], args.load_file)
     else:
-        top = bind_lmk.open()
-        lmk = bind_lmk.bind(top, 'sys')
+        top, _ = bind_ifc_1412.open(args.addr)
+        lmk = bind_lmk.LMK04616(top.LMK04616, args.select)
+        lmk.enable_write()
     output_options[args.output_format](lmk)
 
 main()

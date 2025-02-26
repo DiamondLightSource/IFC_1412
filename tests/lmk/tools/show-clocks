@@ -4,7 +4,7 @@ import time
 import sys
 import argparse
 
-import bind_lmk
+import bind_ifc_1412
 
 
 parser = argparse.ArgumentParser(description = 'Read/write raw registers')
@@ -20,7 +20,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-top = bind_lmk.open(args.addr)
+top, _ = bind_ifc_1412.open(args.addr)
 
 # See test clock input assignments in top.vhd for the clock assignments
 freq_names = [
