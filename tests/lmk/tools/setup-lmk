@@ -5,4 +5,4 @@ TOP="$(readlink -f "$HERE"/../../..)"
 
 export PYTHONPATH="$HERE:$TOP"
 
-exec "$TOP"/ifc_lib/tools/setup-lmk "$@"
+exec "$TOP"/tools/setup-lmk "$@"
