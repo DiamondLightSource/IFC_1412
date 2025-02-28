@@ -154,10 +154,6 @@ def get_ca_commands(verbose, count = 64):
                     show_channels(data), '-',
                     show_bytes(edc), '', show_bytes(dbi))
 
-def setup_dbi(capture_dbi):
-    sg.CONFIG._write_fields_rw(
-        DBI_TRAINING = 0,
-        CAPTURE_EDC_OUT = int(not capture_dbi))
 
 def do_axi_exchange(do_write, do_read, address = 0, read_count = 1):
     old_stats = get_axi_stats()
@@ -178,8 +174,9 @@ def show_fields(register):
 
 args = parse_args()
 
-setup_dbi(args.capture_dbi)
-sg.CONFIG.EDC_SELECT = 0
+sg.CONFIG._write_fields_rw(
+    EDC_SELECT = 0,
+    CAPTURE_EDC_OUT = int(not args.capture_dbi))
 
 if args.reset_stats:
     axi.COMMAND.RESET_STATS = 1
