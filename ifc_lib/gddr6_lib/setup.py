@@ -29,7 +29,8 @@ def enable_ctrl(sg):
         ENABLE_DBI = 1,
         ENABLE_CONTROL = 1,
         ENABLE_REFRESH = 1,
-        ENABLE_AXI = 1)
+        ENABLE_AXI = 1,
+        DBI_TRAINING = 0)
 
 def set_ctrl_priority(sg, round_robin, write_priority):
     sg.CONFIG._write_fields_rw(
