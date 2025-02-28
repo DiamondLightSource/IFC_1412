@@ -8,7 +8,7 @@
 # an open() method returning a tuple (top-registers, gddr6-registers).
 
 COMMAND="$(basename "$0")"
-HERE="$(readlink -f "$(dirname "$0")")"
+HERE="$(dirname "$(readlink -f "$0")")"
 TOP="$(readlink -f "$HERE"/../../..)"
 
 export PYTHONPATH="$HERE:$TOP"
