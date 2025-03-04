@@ -256,7 +256,7 @@ def setup_lmk(_lmk, config : Config):
         _lmk.reset()
     time.sleep(0.15)
 
-    # Create the wrapper register
+    # Create the wrapper register interface
     lmk = LMK04616(_lmk)
 
     configure_lmk(lmk, config)

@@ -106,7 +106,7 @@ CONFIGS = {
     '300' : SysConfig300,
 }
 
-def setup_sys_lmk(_lmk, config = '250'):
+def setup_sys_lmk(lmk, config = '250'):
     if isinstance(config, str):
         config = CONFIGS[config]
-    return setup_lmk(_lmk, config)
+    return setup_lmk(lmk, config)
