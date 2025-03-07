@@ -41,7 +41,9 @@ begin
     -- 250 MHz clock
     clk <= not clk after 2 ns;
 
-    lmk : entity work.lmk04616 port map (
+    lmk : entity work.lmk04616 generic map (
+        STATUS_POLL_BITS => 6
+    ) port map (
         clk_i => clk,
 
         -- Register interface
@@ -73,6 +75,8 @@ begin
 
 
     process
+        variable enable_status : std_ulogic := '0';
+
         procedure write_reg(value : reg_data_t) is
         begin
             write_reg(clk, write_data, write_strobe, write_ack, value);
@@ -81,6 +85,14 @@ begin
         procedure read_reg is
         begin
             read_reg(clk, read_data, read_strobe, read_ack);
+        end;
+
+        procedure set_status(enable : std_ulogic) is
+        begin
+            enable_status := enable;
+            write_reg((
+                LMK04616_ENABLE_STATUS_BIT => enable_status,
+                others => '0'));
         end;
 
         procedure do_spi(
@@ -93,6 +105,7 @@ begin
                 LMK04616_R_WN_BIT => r_wn,
                 LMK04616_SELECT_BIT => sel,
                 LMK04616_ENABLE_BIT => '1',
+                LMK04616_ENABLE_STATUS_BIT => enable_status,
                 others => '0'));
         end;
 
@@ -117,7 +130,8 @@ begin
         write_strobe <= '0';
         read_strobe <= '0';
 
-        clk_wait;
+        clk_wait(5);
+        set_status('1');
         write_spi('0', 15X"1234", X"34");
         write_spi('1', 15X"1234", X"12");
         read_spi('1', 15X"34");

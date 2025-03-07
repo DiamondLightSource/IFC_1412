@@ -9,6 +9,10 @@ use ieee.numeric_std.all;
 use work.register_defs.all;
 
 entity lmk04616 is
+    generic (
+        -- log2 of status switching interval in ticks
+        STATUS_POLL_BITS : natural := 18    -- 1 ms at 250MHz
+    );
     port (
         clk_i : in std_ulogic;
 
@@ -20,6 +24,10 @@ entity lmk04616 is
         read_data_o : out reg_data_t;
         read_ack_o : out std_ulogic;
 
+        -- Live readback of status
+        sys_status_o : out std_ulogic_vector(0 to 1);
+        acq_status_o : out std_ulogic_vector(0 to 1);
+
         -- IO pins
         pad_LMK_CTL_SEL_o : out std_ulogic;
         pad_LMK_SCL_o : out std_ulogic;
@@ -27,7 +35,7 @@ entity lmk04616 is
         pad_LMK_SDIO_io : inout std_logic;
         pad_LMK_RESET_L_o : out std_ulogic;
         pad_LMK_SYNC_io : inout std_logic;
-        pad_LMK_STATUS_io : inout std_logic_vector(1 downto 0)
+        pad_LMK_STATUS_io : inout std_logic_vector(0 to 1)
     );
 end;
 
@@ -42,7 +50,7 @@ architecture arch of lmk04616 is
 
     signal lmk_reset_l : std_ulogic;
     signal lmk_sync : std_ulogic;
-    signal lmk_status : std_ulogic_vector(1 downto 0);
+    signal lmk_status : std_ulogic_vector(0 to 1);
 
     signal spi_start : std_ulogic;
     signal spi_read_write_n : std_ulogic;
@@ -50,6 +58,9 @@ architecture arch of lmk04616 is
     signal spi_data_mosi : std_ulogic_vector(7 downto 0);
     signal spi_data_miso : std_ulogic_vector(7 downto 0);
     signal spi_busy : std_ulogic;
+
+    signal status_sel : std_ulogic;
+    signal status_idle : std_ulogic;
 
 begin
     io : entity work.lmk04616_io port map (
@@ -98,6 +109,20 @@ begin
     );
 
 
+    status : entity work.lmk04616_status generic map (
+        STATUS_POLL_BITS => STATUS_POLL_BITS
+    ) port map (
+        clk_i => clk_i,
+
+        ctrl_sel_o => status_sel,
+        ctrl_idle_i => status_idle,
+        lmk_sel_i => lmk_ctl_sel,
+        lmk_status_i => lmk_status,
+        sys_status_o => sys_status_o,
+        acq_status_o => acq_status_o
+    );
+
+
     control : entity work.lmk04616_control port map (
         clk_i => clk_i,
 
@@ -109,10 +134,12 @@ begin
         read_ack_o => read_ack_o,
 
         lmk_ctl_sel_o => lmk_ctl_sel,
-
         lmk_reset_l_o => lmk_reset_l,
         lmk_sync_o => lmk_sync,
         lmk_status_i => lmk_status,
+
+        status_sel_i => status_sel,
+        status_idle_o => status_idle,
 
         spi_read_write_n_o => spi_read_write_n,
         spi_address_o => spi_address,
@@ -122,5 +149,3 @@ begin
         spi_data_o => spi_data_mosi
     );
 end;
-
--- vim: set filetype=vhdl:

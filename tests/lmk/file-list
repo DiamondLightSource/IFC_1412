@@ -23,6 +23,7 @@ built_dir/register_defines.vhd
 built_dir/version.vhd
 $lmk04616_dir/lmk04616_io.vhd
 $lmk04616_dir/lmk04616_control.vhd
+$lmk04616_dir/lmk04616_status.vhd
 $lmk04616_dir/lmk04616.vhd
 $vhd_dir/system_clocking.vhd
 $vhd_dir/frequency_counters.vhd

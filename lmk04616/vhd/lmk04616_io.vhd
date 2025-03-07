@@ -13,7 +13,7 @@ entity lmk04616_io is
         pad_LMK_SDIO_io : inout std_logic;
         pad_LMK_RESET_L_o : out std_ulogic;
         pad_LMK_SYNC_io : inout std_logic;
-        pad_LMK_STATUS_io : inout std_logic_vector(1 downto 0);
+        pad_LMK_STATUS_io : inout std_logic_vector(0 to 1);
 
         lmk_ctl_sel_i : in std_ulogic;      -- LMK select (0 => SYS, 1 => ACQ)
 
@@ -27,7 +27,7 @@ entity lmk04616_io is
         -- Other controls
         lmk_reset_l_i : in std_ulogic;
         lmk_sync_i : in std_ulogic;
-        lmk_status_o : out std_ulogic_vector(1 downto 0)
+        lmk_status_o : out std_ulogic_vector(0 to 1)
     );
 end;
 
@@ -45,11 +45,10 @@ begin
     pad_LMK_SCS_L_o <= lmk_scs_l_i;
     pad_LMK_RESET_L_o <= lmk_reset_l_i;
     pad_LMK_SYNC_io <= lmk_sync_i;
+    -- Should probably sync this with an IDDR
     lmk_status_o <= pad_LMK_STATUS_io;
 
     -- The SDIO line is shared and needs a tristate driver
     pad_LMK_SDIO_io <= lmk_mosi_i when lmk_moen_i else 'Z';
     lmk_miso_o <= to_X01(pad_LMK_SDIO_io);
 end;
-
--- vim: set filetype=vhdl:

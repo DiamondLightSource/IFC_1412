@@ -11,11 +11,18 @@
     # fields .DATA, .ADDRESS, .R_WN are all ignored
     .ENABLE
     # Selects which LMK to address: 0 => SYS LMK, 1 => ACQ LMK.  The selection
-    # also affects the .RESET, .SYNC, .STATUS fields
+    # also affects the .RESET, .SYNC, .STATUS fields.  Note that while switching
+    # both RESET and SYNC are effectively set to 0, and if .ENABLE_STATUS is set
+    # this may happen on any write!
     .SELECT
     # Resets selected LMK
     .RESET
     # Drives SYNC bit on LMK
     .SYNC
-    # Ignored on write, returns currently selected status bits
+    # Ignored on write, returns currently selected status bits.  Note that if
+    # .ENABLE_STATUS is set the status returned here will be unpredictable.
     .STATUS         2
+    # If set the automatic polling of status flags will be enabled.  Note that
+    # .RESET and .SYNC must be set to 0 before enabling this, and these fields
+    # must not be set while this is enabled.
+    .ENABLE_STATUS
