@@ -1,4 +1,26 @@
 -- Top level control for gddr6 setup
+--
+-- Entity structure:
+--
+--  gddr6_setup
+--      sync_bit                            Synchronise clk_clk_ok
+--      gddr6_setup_control                 Control register interface
+--          register_file_rw
+--          register_file_cc
+--          register_status
+--          cross_clocks_read
+--          sync_bit
+--          edge_detect
+--      gddr6_setup_delay                   Control over delays
+--          register_cc
+--      gddr6_setup_exchange                Programmed CA+DQ exchange
+--          register_command                Command register interface
+--          register_read_block
+--          sync_bit
+--          edge_detect
+--          gddr6_setup_buffers             Buffers for CA and DQ exchange
+--              memory_array_dual
+--              cross_clocks_write
 
 library ieee;
 use ieee.std_logic_1164.all;

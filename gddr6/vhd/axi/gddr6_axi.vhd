@@ -30,6 +30,7 @@
 --              async_fifo_address
 --              memory_array_dual
 --          gddr6_axi_write_response        Process B requests on write complete
+--      gddr6_axi_stats                     Assemble AXI statistics
 
 library ieee;
 use ieee.std_logic_1164.all;

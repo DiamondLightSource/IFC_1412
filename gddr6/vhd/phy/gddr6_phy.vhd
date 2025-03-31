@@ -5,14 +5,14 @@
 --  gddr6_phy
 --      gddr6_phy_io                Map pads to IO buffers
 --          ibufds_array                Arrays of IBUFDS, IBUF, OBUF, IOBUF
---          ibuf_array                  respectively.  All IO buffers explicitly
---          obuf_array                  instantiated
---          iobuf_array
+--          obuf_array                  respectively.  All IO buffers explicitly
+--          iobuf_array                 instantiated
 --      gddr6_phy_clocking          Top level clocking and control
 --          BUFG
---          MMCME3_BASE
+--          MMCME3_ADV
 --          PLLE3_BASE
 --          BUFGCE
+--          cross_clocks_write
 --          sync_bit
 --      gddr_phy_reset              Manage bitslice reset state machine
 --          sync_bit
@@ -29,9 +29,8 @@
 --          gddr6_phy_bitslip           WCK data phase correction
 --          gddr6_phy_dbi               DBI computation and capture
 --          gddr6_phy_crc               CRC calculation on data on the wire
---              gddr6_phy_crc_core          CRC calculation
---              short_delay                 Align read and write CRC calculation
 --      gddr6_phy_delay_control     Control of delay interface
+--          strobe_ack
 
 library ieee;
 use ieee.std_logic_1164.all;

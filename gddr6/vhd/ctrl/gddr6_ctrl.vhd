@@ -15,6 +15,9 @@
 --          gddr6_ctrl_admin            Generate bank administration commands
 --      gddr6_ctrl_data             Read and write data handling
 --          fixed_delay
+--          stretch_pulse
+--      gddr6_ctrl_temps            Read temperatures during refresh
+--          fixed_delay
 
 library ieee;
 use ieee.std_logic_1164.all;
