@@ -862,6 +862,9 @@ pad_MGT232_REFCLK_N                  F9
 
 # SGRAM (banks 24, 25) VDD_SGRAM - - - - - - - - - - - - - - - - - - - - - - - -
 
+pad_SG1_RESET_N                    AT32    HSUL_12_DCI
+pad_SG2_RESET_N                    AJ39    HSUL_12_DCI
+
 pad_SG12_CK_P                      AL30    DIFF_POD12_DCI
 pad_SG12_CK_N                      AM30    DIFF_POD12_DCI
 pad_SG1_WCK_P                      AN33    DIFF_POD12_DCI
@@ -923,7 +926,6 @@ pad_SG1_EDC_A[0]                   AU32    POD12_DCI
 pad_SG1_EDC_A[1]                   AR32    POD12_DCI
 pad_SG1_EDC_B[0]                   AJ33    POD12_DCI
 pad_SG1_EDC_B[1]                   AF30    POD12_DCI
-pad_SG1_RESET_N                    AT32    POD12_DCI
 pad_SG2_CA3_A                      AW36    POD12_DCI
 pad_SG2_CA3_B                      AM34    POD12_DCI
 pad_SG2_DBI_N_A[0]                 AV38    POD12_DCI
@@ -966,4 +968,3 @@ pad_SG2_EDC_A[0]                   AR37    POD12_DCI
 pad_SG2_EDC_A[1]                   AW34    POD12_DCI
 pad_SG2_EDC_B[0]                   AM39    POD12_DCI
 pad_SG2_EDC_B[1]                   AM36    POD12_DCI
-pad_SG2_RESET_N                    AJ39    POD12_DCI
