@@ -25,9 +25,10 @@ $vhd_dir/axi_address.vhd
 $vhd_dir/axi_data.vhd
 $vhd_dir/axi_master_wrapper.vhd
 $vhd_dir/axi_stats.vhd
-$lmk04616_dir/lmk04616.vhd
-$lmk04616_dir/lmk04616_control.vhd
 $lmk04616_dir/lmk04616_io.vhd
+$lmk04616_dir/lmk04616_control.vhd
+$lmk04616_dir/lmk04616_status.vhd
+$lmk04616_dir/lmk04616.vhd
 $vhd_dir/system_clocking.vhd
 $vhd_dir/test_gddr6_phy.vhd
 $vhd_dir/top.vhd
