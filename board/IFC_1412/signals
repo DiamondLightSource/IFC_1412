@@ -35,6 +35,7 @@ pad_SDIO_CD                     in
 # also driven from Bank 0, from pins D00_MOSI_0, D01_DIN_0, D02_0, D03_0
 # respectively.
 #   See sheet 5 for details
+pad_FPGA_CFG_CLK                out
 pad_FPGA_CFG_FCS2_B             inout
 pad_FPGA_CFG_FCS_B              inout
 pad_FPGA_CFG_D[7..0]            inout
