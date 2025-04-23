@@ -19,12 +19,12 @@ pad_FPGA_UART_TX                out
 # connected anywhere else
 pad_USER_SPI_CS_L               out
 pad_USER_SPI_SCK                out
-pad_USER_SPI_D[0..3]            inout
+pad_USER_SPI_D[3..0]            inout
 
 # Control interface for on-board SD card (J102)
 pad_SDIO_CLK                    out
 pad_SDIO_CMD                    out
-pad_SDIO_DATA[0..3]             inout
+pad_SDIO_DATA[3..0]             inout
 pad_SDIO_DIR_0                  out
 pad_SDIO_DIR_123                out
 pad_SDIO_DIR_CMD                out
@@ -33,12 +33,10 @@ pad_SDIO_CD                     in
 # SPI interface to configuration FLASH (U101, U102, U103, U104).  Clocked by the
 # FPGA configuration clock, CCLK_0 from Bank 0.  Configuration data bits are
 # also driven from Bank 0, from pins D00_MOSI_0, D01_DIN_0, D02_0, D03_0
-# respectively.
+# respectively, but these pins must be accessed via the STARTUPE3 primitive.
 #   See sheet 5 for details
-pad_FPGA_CFG_CLK                out
 pad_FPGA_CFG_FCS2_B             inout
-pad_FPGA_CFG_FCS_B              inout
-pad_FPGA_CFG_D[7..0]            inout
+pad_FPGA_CFG_D[7..4]            inout
 
 # Front panel LEDs LD102 and LD103.  2A is green, 2B is red.
 pad_FP_LED2A_K                  out

@@ -1,13 +1,3 @@
-# Bank 0   2.5V  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-pad_FPGA_CFG_CLK                   AC11     LVCMOS25    PULLUP
-pad_FPGA_CFG_FCS_B                  AB9     LVCMOS25    PULLUP
-pad_FPGA_CFG_D[3]                   AD9     LVCMOS25
-pad_FPGA_CFG_D[2]                   AC9     LVCMOS25
-pad_FPGA_CFG_D[1]                  AD10     LVCMOS25
-pad_FPGA_CFG_D[0]                  AE11     LVCMOS25
-
-
 # Bank 44  VADJ1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 pad_SDIO_DIR_CMD                   AE23     LVCMOS18
