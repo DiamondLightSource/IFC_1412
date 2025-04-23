@@ -15,61 +15,95 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description = 'Configure IFC LMK for system or acquisition clocks')
     parser.add_argument(
-        '-a', dest = 'addr', default = 0,
+        '-a', '--addr', default = 0,
         help = 'Set physical address of card.  If not specified then card 0')
     parser.add_argument(
-        '-f', dest = 'force', action = 'store_true',
-        help = 'Override SG check for SYS LMK')
+        '-v', '--verbose', action = 'store_true',
+        help = 'Report status on completion')
     parser.add_argument(
-        'select', default = 'sys', choices = ['sys', 'acq'], nargs = '?',
-        help = 'Select SYS or ACQ LMK to configure')
+        '-t', '--test', action = 'store_true',
+        help = 'Test mode, do not actually modify hardware')
 
-    return parser.parse_args()
+    subparsers = parser.add_subparsers(
+        dest = 'select',
+        help = '''\
+Select SYS or ACQ LMK to configure.
+Use -h after selection for target specific help
+''')
+
+    sys_parser = subparsers.add_parser('sys',
+        description = 'SYS clocks for GDDR6 and reference clocks')
+    sys_parser.add_argument(
+        '-f', '--force', action = 'store_true',
+        help = 'Override SG check for SYS LMK')
+    sys_parser.add_argument(
+        '-o', '--overclock', action = 'store_true',
+        help = 'Enable 300MHz overclock of SGRAM')
+
+    acq_parser = subparsers.add_parser('acq',
+        description = 'ACQ clocks for data acquisition clocks')
+
+    args = parser.parse_args()
+    if not args.select:
+        parser.error('Must specify sys or acq to configure')
+    return args
 
 
+def get_sys_args(args):
+    return {}
+
+def get_acq_args(args):
+    return {}
+
+def report_sys_status(lmk):
+    print('SYS LMK Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
+
+def report_acq_status(lmk):
+    print(
+        'VCXO', 'locked' if lmk.PLL1_LCK_DET else 'unlocked', ',',
+        'VCO',  'locked' if lmk.PLL2_LCK_DET else 'unlocked')
 
 _setup_command = {
-    'sys' : lmk04616.setup_sys_lmk,
-    'acq' : lmk04616.setup_acq_lmk,
+    'sys' : (get_sys_args, lmk04616.setup_sys_lmk, report_sys_status),
+    'acq' : (get_acq_args, lmk04616.setup_acq_lmk, report_acq_status),
 }
 
 
-def setup_lmk(lmk_reg, select):
-    setup = _setup_command[select]
-    raw_lmk = lmk04616.RawLMK(lmk_reg, select)
-    lmk = setup(raw_lmk)
-    return lmk
-
-
-def report_status(top, lmk):
-    print('SYS LMK Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
-
-
-
-def main():
-    args = parse_args()
-
-    top, sg = bind_ifc_1412.open(args.addr)
-
-    if sg and args.select == 'sys' and sg.CONFIG.ENABLE_CONTROL:
-        # The memory controller is active and we're about to reconfigure the SYS
-        # LMK.  Try not to do this by accident!
+def check_sg_active(sg, args):
+    if sg.CONFIG.ENABLE_CONTROL:
+        # The memory controller is active and we're about to reconfigure the
+        # SYS LMK.  Try not to do this by accident!
         if args.force:
-            # Before messing with the LMK ensure that CK and SG are in reset and
-            # the controller isn't actually running
+            # Before messing with the LMK ensure that CK and SG are in reset
+            # and the controller isn't actually running
             print('Resetting SGRAM first', file = sys.stderr)
             sg.CONFIG._write_fields_rw(
                 CK_RESET_N = 0, SG_RESET_N = 0,
                 ENABLE_CONTROL = 0, ENABLE_REFRESH = 0, ENABLE_AXI = 0)
         else:
-            print('SGRAM is active', file = sys.stderr)
+            print('SGRAM is active, use --force to override', file = sys.stderr)
             sys.exit(1)
 
-    lmk = setup_lmk(top.LMK04616, args.select)
 
-    # Wait for lock before enabling ethernet and reporting status
-    time.sleep(0.1)
-    report_status(top, lmk)
+def main():
+    args = parse_args()
 
+    # In test mode use a dummy configuration, otherwise open the hardware
+    if args.test:
+        sg = None
+        lmk = None
+    else:
+        top, sg = bind_ifc_1412.open(args.addr)
+        lmk = lmk04616.RawLMK(top.LMK04616, args.select)
+
+    # Check we don't accidentially reset the SGRAM!
+    if args.select == 'sys' and sg:
+        check_sg_active(sg, args)
+
+    # Dispatch the appropriate setup
+    get_args, setup, report = _setup_command[args.select]
+    lmk = setup(lmk, **get_args(args))
+    if not args.test and args.verbose:
+        report(lmk)
 
 main()

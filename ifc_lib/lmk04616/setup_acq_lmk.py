@@ -60,12 +60,12 @@ class AcqConfig(Config):
     #   CLKIN1  <= AMC TCLKA
     #   CLKIN2  <= AMC TCLKC
     #   CLKIN3  <= FMC clock multiplexer
-    clkin = 1
+    clkin = 0
+#     clkin = 1
 #     clkin = None
 #     oscin = True
 #     pll1 = Pll1
     outputs = OUTPUTS
 
 def setup_acq_lmk(lmk):
-    print('calling setup acq')
     return setup_lmk(lmk, AcqConfig)

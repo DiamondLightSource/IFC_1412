@@ -262,7 +262,7 @@ def setup_lmk(_lmk, config : Config):
     configure_lmk(lmk, config)
     lmk.write_config()
 
-    if config.sync_ports:
+    if config.sync_ports and _lmk:
         lmk.GLOBAL_SYNC = 1
         time.sleep(0.01)
         lmk.GLOBAL_SYNC = 0

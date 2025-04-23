@@ -255,21 +255,6 @@ begin
         read_data_o => read_data(TOP_REGISTERS_REGS),
         read_ack_o => read_ack(TOP_REGISTERS_REGS),
 
---         lmk_command_select_o => lmk_command_select,
---         lmk_status_i => lmk_status,
---         lmk_reset_o => lmk_reset,
---         lmk_sync_o => lmk_sync,
--- 
---         lmk_write_strobe_o => lmk_write_strobe,
---         lmk_write_ack_i => lmk_write_ack,
---         lmk_read_write_n_o => lmk_read_write_n,
---         lmk_address_o => lmk_address,
---         lmk_data_o => lmk_data_out,
---         lmk_write_select_o => lmk_write_select,
---         lmk_read_strobe_o => lmk_read_strobe,
---         lmk_read_ack_i => lmk_read_ack,
---         lmk_data_i => lmk_data_in,
-
         clock_counts_i => test_clock_counts,
         clock_update_i => test_clock_update
     );
@@ -284,23 +269,6 @@ begin
         read_strobe_i => read_strobe(TOP_LMK04616_REG),
         read_data_o => read_data(TOP_LMK04616_REG),
         read_ack_o => read_ack(TOP_LMK04616_REG),
-
---         command_select_i => lmk_command_select,
---         select_valid_o => open,
---         status_o => lmk_status,
---         reset_i => lmk_reset,
---         sync_i => lmk_sync,
--- 
---         write_strobe_i => lmk_write_strobe,
---         write_ack_o => lmk_write_ack,
---         read_write_n_i => lmk_read_write_n,
---         address_i => lmk_address,
---         data_i => lmk_data_out,
---         write_select_i => lmk_write_select,
--- 
---         read_strobe_i => lmk_read_strobe,
---         read_ack_o => lmk_read_ack,
---         data_o => lmk_data_in,
 
         pad_LMK_CTL_SEL_o => pad_LMK_CTL_SEL,
         pad_LMK_SCL_o => pad_LMK_SCL,
