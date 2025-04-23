@@ -2,6 +2,7 @@
 set vhd_dir $env(VHD_DIR)
 set common_vhd $env(COMMON_VHD)
 set bench_dir $env(BENCH_DIR)
+set gddr6_dir $env(GDDR6_DIR)
 
 vlib work
 vlib msim
@@ -15,6 +16,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/axi/axi_lite_slave.vhd \
     built_dir/register_defines.vhd \
     built_dir/gddr6_register_defines.vhd \
+    built_dir/version.vhd \
+    $gddr6_dir/gddr6_defs.vhd \
     built_dir/test_gddr6_phy.vhd.dummy \
     built_dir/top_entity.vhd \
     $vhd_dir/top.vhd

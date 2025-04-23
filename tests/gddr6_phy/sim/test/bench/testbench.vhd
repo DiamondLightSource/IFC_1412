@@ -6,6 +6,7 @@ use work.support.all;
 
 use work.register_defs.all;
 use work.register_defines.all;
+use work.lmk04616_defines.all;
 use work.gddr6_register_defines.all;
 use work.gddr6_ctrl_command_defs.all;
 use work.version.all;

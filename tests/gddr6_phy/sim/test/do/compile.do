@@ -4,8 +4,9 @@ set common_vhd $env(COMMON_VHD)
 set bench_dir $env(BENCH_DIR)
 set common_sim $env(COMMON_SIM)
 set gddr6_dir $env(GDDR6_DIR)
+set lmk04616_dir $env(LMK04616_DIR)
 
-set gddr6_common_sim $bench_dir/../../../../gddr6/sim/common
+set gddr6_common_sim $gddr6_dir/../sim/common
 
 vlib work
 vlib msim
@@ -23,6 +24,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/flow_control.vhd \
     $common_vhd/util/fifo.vhd \
     $common_vhd/util/memory_array_dual.vhd \
+    $common_vhd/util/memory_array_dual_bytes.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
@@ -34,6 +36,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/cross_clocks_read.vhd \
     $common_vhd/util/cross_clocks_write_read.vhd \
     $common_vhd/util/strobe_ack.vhd \
+    $common_vhd/util/edge_detect.vhd \
     $common_vhd/async_fifo/async_fifo_address.vhd \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
@@ -93,6 +96,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/ctrl/gddr6_ctrl_mux.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_request.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_command.vhd \
+    $gddr6_dir/ctrl/gddr6_ctrl_temps.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_data.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl.vhd \
     $gddr6_dir/axi/gddr6_axi_defs.vhd \
@@ -112,9 +116,11 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/axi/gddr6_axi_stats.vhd \
     $gddr6_dir/axi/gddr6_axi.vhd \
     $gddr6_dir/gddr6.vhd \
-    $vhd_dir/lmk04616/lmk04616_io.vhd \
-    $vhd_dir/lmk04616/lmk04616_control.vhd \
-    $vhd_dir/lmk04616/lmk04616.vhd \
+    built_dir/lmk04616_defines.vhd \
+    $lmk04616_dir/lmk04616_io.vhd \
+    $lmk04616_dir/lmk04616_control.vhd \
+    $lmk04616_dir/lmk04616_status.vhd \
+    $lmk04616_dir/lmk04616.vhd \
     $vhd_dir/axi_data.vhd \
     $vhd_dir/axi_address.vhd \
     $vhd_dir/axi_stats.vhd \
@@ -134,11 +140,11 @@ source groups.tcl
 view wave
 
 with_group GDDR6 test/gddr6 {
-    with_group PHY setup_phy/phy {
+    with_group PHY phy {
         add_wave IO io
         add_wave signals
     }
-    with_group SETUP setup_phy/setup {
+    with_group SETUP setup {
         add_wave Control control
         add_wave Exchange exchange
         add_wave Exchange.Buffers exchange/buffers
