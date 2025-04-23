@@ -9,8 +9,8 @@ vlib msim/xil_defaultlib
 
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
-    built/register_defines.vhd \
-    built/version.vhd \
+    built_dir/register_defines.vhd \
+    built_dir/version.vhd \
     $common_vhd/util/sync_reset.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/util/sync_pulse.vhd \
@@ -30,7 +30,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_command.vhd \
     $common_vhd/axi/axi_lite_slave.vhd \
     $bench_dir/interconnect_wrapper.vhd \
-    built/top_entity.vhd \
+    built_dir/top_entity.vhd \
     $vhd_dir/top_registers.vhd \
     $vhd_dir/top.vhd
 
