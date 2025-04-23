@@ -18,16 +18,8 @@ architecture arch of testbench is
     signal axi_clk : std_ulogic := '0';
     signal ck_clk : std_ulogic := '0';
 
-    signal axi_wa : axi_address_t := IDLE_AXI_ADDRESS;
-    signal axi_wa_ready : std_ulogic;
-    signal axi_w : axi_write_data_t := IDLE_AXI_WRITE_DATA;
-    signal axi_w_ready : std_ulogic;
-    signal axi_b : axi_write_response_t;
-    signal axi_b_ready : std_ulogic := '0';
-    signal axi_ra : axi_address_t := IDLE_AXI_ADDRESS;
-    signal axi_ra_ready : std_ulogic;
-    signal axi_r : axi_read_data_t;
-    signal axi_r_ready : std_ulogic := '0';
+    signal axi_request : axi_request_t := IDLE_AXI_REQUEST;
+    signal axi_response : axi_response_t;
     signal axi_stats : axi_stats_t;
 
     signal ctrl_read_request : axi_ctrl_read_request_t;
@@ -52,16 +44,8 @@ begin
         CK_FREQUENCY => period_to_mhz(CTRL_PERIOD)
     ) port map (
         axi_clk_i => axi_clk,
-        axi_wa_i => axi_wa,
-        axi_wa_ready_o => axi_wa_ready,
-        axi_w_i => axi_w,
-        axi_w_ready_o => axi_w_ready,
-        axi_b_o => axi_b,
-        axi_b_ready_i => axi_b_ready,
-        axi_ra_i => axi_ra,
-        axi_ra_ready_o => axi_ra_ready,
-        axi_r_o => axi_r,
-        axi_r_ready_i => axi_r_ready,
+        axi_request_i => axi_request,
+        axi_response_o => axi_response,
         axi_stats_o => axi_stats,
 
         ck_clk_i => ck_clk,

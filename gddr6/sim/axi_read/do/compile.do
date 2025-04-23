@@ -15,6 +15,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fifo.vhd \
     $common_vhd/util/short_delay.vhd \
     $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/memory_array_dual.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \
@@ -41,7 +42,7 @@ view wave
 add wave -group "CTRL" axi_read/ctrl/*
 add wave -group "Address FIFO core" axi_read/address_fifo/fifo/*
 add wave -group "Address FIFO" axi_read/address_fifo/*
-add wave -group "R" axi_read/data/* axi_read/data/vars/*
+add wave -group "R" axi_read/data/*
 add wave -group "Data FIFO Address" axi_read/data_fifo/async_address/*
 add wave -group "Data FIFO" axi_read/data_fifo/*
 add wave -group "RA" axi_read/address/*

@@ -28,7 +28,7 @@ architecture arch of testbench is
     signal read_request_ready : std_ulogic;
     signal request_completion : request_completion_t;
     signal refresh : refresh_request_t;
-    signal refresh_ready : std_ulogic;
+    signal refresh_ack : std_ulogic;
     signal lookahead : bank_open_t;
     signal bypass_command : ca_command_t;
     signal bypass_valid : std_ulogic;
@@ -61,7 +61,7 @@ begin
         request_completion_o => request_completion,
 
         refresh_i => refresh,
-        refresh_ready_o => refresh_ready,
+        refresh_ack_o => refresh_ack,
         lookahead_i => lookahead,
 
         bypass_command_i => bypass_command,

@@ -15,6 +15,8 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/fifo.vhd \
     $common_vhd/util/short_delay.vhd \
     $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/memory_array_dual.vhd \
+    $common_vhd/util/memory_array_dual_bytes.vhd \
     $common_vhd/util/long_delay.vhd \
     $common_vhd/util/fixed_delay_dram.vhd \
     $common_vhd/util/fixed_delay.vhd \

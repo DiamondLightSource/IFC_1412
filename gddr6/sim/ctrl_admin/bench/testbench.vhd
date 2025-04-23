@@ -25,10 +25,10 @@ architecture arch of testbench is
     signal bank_open : bank_open_t;
     signal lookahead : bank_open_t;
     signal refresh : refresh_request_t;
-    signal refresh_ready : std_ulogic;
+    signal refresh_ack : std_ulogic;
     signal status : banks_status_t;
     signal admin : banks_admin_t;
-    signal admin_ok : std_ulogic;
+    signal admin_ack : std_ulogic;
     signal command : ca_command_t;
     signal command_valid : std_ulogic;
 
@@ -50,12 +50,12 @@ begin
         bank_open_i => bank_open,
         lookahead_i => lookahead,
         refresh_i => refresh,
-        refresh_ready_o => refresh_ready,
+        refresh_ack_o => refresh_ack,
 
         status_i => status,
 
         admin_o => admin,
-        admin_ok_i => admin_ok,
+        admin_ack_i => admin_ack,
 
         command_o => command,
         command_valid_o => command_valid
@@ -67,10 +67,11 @@ begin
             refresh <= (
                 bank => to_unsigned(bank, 3),
                 all_banks => all_banks,
+                priority => '0',
                 valid => '1');
             loop
                 clk_wait;
-                exit when refresh_ready;
+                exit when refresh_ack;
             end loop;
             refresh.valid <= '0';
         end;
@@ -109,7 +110,7 @@ begin
 
         loop
             clk_wait;
-            if admin.valid and admin_ok then
+            if admin.valid and admin_ack then
                 bank := to_integer(admin.bank);
                 case admin.command is
                     when CMD_ACT =>
@@ -141,10 +142,10 @@ begin
     end process;
 
     process begin
-        admin_ok <= '1';
+        admin_ack <= '1';
         wait until admin.valid;
         clk_wait;
-        admin_ok <= '0';
+        admin_ack <= '0';
         clk_wait(5);
     end process;
 
@@ -165,7 +166,7 @@ begin
 
     begin
         if rising_edge(clk) then
-            if admin.valid and admin_ok then
+            if admin.valid and admin_ack then
                 write("@ " & to_string(tick_counter) & " " &
                     name(admin.command, admin.all_banks) & " " &
                     to_hstring(admin.bank) & " " & to_hstring(admin.row));

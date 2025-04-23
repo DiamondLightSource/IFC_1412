@@ -101,7 +101,9 @@ begin
     setup_delay_in <= (
         write_ack => '1',
         read_ack => '1',
-        delay => (others => '0')
+        delay => (others => '0'),
+        phase_ack => '0',
+        phase => (others => '0')
     );
 
     process
