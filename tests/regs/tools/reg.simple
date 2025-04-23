@@ -1,21 +1,29 @@
 #!/usr/bin/env python
 
 import os
+import time
 
 import ifc_lib
+from ifc_lib import defs_path
 from fpga_lib.driver import driver
 
-here = os.path.dirname(__file__)
-register_defines = os.path.join(here, '../vhd', 'register_defines.in')
+class Registers(driver.RawRegisters):
+    NAME = 'ifc_1412-regs'
 
-raw_regs = driver.RawRegisters('ifc_1412-regs', 0)
-regs = driver.Registers(raw_regs, register_defines)
+    def __init__(self, address = 0):
+        super().__init__(self.NAME, address)
+
+        register_defines = defs_path.register_defines(__file__)
+        self.make_registers('TOP', None, register_defines)
+
+regs = Registers(0)
 
 print(regs.TOP.GIT_VERSION)
 
 leds = regs.TOP.LEDS
 while True:
     value = leds._value + 1
+    time.sleep(0.001)
     leds._write_fields_wo(
         FMC1 = value & 0xFF,
         FMC2 = (value >> 8) & 0xFF,
