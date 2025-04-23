@@ -113,8 +113,8 @@ INIT_MR5  = MRS(5, 0b000111_0_00_0_0_0)
 # MR6 is a bit special, each write selects a different pin or group of pins
 #  6:0  VREFD level or TX EQ enable
 # 11:7  Pin selection (0F => Byte 0, 1F => Byte 1, 0A => TX EQ B0, 1A => Byte 1)
-INIT_MR6_B0_VREF = MRS(6, 0b01111_0101111)  # Set VREFD = 0.725 V
-INIT_MR6_B1_VREF = MRS(6, 0b11111_0101111)
+INIT_MR6_B0_VREF = MRS(6, 0b01111_0101010)  # Set VREFD = 0.875 V
+INIT_MR6_B1_VREF = MRS(6, 0b11111_0101010)
 INIT_MR6_B0_TXEQ = MRS(6, 0b01010_0000000)  # Disable output equalisation
 INIT_MR6_B1_TXEQ = MRS(6, 0b11010_0000000)
 
