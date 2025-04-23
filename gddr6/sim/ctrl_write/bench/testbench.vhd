@@ -220,7 +220,8 @@ begin
                 report "Expected mask got command"
                 severity failure;
             assert get_mask = mask
-                report "Invalid mask value"
+                report "Invalid mask value: expected " &
+                    to_hstring(mask) & " but read " & to_hstring(get_mask)
                 severity failure;
         end;
 
@@ -230,9 +231,9 @@ begin
         constant WSM : std_ulogic_vector(5 downto 0) := "110001";
 
         -- Expected masks
-        constant WDM_MASK : std_ulogic_vector(15 downto 0) := X"D81B";
-        constant WSM_MASK1 : std_ulogic_vector(15 downto 0) := X"46EC";
-        constant WSM_MASK2 : std_ulogic_vector(15 downto 0) := X"1416";
+        constant WDM_MASK : std_ulogic_vector(15 downto 0) := not X"D81B";
+        constant WSM_MASK1 : std_ulogic_vector(15 downto 0) := not X"46EC";
+        constant WSM_MASK2 : std_ulogic_vector(15 downto 0) := not X"1416";
 
     begin
         for i in 0 to 2 loop

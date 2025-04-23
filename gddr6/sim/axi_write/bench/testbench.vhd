@@ -402,7 +402,7 @@ begin
 --     end process;
 -- 
 
-    ctrl_response_wd_ready <= delay_write_valid;
+    ctrl_response_wd_ready <= delay_write_valid and not delay_write_phase;
     ctrl_response_wd_advance <= delay_write_advance;
     process (ctrl_clk)
         procedure report_write_data(data : vector_array(0 to 3)(127 downto 0))
