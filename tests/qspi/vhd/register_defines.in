@@ -1,0 +1,25 @@
+# QSPI register definitions
+
+:!QSPI
+    # Writing to this register initiates a QSPI transaction
+    COMMAND     RW
+        # This is the 8-bit instruction sent at the start of every SPI exchange
+        .COMMAND            8
+        # If set the address will be sent after the instruction.  This can also
+        # be used for small register write commands
+        .SEND_ADDRESS
+        # This encodes how many bits are sent from the address
+        .ADDRESS_WIDTH      2
+        # Number of dummy cycles after address, can be anything from 0 to 8
+        .DUMMY_COUNT        4
+
+    # If an address or auxillary data is to be sent this register should be set.
+    # Bits are sent in big endian order.
+    ADDRESS     RW
+
+    # Writing to this register writes to the transmit FIFO, reading reads from
+    # the receive FIFO.  In both cases the associated pointer is advanced.
+    DATA        RW
+
+!TOP
+    :QSPI

@@ -1,0 +1,20 @@
+# List of files in project
+
+# Support files
+$common_vhd/support.vhd
+$common_vhd/util/fixed_delay_dram.vhd
+$common_vhd/util/dlyreg.vhd
+$common_vhd/axi/axi_lite_slave.vhd
+$common_vhd/register/register_defs.vhd
+$common_vhd/register/register_buffer.vhd
+$common_vhd/register/register_mux_strobe.vhd
+$common_vhd/register/register_mux.vhd
+
+# This project
+built_dir/register_defines.vhd
+$vhd_dir/system_clocking.vhd
+$vhd_dir/qspi.vhd
+built_dir/top_entity.vhd
+$vhd_dir/top.vhd
+
+# vim: set filetype=tcl:

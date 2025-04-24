@@ -14,4 +14,7 @@ pad_FP_LED2B_K                  out
 # SPI interface to SPI flash U105 (512Mbit) for custom state.
 pad_USER_SPI_CS_L               out
 pad_USER_SPI_SCK                out
-pad_USER_SPI_D[0..3]            inout
+pad_USER_SPI_D[3..0]            inout
+# SPI interface to FPGA configuration flash
+pad_FPGA_CFG_FCS2_B             inout
+pad_FPGA_CFG_D[7..4]            inout
