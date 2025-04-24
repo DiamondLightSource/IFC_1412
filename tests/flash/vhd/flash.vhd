@@ -8,17 +8,17 @@ use work.support.all;
 use work.register_defs.all;
 use work.register_defines.all;
 
-entity qspi is
+entity flash is
     port (
         clk_i : in std_ulogic;
 
         -- Register interface
-        write_strobe_i : in std_ulogic_vector(QSPI_REGS_RANGE);
-        write_data_i : in reg_data_array_t(QSPI_REGS_RANGE);
-        write_ack_o : out std_ulogic_vector(QSPI_REGS_RANGE);
-        read_strobe_i : in std_ulogic_vector(QSPI_REGS_RANGE);
-        read_data_o : out reg_data_array_t(QSPI_REGS_RANGE);
-        read_ack_o : out std_ulogic_vector(QSPI_REGS_RANGE);
+        write_strobe_i : in std_ulogic_vector(FLASH_REGS_RANGE);
+        write_data_i : in reg_data_array_t(FLASH_REGS_RANGE);
+        write_ack_o : out std_ulogic_vector(FLASH_REGS_RANGE);
+        read_strobe_i : in std_ulogic_vector(FLASH_REGS_RANGE);
+        read_data_o : out reg_data_array_t(FLASH_REGS_RANGE);
+        read_ack_o : out std_ulogic_vector(FLASH_REGS_RANGE);
 
         -- User FLASH
         pad_USER_SPI_CS_L_o : out std_ulogic;
@@ -30,7 +30,7 @@ entity qspi is
     );
 end;
 
-architecture arch of qspi is
+architecture arch of flash is
 begin
     write_ack_o <= (others => '1');
     read_data_o <= (others => (others => '0'));

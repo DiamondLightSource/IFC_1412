@@ -172,15 +172,15 @@ begin
     );
 
 
-    qspi : entity work.qspi port map (
+    flash : entity work.flash port map (
         clk_i => clk,
 
-        write_strobe_i => write_strobe(TOP_QSPI_REGS),
-        write_data_i => write_data(TOP_QSPI_REGS),
-        write_ack_o => write_ack(TOP_QSPI_REGS),
-        read_strobe_i => read_strobe(TOP_QSPI_REGS),
-        read_data_o => read_data(TOP_QSPI_REGS),
-        read_ack_o => read_ack(TOP_QSPI_REGS),
+        write_strobe_i => write_strobe(TOP_FLASH_REGS),
+        write_data_i => write_data(TOP_FLASH_REGS),
+        write_ack_o => write_ack(TOP_FLASH_REGS),
+        read_strobe_i => read_strobe(TOP_FLASH_REGS),
+        read_data_o => read_data(TOP_FLASH_REGS),
+        read_ack_o => read_ack(TOP_FLASH_REGS),
 
         pad_USER_SPI_CS_L_o => pad_USER_SPI_CS_L,
         pad_USER_SPI_SCK_o => pad_USER_SPI_SCK,

@@ -1,7 +1,7 @@
-# QSPI register definitions
+# FLASH register definitions
 
-:!QSPI
-    # Writing to this register initiates a QSPI transaction
+:!FLASH
+    # Writing to this register initiates a FLASH transaction
     COMMAND     RW
         # This is the 8-bit instruction sent at the start of every SPI exchange
         .COMMAND            8
@@ -22,4 +22,4 @@
     DATA        RW
 
 !TOP
-    :QSPI
+    :FLASH

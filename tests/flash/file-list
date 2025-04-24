@@ -13,7 +13,7 @@ $common_vhd/register/register_mux.vhd
 # This project
 built_dir/register_defines.vhd
 $vhd_dir/system_clocking.vhd
-$vhd_dir/qspi.vhd
+$vhd_dir/flash.vhd
 built_dir/top_entity.vhd
 $vhd_dir/top.vhd
 
