@@ -23,10 +23,10 @@ entity flash is
         -- User FLASH
         pad_USER_SPI_CS_L_o : out std_ulogic;
         pad_USER_SPI_SCK_o : out std_ulogic;
-        pad_USER_SPI_D_io : inout std_ulogic_vector(3 downto 0);
+        pad_USER_SPI_D_io : inout std_logic_vector(3 downto 0);
         -- FPGA configuration
         pad_FPGA_CFG_FCS2_B_o : out std_ulogic;
-        pad_FPGA_CFG_D_io : inout std_ulogic_vector(7 downto 4)
+        pad_FPGA_CFG_D_io : inout std_logic_vector(7 downto 4)
     );
 end;
 
