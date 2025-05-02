@@ -52,6 +52,7 @@ begin
         pad_FPGA_CFG_D_io => pad_FPGA_CFG_D
     );
 
+
     pad_USER_SPI_D <= (others => 'Z');
     pad_FPGA_CFG_D <= (others => 'Z');
 
@@ -68,14 +69,89 @@ begin
             read_reg(clk, read_data, read_strobe, read_ack, reg);
         end;
 
+        type select_t is (NONE, USER, FPGA1, FPGA2);
+        function to_std_ulogic_vector(selection : select_t)
+            return std_ulogic_vector is
+        begin
+            case selection is
+                when NONE => return "00";
+                when USER => return "01";
+                when FPGA1 => return "10";
+                when FPGA2 => return "11";
+            end case;
+        end;
+
+        procedure write_command(
+            selection : select_t; length : natural;
+            read_offset : natural := 1023;
+            read_delay : natural := 0;
+            clock_speed : unsigned(1 downto 0) := "01";
+            long_cs_high : std_ulogic := '0') is
+        begin
+            write_reg(FLASH_COMMAND_REG, (
+                FLASH_COMMAND_LENGTH_BITS =>
+                    to_std_ulogic_vector_u(length, 10),
+                FLASH_COMMAND_READ_OFFSET_BITS =>
+                    to_std_ulogic_vector_u(read_offset, 10),
+                FLASH_COMMAND_SELECT_BITS =>
+                    to_std_ulogic_vector(selection),
+                FLASH_COMMAND_READ_DELAY_BITS =>
+                    to_std_ulogic_vector_u(read_delay, 3),
+                FLASH_COMMAND_CLOCK_SPEED_BITS =>
+                    std_ulogic_vector(clock_speed),
+                FLASH_COMMAND_LONG_CS_HIGH_BIT => long_cs_high,
+                others => '0'));
+        end;
+
     begin
         write_strobe <= (others => '0');
         read_strobe <= (others => '0');
 
-        clk_wait(5);
-        write_reg(FLASH_COMMAND_REG, (others => '0'));
-        read_reg(FLASH_ADDRESS_REG);
+        -- Need to wait a bit for the IO startup to complete
+        clk_wait(20);
+
+        write_reg(FLASH_DATA_REG, X"FF_FF_FF_5A");
+        clk_wait;
+        write_command(USER, 0, long_cs_high => '1');
+
+        write_reg(FLASH_DATA_REG, X"04_55_AA_00");
+        write_reg(FLASH_DATA_REG, X"08_07_06_05");
+        write_command(USER, 2,
+            read_offset => 0, clock_speed => "10", read_delay => 2);
+
+        clk_wait;
+        read_reg(FLASH_DATA_REG);
 
         wait;
     end process;
+
+
+    user_spi : entity work.sim_spi generic map (
+        NAME => "USER",
+        -- Most optimistic delay from falling edge out to data back
+        READ_DELAY => 1.5 ns
+    ) port map (
+        clk_i => pad_USER_SPI_SCK,
+        cs_i => pad_USER_SPI_CS_L,
+        mosi_i => pad_USER_SPI_D(0),
+        miso_o => pad_USER_SPI_D(1)
+    );
+
+
+    fpga2_spi : entity work.sim_spi generic map (
+        NAME => "FPGA2",
+        -- Reasonably pessimistic delay:
+        --  From clk_i via STARTUPE3 to CLK out: 1 to 7.5 ns
+        --  From falling edge to data valid: up to 14.5 ns
+        --  From data valid on MI back via STARTUPE3: 0.5 to 3.5 ns
+        --  Extra routing of 0.5ns
+        READ_DELAY => 26 ns
+    ) port map (
+        -- The FPGA config clock is buried and only connected to the STARTUPE3
+        -- primitive, so we have to find it like this!
+        clk_i => << signal flash.io.fpga_clk : std_ulogic >>,
+        cs_i => pad_FPGA_CFG_FCS2_B,
+        mosi_i => pad_FPGA_CFG_D(4),
+        miso_o => pad_FPGA_CFG_D(5)
+    );
 end;

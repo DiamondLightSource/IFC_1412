@@ -2,7 +2,10 @@
 
 # Support files
 $common_vhd/support.vhd
+$common_vhd/util/memory_array.vhd
+$common_vhd/util/long_delay.vhd
 $common_vhd/util/fixed_delay_dram.vhd
+$common_vhd/util/fixed_delay.vhd
 $common_vhd/util/dlyreg.vhd
 $common_vhd/axi/axi_lite_slave.vhd
 $common_vhd/register/register_defs.vhd
@@ -13,6 +16,11 @@ $common_vhd/register/register_mux.vhd
 # This project
 built_dir/register_defines.vhd
 $vhd_dir/system_clocking.vhd
+$vhd_dir/flash_control.vhd
+$vhd_dir/flash_mo_fifo.vhd
+$vhd_dir/flash_mi_fifo.vhd
+$vhd_dir/flash_spi_core.vhd
+$vhd_dir/flash_io.vhd
 $vhd_dir/flash.vhd
 built_dir/top_entity.vhd
 $vhd_dir/top.vhd

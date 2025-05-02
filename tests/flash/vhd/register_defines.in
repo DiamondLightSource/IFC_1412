@@ -2,20 +2,30 @@
 
 :!FLASH
     # Writing to this register initiates a FLASH transaction
-    COMMAND     RW
-        # This is the 8-bit instruction sent at the start of every SPI exchange
-        .COMMAND            8
-        # If set the address will be sent after the instruction.  This can also
-        # be used for small register write commands
-        .SEND_ADDRESS
-        # This encodes how many bits are sent from the address
-        .ADDRESS_WIDTH      2
-        # Number of dummy cycles after address, can be anything from 0 to 8
-        .DUMMY_COUNT        4
-
-    # If an address or auxillary data is to be sent this register should be set.
-    # Bits are sent in big endian order.
-    ADDRESS     RW
+    COMMAND     W
+        # Total transaction length (less 1).  The DATA FIFO must be populated
+        # with the correct number of bytes to be written
+        .LENGTH             10
+        # Offset into transaction where the read FIFO is populated
+        .READ_OFFSET        10
+        # Selects which interface to use:
+        #
+        #  0   => No target, transaction has no effect
+        #  1   => User config
+        #  2   => FPGA1
+        #  3   => FPGA2
+        .SELECT             2
+        # Delay on reading incoming data
+        .READ_DELAY         3
+        # Determines clock speed according to the following table:
+        #   0   125 MHz
+        #   1   62.5 MHz
+        #   2   41.7 MHz
+        #   3   31.3 MHz
+        .CLOCK_SPEED        2
+        # Set when performing erase or program command to ensure CS# remains
+        # high for long enough
+        .LONG_CS_HIGH
 
     # Writing to this register writes to the transmit FIFO, reading reads from
     # the receive FIFO.  In both cases the associated pointer is advanced.
