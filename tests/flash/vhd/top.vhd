@@ -73,7 +73,7 @@ begin
 
     interconnect : entity work.interconnect_wrapper port map (
         -- PCIe MGT interface
-        nCOLDRST => not pci_reset_n,
+        nCOLDRST => pci_reset_n,
         FCLKA_clk_p(0) => pad_MGT224_REFCLK_P,
         FCLKA_clk_n(0) => pad_MGT224_REFCLK_N,
         pcie_7x_mgt_0_rxn => pad_AMC_PCI_RX_N,
