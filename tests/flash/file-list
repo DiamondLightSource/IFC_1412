@@ -7,6 +7,7 @@ $common_vhd/util/long_delay.vhd
 $common_vhd/util/fixed_delay_dram.vhd
 $common_vhd/util/fixed_delay.vhd
 $common_vhd/util/dlyreg.vhd
+$common_vhd/util/fifo.vhd
 $common_vhd/axi/axi_lite_slave.vhd
 $common_vhd/register/register_defs.vhd
 $common_vhd/register/register_buffer.vhd

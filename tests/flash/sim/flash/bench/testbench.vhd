@@ -110,16 +110,44 @@ begin
         -- Need to wait a bit for the IO startup to complete
         clk_wait(20);
 
-        write_reg(FLASH_DATA_REG, X"FF_FF_FF_5A");
-        clk_wait;
-        write_command(USER, 0, long_cs_high => '1');
+--         write_reg(FLASH_DATA_REG, X"FF_FF_FF_5A");
+--         clk_wait;
+--         write_command(USER, 0, long_cs_high => '1');
+-- 
+--         write_reg(FLASH_DATA_REG, X"04_55_AA_00");
+--         write_reg(FLASH_DATA_REG, X"08_07_06_05");
+--         write_command(USER, 2,
+--             read_offset => 0, clock_speed => "10", read_delay => 2);
+-- 
+--         clk_wait;
+--         read_reg(FLASH_DATA_REG);
 
-        write_reg(FLASH_DATA_REG, X"04_55_AA_00");
-        write_reg(FLASH_DATA_REG, X"08_07_06_05");
-        write_command(USER, 2,
-            read_offset => 0, clock_speed => "10", read_delay => 2);
+        -- Try a really fast read
+        write_reg(FLASH_DATA_REG, X"FF_FF_53_11");
+        write_command(USER, 1,
+            read_offset => 0, clock_speed => "00", read_delay => 0);
+        clk_wait(6);
+        read_reg(FLASH_DATA_REG);
 
-        clk_wait;
+        -- Same with longer delay
+        write_reg(FLASH_DATA_REG, X"FF_FF_12_11");
+        write_command(USER, 1,
+            read_offset => 0, clock_speed => "00", read_delay => 1);
+        clk_wait(6);
+        read_reg(FLASH_DATA_REG);
+
+        -- Followed by a really slow one
+        write_reg(FLASH_DATA_REG, X"FF_FF_AC_88");
+        write_command(USER, 1,
+            read_offset => 0, clock_speed => "11", read_delay => 0);
+        clk_wait(6);
+        read_reg(FLASH_DATA_REG);
+
+        -- Followed by a really slow one
+        write_reg(FLASH_DATA_REG, X"FF_FF_AC_88");
+        write_command(USER, 1,
+            read_offset => 0, clock_speed => "11", read_delay => 7);
+        clk_wait(6);
         read_reg(FLASH_DATA_REG);
 
         wait;

@@ -32,14 +32,18 @@ entity flash_io is
 end;
 
 architecture arch of flash_io is
-    type spi_target_t is (SEL_USER, SEL_FPGA1, SEL_FPGA2);
-    type spi_bits_t is array(spi_target_t) of std_ulogic;
-
-    signal fpga_clk : std_ulogic := '0';
     signal user_clk : std_ulogic := '0';
-    signal mosi : spi_bits_t := (others => '1');
-    signal miso : spi_bits_t;
-    signal spi_cs_n : spi_bits_t := (others => '1');
+    signal fpga_clk : std_ulogic := '0';
+
+    signal user_spi_cs_n : std_ulogic := '1';
+    signal fpga1_spi_cs_n : std_ulogic := '1';
+    signal fpga2_spi_cs_n : std_ulogic := '1';
+    signal user_mosi : std_ulogic := '1';
+    signal fpga1_mosi : std_ulogic := '1';
+    signal fpga2_mosi : std_ulogic := '1';
+    signal user_miso : std_ulogic := '1';
+    signal fpga1_miso : std_ulogic := '1';
+    signal fpga2_miso : std_ulogic := '1';
 
     signal startup_di : std_ulogic_vector(3 downto 0);
 
@@ -48,6 +52,17 @@ architecture arch of flash_io is
     -- CCLK pin.  So we run a tiny startup engine to sort this out.
     constant STARTUP_DELAY : natural := 10;
     signal startup_counter : natural range 0 to STARTUP_DELAY := STARTUP_DELAY;
+
+    -- Place all SPI IO registers on the IO block where possible.  The SEL_FPGA1
+    -- registers have to go through STARTUPE3 so we exclude them here.
+    attribute IOB : string;
+    attribute IOB of user_clk : signal is "TRUE";
+    attribute IOB of fpga2_spi_cs_n : signal is "TRUE";
+    attribute IOB of user_spi_cs_n : signal is "TRUE";
+    attribute IOB of fpga2_mosi : signal is "TRUE";
+    attribute IOB of user_mosi : signal is "TRUE";
+    attribute IOB of fpga2_miso : signal is "TRUE";
+    attribute IOB of user_miso : signal is "TRUE";
 
 begin
     -- For all QSPI signals the assignments are as follows:
@@ -66,9 +81,9 @@ begin
         EOS => open,
         PREQ => open,
         DI => startup_di,
-        DO => (0 => mosi(SEL_FPGA1), others => '1'),
+        DO => (0 => fpga1_mosi, others => '1'),
         DTS => ( 0 => '0', 1 => '1', others => '0' ),
-        FCSBO => spi_cs_n(SEL_FPGA1),
+        FCSBO => fpga1_spi_cs_n,
         FCSBTS => '0',
         GSR => '0',
         GTS => '0',
@@ -81,52 +96,67 @@ begin
     );
 
     -- FPGA CONFIG 2 signals
-    pad_FPGA_CFG_FCS2_B_o <= spi_cs_n(SEL_FPGA2);
-    pad_FPGA_CFG_D_io <= ( 4 => mosi(SEL_FPGA2), 5 => 'Z', others => '1' );
+    pad_FPGA_CFG_FCS2_B_o <= fpga2_spi_cs_n;
+    pad_FPGA_CFG_D_io <= ( 4 => fpga2_mosi, 5 => 'Z', others => '1' );
 
     -- USER signals
-    pad_USER_SPI_CS_L_o <= spi_cs_n(SEL_USER);
+    pad_USER_SPI_CS_L_o <= user_spi_cs_n;
     pad_USER_SPI_SCK_o <= user_clk;
-    pad_USER_SPI_D_io <= ( 0 => mosi(SEL_USER), 1 => 'Z', others => '1' );
+    pad_USER_SPI_D_io <= ( 0 => user_mosi, 1 => 'Z', others => '1' );
 
 
     -- Register outgoing and incoming signals.  These delays will need to be
     -- taken into account when receiving SPI data
-    process (clk_i) begin
+    process (clk_i)
+        variable fpga_clk_out : std_ulogic;
+    begin
         if rising_edge(clk_i) then
+            -- Registered MISO inputs
+            user_miso <= pad_USER_SPI_D_io(1);
+            fpga1_miso <= startup_di(1);
+            fpga2_miso <= pad_FPGA_CFG_D_io(5);
+
+            -- Default output values
+            user_clk <= '0';
+            fpga_clk_out := '0';
+            user_spi_cs_n <= '1';
+            fpga1_spi_cs_n <= '1';
+            fpga2_spi_cs_n <= '1';
+            user_mosi <= '1';
+            fpga1_mosi <= '1';
+            fpga2_mosi <= '1';
+
+            case select_i is
+                when "00" =>
+                    -- Nothing active
+                when "01" =>
+                    -- User FLASH
+                    user_clk <= spi_clk_i;
+                    user_spi_cs_n <= spi_cs_n_i;
+                    user_mosi <= mosi_i;
+                    miso_o <= user_miso;
+                when "10" =>
+                    -- FPGA1 config via STARTUPE3
+                    fpga_clk_out := spi_clk_i;
+                    fpga1_spi_cs_n <= spi_cs_n_i;
+                    fpga1_mosi <= mosi_i;
+                    miso_o <= fpga1_miso;
+                when "11" =>
+                    -- FPGA2 config
+                    fpga_clk_out := spi_clk_i;
+                    fpga2_spi_cs_n <= spi_cs_n_i;
+                    fpga2_mosi <= mosi_i;
+                    miso_o <= fpga2_miso;
+                when others =>
+            end case;
+
             -- Run USRCCLKO for a few cycles on startup
             if startup_counter > 0 then
                 fpga_clk <= not fpga_clk;
                 startup_counter <= startup_counter - 1;
             else
-                fpga_clk <= spi_clk_i;
+                fpga_clk <= fpga_clk_out;
             end if;
-
-            user_clk <= spi_clk_i;
-
-            miso(SEL_FPGA1) <= startup_di(1);
-            miso(SEL_FPGA2) <= pad_FPGA_CFG_D_io(5);
-            miso(SEL_USER) <= pad_USER_SPI_D_io(1);
-
-            case select_i is
-                when "00" =>
-                    miso_o <= '1';
-                    mosi <= (others => '1');
-                    spi_cs_n <= (others => '1');
-                when "01" =>
-                    miso_o <= miso(SEL_USER);
-                    mosi <= (SEL_USER => mosi_i, others => '1');
-                    spi_cs_n <= (SEL_USER => spi_cs_n_i, others => '1');
-                when "10" =>
-                    miso_o <= miso(SEL_FPGA1);
-                    mosi <= (SEL_FPGA1 => mosi_i, others => '1');
-                    spi_cs_n <= (SEL_FPGA1 => spi_cs_n_i, others => '1');
-                when "11" =>
-                    miso_o <= miso(SEL_FPGA2);
-                    mosi <= (SEL_FPGA2 => mosi_i, others => '1');
-                    spi_cs_n <= (SEL_FPGA2 => spi_cs_n_i, others => '1');
-                when others =>
-            end case;
         end if;
     end process;
 end;

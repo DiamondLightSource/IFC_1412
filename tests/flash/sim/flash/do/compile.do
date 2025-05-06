@@ -42,6 +42,6 @@ add wave -group "FLASH" sim:/testbench/flash/*
 add wave -group "Bench" sim:*
 
 
-run 1 us
+run 2 us
 
 # vim: set filetype=tcl:

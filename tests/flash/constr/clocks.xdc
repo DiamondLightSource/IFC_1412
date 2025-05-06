@@ -5,7 +5,8 @@ create_clock -period 10.0 -name FCLKA [get_ports pad_MGT224_REFCLK_P]
 
 
 # Set routing delay constraints on the four STARTUPE3 connections as recommended
-# by Xilinx note 000034704
+# by Xilinx note 000034704, but here we set the minimum delay we seem to be able
+# to get away with.
 set setup_delay 0.5
 
 # fpga_clk -> USRCCLKO
@@ -15,16 +16,16 @@ set_max_delay -datapath_only \
 
 # spi_cs_n -> FCSBO
 set_max_delay -datapath_only \
-    -from [get_cells {flash/io/spi_cs_n_reg[*]}] \
+    -from [get_cells {flash/io/fpga1_spi_cs_n_reg}] \
     -to [get_pins flash/io/startup/FCSBO] $setup_delay
 
 # mosi -> DO
 set_max_delay -datapath_only \
-    -from [get_cells {flash/io/mosi_reg[*]}] \
+    -from [get_cells {flash/io/fpga1_mosi_reg}] \
     -to [get_pins flash/io/startup/DO] $setup_delay
 
 # DTS -> DI
 set_max_delay -datapath_only \
     -from [get_pins flash/io/startup/DI] \
-    -to [get_cells {flash/io/miso_reg[*]}] $setup_delay
+    -to [get_cells {flash/io/fpga1_miso_reg}] $setup_delay
 
