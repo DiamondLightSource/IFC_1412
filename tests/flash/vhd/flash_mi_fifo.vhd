@@ -8,6 +8,9 @@ use work.support.all;
 use work.register_defs.all;
 
 entity flash_mi_fifo is
+    generic (
+        constant FIFO_BITS : natural
+    );
     port (
         clk_i : in std_ulogic;
 
@@ -45,7 +48,7 @@ architecture arch of flash_mi_fifo is
 
 begin
     fifo : entity work.fifo generic map (
-        FIFO_BITS => 7,         -- Up to 512 bytes = 128 words
+        FIFO_BITS => FIFO_BITS,
         DATA_WIDTH => 32
     ) port map (
         clk_i => clk_i,

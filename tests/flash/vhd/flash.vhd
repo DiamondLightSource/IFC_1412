@@ -31,6 +31,10 @@ entity flash is
 end;
 
 architecture arch of flash is
+    -- Both the MI and MO FIFOs need to have 8 bits of addressing (256 words, or
+    -- 1024 bytes) to match the 10 bit transaction length.
+    constant FIFO_BITS : natural := 8;
+
     -- Control to core
     signal select_spi : std_ulogic_vector(1 downto 0);
     signal read_delay : unsigned(2 downto 0);
@@ -82,7 +86,9 @@ begin
     );
 
 
-    mo_fifo : entity work.flash_mo_fifo port map (
+    mo_fifo : entity work.flash_mo_fifo generic map (
+        FIFO_BITS => FIFO_BITS
+    ) port map (
         clk_i => clk_i,
 
         write_strobe_i => write_strobe_i(FLASH_DATA_REG),
@@ -95,7 +101,9 @@ begin
     );
 
 
-    mi_fifo : entity work.flash_mi_fifo port map (
+    mi_fifo : entity work.flash_mi_fifo generic map (
+        FIFO_BITS => FIFO_BITS
+    ) port map (
         clk_i => clk_i,
 
         read_strobe_i => read_strobe_i(FLASH_DATA_REG),
