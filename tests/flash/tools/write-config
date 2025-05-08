@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+# Writes configuration memory, performing writes to both banks together
+
+import sys
+import os
+import argparse
+
+import flash_lib
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description = 'Write to configuration memory')
+    flash_lib.add_common_args(parser, select = False)
+    parser.add_argument('config1', help = 'First config file')
+    parser.add_argument('config2', help = 'Second config file')
+    return parser.parse_args()
+
+
+def fail(message):
+    print(message, file = sys.stderr)
+    sys.exit(1)
+
+
+SECTOR_SIZE = 0x40000
+PAGE_SIZE = 512
+
+
+def wait_while_busy(e1, e2):
+    # Wait for programming to complete
+    while True:
+        status1 = e1.RDSR1()
+        status2 = e2.RDSR1()
+        status = status1 | status2
+        if not status & 1:
+            break
+    # Report any detected error condition
+    if status & 0x60:
+        e.WRDI()
+        fail('Erase or write error: %02X/%02X' % (status1, status2))
+
+
+def erase_sector(e1, e2, address):
+    e1.WREN()
+    e1.SE(address)
+    e2.WREN()
+    e2.SE(address)
+    wait_while_busy(e1, e2)
+
+
+def program_sector(e1, e2, address, block1, block2):
+    for base in range(0, len(block1), 512):
+        e1.WREN()
+        e1.PP(address + base, block1[base:base+512])
+        e2.WREN()
+        e2.PP(address + base, block2[base:base+512])
+        wait_while_busy(e1, e2)
+
+
+def write_flash(e1, e2, config1, config2, progress):
+    address = 0
+    while True:
+        block1 = config1.read(SECTOR_SIZE)
+        block2 = config2.read(SECTOR_SIZE)
+        if not block1 or not block2:
+            break
+        progress.report(address)
+        erase_sector(e1, e2, address)
+        program_sector(e1, e2, address, block1, block2)
+        address += SECTOR_SIZE
+
+
+def main():
+    args = parse_args()
+
+    flash = flash_lib.open(args.addr)
+    e1 = flash_lib.Exchange(flash, 'fpga1', args.clock, args.read_delay)
+    e2 = flash_lib.Exchange(flash, 'fpga2', args.clock, args.read_delay)
+
+    file_size = os.path.getsize(args.config1)
+    if os.path.getsize(args.config2) != file_size:
+        fail('Configuration file sizes don\'t match')
+
+    progress = flash_lib.Progress(file_size)
+    with open(args.config1, 'rb') as config1:
+        with open(args.config2, 'rb') as config2:
+            write_flash(e1, e2, config1, config2, progress)
+    progress.done()
+
+
+main()

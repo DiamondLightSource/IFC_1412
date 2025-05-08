@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+# Dumps configuration state of the selected flash
+
+import argparse
+
+import flash_lib
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description = 'Dump FLASH config')
+    flash_lib.add_common_args(parser)
+    return parser.parse_args()
+
+
+def dump_setup(e):
+    sr1 = e.RDSR1()
+    cr = e.RDCR()
+    sr2 = e.RDSR2()
+    abr = e.ABRD()
+    print(f'{sr1:02X} {cr:02X} {sr2:02X} {abr:08X}')
+
+
+def main():
+    args = parse_args()
+    e = flash_lib.open_with_args(args)
+    dump_setup(e)
+
+main()

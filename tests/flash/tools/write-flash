@@ -23,23 +23,6 @@ SECTOR_SIZE = 0x40000
 PAGE_SIZE = 512
 
 
-class Progress:
-    SYMBOL = '|/-\\'
-
-    def __init__(self, file):
-        self.size = os.path.getsize(file)
-        self.state = 0
-
-    def report(self, address, end = '\r'):
-        progress = 100 * address / self.size
-        symbol = self.SYMBOL[self.state]
-        self.state = (self.state + 1) % len(self.SYMBOL)
-        print('{} {:4.1f}% {}'.format(symbol, progress, address), end = end)
-
-    def done(self):
-        self.report(self.size, '\n')
-
-
 def wait_while_busy(e):
     # Wait for programming to complete
     while True:
@@ -81,7 +64,7 @@ def main():
     args = parse_args()
     e = flash_lib.open_with_args(args)
 
-    progress = Progress(args.input)
+    progress = flash_lib.Progress(os.path.getsize(args.input))
     with open(args.input, 'rb') as input:
         write_flash(e, input, progress)
     progress.done()

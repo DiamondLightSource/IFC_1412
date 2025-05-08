@@ -33,14 +33,15 @@ def delay_type(arg):
         raise ValueError('Invalid value for read delay')
     return result
 
-def add_common_args(parser):
+def add_common_args(parser, select = True):
     parser.add_argument(
         '-a', dest = 'addr', default = 0,
         help = 'Set physical address of card.  If not specified then card 0')
-    parser.add_argument(
-        '-s', dest = 'select', default = 'user',
-        choices = SelectOptions.keys(),
-        help = 'Select which FLASH memory to access')
+    if select:
+        parser.add_argument(
+            '-s', dest = 'select', default = 'user',
+            choices = SelectOptions.keys(),
+            help = 'Select which FLASH memory to access')
     parser.add_argument(
         '-c', dest = 'clock', default = '63M',
         choices = SpeedOptions.keys(),
@@ -54,6 +55,23 @@ def open_with_args(args):
     flash = open(args.addr)
     return Exchange(flash, args.select, args.clock, args.read_delay)
 
+
+
+class Progress:
+    SYMBOL = '|/-\\'
+
+    def __init__(self, size):
+        self.size = size
+        self.state = 0
+
+    def report(self, address, end = '\r'):
+        progress = 100 * address / self.size
+        symbol = self.SYMBOL[self.state]
+        self.state = (self.state + 1) % len(self.SYMBOL)
+        print('{} {:4.1f}% {}'.format(symbol, progress, address), end = end)
+
+    def done(self):
+        self.report(self.size, '\n')
 
 
 class Exchange:
@@ -128,6 +146,10 @@ class Exchange:
     def RDCR(self):
         '''Reads Configuration Register'''
         return self.exchange(0x07, b'', 1)[0]
+
+    def ABRD(self):
+        '''Reads autoboot register'''
+        return self.exchange(0x14, b'', 4).view('uint32')[0]
 
     def FAST_READ(self, address, count):
         '''Reads block of memory'''
