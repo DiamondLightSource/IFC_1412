@@ -20,6 +20,11 @@ entity sim_spi is
 end;
 
 architecture arch of sim_spi is
+    -- The simulation needs to take into account delays at the edge of the
+    -- device.  It's not clear what this should be, but this delay seems to
+    -- match what we're seeing on the hardware.
+    constant BASE_DELAY : time := 7 ns;
+
     procedure write(message : string := "") is
     begin
         sim_support.write(NAME & " " & message, true);
@@ -48,5 +53,5 @@ begin
         end loop;
     end process;
 
-    miso_o <= transport mosi_i after READ_DELAY;
+    miso_o <= transport mosi_i after READ_DELAY + BASE_DELAY;
 end;

@@ -34,7 +34,7 @@ entity flash_spi_core is
         -- Asserted when data from SO is to be captured
         read_enable_i : in std_ulogic;
         -- Asserted when ready to read the next byte
-        next_o : out std_ulogic;
+        next_o : out std_ulogic := '0';
         -- Asserted during transaction
         busy_o : out std_ulogic := '0'
     );
@@ -82,8 +82,8 @@ architecture arch of flash_spi_core is
 
     -- MI data handling
     -- The read delay is designed so that the earliest possible data result will
-    -- be at the start of the delay pipeline, so we need 8 ticks plus an
-    -- for the minimum round trip delay.
+    -- be at the start of the delay pipeline, so we need 7 ticks plus an
+    -- allowance for the minimum round trip delay.
     constant READ_DELAY : natural := 12;
     signal mi_pipeline : std_ulogic_vector(0 to 7);
 

@@ -125,21 +125,22 @@ begin
         -- Try a really fast read
         write_reg(FLASH_DATA_REG, X"FF_FF_53_11");
         write_command(USER, 1,
-            read_offset => 0, clock_speed => "00", read_delay => 0);
+            read_offset => 0, clock_speed => "00", read_delay => 2);
         clk_wait(6);
         read_reg(FLASH_DATA_REG);
 
         -- Same with longer delay
         write_reg(FLASH_DATA_REG, X"FF_FF_12_11");
+        write_reg(FLASH_DATA_REG, X"BA_D0_FF_00");
         write_command(USER, 1,
-            read_offset => 0, clock_speed => "00", read_delay => 1);
+            read_offset => 0, clock_speed => "00", read_delay => 3);
         clk_wait(6);
         read_reg(FLASH_DATA_REG);
 
         -- Followed by a really slow one
         write_reg(FLASH_DATA_REG, X"FF_FF_AC_88");
         write_command(USER, 1,
-            read_offset => 0, clock_speed => "11", read_delay => 0);
+            read_offset => 0, clock_speed => "11", read_delay => 2);
         clk_wait(6);
         read_reg(FLASH_DATA_REG);
 

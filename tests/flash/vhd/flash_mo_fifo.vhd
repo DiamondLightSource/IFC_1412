@@ -17,7 +17,7 @@ entity flash_mo_fifo is
         -- Write interface from user registers
         write_strobe_i : in std_ulogic;
         write_data_i : in reg_data_t;
-        write_ack_o : out std_ulogic;
+        write_ack_o : out std_ulogic := '0';
 
         -- Read interface to FLASH
         read_data_o : out std_ulogic_vector(7 downto 0);
@@ -29,6 +29,7 @@ entity flash_mo_fifo is
 end;
 
 architecture arch of flash_mo_fifo is
+    signal ack_pending : std_ulogic := '0';
     signal write_ready : std_ulogic;
 
     signal advance_byte : std_ulogic;
@@ -72,13 +73,19 @@ begin
         reset_fifo_i => read_reset_i
     );
 
-    -- Unconditionally acknowledge writes
-    write_ack_o <= '1';
-
 
     -- Map the 32 bit wide FIFO output onto 8 bit output
     process (clk_i) begin
         if rising_edge(clk_i) then
+            -- Acknowledge once the write has appeared at the output, ensure we
+            -- don't get stuck if a reset happens
+            if read_reset_i or byte_read_valid then
+                write_ack_o <= ack_pending or write_strobe_i;
+                ack_pending <= '0';
+            else
+                ack_pending <= ack_pending or write_strobe_i;
+            end if;
+
             -- We don't bother to check whether the FIFO is full.  As it
             -- happens we get away with this because when the FIFO is not ready
             -- it simply ignores extra writes!  Catch this in simulation.
