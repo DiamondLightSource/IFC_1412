@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+# Checks communication with flash modules
+
+import sys
+
+import flash_lib
+
+
+def format(array):
+    return ' '.join('%02X' % a for a in array)
+
+
+flash = flash_lib.open()
+
+for select in ['user', 'fpga1', 'fpga2']:
+    e = flash_lib.Exchange(flash, select, '63M', flash_lib.BASE_DELAY)
+    ok = (e.REMS() == [0x01, 0x19]).all()
+    pattern = e.OTPR(0, 16)
+
+    print('Checking', select, 'ok' if ok else 'FAIL!')
+
+    for clock in ['125M', '63M', '42M', '31M']:
+        print(f'{clock:5}', end = ' ')
+        for delay in range(8):
+            e = flash_lib.Exchange(flash, select, clock, delay)
+            test = e.OTPR(0, 16)
+            ok = int((test == pattern).all())
+            print(ok, end = ' ')
+        print()

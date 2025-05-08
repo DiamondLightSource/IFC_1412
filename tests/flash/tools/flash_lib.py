@@ -7,6 +7,12 @@ from ifc_lib import defs_path
 from fpga_lib.driver import driver
 
 
+SelectOptions = { 'user' : 1, 'fpga1' : 2, 'fpga2' : 3 }
+SpeedOptions = { '125M' : 0, '63M' : 1, '42M' : 2, '31M' : 3 }
+
+BASE_DELAY = 3
+
+
 class Registers(driver.RawRegisters):
     NAME = 'ifc_1412-flash'
 
@@ -40,7 +46,7 @@ def add_common_args(parser):
         choices = SpeedOptions.keys(),
         help = 'Select SPI clock speed')
     parser.add_argument(
-        '-r', dest = 'read_delay', default = 3, type = delay_type,
+        '-r', dest = 'read_delay', default = BASE_DELAY, type = delay_type,
         help = 'Read delay')
 
 
@@ -48,21 +54,6 @@ def open_with_args(args):
     flash = open(args.addr)
     return Exchange(flash, args.select, args.clock, args.read_delay)
 
-
-# Options for select
-USER = 1
-FPGA1 = 2
-FPGA2 = 3
-
-# Options for clock speed
-SPEED_125M = 0
-SPEED_63M = 1
-SPEED_42M = 2
-SPEED_31M = 3
-
-
-SelectOptions = { 'user' : 1, 'fpga1' : 2, 'fpga2' : 3 }
-SpeedOptions = { '125M' : 0, '63M' : 1, '42M' : 2, '31M' : 3 }
 
 
 class Exchange:
@@ -103,6 +94,11 @@ class Exchange:
     def REMS(self):
         '''Read Identification, should return 01 19'''
         return self.exchange(0x90, [0, 0, 0], 2)
+
+    def OTPR(self, address, count):
+        '''Read from one time programmable array'''
+        address = struct.pack('>BHB', 0, address, 255)
+        return self.exchange(0x4B, address, count)
 
     def WREN(self):
         '''Set Write Enable Latch to enable modification of memory.'''
