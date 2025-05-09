@@ -4,4 +4,7 @@ FPGA_PART = xcku085-flva1517-1-c
 
 CONSTR_FILES += $(BOARD_DIR)/config.xdc
 
+FILE_LIST_DEFS += BOARD_DIR
+TCL_SCRIPTS += $(BOARD_DIR)/post_bitstream_hook.tcl
+
 # vim: set filetype=make:
