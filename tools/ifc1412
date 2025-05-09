@@ -1,0 +1,508 @@
+#!/usr/bin/env python
+
+import sys
+import subprocess
+import argparse
+import struct
+import datetime
+from collections import OrderedDict
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# IPMI commands
+
+class IPMI:
+    def __init__(self, mch, amc, dry_run = False):
+        self.mch = mch
+        self.amc = amc
+        self.dry_run = dry_run
+
+    # Raw access to ipmitool command
+    def ipmitool(self, cmd, *args, capture):
+        command = (
+            'ipmitool', '-H', self.mch, '-A', 'none',
+            '-B', '0', '-b', '7', '-T', '0x82',
+            '-t', f'{self.amc:d}', cmd) + args
+        if self.dry_run:
+            print(' '.join(command))
+            sys.exit(0)
+        else:
+            stdout = subprocess.PIPE if capture else sys.stdout
+            result = subprocess.run(command, stdout = stdout)
+            if result.returncode:
+                sys.exit(result.returncode)
+            return result.stdout
+
+    # Simply prints the output of the requested command
+    def ipmi_cmd(self, cmd, *args):
+        self.ipmitool(cmd, *args, capture = False)
+
+    # This command takes arguments and returns result as an array of integers
+    def ipmi_raw(self, *args):
+        args = (f'0x{x:02x}' for x in args)
+        result = self.ipmitool('raw', *args, capture = True)
+        return [int(x, 16) for x in result.split()]
+
+    # Invokes the requested IFC OEM command, returns a bytes array
+    def ipmi_oem(self, command, *args):
+        result = self.ipmi_raw(0x2e, command, 0x5e, 0xbe, 0x00, *args)
+        assert result[:3] == [0x5e, 0xbe, 0x00], \
+            'Unexpected response to OEM commmand'
+        return bytes(result[3:])
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Argument parsing
+
+# Set of actions populated by command() decorator.  Each entry represents either
+# a single command (False, command_info) or a dictionary of commands prefixed by
+# this command (True, dictionary).
+actions = OrderedDict()
+
+
+def fail(message):
+    print(message, file = sys.stderr)
+    sys.exit(1)
+
+
+def parse_amc(amc_string):
+    # Allow argument to begin with amc or AMC
+    if amc_string.lower()[:3] == 'amc':
+        amc_string = amc_string[3:]
+    amc = int(amc_string)
+    if amc < 1 or 12 < amc:
+        raise ValueError('AMC value out of range')
+    # Convert slot number to IPMI address
+    return 2 * amc + 0x70
+
+def parse_args():
+    parser = argparse.ArgumentParser('IFC_1412 IPMI commands')
+    parser.add_argument('-d', '--dry_run', action = 'store_true')
+    parser.add_argument('mch',
+        help = 'Network address of MCH')
+    parser.add_argument('amc', type = parse_amc,
+        help = 'AMC slot of card to address')
+
+    parser.add_argument('action',
+        help = 'Basic action to request')
+    parser.add_argument('command', nargs = '?',
+        help = 'Command')
+    parser.add_argument('args', nargs = '*')
+
+    return parser.parse_args()
+
+
+# Function decorator used to add commands to the actions lookup table
+def command(function):
+    name = function.__name__.replace('_', '-').split('-', 1)
+
+    # For a single part command just add directly to the dictionary, for a
+    # multi-part command create a sub dictionary as appropriate
+    if len(name) == 1:
+        assert name[0] not in actions, 'Repeated action name'
+        actions[name[0]] = (False, function)
+    else:
+        action, command = name
+        try:
+            is_prefix, dict = actions[action]
+            assert is_prefix, 'Cannot mix single and multi-part commands'
+        except KeyError:
+            dict = OrderedDict()
+            actions[action] = (True, dict)
+        dict[command] = function
+    return function
+
+
+def lookup_action(action):
+    try:
+        return actions[action]
+    except KeyError:
+        fail('Unknown action "%s"' % action)
+
+def lookup_command(commands, command):
+    if not command:
+        fail('Must specify command')
+    try:
+        return commands[command]
+    except KeyError:
+        fail('Unknown command "%s"' % command)
+
+def dispatch(args, ipmi):
+    nested, function = lookup_action(args.action)
+    if nested:
+        function = lookup_command(function, args.command)
+    elif args.command:
+        args.args = [args.command] + args.args
+    function(ipmi, *args.args)
+
+
+# Returns title, args, detailed help
+def get_help_info(function):
+    return function.__doc__.split('\n', 2)
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Actions
+
+@command
+def help(ipmi, *args):
+    '''Print this help text or help for command
+[command [sub-command]]
+Prints list of available commands, or if command and, if appropriate,
+sub-command specified prints usage and detailed help for command.'''
+
+    if args:
+        command = args[0]
+        nested, function = lookup_action(args[0])
+        if nested:
+            if len(args) > 1:
+                command += ' ' + args[1]
+                function = lookup_command(function, args[1])
+            else:
+                fail(f'Missing action, one of: {", ".join(function.keys())}')
+
+        args, long_help = get_help_info(function)[1:]
+        print('Usage:', command, args)
+        print()
+        print(long_help)
+
+    else:
+        # Print basic description of every available command
+        for action, (nested, info) in actions.items():
+            if nested:
+                for command, function in info.items():
+                    usage = get_help_info(function)[0]
+                    name = f'{action} {command}'
+                    print(f'{name:24s} {usage}')
+            else:
+                usage = get_help_info(info)[0]
+                print(f'{action:24s} {usage}')
+
+
+@command
+def get_boot_count(ipmi):
+    '''Get number of MMC boots
+
+Returns number of times card has been rebooted since counter reset.'''
+    result = ipmi.ipmi_oem(0x01)
+    print(struct.unpack('<L', result)[0])
+
+@command
+def get_run_time(ipmi):
+    '''Get run time since last MMC reboot
+
+Returns run time in hours, minutes and seconds.'''
+    result = ipmi.ipmi_oem(0x02)
+    result = struct.unpack('<Q', result)[0]
+    print(datetime.timedelta(seconds = result))
+
+@command
+def get_fpga_state(ipmi):
+    '''Get configuration state of FPGA
+
+Returns "configured" if the FPGA has been programmed.'''
+    result = ipmi.ipmi_oem(0x06)
+    print('configured' if result[0] else 'not configured')
+
+@command
+def get_board_uid(ipmi):
+    '''Get unique board ID
+
+    '''
+    result = ipmi.ipmi_oem(0x14)
+    print(''.join(f'{x:02x}' for x in result))
+
+@command
+def get_firmware_info(ipmi):
+    '''Get firmware version information
+
+    '''
+    result = ipmi.ipmi_oem(0x15)
+    assert result[-1] == 0, 'Expected null terminated string'
+    major, minor, step, id, build = struct.unpack('<BBBLH', result[:9])
+    name = result[9:-1].decode()
+    print(f'{name} release {major}.{minor}.{step} ({id:08x}) build {build}')
+
+
+# Payload options: key, options
+payload_options = (
+    ('tclkb-mode', ('none', 'acq-amc', 'amc-fpga')),
+    ('fpga-image', ('a', 'b')),
+    ('jtag-master', ('onboard', 'backplane')),
+    ('jtag-rtm', ('disable', 'enable')),
+    ('acq-clk-src', (
+        'fmc2-clk1', 'fmc2-clk0', 'fmc1-clk1', 'fmc1-clk0',
+        'rtm-clk', 'none')),
+    ('acq-clk-vcxo', ('disable', 'enable')),
+    ('fmc1-enum', ('legacy', 'mmc', 'delegated')),
+    ('fmc2-enum', ('legacy', 'mmc', 'delegated')),
+    ('fmc1-refclk-src',
+        {0 : 'acq', 1 : 'other-fmc', 0x83 : 'none'}),
+    ('fmc2-refclk-src',
+        {0 : 'acq', 1 : 'other-fmc', 0x83 : 'none'}),
+    ('fmc1-sync-src',
+        {0 : 'fpga', 1 : 'other-fmc', 0x83 : 'none'}),
+    ('fmc2-sync-src',
+        {0 : 'fpga', 1 : 'other-fmc', 0x83 : 'none'}),
+)
+
+# Searches for argument in payload_options and decodes as appropriate
+def lookup_payload_config(arg):
+    key, value = arg.split('=', 1)
+    for index, (config, options) in enumerate(payload_options):
+        if key == config:
+            if isinstance(options, dict):
+                for k, v in options.items():
+                    if v == value:
+                        return index, k
+                fail(f'Unknown option "{value}" for {key}')
+            else:
+                try:
+                    return index, options.index(value)
+                except ValueError:
+                    fail(f'Unknown option "{value}" for {key}')
+    fail(f'Option {key} not found')
+
+
+@command
+def get_payload_config(ipmi):
+    '''Get payload configuration'
+
+Returns table of currently configured payload configuration.'''
+    result = ipmi.ipmi_oem(0x0a)
+    for config, options in zip(result, payload_options):
+        try:
+            descr = options[1][config]
+        except IndexError:
+            descr = f'INVALID ({config:02x})'
+        print(f'{options[0]:16} : ({config:02x}) {descr}')
+
+@command
+def set_payload_config(ipmi, *args):
+    '''Set payload configuration
+[option=value]*
+Sets selected options in the stored payload according to the following table:
+
+    tclkb-mode={none|acq-amc|amc-fpga}
+    fpga-image={a|b}
+    jtag-master={onboard|backplane}
+    jtag-rtm={disable|enable}
+    acq-clk-src={fmc2-clk1|fmc2-clk0|fmc1-clk1|fmc1-clk0|rtm-clk|none}
+    acq-clk-vcxo={disable|enable}
+    fmc1-enum={legacy|mmc|delegated}
+    fmc2-enum={legacy|mmc|delegated}
+    fmc1-refclk-src={acq|other-fmc|none}
+    fmc2-refclk-src={acq|other-fmc|none}
+    fmc1-sync-src={fpga|other-fmc|none}
+    fmc2-sync-src={fpga|other-fmc|none}
+
+Options not listed are left unchanged'''
+
+    # Read the existing options, apply arguments to modify options
+    options = list(ipmi.ipmi_oem(0x0a))
+    for arg in args:
+        index, value = lookup_payload_config(arg)
+        options[index] = value
+
+    ipmi.ipmi_oem(0x0b, *options)
+
+@command
+def get_sensors(ipmi):
+    '''Get list of all sensors
+
+    '''
+    ipmi.ipmi_cmd('sensor', 'list', 'all')
+
+@command
+def get_sdr(ipmi):
+    '''Report current sensor readings
+
+    '''
+    ipmi.ipmi_cmd('sdr')
+
+@command
+def get_fru_info(ipmi):
+    '''Get FRU information
+
+    '''
+    ipmi.ipmi_cmd('fru')
+
+@command
+def reset_fpga(ipmi):
+    '''Reset the FPGA
+
+    (Soft reset not currently supported)
+    '''
+    ipmi.ipmi_oem(0x05, 0x83)
+
+@command
+def reset_mmc(ipmi):
+    '''Reset the MMC
+
+    '''
+    ipmi.ipmi_cmd('mc', 'reset', 'cold')
+
+@command
+def reset_payload_config(ipmi):
+    '''Reset the payload configuration to default state
+
+    '''
+    ipmi.ipmi_oem(0x04)
+
+@command
+def set_led(ipmi, led, state):
+    '''Set LED state
+
+    '''
+    led_table = {
+        'blue'  : 0x00,
+        '1'     : 0x01,
+        'a'     : 0x04,
+        'b'     : 0x05,
+        'c'     : 0x06,
+        'd'     : 0x07,
+        'all'   : 0xFF,
+    }
+    function_table = {
+        'on'    : (0xFF, 0x00),
+        'off'   : (0x00, 0x00),
+        'slow'  : (0x30, 0x30),
+        'fast'  : (0x10, 0x10),
+    }
+
+    led_id = led_table[led]
+    function, duration = function_table[led]
+    colour = 0xFF
+
+    ipmi.ipmi_raw(
+        # IPMI magic for LED command
+        0x2c, 0x07, 0x00, 0x00,
+        led_id, function, duration, colour)
+
+@command
+def set_amc_power(ipmi, on_off):
+    '''Set AMC power on or off
+    on|off
+    '''
+    on_off = {'on' : 0x01, 'off' : 0x00}[on_off]
+    ipmi.ipmi_oem(0x12, on_off)
+
+@command
+def set_rtm_power(ipmi, mp_on_off, pp_on_off):
+    '''Set RTM power on or off
+    on|off on|off
+    '''
+    on_off = {'on' : 0x01, 'off' : 0x00}
+    mp = on_off[mp_on_off]
+    pp = on_off[pp_on_off]
+    ipmi.ipmi_oem(0x13, mp, pp)
+
+@command
+def set_fru_info(ipmi, image):
+    '''Set custom FRU info image
+
+    '''
+    print('The MMC will be rebooted to upload the FRU info image.')
+    input('Press <control-c> to abort, or <return> to continue.')
+    ipmi.ipmi_oem(0x03)
+    input('Press <return> when MMC ready for upload')
+    ipmi.ipmi_cmd('fru', 'write', '0', image)
+    ipmi.ipmi_cmd('mc', 'reset', 'cold')
+
+@command
+def set_fpga_config(ipmi, config):
+    '''Select which FPFA configuration image to use, a or b.
+
+    This temporarily overrides the fpga-image selection as reported by
+    get payload-config, but is not persistent after power-cycle or MMC reset.'''
+    config = { 'a' : 0, 'b' : 1 }[config]
+    ipmi.ipmi_oem(0x0e, config)
+
+
+# Performs a custom OEM I2C read/write transaction
+def oem_i2c(ipmi, channel, device, read_count, *writes):
+    def do_transfer(device, read_count, *writes):
+        return (device, len(writes)) + writes + (read_count, )
+
+    return ipmi.ipmi_oem(0x17,
+        # Two transfers in one I2C transaction
+        *(2,) +
+        # First set the channel
+        do_transfer(0x70, 0, 1 << channel) +
+        # Then do the read/write transaction
+        do_transfer(device, read_count, *writes))
+
+@command
+def i2c_rw(ipmi, *args):
+    '''Custom I2c exchange
+
+    '''
+    reads = oem_i2c(ipmi, *[int(x, 0) for x in args])
+    print(' '.join(f'{x:02x}' for x in reads))
+
+@command
+def firmware_upgrade(ipmi, image):
+    '''Set custom FRU info image
+
+    '''
+    print('The MMC will be rebooted to upgrade the firmware.')
+    input('Press <control-c> to abort, or <return> to continue.')
+    ipmi.ipmi_oem(0x03)
+    ipmi.ipmi_cmd('hpm check')
+    input('Press <return> when MMC ready for upload')
+    ipmi.ipmi_cmd('hpm', 'upgrade', image, 'activate')
+    ipmi.ipmi_cmd('mc', 'reset', 'cold')
+
+@command
+def ipmi(ipmi, command, *args):
+    '''Run ipmi command
+
+    '''
+    ipmi.ipmi_cmd(command, *args)
+
+@command
+def temp_fmc(ipmi, fmc):
+    '''Returns ADC_3110 temperature
+
+    '''
+    fmc = int(fmc)
+    assert fmc in [1, 2], 'FMC argument must be 1 or 2'
+    # Read and convert as documented for TMP102
+    raw_temp = oem_i2c(ipmi, 3 + fmc, 0x48, 2, 0)
+    raw_temp = struct.unpack('>H', raw_temp)[0] >> 4
+    print(raw_temp / 16.0)
+
+@command
+def temp_u227(ipmi):
+    '''Returns temperature from U227
+
+    '''
+    # Poke the trigger register in case we're first on the scene
+    oem_i2c(ipmi, 0, 0x4F, 0, 2, 1)
+    # Now read and convert the temperature as documented for LTC2990
+    raw_temp = oem_i2c(ipmi, 0, 0x4F, 2, 4)
+    raw_temp = struct.unpack('>H', raw_temp)[0] & 0x1FFF
+    print(raw_temp / 16.0)
+
+@command
+def temp_fpga(ipmi):
+    '''Returns FPGA temperature
+
+    '''
+    raw_temp = oem_i2c(ipmi, 3, 0x32, 2, 0, 0, 0, 4)
+    raw_temp = struct.unpack('<H', raw_temp)[0]
+    # Magic numbers taken from UG580 for Temperature Sensor with SYSMONE1 using
+    # the internal reference (v1.10.1 p40).
+    temp = 501.3743 * raw_temp * 2**-16 - 273.6777
+    print(f'{temp:.1f}')
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+def run_command():
+    args = parse_args()
+    ipmi = IPMI(args.mch, args.amc, args.dry_run)
+    command = dispatch(args, ipmi)
+
+run_command()
