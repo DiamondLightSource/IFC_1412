@@ -3,29 +3,43 @@
 # Checks communication with flash modules.  Reports four status registers and
 # scans available clock speeds and read delay settings
 
-import sys
+import argparse
 
 import flash_lib
 
-flash = flash_lib.open()
 
-for select in ['user', 'fpga1', 'fpga2']:
-    e = flash_lib.Exchange(flash, select, '63M', flash_lib.BASE_DELAY)
+def parse_args():
+    parser = argparse.ArgumentParser(description = 'Check FLASH communication')
+    flash_lib.add_common_args(parser, select = False)
+    return parser.parse_args()
 
-    sr1 = e.RDSR1()
-    cr = e.RDCR()
-    sr2 = e.RDSR2()
-    abr = e.ABRD()
-    status = 'ok' if (e.REMS() == [0x01, 0x19]).all() else 'FAIL!'
-    print(f'{select} {status} {sr1:02X} {cr:02X} {sr2:02X} {abr:08X}')
 
-    pattern = e.OTPR(0, 16)
-    for clock in ['125M', '63M', '42M', '31M']:
-        print(f'{clock:5}', end = ' ')
-        for delay in range(8):
-            e = flash_lib.Exchange(flash, select, clock, delay)
-            test = e.OTPR(0, 16)
-            ok = int((test == pattern).all())
-            print(ok, end = ' ')
+def check_flash(flash, main_clock, main_read_delay):
+    for select in ['user', 'fpga1', 'fpga2']:
+        e = flash_lib.Exchange(flash, select, main_clock, main_read_delay)
+
+        sr1 = e.RDSR1()
+        cr = e.RDCR()
+        sr2 = e.RDSR2()
+        abr = e.ABRD()
+        status = 'ok' if (e.REMS() == [0x01, 0x19]).all() else 'FAIL!'
+        print(f'{select} {status} {sr1:02X} {cr:02X} {sr2:02X} {abr:08X}')
+
+        pattern = e.OTPR(0, 16)
+        for clock in ['125M', '63M', '42M', '31M']:
+            print(f'{clock:5}', end = ' ')
+            for delay in range(8):
+                e = flash_lib.Exchange(flash, select, clock, delay)
+                test = e.OTPR(0, 16)
+                ok = int((test == pattern).all())
+                print(ok, end = ' ')
+            print()
         print()
-    print()
+
+
+def main():
+    args = parse_args()
+    flash = flash_lib.open(args.addr)
+    check_flash(flash, args.clock, args.read_delay)
+
+main()

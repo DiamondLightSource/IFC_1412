@@ -1,5 +1,6 @@
 # Support for flash operations
 
+import sys
 import struct
 import numpy
 
@@ -12,6 +13,15 @@ SpeedOptions = { '125M' : 0, '63M' : 1, '42M' : 2, '31M' : 3 }
 
 BASE_DELAY = 3
 
+SECTOR_SIZE = 0x40000
+PAGE_SIZE = 512
+
+
+
+def fail(message):
+    print(message, file = sys.stderr)
+    sys.exit(1)
+
 
 class Registers(driver.RawRegisters):
     NAME = 'ifc_1412-flash'
@@ -21,6 +31,10 @@ class Registers(driver.RawRegisters):
 
         register_defines = defs_path.register_defines(__file__)
         self.make_registers('TOP', None, register_defines)
+
+        readback = self.TOP.FLASH.COMMAND._value
+        if readback != 0:
+            fail('Command readback = %08X, need to rescan PCI bus' % readback)
 
 def open(address = 0):
     regs = Registers(address)

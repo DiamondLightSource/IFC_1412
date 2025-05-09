@@ -1,5 +1,6 @@
 BUILT += metadata.coe
 BUILT += register_defines.vhd
+
 BLOCK_DESIGNS += interconnect
 
 VHD_FILES =

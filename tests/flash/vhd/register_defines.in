@@ -1,8 +1,9 @@
 # FLASH register definitions
 
 :!FLASH
-    # Writing to this register initiates a FLASH transaction
-    COMMAND     W
+    # Writing to this register initiates a FLASH transaction.  Reading this
+    # register is guaranteed to return zero.
+    COMMAND     RW
         # Total transaction length (less 1).  The DATA FIFO must be populated
         # with the correct number of bytes to be written
         .LENGTH             10

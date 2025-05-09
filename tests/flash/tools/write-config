@@ -2,7 +2,6 @@
 
 # Writes configuration memory, performing writes to both banks together
 
-import sys
 import os
 import argparse
 
@@ -18,15 +17,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def fail(message):
-    print(message, file = sys.stderr)
-    sys.exit(1)
-
-
-SECTOR_SIZE = 0x40000
-PAGE_SIZE = 512
-
-
 def wait_while_busy(e1, e2):
     # Wait for programming to complete
     while True:
@@ -38,7 +28,7 @@ def wait_while_busy(e1, e2):
     # Report any detected error condition
     if status & 0x60:
         e.WRDI()
-        fail('Erase or write error: %02X/%02X' % (status1, status2))
+        flash_lib.fail('Erase or write error: %02X/%02X' % (status1, status2))
 
 
 def erase_sector(e1, e2, address):
@@ -50,25 +40,25 @@ def erase_sector(e1, e2, address):
 
 
 def program_sector(e1, e2, address, block1, block2):
-    for base in range(0, len(block1), 512):
+    for base in range(0, len(block1), flash_lib.PAGE_SIZE):
         e1.WREN()
-        e1.PP(address + base, block1[base:base+512])
+        e1.PP(address + base, block1[base : base + flash_lib.PAGE_SIZE])
         e2.WREN()
-        e2.PP(address + base, block2[base:base+512])
+        e2.PP(address + base, block2[base : base + flash_lib.PAGE_SIZE])
         wait_while_busy(e1, e2)
 
 
 def write_flash(e1, e2, config1, config2, progress):
     address = 0
     while True:
-        block1 = config1.read(SECTOR_SIZE)
-        block2 = config2.read(SECTOR_SIZE)
+        block1 = config1.read(flash_lib.SECTOR_SIZE)
+        block2 = config2.read(flash_lib.SECTOR_SIZE)
         if not block1 or not block2:
             break
         progress.report(address)
         erase_sector(e1, e2, address)
         program_sector(e1, e2, address, block1, block2)
-        address += SECTOR_SIZE
+        address += flash_lib.SECTOR_SIZE
 
 
 def main():
@@ -80,7 +70,7 @@ def main():
 
     file_size = os.path.getsize(args.config1)
     if os.path.getsize(args.config2) != file_size:
-        fail('Configuration file sizes don\'t match')
+        flash_lib.fail('Configuration file sizes don\'t match')
 
     progress = flash_lib.Progress(file_size)
     with open(args.config1, 'rb') as config1:
