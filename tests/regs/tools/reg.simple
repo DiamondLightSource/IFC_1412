@@ -19,6 +19,9 @@ class Registers(driver.RawRegisters):
 regs = Registers(0)
 
 print(regs.TOP.GIT_VERSION)
+git_sha = regs.TOP.GIT_VERSION.SHA
+git_dirty = regs.TOP.GIT_VERSION.DIRTY
+print('Git version: %08X (%s)' % (git_sha, 'dirty' if git_dirty else 'clean'))
 
 leds = regs.TOP.LEDS
 while True:
