@@ -1,0 +1,5 @@
+# Ignore Python droppings
+*.pyc
+
+# dia tends to leave *~ files behind
+*~
