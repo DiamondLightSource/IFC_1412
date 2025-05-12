@@ -1,0 +1,230 @@
+#!/usr/bin/env python
+
+# Parses net file, fpga pinout file, signals file and generates list of pins
+
+import sys
+import re
+
+# netlist_file = 'IFC_1412.NET'
+netlist_file = 'IFC_1412_2104.2.NET'
+package_file = 'xcku085flva1517pkg.txt'
+renames_file = 'renames.txt'
+# signals_file = 'signals.txt'
+signals_file = '../signals'
+
+# For checking signals
+print_wires = False
+compare_signals = True
+print_reduced_file = False
+
+# For generating raw pins file
+print_wires = True
+compare_signals = False
+print_reduced_file = False
+
+# # For dumping reduced netlist
+# print_wires = False
+# compare_signals = False
+# print_reduced_file = True
+
+
+# Parses package file after skipping the given number of lines and returns the
+# following mapping:
+#   location => name, byte_group, bank, io_type, slr, nc
+# The file format is absurdly simple: white-space separated columns of values
+def parse_package(package_file, skip_start = 3, skip_end = 2):
+    lines = open(package_file).readlines()
+    lines = (l.split() for l in lines[skip_start : -skip_end])
+    return dict((l[0], l[1:]) for l in lines)
+
+
+# The netlist is a list of S-expressions, but as it happens the syntax is
+# absurdly simple and we're only interested in extracting very specific fields
+# of the form:
+#   (net "USER_SPI_SCK"
+#     (node "R117" "1")
+#     (node "U100" "AG19")
+#   )
+# From this we return a dictionary of wire_name => location entries
+def parse_netlist(netlist_file, fpga = 'U100'):
+    start_net = re.compile(r' *\(net +"([^"]*)')
+    end_net = re.compile(r' *\)')
+    fpga_pin = re.compile(r' *\(node +"' + fpga + r'" +"([^"]*)"\)')
+
+    result = {}
+    netlist = []
+
+    input = (
+        line.decode(errors = 'replace')
+        for line in open(netlist_file, 'rb').readlines())
+
+    try:
+        while True:
+            group = []
+            # Search for a line matching the start of a net definition
+            while True:
+                line = next(input)
+                match = start_net.match(line)
+                if match:
+                    group.append(line)
+                    wire_name = match.group(1)
+                    break
+            # Now build a list of pins on the target device
+            locations = []
+            while True:
+                line = next(input)
+                if end_net.match(line):
+                    group.append(line)
+                    # End of net definition
+                    break
+                else:
+                    match = fpga_pin.match(line)
+                    if match:
+                        group.append(line)
+                        locations.append(match.group(1))
+            if locations:
+                result[wire_name] = locations
+                netlist.extend(group)
+    except StopIteration:
+        pass
+    return (result, netlist)
+
+def pattern_to_re(pattern):
+    pattern = re.sub('{', '(?:', pattern)
+    pattern = re.sub(',', '|', pattern)
+    pattern = re.sub('}', ')', pattern)
+    pattern = re.sub(r'@', '([0-9]+)', pattern)
+    return pattern
+
+
+# Loads file containing list of renames
+def parse_renames(renames_file):
+    renames = []
+    arrays = []
+    deletes = []
+    for line in open(renames_file).readlines():
+        # Identify type of line
+        if line[0] == '#' or line[0] == '\n':
+            # Ignore blank lines and lines beginning with #
+            pass
+        elif line[0] == '~':
+            # Pattern of wires to ignore
+            pattern = pattern_to_re(line[1:].strip())
+            deletes.append(re.compile(pattern))
+        elif ' ' in line:
+            # Assume line has three parts, must be a rename
+            match, pattern, replace = line.split()
+            match = pattern_to_re(match)
+            if replace == '!':
+                replace = ''
+            renames.append((re.compile(match), re.compile(pattern), replace))
+        else:
+            # Must be an array definition
+            pattern = pattern_to_re(line.strip())
+            arrays.append(re.compile(pattern))
+    return (renames, arrays, deletes)
+
+
+def expand_string(string):
+    if '{' in string:
+        start, tail = string.split('{', 1)
+        repeats, tail = tail.split('}', 1)
+        for repeat in repeats.split(','):
+            for string in expand_string(start + repeat + tail):
+                yield string
+    else:
+        yield string
+
+def expand_array(string):
+    match = re.match(r'(.*)\[(.*)\.\.(.*)\]', string)
+    if match:
+        name, l, r = match.groups()
+        l = int(l); r = int(r)
+        if l > r: l, r = r, l
+        for n in range(l, r+1):
+            yield '%s[%d]' % (name, n)
+    else:
+        yield string
+
+def expand_signal(signal):
+    for s in expand_string(signal):
+        yield from expand_array(s)
+
+def parse_signals(signals_file):
+    signals = []
+    for line in open(signals_file).readlines():
+        if line[0] == '#' or line[0] == '\n':
+            pass
+        else:
+            signal, _ = line.split()
+            assert signal[:4] == 'pad_'
+            signal = signal[4:]
+            signals.extend(expand_signal(signal))
+    return signals
+
+
+def gather_array(arrays, wire_name):
+    for pattern in arrays:
+        match = pattern.fullmatch(wire_name)
+        if match:
+            l, r = match.span(1)
+            wire_name = \
+                '%s%s[%d]' % (wire_name[:l], wire_name[r:], int(match[1]))
+    return wire_name
+
+
+def rename_wire(renames, wire_name):
+    for match, pattern, replace in renames:
+        if match.match(wire_name):
+            wire_name = pattern.sub(replace, wire_name)
+    return wire_name
+
+
+def check_delete(deletes, wire_name):
+    for pattern in deletes:
+        if pattern.match(wire_name):
+            return True
+    return False
+
+
+def gather_wires(netlist, package, renames, arrays, deletes):
+    for (wire, pins) in netlist.items():
+        if len(pins) == 1 and not check_delete(deletes, wire):
+            wire = rename_wire(renames, wire)
+            wire = gather_array(arrays, wire)
+            pin = pins[0]
+            pkg = package[pin]
+            bank = pkg[2]
+            yield (wire, pin, bank)
+
+
+package = parse_package(package_file)
+netlist, reduced_file = parse_netlist(netlist_file)
+renames, arrays, deletes = parse_renames(renames_file)
+
+wires = gather_wires(netlist, package, renames, arrays, deletes)
+
+if print_reduced_file:
+    for line in reduced_file:
+        print(line, end = '')
+
+if print_wires:
+    for wire, pin, bank in wires:
+        print('%3s %-30s %4s' % (bank, wire, pin))
+
+if compare_signals:
+    signals = parse_signals(signals_file)
+    wire_set = dict((wire, (pin, bank)) for wire, pin, bank in wires)
+    signals_set = set(signals)
+    wire_set = set(wire_set.keys())
+
+    print('Signals without associated wires')
+    print(80*'-')
+    for s in sorted(signals_set - wire_set):
+        print(s)
+
+    print()
+    print('Wires without associated signals')
+    print(80*'-')
+    for s in sorted(wire_set - signals_set):
+        print(s)

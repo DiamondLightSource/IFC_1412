@@ -1,0 +1,88 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Renames: pattern followed by re substitution pair
+
+# Remove a number of boiler-plate marks from all matching signal names
+.*_FPGA_.*                      _FPGA_  _
+.*_CR_.*                        _CR_    _
+.*_VIOB                         _VIOB$  !
+
+# Remove _CC_ suffix from FMC buses
+FMC{1,2}_{LA,HA,HB}@_CC_{P,N}   _CC_    _
+# Remove direction from FMC CLK0,1
+FMC{1,2}_CLK                    _TO_    _
+
+# Grouping of RTM MGT signals, want to treat 0-3 specially
+RTM_GTP[0-3].*                  GTP(.)_(.*)     GTP_3_0_\1\2
+
+# Grouping of AMC buses: ETH/LVDS/M-LVDS/PCI.  The order of renames matters!
+AMC_{RX,TX}{0,1}_{P,N}          AMC_    AMC_ETH_
+AMC_{RX,TX}@_{WEN,DATA}         AMC_    AMC_MLVDS_
+AMC_{RX,TX}{12,13,14,15}_{P,N}  AMC_    AMC_LVDS_
+AMC_{RX,TX}@_{P,N}              AMC_    AMC_PCI_
+
+# Rename the SG_CA pins in two stages: first rename 0-2, then the rest
+SG12_CA{0,1,2}                  _CA     _CAL
+SG12_CA@                        _CA     _CAU
+# Rename WCK back the way it was
+SG12_WCK_A_{P,N}                SG12_WCK_A_(.)  SG1_WCK_\1
+SG12_WCK_B_{P,N}                SG12_WCK_B_(.)  SG2_WCK_\1
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Arrays: the @ marks the numerical array index
+
+FPGA_CFG_D@
+
+LMK_STATUS@
+USER_SPI_D@
+SDIO_DATA@
+DIP_SW@_L
+
+EXT_{A,B}@
+
+# AMC
+AMC_{ETH,PCI,LVDS}_{RX,TX}@_{P,N}
+AMC_MLVDS_{RX,TX}@_{WEN,DATA}
+
+# FMC
+FMC{1,2}_LED@
+FMC{1,2}_{LA,HA,HB}@_{P,N}
+FMC{1,2}_DP@_{M2C,C2M}_{P,N}
+FMC{1,2}_CLK@_{P,N}
+FMC{1,2}_GBTCLK@_{P,N}
+
+# RTM
+RTM_IO@_CC_{P,N}
+RTM_OUT@_{P,N}
+RTM_GTP_3_0_@{RX,TX}_{P,N}
+
+# SG
+SG{1,2}_DQ_{A,B}@
+SG{1,2}_DBI@_N_{A,B}
+SG{1,2}_EDC@_{A,B}
+SG12_CAL@
+SG12_CAU@
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Deletions
+# Note that these are applied _before_ any renames, so must include full names
+
+# Reference voltages etc
+~BANK@_{VREF,VRP}
+~MGT..._RREF
+~FMC{1,2}_VREF_B
+
+# Most of the BANK 0 pins are not wanted
+~FPGA_DONE
+~FPGA_INIT_B
+~FPGA_PROGRAM_B
+~FPGA_PUDC_B
+~FPGA_TCK_R
+~FPGA_TDI_R
+~FPGA_TDO
+~FPGA_TMS_R
+~FPGA_POR_OVERRIDE
+~FPGA_ADC_VCC
+
+# vim: set filetype=conf:
