@@ -3,3 +3,6 @@
 
 # dia tends to leave *~ files behind
 *~
+
+# Allow users to create their own CONFIG
+/CONFIG

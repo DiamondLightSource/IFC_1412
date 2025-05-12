@@ -1,17 +1,13 @@
 # Configuration settings
+#
+# Copy this file to a file name CONFIG and edit the settings below to suit the
+# local build environment.
 
+# Where to build
 BUILD_TOP = /scratch/$(USER)/tmp/IFC_1412
 
-# Architecture of board
-BOARD = $(CONFIG_TOP)/board/IFC_1412
-
-# Some component definitions needed during builds
-#
-# Path to gddr6 files
-GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
-# Path to LMK04616 files
-LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
-
+# Common tools
+FPGA_COMMON = /home/mga83/targetOS/fpga-common
 
 # Definitions needed for FPGA build
 VIVADO = /dls_sw/FPGA/Xilinx/Vivado/2022.2/bin/vivado
@@ -23,8 +19,5 @@ LM_LICENSE_FILE += 2100@diamcslicserv01.diamond.ac.uk
 LM_LICENSE_FILE += 2100@diamcslicserv02.diamond.ac.uk
 # Licensing for Mentor Graphics vsim
 LM_LICENSE_FILE += 29000@diamcslicserv01.diamond.ac.uk
-
-# Common tools
-FPGA_COMMON = /home/mga83/targetOS/fpga-common
 
 # vim: set filetype=make:

@@ -2,8 +2,9 @@
 
 FPGA_PART = xcku085-flva1517-1-c
 
+# The following definitions ensure that the configuration can be loaded from
+# FLASH and triggers the generation of the appropriate .bin files.
 CONSTR_FILES += $(BOARD_DIR)/config.xdc
-
 FILE_LIST_DEFS += BOARD_DIR
 TCL_SCRIPTS += $(BOARD_DIR)/post_bitstream_hook.tcl
 
