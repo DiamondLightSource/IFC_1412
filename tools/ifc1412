@@ -147,9 +147,33 @@ def get_help_info(function):
 @command
 def help(ipmi, *args):
     '''Print this help text or help for command
-[command [sub-command]]
+    [command [sub-command]]
 Prints list of available commands, or if command and, if appropriate,
 sub-command specified prints usage and detailed help for command.'''
+
+    def print_brief_help(action, info):
+        for command, function in info.items():
+            brief_help = get_help_info(function)[0]
+            name = f'{action} {command}'
+            print(f'{name:24s} {brief_help}')
+
+    def print_help_summary():
+        # Print basic description of every available command
+        for action, (nested, info) in actions.items():
+            if nested:
+                print_brief_help(action, info)
+            else:
+                brief_help = get_help_info(info)[0]
+                print(f'{action:24s} {brief_help}')
+
+    def print_long_help(name, function):
+        brief_help, args, long_help = get_help_info(function)
+        print('Usage:', command, args)
+        print()
+        if long_help.strip():
+            print(long_help)
+        else:
+            print(brief_help)
 
     if args:
         command = args[0]
@@ -158,25 +182,13 @@ sub-command specified prints usage and detailed help for command.'''
             if len(args) > 1:
                 command += ' ' + args[1]
                 function = lookup_command(function, args[1])
+                print_long_help(command, function)
             else:
-                fail(f'Missing action, one of: {", ".join(function.keys())}')
-
-        args, long_help = get_help_info(function)[1:]
-        print('Usage:', command, args)
-        print()
-        print(long_help)
-
+                print_brief_help(command, function)
+        else:
+            print_long_help(command, function)
     else:
-        # Print basic description of every available command
-        for action, (nested, info) in actions.items():
-            if nested:
-                for command, function in info.items():
-                    usage = get_help_info(function)[0]
-                    name = f'{action} {command}'
-                    print(f'{name:24s} {usage}')
-            else:
-                usage = get_help_info(info)[0]
-                print(f'{action:24s} {usage}')
+        print_help_summary()
 
 
 @command
@@ -280,7 +292,7 @@ Returns table of currently configured payload configuration.'''
 @command
 def set_payload_config(ipmi, *args):
     '''Set payload configuration
-[option=value]*
+    [option=value]*
 Sets selected options in the stored payload according to the following table:
 
     tclkb-mode={none|acq-amc|amc-fpga}
@@ -352,8 +364,11 @@ def reset_payload_config(ipmi):
 @command
 def set_led(ipmi, led, state):
     '''Set LED state
-
-    '''
+    led state
+Sets the selected led to the selected state.  led can be one of:
+    blue, 1, a, b, c, d, all
+and state can be one of
+    on, off, slow, fast'''
     led_table = {
         'blue'  : 0x00,
         '1'     : 0x01,
@@ -383,7 +398,7 @@ def set_led(ipmi, led, state):
 def set_amc_power(ipmi, on_off):
     '''Set AMC power on or off
     on|off
-    '''
+Turns payload power to AMC card on or off as requested.'''
     on_off = {'on' : 0x01, 'off' : 0x00}[on_off]
     ipmi.ipmi_oem(0x12, on_off)
 
@@ -391,7 +406,8 @@ def set_amc_power(ipmi, on_off):
 def set_rtm_power(ipmi, mp_on_off, pp_on_off):
     '''Set RTM power on or off
     on|off on|off
-    '''
+Controls power to the RTM.   The first argument controls management power, the
+second controls payload power.'''
     on_off = {'on' : 0x01, 'off' : 0x00}
     mp = on_off[mp_on_off]
     pp = on_off[pp_on_off]
@@ -400,8 +416,8 @@ def set_rtm_power(ipmi, mp_on_off, pp_on_off):
 @command
 def set_fru_info(ipmi, image):
     '''Set custom FRU info image
-
-    '''
+    filename
+Uses ipmi `fru write` command to upload FRU image.'''
     print('The MMC will be rebooted to upload the FRU info image.')
     input('Press <control-c> to abort, or <return> to continue.')
     ipmi.ipmi_oem(0x03)
@@ -412,9 +428,9 @@ def set_fru_info(ipmi, image):
 @command
 def set_fpga_config(ipmi, config):
     '''Select which FPFA configuration image to use, a or b.
-
-    This temporarily overrides the fpga-image selection as reported by
-    get payload-config, but is not persistent after power-cycle or MMC reset.'''
+    a|b
+This temporarily overrides the fpga-image selection as reported by
+get payload-config, but is not persistent after power-cycle or MMC reset.'''
     config = { 'a' : 0, 'b' : 1 }[config]
     ipmi.ipmi_oem(0x0e, config)
 
@@ -443,8 +459,8 @@ def i2c_rw(ipmi, *args):
 @command
 def firmware_upgrade(ipmi, image):
     '''Set custom FRU info image
-
-    '''
+    filename
+Uses ipmi `hpm upgrade` command to upgrade the MMC firware.'''
     print('The MMC will be rebooted to upgrade the firmware.')
     input('Press <control-c> to abort, or <return> to continue.')
     ipmi.ipmi_oem(0x03)
@@ -456,14 +472,14 @@ def firmware_upgrade(ipmi, image):
 @command
 def ipmi(ipmi, command, *args):
     '''Run ipmi command
-
+    command [args]
     '''
     ipmi.ipmi_cmd(command, *args)
 
 @command
 def temp_fmc(ipmi, fmc):
     '''Returns ADC_3110 temperature
-
+    fmc
     '''
     fmc = int(fmc)
     assert fmc in [1, 2], 'FMC argument must be 1 or 2'
