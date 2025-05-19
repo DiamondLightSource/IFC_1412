@@ -149,26 +149,6 @@ package gddr6_defs is
     constant IDLE_AXI_CTRL_WRITE_RESPONSE : axi_ctrl_write_response_t;
 
 
-    -- Event bits recording various AXI events.  Each bit is strobed when the
-    -- corresponding event occurs
-    type axi_stats_t is record
-        write_frame_error : std_ulogic;     -- Invalid write address request
-        write_crc_error : std_ulogic;       -- Write CRC error reported
-        write_last_error : std_ulogic;      -- Data burst framing error
-
-        write_address : std_ulogic;         -- Write address accepted
-        write_transfer : std_ulogic;        -- Write transfer completed
-        write_data_beat : std_ulogic;       -- Single write data transfer
-
-        read_frame_error : std_ulogic;      -- Invalid read address request
-        read_crc_error : std_ulogic;        -- Read CRC error reported
-
-        read_address : std_ulogic;          -- Read address accepted
-        read_transfer : std_ulogic;         -- Read transfer completed
-        read_data_beat : std_ulogic;        -- Single read data transfer
-    end record;
-
-
     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     -- Interfaces between CTRL (and SETUP) and PHY
 

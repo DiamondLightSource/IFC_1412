@@ -37,6 +37,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 use work.gddr6_axi_defs.all;
 
 entity gddr6_axi is

@@ -25,6 +25,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/async_fifo/async_fifo_reset.vhd \
     $common_vhd/async_fifo/async_fifo.vhd \
     $vhd_dir/gddr6_defs.vhd \
+    $vhd_dir/gddr6_ip_defs.vhd \
     $vhd_dir/phy/gddr6_phy_crc.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $vhd_dir/ctrl/gddr6_ctrl_defs.vhd \

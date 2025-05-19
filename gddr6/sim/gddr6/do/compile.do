@@ -51,6 +51,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/register/register_read_block.vhd \
     $vhd_dir/gddr6_config_defs.vhd \
     $vhd_dir/gddr6_defs.vhd \
+    $vhd_dir/gddr6_ip_defs.vhd \
     $vhd_dir/phy/gddr6_phy_defs.vhd \
     $vhd_dir/phy/gddr6_phy_io.vhd \
     $vhd_dir/phy/gddr6_phy_clocking.vhd \

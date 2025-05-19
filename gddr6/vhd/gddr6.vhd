@@ -12,6 +12,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 use work.gddr6_register_defines.all;
 use work.register_defs.all;
 

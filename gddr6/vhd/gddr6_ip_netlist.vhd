@@ -11,6 +11,7 @@ use work.support.all;
 use work.register_defs.all;
 use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 
 entity gddr6_ip_netlist is
     port (
@@ -322,17 +323,5 @@ begin
     );
 
     -- Flatten the AXI statistics for IP output
-    axi_stats_o <= (
-        0 => axi_stats.write_frame_error,
-        1 => axi_stats.write_crc_error,
-        2 => axi_stats.write_last_error,
-        3 => axi_stats.write_address,
-        4 => axi_stats.write_transfer,
-        5 => axi_stats.write_data_beat,
-        6 => axi_stats.read_frame_error,
-        7 => axi_stats.read_crc_error,
-        8 => axi_stats.read_address,
-        9 => axi_stats.read_transfer,
-        10 => axi_stats.read_data_beat
-    );
+    axi_stats_o <= to_std_ulogic_vector(axi_stats);
 end;

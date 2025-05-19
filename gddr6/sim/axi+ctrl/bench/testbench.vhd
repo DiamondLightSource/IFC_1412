@@ -6,6 +6,7 @@ use std.textio.all;
 use work.support.all;
 
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 use work.gddr6_axi_defs.all;
 
 entity testbench is
