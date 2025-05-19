@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.register_defs.all;
-use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 
 entity axi_stats is
     port (

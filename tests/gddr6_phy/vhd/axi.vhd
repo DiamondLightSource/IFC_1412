@@ -10,6 +10,7 @@ use work.register_defs.all;
 use work.register_defines.all;
 
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 
 entity axi is
     port (

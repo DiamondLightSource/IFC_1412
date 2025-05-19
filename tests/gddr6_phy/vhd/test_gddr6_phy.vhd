@@ -11,6 +11,7 @@ use work.register_defines.all;
 use work.version.all;
 
 use work.gddr6_defs.all;
+use work.gddr6_ip_defs.all;
 
 entity test_gddr6_phy is
     generic (
