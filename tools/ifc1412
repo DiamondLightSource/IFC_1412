@@ -449,10 +449,16 @@ def oem_i2c(ipmi, channel, device, read_count, *writes):
         do_transfer(device, read_count, *writes))
 
 @command
-def i2c_rw(ipmi, *args):
-    '''Custom I2c exchange
-
-    '''
+def i2c(ipmi, *args):
+    '''Custom I2C exchange
+    bus device read-count [writes]*
+Performs I2C transaction with selected device on the specified bus, arguments
+are interpreted as follows:
+    bus         I2C bus, 0 for general sensors, 1 for RTM, 3 for shared sensors,
+                and 4 and 5 for FMC1 and FMC2 respectively
+    device      Address of I2C device on selected bus
+    read-count  Number of bytes to read from device after writes
+    [writes]*   Bytes to send to selected device'''
     reads = oem_i2c(ipmi, *[int(x, 0) for x in args])
     print(' '.join(f'{x:02x}' for x in reads))
 
@@ -473,14 +479,16 @@ Uses ipmi `hpm upgrade` command to upgrade the MMC firware.'''
 def ipmi(ipmi, command, *args):
     '''Run ipmi command
     command [args]
-    '''
+Run `ipmi help` for list of available commands.  Note that most listed commands
+will not be available for the specified target.'''
     ipmi.ipmi_cmd(command, *args)
 
 @command
 def temp_fmc(ipmi, fmc):
-    '''Returns ADC_3110 temperature
+    '''Returns FMC temperature
     fmc
-    '''
+Looks for a TMP102 device at address 0x48 on the specified FMC.  The FMCs are
+numbered 1 and 2.'''
     fmc = int(fmc)
     assert fmc in [1, 2], 'FMC argument must be 1 or 2'
     # Read and convert as documented for TMP102
