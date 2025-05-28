@@ -78,6 +78,7 @@ pad_FPGA_ACQCLK_{P,N}           in
 # AMC TCLKB routeable from backplane
 pad_AMC_TCLKB_IN_{P,N}          in
 
+# Fixed clocks to quads 128, 231, 225
 pad_E10G_CLK{1,2,3}_{P,N}       in
 
 # Reference clock at 156.25 MHz to MGT126 (AMC[0..1] and RTM[12..13]

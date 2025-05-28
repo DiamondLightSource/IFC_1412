@@ -533,8 +533,8 @@ pad_FMC1_LED[1]                     T23     LVCMOS18
 pad_FMC1_SDA                        H24     LVCMOS18
 pad_FMC1_SCL                        H23     LVCMOS18
 
-pad_FMC1_CLK_P[2]                   H21
-pad_FMC1_CLK_N[2]                   H22
+pad_FMC1_CLK_P[2]                   H21     LVDS
+pad_FMC1_CLK_N[2]                   H22     LVDS
 pad_FMC1_LA_P[16]                   K20
 pad_FMC1_LA_N[16]                   L20
 pad_FMC1_LA_P[15]                   M21
