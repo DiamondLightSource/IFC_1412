@@ -10,6 +10,6 @@
             # Set when CLOCK_FREQ updates
             .COUNT_UPDATE
 
-        CLOCK_FREQ      R   6
+        CLOCK_FREQ      R   32
 
     :LMK04616

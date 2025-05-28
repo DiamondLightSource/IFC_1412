@@ -26,16 +26,42 @@ pad_LMK_RESET_L                 out
 pad_LMK_SYNC                    inout
 pad_LMK_STATUS[0..1]            inout
 
-# Some miscellaneous clocks to count
-# SG12_CK from CLKOUT9
-pad_SG12_CK_{P,N}               in
-# SG1_WCK from CLKOUT11, SG2_WCK from CLKOUT14
-pad_SG{1,2}_WCK_{P,N}           in
-# MGT232 from CLKOUT6
-pad_MGT232_REFCLK_{P,N}         in
 
+# Clocks to count
+
+# SG clocks for SGRAM
+#
+pad_SG12_CK_{P,N}               in
+pad_SG{1,2}_WCK_{P,N}           in
+
+# LVDS clocks
+#
 # Acquisition clock from CLKOUT0
 pad_FPGA_ACQCLK_{P,N}           in
-
 # AMC TCLKB routeable from backplane
 pad_AMC_TCLKB_IN_{P,N}          in
+
+# MGT reference clocks
+#
+# Fixed clocks to quads 128, 231, 225
+pad_E10G_CLK{1,2,3}_{P,N}       in
+# Crystal to quad 126
+pad_MGT126_CLK0_{P,N}           in
+# SYS CLKOUT2 to quad 227
+pad_MGT227_REFCLK_{P,N}         in
+# SYS CLKOUT3 to quad 229
+pad_MGT229_REFCLK_{P,N}         in
+# SYS CLKOUT5 to quad 230
+pad_MGT230_REFCLK_{P,N}         in
+# SYS CLKOUT4 to quad 127
+pad_MGT127_REFCLK_{P,N}         in
+# SYS CLKOUT6 to quad 232
+pad_MGT232_REFCLK_{P,N}         in
+# From RTM GTP0-3_CLK_IN to quad 232
+pad_RTM_GTP_CLK0_IN_{P,N}       in
+# From RTM GTP12-15_CLK_IN to quad 126
+pad_RTM_GTP_CLK3_IN_{P,N}       in
+# Clocks from FMC
+pad_FMC{1,2}_CLK_{P,N}[0..3]        inout
+# MGT reference clocks from FMC
+pad_FMC{1,2}_GBTCLK_{P,N}[0..3]      in

@@ -18,7 +18,7 @@ architecture arch of top is
     signal perst_n : std_ulogic;
 
     -- Test clocks
-    constant CLOCKS_COUNT : natural := 6;
+    constant CLOCKS_COUNT : natural := 32;
     subtype CLOCKS_RANGE is natural range 0 to CLOCKS_COUNT-1;
     signal test_clocks : std_ulogic_vector(CLOCKS_RANGE);
     signal test_clock_counts : unsigned_array(CLOCKS_RANGE)(31 downto 0);
@@ -75,59 +75,78 @@ begin
 
 
     -- Test clock inputs
-    sg_clocks : entity work.ibufds_array generic map (
-        COUNT => 3,
-        -- Don't set differential termination for CK and WCK as these have their
-        -- termination set separately in the constraints file
-        DIFF_TERM => false
-    ) port map (
-        p_i => (
-            pad_SG12_CK_P,
-            pad_SG1_WCK_P,
-            pad_SG2_WCK_P
-        ),
-        n_i => (
-            pad_SG12_CK_N,
-            pad_SG1_WCK_N,
-            pad_SG2_WCK_N
-        ),
-        o_o => test_clocks(0 to 2)
-    );
-
-    lvds_clocks : entity work.ibufds_array generic map (
-        COUNT => 2
-    ) port map (
-        p_i => (
+    clock_inputs : entity work.clock_inputs port map (
+        sg_p_i => (pad_SG12_CK_P, pad_SG1_WCK_P, pad_SG2_WCK_P),
+        sg_n_i => (pad_SG12_CK_N, pad_SG1_WCK_N, pad_SG2_WCK_N),
+        lvds_p_i => (
             pad_FPGA_ACQCLK_P,
-            pad_AMC_TCLKB_IN_P
+            pad_AMC_TCLKB_IN_P,
+            pad_FMC1_CLK_P(0),
+            pad_FMC1_CLK_P(1),
+            pad_FMC1_CLK_P(2),
+            pad_FMC1_CLK_P(3),
+            pad_FMC2_CLK_P(0),
+            pad_FMC2_CLK_P(1),
+            pad_FMC2_CLK_P(2),
+            pad_FMC2_CLK_P(3)
         ),
-        n_i => (
+        lvds_n_i => (
             pad_FPGA_ACQCLK_N,
-            pad_AMC_TCLKB_IN_N
+            pad_AMC_TCLKB_IN_N,
+            pad_FMC1_CLK_N(0),
+            pad_FMC1_CLK_N(1),
+            pad_FMC1_CLK_N(2),
+            pad_FMC1_CLK_N(3),
+            pad_FMC2_CLK_N(0),
+            pad_FMC2_CLK_N(1),
+            pad_FMC2_CLK_N(2),
+            pad_FMC2_CLK_N(3)
         ),
-        o_o => test_clocks(3 to 4)
-    );
+        mgt_p_i => (
+            pad_E10G_CLK1_P,
+            pad_E10G_CLK2_P,
+            pad_E10G_CLK3_P,
+            pad_MGT126_CLK0_P,
+            pad_MGT227_REFCLK_P,
+            pad_MGT229_REFCLK_P,
+            pad_MGT230_REFCLK_P,
+            pad_MGT127_REFCLK_P,
+            pad_MGT232_REFCLK_P,
+            pad_RTM_GTP_CLK0_IN_P,
+            pad_RTM_GTP_CLK3_IN_P,
+            pad_FMC1_GBTCLK_P(0),
+            pad_FMC1_GBTCLK_P(1),
+            pad_FMC1_GBTCLK_P(2),
+            pad_FMC1_GBTCLK_P(3),
+            pad_FMC2_GBTCLK_P(0),
+            pad_FMC2_GBTCLK_P(1),
+            pad_FMC2_GBTCLK_P(2),
+            pad_FMC2_GBTCLK_P(3)
+        ),
+        mgt_n_i => (
+            pad_E10G_CLK1_N,
+            pad_E10G_CLK2_N,
+            pad_E10G_CLK3_N,
+            pad_MGT126_CLK0_N,
+            pad_MGT227_REFCLK_N,
+            pad_MGT229_REFCLK_N,
+            pad_MGT230_REFCLK_N,
+            pad_MGT127_REFCLK_N,
+            pad_MGT232_REFCLK_N,
+            pad_RTM_GTP_CLK0_IN_N,
+            pad_RTM_GTP_CLK3_IN_N,
+            pad_FMC1_GBTCLK_N(0),
+            pad_FMC1_GBTCLK_N(1),
+            pad_FMC1_GBTCLK_N(2),
+            pad_FMC1_GBTCLK_N(3),
+            pad_FMC2_GBTCLK_N(0),
+            pad_FMC2_GBTCLK_N(1),
+            pad_FMC2_GBTCLK_N(2),
+            pad_FMC2_GBTCLK_N(3)
+        ),
 
-    mgt_clocks : for clock in 5 to 5 generate
-        signal odiv2 : std_ulogic;
-    begin
-        ibuf : IBUFDS_GTE3 port map (
-            I => pad_MGT232_REFCLK_P,
-            IB => pad_MGT232_REFCLK_N,
-            CEB => '0',
-            O => open,
-            ODIV2 => odiv2
-        );
-        bufg : BUFG_GT port map (
-            CE => '1',
-            CEMASK => '1',
-            CLR => '0',
-            CLRMASK => '1',
-            DIV => "000",
-            I => odiv2,
-            O => test_clocks(5)
-        );
-    end generate;
+        clocks_o => test_clocks
+    );
 
 
     -- -------------------------------------------------------------------------

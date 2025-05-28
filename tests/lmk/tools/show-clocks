@@ -29,7 +29,33 @@ freq_names = [
     "SG2_WCK",
     "ACQCLK",
     "TCLKB",
-    "MGT232_REF"
+    "FMC1_CLK(0)",
+    "FMC1_CLK(1)",
+    "FMC1_CLK(2)",
+    "FMC1_CLK(3)",
+    "FMC2_CLK(0)",
+    "FMC2_CLK(1)",
+    "FMC2_CLK(2)",
+    "FMC2_CLK(3)",
+    "E10G_CLK1",
+    "E10G_CLK2",
+    "E10G_CLK3",
+    "MGT126_CLK0",
+    "MGT227_REFCLK",
+    "MGT229_REFCLK",
+    "MGT230_REFCLK",
+    "MGT127_REFCLK",
+    "MGT232_REFCLK",
+    "RTM_GTP_CLK0_IN",
+    "RTM_GTP_CLK3_IN",
+    "FMC1_GBTCLK(0)",
+    "FMC1_GBTCLK(1)",
+    "FMC1_GBTCLK(2)",
+    "FMC1_GBTCLK(3)",
+    "FMC2_GBTCLK(0)",
+    "FMC2_GBTCLK(1)",
+    "FMC2_GBTCLK(2)",
+    "FMC2_GBTCLK(3)",
 ]
 
 def print_freqs(concise):
@@ -40,7 +66,7 @@ def print_freqs(concise):
             print(10 * freq_reg._value, end = '  ')
     else:
         for name, freq_reg in zip(freq_names, top.CLOCK_FREQ):
-            print('{:8}: {:9.4f} MHz'.format(
+            print('{:16}: {:9.4f} MHz'.format(
                 name, 1e-6 * 10.0 * freq_reg._value))
     print()
 

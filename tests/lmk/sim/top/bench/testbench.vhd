@@ -11,10 +11,6 @@ architecture arch of testbench is
     signal pad_SYSCLK100_N : std_ulogic := '1';
     signal pad_MGT224_REFCLK_P : std_ulogic := '0';
     signal pad_MGT224_REFCLK_N : std_ulogic := '1';
-    signal pad_FPGA_ACQCLK_P : std_ulogic := '0';
-    signal pad_FPGA_ACQCLK_N : std_ulogic := '1';
-    signal pad_AMC_TCLKB_IN_P : std_ulogic := '0';
-    signal pad_AMC_TCLKB_IN_N : std_ulogic := '1';
     signal pad_AMC_PCI_RX_P : std_ulogic_vector(7 downto 4);
     signal pad_AMC_PCI_RX_N : std_ulogic_vector(7 downto 4);
     signal pad_AMC_PCI_TX_P : std_ulogic_vector(7 downto 4);
@@ -36,8 +32,40 @@ architecture arch of testbench is
     signal pad_SG1_WCK_N : std_ulogic;
     signal pad_SG2_WCK_P : std_ulogic;
     signal pad_SG2_WCK_N : std_ulogic;
+    signal pad_FPGA_ACQCLK_P : std_ulogic;
+    signal pad_FPGA_ACQCLK_N : std_ulogic;
+    signal pad_AMC_TCLKB_IN_P : std_ulogic;
+    signal pad_AMC_TCLKB_IN_N : std_ulogic;
+    signal pad_E10G_CLK1_P : std_ulogic;
+    signal pad_E10G_CLK1_N : std_ulogic;
+    signal pad_E10G_CLK2_P : std_ulogic;
+    signal pad_E10G_CLK2_N : std_ulogic;
+    signal pad_E10G_CLK3_P : std_ulogic;
+    signal pad_E10G_CLK3_N : std_ulogic;
+    signal pad_MGT126_CLK0_P : std_ulogic;
+    signal pad_MGT126_CLK0_N : std_ulogic;
+    signal pad_MGT227_REFCLK_P : std_ulogic;
+    signal pad_MGT227_REFCLK_N : std_ulogic;
+    signal pad_MGT229_REFCLK_P : std_ulogic;
+    signal pad_MGT229_REFCLK_N : std_ulogic;
+    signal pad_MGT230_REFCLK_P : std_ulogic;
+    signal pad_MGT230_REFCLK_N : std_ulogic;
+    signal pad_MGT127_REFCLK_P : std_ulogic;
+    signal pad_MGT127_REFCLK_N : std_ulogic;
     signal pad_MGT232_REFCLK_P : std_ulogic;
     signal pad_MGT232_REFCLK_N : std_ulogic;
+    signal pad_RTM_GTP_CLK0_IN_P : std_ulogic;
+    signal pad_RTM_GTP_CLK0_IN_N : std_ulogic;
+    signal pad_RTM_GTP_CLK3_IN_P : std_ulogic;
+    signal pad_RTM_GTP_CLK3_IN_N : std_ulogic;
+    signal pad_FMC1_CLK_P : std_logic_vector(0 to 3);
+    signal pad_FMC1_CLK_N : std_logic_vector(0 to 3);
+    signal pad_FMC2_CLK_P : std_logic_vector(0 to 3);
+    signal pad_FMC2_CLK_N : std_logic_vector(0 to 3);
+    signal pad_FMC1_GBTCLK_P : std_ulogic_vector(0 to 3);
+    signal pad_FMC1_GBTCLK_N : std_ulogic_vector(0 to 3);
+    signal pad_FMC2_GBTCLK_P : std_ulogic_vector(0 to 3);
+    signal pad_FMC2_GBTCLK_N : std_ulogic_vector(0 to 3);
 
 begin
     pad_SYSCLK100_P <= not pad_SYSCLK100_P after 5 ns;
@@ -50,10 +78,6 @@ begin
         pad_SYSCLK100_N => pad_SYSCLK100_N,
         pad_MGT224_REFCLK_P => pad_MGT224_REFCLK_P,
         pad_MGT224_REFCLK_N => pad_MGT224_REFCLK_N,
-        pad_FPGA_ACQCLK_P => pad_FPGA_ACQCLK_P,
-        pad_FPGA_ACQCLK_N => pad_FPGA_ACQCLK_N,
-        pad_AMC_TCLKB_IN_P => pad_AMC_TCLKB_IN_P,
-        pad_AMC_TCLKB_IN_N => pad_AMC_TCLKB_IN_N,
         pad_AMC_PCI_RX_P => pad_AMC_PCI_RX_P,
         pad_AMC_PCI_RX_N => pad_AMC_PCI_RX_N,
         pad_AMC_PCI_TX_P => pad_AMC_PCI_TX_P,
@@ -75,8 +99,40 @@ begin
         pad_SG1_WCK_N => pad_SG1_WCK_N,
         pad_SG2_WCK_P => pad_SG2_WCK_P,
         pad_SG2_WCK_N => pad_SG2_WCK_N,
+        pad_FPGA_ACQCLK_P => pad_FPGA_ACQCLK_P,
+        pad_FPGA_ACQCLK_N => pad_FPGA_ACQCLK_N,
+        pad_AMC_TCLKB_IN_P => pad_AMC_TCLKB_IN_P,
+        pad_AMC_TCLKB_IN_N => pad_AMC_TCLKB_IN_N,
+        pad_E10G_CLK1_P => pad_E10G_CLK1_P,
+        pad_E10G_CLK1_N => pad_E10G_CLK1_N,
+        pad_E10G_CLK2_P => pad_E10G_CLK2_P,
+        pad_E10G_CLK2_N => pad_E10G_CLK2_N,
+        pad_E10G_CLK3_P => pad_E10G_CLK3_P,
+        pad_E10G_CLK3_N => pad_E10G_CLK3_N,
+        pad_MGT126_CLK0_P => pad_MGT126_CLK0_P,
+        pad_MGT126_CLK0_N => pad_MGT126_CLK0_N,
+        pad_MGT227_REFCLK_P => pad_MGT227_REFCLK_P,
+        pad_MGT227_REFCLK_N => pad_MGT227_REFCLK_N,
+        pad_MGT229_REFCLK_P => pad_MGT229_REFCLK_P,
+        pad_MGT229_REFCLK_N => pad_MGT229_REFCLK_N,
+        pad_MGT230_REFCLK_P =>  pad_MGT230_REFCLK_P,
+        pad_MGT230_REFCLK_N => pad_MGT230_REFCLK_N,
+        pad_MGT127_REFCLK_P => pad_MGT127_REFCLK_P,
+        pad_MGT127_REFCLK_N => pad_MGT127_REFCLK_N,
         pad_MGT232_REFCLK_P => pad_MGT232_REFCLK_P,
-        pad_MGT232_REFCLK_N => pad_MGT232_REFCLK_N
+        pad_MGT232_REFCLK_N => pad_MGT232_REFCLK_N,
+        pad_RTM_GTP_CLK0_IN_P => pad_RTM_GTP_CLK0_IN_P,
+        pad_RTM_GTP_CLK0_IN_N => pad_RTM_GTP_CLK0_IN_N,
+        pad_RTM_GTP_CLK3_IN_P => pad_RTM_GTP_CLK3_IN_P,
+        pad_RTM_GTP_CLK3_IN_N => pad_RTM_GTP_CLK3_IN_N,
+        pad_FMC1_CLK_P => pad_FMC1_CLK_P,
+        pad_FMC1_CLK_N => pad_FMC1_CLK_N,
+        pad_FMC2_CLK_P => pad_FMC2_CLK_P,
+        pad_FMC2_CLK_N => pad_FMC2_CLK_N,
+        pad_FMC1_GBTCLK_P => pad_FMC1_GBTCLK_P,
+        pad_FMC1_GBTCLK_N => pad_FMC1_GBTCLK_N,
+        pad_FMC2_GBTCLK_P => pad_FMC2_GBTCLK_P,
+        pad_FMC2_GBTCLK_N => pad_FMC2_GBTCLK_N
     );
 
     pad_LMK_SDIO <= 'Z';
