@@ -21,35 +21,31 @@ entity clock_inputs is
 end;
 
 architecture arch of clock_inputs is
-    constant SG_COUNT : natural := sg_p_i'LENGTH;
-    constant LVDS_COUNT : natural := lvds_p_i'LENGTH;
-    constant MGT_COUNT : natural := mgt_p_i'LENGTH;
-    constant MGT_OFFSET : natural := SG_COUNT + LVDS_COUNT;
-    subtype SG_RANGE is natural range 0 to SG_COUNT - 1;
-    subtype LVDS_RANGE is natural range SG_COUNT to MGT_OFFSET - 1;
-    subtype MGT_RANGE is natural range MGT_OFFSET to MGT_OFFSET + MGT_COUNT - 1;
+    signal sg_clocks : sg_p_i'SUBTYPE;
+    signal lvds_clocks : lvds_p_i'SUBTYPE;
+    signal mgt_clocks : mgt_p_i'SUBTYPE;
 
 begin
-    sg_clocks : entity work.ibufds_array generic map (
-        COUNT => SG_COUNT,
+    sg : entity work.ibufds_array generic map (
+        COUNT => sg_clocks'LENGTH,
         -- Don't set differential termination for SG clocks as these have their
         -- termination set separately in the constraints file
         DIFF_TERM => false
     ) port map (
         p_i => sg_p_i,
         n_i => sg_n_i,
-        o_o => clocks_o(SG_RANGE)
+        o_o => sg_clocks
     );
 
-    lvds_clocks : entity work.ibufds_array generic map (
-        COUNT => LVDS_COUNT
+    lvds : entity work.ibufds_array generic map (
+        COUNT => lvds_clocks'LENGTH
     ) port map (
         p_i => lvds_p_i,
         n_i => lvds_n_i,
-        o_o => clocks_o(LVDS_RANGE)
+        o_o => lvds_clocks
     );
 
-    mgt_clocks : for i in 0 to MGT_COUNT-1 generate
+    mgt : for i in mgt_clocks'RANGE generate
         signal odiv2 : std_ulogic;
     begin
         ibuf : IBUFDS_GTE3 port map (
@@ -66,7 +62,9 @@ begin
             CLRMASK => '1',
             DIV => "000",
             I => odiv2,
-            O => clocks_o(MGT_OFFSET + i)
+            O => mgt_clocks(i)
         );
     end generate;
+
+    clocks_o <= sg_clocks & lvds_clocks & mgt_clocks;
 end;

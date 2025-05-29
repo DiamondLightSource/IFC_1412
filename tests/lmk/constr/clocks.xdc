@@ -11,9 +11,9 @@ set_false_path -from [get_cells clocking/perst_n_out_reg]
 # are special QBC pins only for BITSLICE input clocking.  To measure their
 # frequency we need to allow alternative routing.
 set_property CLOCK_DEDICATED_ROUTE FALSE \
-    [get_nets {clock_inputs/sg_clocks/ibufds_array[0].ibufds_inst/O}]
+    [get_nets {clock_inputs/sg/ibufds_array[0].ibufds_inst/O}]
 set_property CLOCK_DEDICATED_ROUTE FALSE \
-    [get_nets {clock_inputs/sg_clocks/ibufds_array[1].ibufds_inst/O}]
+    [get_nets {clock_inputs/sg/ibufds_array[1].ibufds_inst/O}]
 
 # Define clocks for the clocks we want to measure.
 create_clock -period 2.0 [get_ports pad_SG12_CK_P]
