@@ -1,0 +1,6 @@
+BUILT += register_defines.vhd
+BUILT += top_entity.vhd
+
+export FILE_LIST = $(FPGA_TOP)/file-list
+
+# vim: set filetype=make:

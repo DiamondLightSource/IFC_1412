@@ -1,0 +1,12 @@
+# Access to mailbox on I2C bus
+:MAILBOX        RW
+    # Address of field to read or write
+    .ADDRESS    11
+    # Data to write on write
+    .DATA       8
+    # Set for write cycle, otherwise .DATA is read from mailbox
+    .WRITE
+
+# Register definitions for test
+!TOP
+    :MAILBOX

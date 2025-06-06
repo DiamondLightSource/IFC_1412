@@ -1,0 +1,26 @@
+# List of files to include in project
+
+$common_vhd/support.vhd
+$common_vhd/axi/axi_lite_slave.vhd
+$common_vhd/util/memory_array.vhd
+$common_vhd/util/fixed_delay_dram.vhd
+$common_vhd/util/dlyreg.vhd
+$common_vhd/register/register_defs.vhd
+$common_vhd/register/register_mux_strobe.vhd
+$common_vhd/register/register_buffer.vhd
+$common_vhd/register/register_mux.vhd
+$common_vhd/iodefs/iddr_array.vhd
+
+built_dir/register_defines.vhd
+built_dir/top_entity.vhd
+$vhd_dir/mailbox_io.vhd
+$vhd_dir/debounce.vhd
+$vhd_dir/i2c_signals.vhd
+$vhd_dir/i2c_core.vhd
+$vhd_dir/register_share.vhd
+$vhd_dir/register_share_rw.vhd
+$vhd_dir/mailbox_slave.vhd
+$vhd_dir/mailbox.vhd
+$vhd_dir/top.vhd
+
+# vim: set filetype=tcl:

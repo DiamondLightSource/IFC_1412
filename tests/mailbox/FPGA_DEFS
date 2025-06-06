@@ -1,0 +1,10 @@
+BUILT += metadata.coe
+BUILT += register_defines.vhd
+
+BLOCK_DESIGNS += interconnect
+
+# Add the individual VHDL support files used by this project
+VHD_FILES =
+VHD_FILE_LIST = $(FPGA_TOP)/file-list
+
+# vim: set filetype=make:
