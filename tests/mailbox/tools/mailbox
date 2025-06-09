@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+
+from ifc_lib import defs_path
+from fpga_lib.driver import driver
+
+
+class Registers(driver.RawRegisters):
+    NAME = 'ifc_1412-mailbox'
+
+    def __init__(self, address = 0):
+        super().__init__(self.NAME, address)
+        register_defines = defs_path.register_defines(__file__)
+        self.make_registers('TOP', None, register_defines)
+
+def open(addr = 0):
+    regs = Registers(addr)
+    return regs.TOP.MAILBOX
+
+
+def to_int(s):
+    return int(s, 0)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description = 'Read/write raw registers')
+    parser.add_argument(
+        '-a', dest = 'address', default = 0,
+        help = 'Set physical address of card.  If not specified then card 0')
+
+    subparsers = parser.add_subparsers(
+        dest = 'select',
+        help = 'Select read or write, use -h after selection for specific help')
+
+    read_parser = subparsers.add_parser('read',
+        description = 'Read from mailbox')
+    read_parser.add_argument(
+        'mb_address', type = to_int, help = 'Address to read from')
+    read_parser.add_argument(
+        'count', type = int, default = 1, nargs = '?',
+        help = 'Number of values to read (defaults to 1)')
+
+    write_parser = subparsers.add_parser('write',
+        description = 'Write to mailbox')
+    write_parser.add_argument(
+        'mb_address', type = to_int, help = 'Address to write to')
+    write_parser.add_argument(
+        'values', type = to_int, nargs = '+',
+        help = 'Values to write')
+
+    return parser.parse_args()
+
+
+def read_mailbox(mailbox, address, count):
+    result = []
+    for n in range(count):
+        mailbox._write_fields_wo(ADDRESS = address + n, WRITE = 0)
+        result.append('{:02X}'.format(mailbox.DATA))
+    print('MB[{:03X}]: {}'.format(address, ' '.join(result)))
+
+def write_mailbox(mailbox, address, values):
+    for n, value in enumerate(values):
+        mailbox._write_fields_wo(
+            ADDRESS = address + n, DATA = value, WRITE = 1)
+
+
+def main():
+    args = parse_args()
+    mailbox = open(args.address)
+
+    if args.select == 'read':
+        read_mailbox(mailbox, args.mb_address, args.count)
+    elif args.select == 'write':
+        write_mailbox(mailbox, args.mb_address, args.values)
+
+main()

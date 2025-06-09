@@ -39,13 +39,19 @@ begin
     );
 
 
-    iddr_sync : entity work.iddr_array generic map (
-        COUNT => 2
+    sync_scl : entity work.sync_bit generic map (
+        INITIAL => '1'
     ) port map (
         clk_i => clk_i,
-        d_i(0) => scl_in,
-        d_i(1) => sda_in,
-        q1_o(0) => scl_o,
-        q1_o(1) => sda_o
+        bit_i => scl_in,
+        bit_o => scl_o
+    );
+
+    sync_sda : entity work.sync_bit generic map (
+        INITIAL => '1'
+    ) port map (
+        clk_i => clk_i,
+        bit_i => sda_in,
+        bit_o => sda_o
     );
 end;

@@ -11,10 +11,8 @@ vlib msim/xil_defaultlib
 vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/support.vhd \
     $common_vhd/util/memory_array.vhd \
+    $common_vhd/util/sync_bit.vhd \
     $common_vhd/register/register_defs.vhd \
-    $common_vhd/iodefs/ibuf_array.vhd \
-    $common_vhd/iodefs/iobuf_array.vhd \
-    $common_vhd/iodefs/iddr_array.vhd \
     built_dir/register_defines.vhd \
     $vhd_dir/mailbox_io.vhd \
     $vhd_dir/debounce.vhd \
