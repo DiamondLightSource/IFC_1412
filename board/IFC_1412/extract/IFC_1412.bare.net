@@ -1,0 +1,4151 @@
+# This file contains the pin definitions for the FPGA part of the IFC_1412
+# schematic with all other nets and definitions removed.
+
+  (net "VDD_SGRAM"
+    (node "U100" "AG28")
+    (node "U100" "AJ32")
+    (node "U100" "AK29")
+    (node "U100" "AK39")
+    (node "U100" "AL36")
+    (node "U100" "AM33")
+    (node "U100" "AN30")
+    (node "U100" "AP37")
+    (node "U100" "AR34")
+    (node "U100" "AT31")
+    (node "U100" "AU38")
+    (node "U100" "AV35")
+    (node "U100" "AW32")
+  )
+
+  (net "VCC_VADJ2"
+    (node "U100" "A36")
+    (node "U100" "AD27")
+    (node "U100" "AE24")
+    (node "U100" "AH25")
+    (node "U100" "AL26")
+    (node "U100" "AP27")
+    (node "U100" "AU28")
+    (node "U100" "AV25")
+    (node "U100" "B33")
+    (node "U100" "C30")
+    (node "U100" "D37")
+    (node "U100" "E34")
+    (node "U100" "F31")
+    (node "U100" "G38")
+    (node "U100" "H35")
+    (node "U100" "J32")
+    (node "U100" "K29")
+    (node "U100" "K39")
+    (node "U100" "L36")
+    (node "U100" "N30")
+  )
+
+  (net "VCC_VADJ1"
+    (node "U100" "AF21")
+    (node "U100" "AJ22")
+    (node "U100" "AM23")
+    (node "U100" "AN20")
+    (node "U100" "AR24")
+    (node "U100" "AT21")
+    (node "U100" "AW22")
+    (node "U100" "B23")
+    (node "U100" "C20")
+    (node "U100" "D17")
+    (node "U100" "E24")
+    (node "U100" "F21")
+    (node "U100" "G18")
+    (node "U100" "J22")
+    (node "U100" "K19")
+    (node "U100" "L16")
+    (node "U100" "M23")
+    (node "U100" "N20")
+    (node "U100" "P17")
+    (node "U100" "T21")
+  )
+
+  (net "VCC_2V5"
+    (node "U100" "AB11")
+    (node "U100" "AD11")
+    (node "U100" "AD17")
+    (node "U100" "AE14")
+    (node "U100" "AG18")
+    (node "U100" "AH15")
+    (node "U100" "AJ12")
+    (node "U100" "AK19")
+    (node "U100" "AL16")
+    (node "U100" "AM13")
+    (node "U100" "AP17")
+    (node "U100" "AR14")
+    (node "U100" "AU18")
+    (node "U100" "AV15")
+    (node "U100" "AW12")
+    (node "U100" "T9")
+    (node "U100" "W9")
+  )
+
+  (net "VCC_1V8"
+    (node "U100" "AA28")
+    (node "U100" "AA30")
+    (node "U100" "AA32")
+    (node "U100" "AB8")
+    (node "U100" "AB27")
+    (node "U100" "AB29")
+    (node "U100" "AC28")
+    (node "U100" "AC30")
+    (node "U100" "AD8")
+    (node "U100" "AD29")
+    (node "U100" "T8")
+    (node "U100" "T27")
+    (node "U100" "T29")
+    (node "U100" "U28")
+    (node "U100" "U30")
+    (node "U100" "V8")
+    (node "U100" "V27")
+    (node "U100" "V29")
+    (node "U100" "W28")
+    (node "U100" "W30")
+    (node "U100" "W32")
+    (node "U100" "Y27")
+    (node "U100" "Y29")
+  )
+
+  (net "VCC_0V95"
+    (node "U100" "AA10")
+    (node "U100" "AA12")
+    (node "U100" "AA14")
+    (node "U100" "AA18")
+    (node "U100" "AA20")
+    (node "U100" "AA22")
+    (node "U100" "AA24")
+    (node "U100" "AA26")
+    (node "U100" "AB13")
+    (node "U100" "AB17")
+    (node "U100" "AB19")
+    (node "U100" "AB21")
+    (node "U100" "AB23")
+    (node "U100" "AB25")
+    (node "U100" "AC10")
+    (node "U100" "AC12")
+    (node "U100" "AC14")
+    (node "U100" "AC16")
+    (node "U100" "AC18")
+    (node "U100" "AC20")
+    (node "U100" "AC22")
+    (node "U100" "AC24")
+    (node "U100" "AC26")
+    (node "U100" "T11")
+    (node "U100" "T13")
+    (node "U100" "T15")
+    (node "U100" "U10")
+    (node "U100" "U12")
+    (node "U100" "U14")
+    (node "U100" "U16")
+    (node "U100" "U18")
+    (node "U100" "U20")
+    (node "U100" "U22")
+    (node "U100" "U24")
+    (node "U100" "U26")
+    (node "U100" "V11")
+    (node "U100" "V13")
+    (node "U100" "V15")
+    (node "U100" "V17")
+    (node "U100" "V19")
+    (node "U100" "V21")
+    (node "U100" "V23")
+    (node "U100" "V25")
+    (node "U100" "W10")
+    (node "U100" "W12")
+    (node "U100" "W14")
+    (node "U100" "W18")
+    (node "U100" "W20")
+    (node "U100" "W22")
+    (node "U100" "W24")
+    (node "U100" "W26")
+    (node "U100" "Y11")
+    (node "U100" "Y13")
+    (node "U100" "Y17")
+    (node "U100" "Y19")
+    (node "U100" "Y21")
+    (node "U100" "Y23")
+    (node "U100" "Y25")
+  )
+
+  (net "USER_SPI_SCK"
+    (node "U100" "AG19")
+  )
+
+  (net "USER_SPI_D3"
+    (node "U100" "AH18")
+  )
+
+  (net "USER_SPI_D2"
+    (node "U100" "AH16")
+  )
+
+  (net "USER_SPI_D1"
+    (node "U100" "AF17")
+  )
+
+  (net "USER_SPI_D0"
+    (node "U100" "AE17")
+  )
+
+  (net "USER_SPI_CS_L"
+    (node "U100" "AG16")
+  )
+
+  (net "SYSRESET_L"
+    (node "U100" "AD13")
+  )
+
+  (net "SYSCLK100_P"
+    (node "U100" "AM19")
+  )
+
+  (net "SYSCLK100_N"
+    (node "U100" "AN19")
+  )
+
+  (net "SHARED_PAYLOAD_SDA"
+    (node "U100" "AF12")
+  )
+
+  (net "SHARED_PAYLOAD_SCL"
+    (node "U100" "AE12")
+  )
+
+  (net "SG12_WCK_B_FPGA_P"
+    (node "U100" "AU36")
+  )
+
+  (net "SG12_WCK_B_FPGA_N"
+    (node "U100" "AV36")
+  )
+
+  (net "SG12_WCK_A_FPGA_P"
+    (node "U100" "AN33")
+  )
+
+  (net "SG12_WCK_A_FPGA_N"
+    (node "U100" "AP33")
+  )
+
+  (net "SG12_VREF"
+    (node "U100" "AD28")
+    (node "U100" "AJ34")
+  )
+
+  (net "SG12_CKE_N"
+    (node "U100" "AP35")
+  )
+
+  (net "SG12_CK_FPGA_P"
+    (node "U100" "AL30")
+  )
+
+  (net "SG12_CK_FPGA_N"
+    (node "U100" "AM30")
+  )
+
+  (net "SG12_CABI_N"
+    (node "U100" "AL34")
+  )
+
+  (net "SG12_CA9"
+    (node "U100" "AG30")
+  )
+
+  (net "SG12_CA8"
+    (node "U100" "AL35")
+  )
+
+  (net "SG12_CA7"
+    (node "U100" "AP29")
+  )
+
+  (net "SG12_CA6"
+    (node "U100" "AW38")
+  )
+
+  (net "SG12_CA5"
+    (node "U100" "AN29")
+  )
+
+  (net "SG12_CA4"
+    (node "U100" "AL33")
+  )
+
+  (net "SG12_CA2"
+    (node "U100" "AK37")
+  )
+
+  (net "SG12_CA1"
+    (node "U100" "AT39")
+  )
+
+  (net "SG12_CA0"
+    (node "U100" "AH28")
+  )
+
+  (net "SG2_RESET_N"
+    (node "U100" "AJ39")
+  )
+
+  (net "SG2_EDC1_B"
+    (node "U100" "AM36")
+  )
+
+  (net "SG2_EDC1_A"
+    (node "U100" "AW34")
+  )
+
+  (net "SG2_EDC0_B"
+    (node "U100" "AM39")
+  )
+
+  (net "SG2_EDC0_A"
+    (node "U100" "AR37")
+  )
+
+  (net "SG2_DQ_B15"
+    (node "U100" "AN34")
+  )
+
+  (net "SG2_DQ_B14"
+    (node "U100" "AP34")
+  )
+
+  (net "SG2_DQ_B13"
+    (node "U100" "AK35")
+  )
+
+  (net "SG2_DQ_B12"
+    (node "U100" "AP36")
+  )
+
+  (net "SG2_DQ_B11"
+    (node "U100" "AR36")
+  )
+
+  (net "SG2_DQ_B10"
+    (node "U100" "AN37")
+  )
+
+  (net "SG2_DQ_B9"
+    (node "U100" "AN36")
+  )
+
+  (net "SG2_DQ_B8"
+    (node "U100" "AP38")
+  )
+
+  (net "SG2_DQ_B7"
+    (node "U100" "AN38")
+  )
+
+  (net "SG2_DQ_B6"
+    (node "U100" "AP39")
+  )
+
+  (net "SG2_DQ_B5"
+    (node "U100" "AK38")
+  )
+
+  (net "SG2_DQ_B4"
+    (node "U100" "AN39")
+  )
+
+  (net "SG2_DQ_B3"
+    (node "U100" "AK36")
+  )
+
+  (net "SG2_DQ_B2"
+    (node "U100" "AL38")
+  )
+
+  (net "SG2_DQ_B1"
+    (node "U100" "AL39")
+  )
+
+  (net "SG2_DQ_B0"
+    (node "U100" "AL37")
+  )
+
+  (net "SG2_DQ_A15"
+    (node "U100" "AU35")
+  )
+
+  (net "SG2_DQ_A14"
+    (node "U100" "AW35")
+  )
+
+  (net "SG2_DQ_A13"
+    (node "U100" "AU34")
+  )
+
+  (net "SG2_DQ_A12"
+    (node "U100" "AR33")
+  )
+
+  (net "SG2_DQ_A11"
+    (node "U100" "AT33")
+  )
+
+  (net "SG2_DQ_A10"
+    (node "U100" "AV33")
+  )
+
+  (net "SG2_DQ_A9"
+    (node "U100" "AW33")
+  )
+
+  (net "SG2_DQ_A8"
+    (node "U100" "AT34")
+  )
+
+  (net "SG2_DQ_A7"
+    (node "U100" "AU39")
+  )
+
+  (net "SG2_DQ_A6"
+    (node "U100" "AV39")
+  )
+
+  (net "SG2_DQ_A5"
+    (node "U100" "AT38")
+  )
+
+  (net "SG2_DQ_A4"
+    (node "U100" "AT37")
+  )
+
+  (net "SG2_DQ_A3"
+    (node "U100" "AR38")
+  )
+
+  (net "SG2_DQ_A2"
+    (node "U100" "AU37")
+  )
+
+  (net "SG2_DQ_A1"
+    (node "U100" "AT35")
+  )
+
+  (net "SG2_DQ_A0"
+    (node "U100" "AV37")
+  )
+
+  (net "SG2_DBI1_N_B"
+    (node "U100" "AM35")
+  )
+
+  (net "SG2_DBI1_N_A"
+    (node "U100" "AV34")
+  )
+
+  (net "SG2_DBI0_N_B"
+    (node "U100" "AM37")
+  )
+
+  (net "SG2_DBI0_N_A"
+    (node "U100" "AV38")
+  )
+
+  (net "SG2_CA3_B"
+    (node "U100" "AM34")
+  )
+
+  (net "SG2_CA3_A"
+    (node "U100" "AW36")
+  )
+
+  (net "SG1_RESET_N"
+    (node "U100" "AT32")
+  )
+
+  (net "SG1_EDC1_B"
+    (node "U100" "AF30")
+  )
+
+  (net "SG1_EDC1_A"
+    (node "U100" "AR32")
+  )
+
+  (net "SG1_EDC0_B"
+    (node "U100" "AJ33")
+  )
+
+  (net "SG1_EDC0_A"
+    (node "U100" "AU32")
+  )
+
+  (net "SG1_DQ_B15"
+    (node "U100" "AJ28")
+  )
+
+  (net "SG1_DQ_B14"
+    (node "U100" "AJ30")
+  )
+
+  (net "SG1_DQ_B13"
+    (node "U100" "AH29")
+  )
+
+  (net "SG1_DQ_B12"
+    (node "U100" "AH31")
+  )
+
+  (net "SG1_DQ_B11"
+    (node "U100" "AE30")
+  )
+
+  (net "SG1_DQ_B10"
+    (node "U100" "AF28")
+  )
+
+  (net "SG1_DQ_B9"
+    (node "U100" "AE28")
+  )
+
+  (net "SG1_DQ_B8"
+    (node "U100" "AF29")
+  )
+
+  (net "SG1_DQ_B7"
+    (node "U100" "AL29")
+  )
+
+  (net "SG1_DQ_B6"
+    (node "U100" "AM29")
+  )
+
+  (net "SG1_DQ_B5"
+    (node "U100" "AK33")
+  )
+
+  (net "SG1_DQ_B4"
+    (node "U100" "AJ31")
+  )
+
+  (net "SG1_DQ_B3"
+    (node "U100" "AL32")
+  )
+
+  (net "SG1_DQ_B2"
+    (node "U100" "AK32")
+  )
+
+  (net "SG1_DQ_B1"
+    (node "U100" "AH32")
+  )
+
+  (net "SG1_DQ_B0"
+    (node "U100" "AK30")
+  )
+
+  (net "SG1_DQ_A15"
+    (node "U100" "AN31")
+  )
+
+  (net "SG1_DQ_A14"
+    (node "U100" "AP30")
+  )
+
+  (net "SG1_DQ_A13"
+    (node "U100" "AP31")
+  )
+
+  (net "SG1_DQ_A12"
+    (node "U100" "AR30")
+  )
+
+  (net "SG1_DQ_A11"
+    (node "U100" "AW29")
+  )
+
+  (net "SG1_DQ_A10"
+    (node "U100" "AU29")
+  )
+
+  (net "SG1_DQ_A9"
+    (node "U100" "AV29")
+  )
+
+  (net "SG1_DQ_A8"
+    (node "U100" "AT29")
+  )
+
+  (net "SG1_DQ_A7"
+    (node "U100" "AW30")
+  )
+
+  (net "SG1_DQ_A6"
+    (node "U100" "AU31")
+  )
+
+  (net "SG1_DQ_A5"
+    (node "U100" "AV31")
+  )
+
+  (net "SG1_DQ_A4"
+    (node "U100" "AU30")
+  )
+
+  (net "SG1_DQ_A3"
+    (node "U100" "AN32")
+  )
+
+  (net "SG1_DQ_A2"
+    (node "U100" "AV32")
+  )
+
+  (net "SG1_DQ_A1"
+    (node "U100" "AM32")
+  )
+
+  (net "SG1_DQ_A0"
+    (node "U100" "AT30")
+  )
+
+  (net "SG1_DBI1_N_B"
+    (node "U100" "AG29")
+  )
+
+  (net "SG1_DBI1_N_A"
+    (node "U100" "AR31")
+  )
+
+  (net "SG1_DBI0_N_B"
+    (node "U100" "AK31")
+  )
+
+  (net "SG1_DBI0_N_A"
+    (node "U100" "AW31")
+  )
+
+  (net "SG1_CA3_B"
+    (node "U100" "AJ29")
+  )
+
+  (net "SG1_CA3_A"
+    (node "U100" "AM31")
+  )
+
+  (net "SDIO_DIR_CMD"
+    (node "U100" "AE23")
+  )
+
+  (net "SDIO_DIR_123"
+    (node "U100" "AG20")
+  )
+
+  (net "SDIO_DIR_0"
+    (node "U100" "AF23")
+  )
+
+  (net "SDIO_DATA3"
+    (node "U100" "AG21")
+  )
+
+  (net "SDIO_DATA2"
+    (node "U100" "AE22")
+  )
+
+  (net "SDIO_DATA1"
+    (node "U100" "AF22")
+  )
+
+  (net "SDIO_DATA0"
+    (node "U100" "AE21")
+  )
+
+  (net "SDIO_CMD"
+    (node "U100" "AE20")
+  )
+
+  (net "SDIO_CLK"
+    (node "U100" "AG22")
+  )
+
+  (net "SDIO_CD"
+    (node "U100" "A23")
+  )
+
+  (net "RTM_OUT2_P"
+    (node "U100" "AV14")
+  )
+
+  (net "RTM_OUT2_N"
+    (node "U100" "AW14")
+  )
+
+  (net "RTM_OUT1_P"
+    (node "U100" "AU12")
+  )
+
+  (net "RTM_OUT1_N"
+    (node "U100" "AV12")
+  )
+
+  (net "RTM_OUT0_P"
+    (node "U100" "AV13")
+  )
+
+  (net "RTM_OUT0_N"
+    (node "U100" "AW13")
+  )
+
+  (net "RTM_IO7_CC_P"
+    (node "U100" "AL19")
+  )
+
+  (net "RTM_IO7_CC_N"
+    (node "U100" "AL18")
+  )
+
+  (net "RTM_IO6_CC_P"
+    (node "U100" "AJ15")
+  )
+
+  (net "RTM_IO6_CC_N"
+    (node "U100" "AK15")
+  )
+
+  (net "RTM_IO5_CC_P"
+    (node "U100" "AL14")
+  )
+
+  (net "RTM_IO5_CC_N"
+    (node "U100" "AL13")
+  )
+
+  (net "RTM_IO4_CC_P"
+    (node "U100" "AL12")
+  )
+
+  (net "RTM_IO4_CC_N"
+    (node "U100" "AM12")
+  )
+
+  (net "RTM_IO3_CC_P"
+    (node "U100" "AM14")
+  )
+
+  (net "RTM_IO3_CC_N"
+    (node "U100" "AN14")
+  )
+
+  (net "RTM_IO2_CC_P"
+    (node "U100" "AN13")
+  )
+
+  (net "RTM_IO2_CC_N"
+    (node "U100" "AN12")
+  )
+
+  (net "RTM_IO1_CC_P"
+    (node "U100" "AP14")
+  )
+
+  (net "RTM_IO1_CC_N"
+    (node "U100" "AP13")
+  )
+
+  (net "RTM_IO0_CC_P"
+    (node "U100" "AR13")
+  )
+
+  (net "RTM_IO0_CC_N"
+    (node "U100" "AT13")
+  )
+
+  (net "RTM_GTP_CLK3_IN_P"
+    (node "U100" "AB32")
+  )
+
+  (net "RTM_GTP_CLK3_IN_N"
+    (node "U100" "AB33")
+  )
+
+  (net "RTM_GTP_CLK0_IN_P"
+    (node "U100" "D10")
+  )
+
+  (net "RTM_GTP_CLK0_IN_N"
+    (node "U100" "D9")
+  )
+
+  (net "RTM_GTP13_TX_CR_P"
+    (node "U100" "AH36")
+  )
+
+  (net "RTM_GTP13_TX_CR_N"
+    (node "U100" "AH37")
+  )
+
+  (net "RTM_GTP13_RX_P"
+    (node "U100" "AG38")
+  )
+
+  (net "RTM_GTP13_RX_N"
+    (node "U100" "AG39")
+  )
+
+  (net "RTM_GTP12_TX_CR_P"
+    (node "U100" "AG34")
+  )
+
+  (net "RTM_GTP12_TX_CR_N"
+    (node "U100" "AG35")
+  )
+
+  (net "RTM_GTP12_RX_P"
+    (node "U100" "AF36")
+  )
+
+  (net "RTM_GTP12_RX_N"
+    (node "U100" "AF37")
+  )
+
+  (net "RTM_GTP3_TX_CR_P"
+    (node "U100" "A8")
+  )
+
+  (net "RTM_GTP3_TX_CR_N"
+    (node "U100" "A7")
+  )
+
+  (net "RTM_GTP3_RX_P"
+    (node "U100" "A4")
+  )
+
+  (net "RTM_GTP3_RX_N"
+    (node "U100" "A3")
+  )
+
+  (net "RTM_GTP2_TX_CR_P"
+    (node "U100" "B6")
+  )
+
+  (net "RTM_GTP2_TX_CR_N"
+    (node "U100" "B5")
+  )
+
+  (net "RTM_GTP2_RX_P"
+    (node "U100" "B2")
+  )
+
+  (net "RTM_GTP2_RX_N"
+    (node "U100" "B1")
+  )
+
+  (net "RTM_GTP1_TX_CR_P"
+    (node "U100" "C8")
+  )
+
+  (net "RTM_GTP1_TX_CR_N"
+    (node "U100" "C7")
+  )
+
+  (net "RTM_GTP1_RX_P"
+    (node "U100" "C4")
+  )
+
+  (net "RTM_GTP1_RX_N"
+    (node "U100" "C3")
+  )
+
+  (net "RTM_GTP0_TX_CR_P"
+    (node "U100" "D6")
+  )
+
+  (net "RTM_GTP0_TX_CR_N"
+    (node "U100" "D5")
+  )
+
+  (net "RTM_GTP0_RX_P"
+    (node "U100" "D2")
+  )
+
+  (net "RTM_GTP0_RX_N"
+    (node "U100" "D1")
+  )
+
+  (net "PERSTN0"
+    (node "U100" "AM15")
+  )
+
+  (net "MGTAVTT"
+    (node "U100" "AA2")
+    (node "U100" "AA36")
+    (node "U100" "AB4")
+    (node "U100" "AB38")
+    (node "U100" "AC2")
+    (node "U100" "AC36")
+    (node "U100" "AD4")
+    (node "U100" "AD38")
+    (node "U100" "AE2")
+    (node "U100" "AE36")
+    (node "U100" "AF4")
+    (node "U100" "AF32")
+    (node "U100" "AF38")
+    (node "U100" "AG2")
+    (node "U100" "AG36")
+    (node "U100" "AH4")
+    (node "U100" "AJ2")
+    (node "U100" "AK4")
+    (node "U100" "AL2")
+    (node "U100" "AM4")
+    (node "U100" "AN2")
+    (node "U100" "AP4")
+    (node "U100" "AR2")
+    (node "U100" "AT4")
+    (node "U100" "AU2")
+    (node "U100" "AV4")
+    (node "U100" "AV10")
+    (node "U100" "B4")
+    (node "U100" "B10")
+    (node "U100" "C2")
+    (node "U100" "D4")
+    (node "U100" "E2")
+    (node "U100" "F4")
+    (node "U100" "G2")
+    (node "U100" "H4")
+    (node "U100" "J2")
+    (node "U100" "K4")
+    (node "U100" "L2")
+    (node "U100" "M4")
+    (node "U100" "N2")
+    (node "U100" "N36")
+    (node "U100" "P4")
+    (node "U100" "P38")
+    (node "U100" "R2")
+    (node "U100" "R36")
+    (node "U100" "T4")
+    (node "U100" "T38")
+    (node "U100" "U2")
+    (node "U100" "U36")
+    (node "U100" "V4")
+    (node "U100" "V38")
+    (node "U100" "W2")
+    (node "U100" "W36")
+    (node "U100" "Y4")
+  )
+
+  (net "MGTAVCC_RS"
+    (node "U100" "AA6")
+    (node "U100" "AC6")
+    (node "U100" "AE6")
+    (node "U100" "AF8")
+    (node "U100" "AG6")
+    (node "U100" "AH8")
+    (node "U100" "AJ6")
+    (node "U100" "AK8")
+    (node "U100" "AL6")
+    (node "U100" "AM8")
+    (node "U100" "AN6")
+    (node "U100" "AP8")
+    (node "U100" "AR6")
+    (node "U100" "AT8")
+    (node "U100" "AU6")
+    (node "U100" "AV8")
+    (node "U100" "W6")
+  )
+
+  (net "MGTAVCC_RN"
+    (node "U100" "B8")
+    (node "U100" "C6")
+    (node "U100" "D8")
+    (node "U100" "E6")
+    (node "U100" "F8")
+    (node "U100" "G6")
+    (node "U100" "H8")
+    (node "U100" "J6")
+    (node "U100" "K8")
+    (node "U100" "L6")
+    (node "U100" "M8")
+    (node "U100" "N6")
+    (node "U100" "P8")
+    (node "U100" "R6")
+    (node "U100" "U6")
+  )
+
+  (net "MGTAVCC_L"
+    (node "U100" "AB34")
+    (node "U100" "AC32")
+    (node "U100" "AD34")
+    (node "U100" "AE32")
+    (node "U100" "AF34")
+    (node "U100" "P34")
+    (node "U100" "R32")
+    (node "U100" "T34")
+    (node "U100" "U32")
+    (node "U100" "V34")
+    (node "U100" "Y34")
+  )
+
+  (net "MGT232_RREF"
+    (node "U100" "B9")
+  )
+
+  (net "MGT232_REFCLK_P"
+    (node "U100" "F10")
+  )
+
+  (net "MGT232_REFCLK_N"
+    (node "U100" "F9")
+  )
+
+  (net "MGT230_REFCLK_P"
+    (node "U100" "P10")
+  )
+
+  (net "MGT230_REFCLK_N"
+    (node "U100" "P9")
+  )
+
+  (net "MGT229_REFCLK_P"
+    (node "U100" "U8")
+  )
+
+  (net "MGT229_REFCLK_N"
+    (node "U100" "U7")
+  )
+
+  (net "MGT228_RREF"
+    (node "U100" "AV9")
+  )
+
+  (net "MGT227_REFCLK_P"
+    (node "U100" "AE8")
+  )
+
+  (net "MGT227_REFCLK_N"
+    (node "U100" "AE7")
+  )
+
+  (net "MGT224_REFCLK_P"
+    (node "U100" "AT10")
+  )
+
+  (net "MGT224_REFCLK_N"
+    (node "U100" "AT9")
+  )
+
+  (net "MGT128_RREF"
+    (node "U100" "AF33")
+  )
+
+  (net "MGT127_REFCLK_P"
+    (node "U100" "Y32")
+  )
+
+  (net "MGT127_REFCLK_N"
+    (node "U100" "Y33")
+  )
+
+  (net "MGT126_REFCLK_P"
+    (node "U100" "AD32")
+  )
+
+  (net "MGT126_REFCLK_N"
+    (node "U100" "AD33")
+  )
+
+  (net "LMK_SYNC"
+    (node "U100" "D38")
+  )
+
+  (net "LMK_STATUS1"
+    (node "U100" "AG25")
+  )
+
+  (net "LMK_STATUS0"
+    (node "U100" "AF25")
+  )
+
+  (net "LMK_SDIO"
+    (node "U100" "A33")
+  )
+
+  (net "LMK_SCS_L"
+    (node "U100" "AE26")
+  )
+
+  (net "LMK_SCL"
+    (node "U100" "AD26")
+  )
+
+  (net "LMK_RESET_L"
+    (node "U100" "AE25")
+  )
+
+  (net "LMK_CTL_SEL"
+    (node "U100" "E37")
+  )
+
+  (net "GND"
+    (node "U100" "A2")
+    (node "U100" "A5")
+    (node "U100" "A6")
+    (node "U100" "A9")
+    (node "U100" "A10")
+    (node "U100" "A11")
+    (node "U100" "A21")
+    (node "U100" "A31")
+    (node "U100" "AA1")
+    (node "U100" "AA5")
+    (node "U100" "AA13")
+    (node "U100" "AA17")
+    (node "U100" "AA19")
+    (node "U100" "AA21")
+    (node "U100" "AA23")
+    (node "U100" "AA25")
+    (node "U100" "AA27")
+    (node "U100" "AA29")
+    (node "U100" "AA31")
+    (node "U100" "AA33")
+    (node "U100" "AA37")
+    (node "U100" "AB3")
+    (node "U100" "AB7")
+    (node "U100" "AB10")
+    (node "U100" "AB12")
+    (node "U100" "AB14")
+    (node "U100" "AB15")
+    (node "U100" "AB16")
+    (node "U100" "AB18")
+    (node "U100" "AB20")
+    (node "U100" "AB22")
+    (node "U100" "AB24")
+    (node "U100" "AB26")
+    (node "U100" "AB28")
+    (node "U100" "AB30")
+    (node "U100" "AB31")
+    (node "U100" "AB35")
+    (node "U100" "AB39")
+    (node "U100" "AC1")
+    (node "U100" "AC5")
+    (node "U100" "AC13")
+    (node "U100" "AC15")
+    (node "U100" "AC17")
+    (node "U100" "AC19")
+    (node "U100" "AC21")
+    (node "U100" "AC23")
+    (node "U100" "AC25")
+    (node "U100" "AC27")
+    (node "U100" "AC29")
+    (node "U100" "AC31")
+    (node "U100" "AC33")
+    (node "U100" "AC37")
+    (node "U100" "AD3")
+    (node "U100" "AD7")
+    (node "U100" "AD12")
+    (node "U100" "AD22")
+    (node "U100" "AD30")
+    (node "U100" "AD31")
+    (node "U100" "AD35")
+    (node "U100" "AD39")
+    (node "U100" "AE1")
+    (node "U100" "AE5")
+    (node "U100" "AE9")
+    (node "U100" "AE10")
+    (node "U100" "AE19")
+    (node "U100" "AE29")
+    (node "U100" "AE31")
+    (node "U100" "AE33")
+    (node "U100" "AE37")
+    (node "U100" "AF3")
+    (node "U100" "AF7")
+    (node "U100" "AF16")
+    (node "U100" "AF26")
+    (node "U100" "AF31")
+    (node "U100" "AF35")
+    (node "U100" "AF39")
+    (node "U100" "AG1")
+    (node "U100" "AG5")
+    (node "U100" "AG9")
+    (node "U100" "AG10")
+    (node "U100" "AG11")
+    (node "U100" "AG13")
+    (node "U100" "AG23")
+    (node "U100" "AG31")
+    (node "U100" "AG32")
+    (node "U100" "AG33")
+    (node "U100" "AG37")
+    (node "U100" "AH3")
+    (node "U100" "AH7")
+    (node "U100" "AH11")
+    (node "U100" "AH20")
+    (node "U100" "AH30")
+    (node "U100" "AH33")
+    (node "U100" "AH34")
+    (node "U100" "AH35")
+    (node "U100" "AH38")
+    (node "U100" "AH39")
+    (node "U100" "AJ1")
+    (node "U100" "AJ5")
+    (node "U100" "AJ9")
+    (node "U100" "AJ10")
+    (node "U100" "AJ11")
+    (node "U100" "AJ17")
+    (node "U100" "AJ27")
+    (node "U100" "AJ35")
+    (node "U100" "AJ36")
+    (node "U100" "AJ37")
+    (node "U100" "AJ38")
+    (node "U100" "AK3")
+    (node "U100" "AK7")
+    (node "U100" "AK11")
+    (node "U100" "AK14")
+    (node "U100" "AK24")
+    (node "U100" "AK34")
+    (node "U100" "AL1")
+    (node "U100" "AL5")
+    (node "U100" "AL9")
+    (node "U100" "AL10")
+    (node "U100" "AL11")
+    (node "U100" "AL21")
+    (node "U100" "AL31")
+    (node "U100" "AM3")
+    (node "U100" "AM7")
+    (node "U100" "AM11")
+    (node "U100" "AM18")
+    (node "U100" "AM28")
+    (node "U100" "AM38")
+    (node "U100" "AN1")
+    (node "U100" "AN5")
+    (node "U100" "AN9")
+    (node "U100" "AN10")
+    (node "U100" "AN11")
+    (node "U100" "AN15")
+    (node "U100" "AN25")
+    (node "U100" "AN35")
+    (node "U100" "AP3")
+    (node "U100" "AP7")
+    (node "U100" "AP11")
+    (node "U100" "AP12")
+    (node "U100" "AP22")
+    (node "U100" "AP32")
+    (node "U100" "AR1")
+    (node "U100" "AR5")
+    (node "U100" "AR9")
+    (node "U100" "AR10")
+    (node "U100" "AR11")
+    (node "U100" "AR19")
+    (node "U100" "AR29")
+    (node "U100" "AR39")
+    (node "U100" "AT3")
+    (node "U100" "AT7")
+    (node "U100" "AT11")
+    (node "U100" "AT16")
+    (node "U100" "AT26")
+    (node "U100" "AT36")
+    (node "U100" "AU1")
+    (node "U100" "AU5")
+    (node "U100" "AU9")
+    (node "U100" "AU10")
+    (node "U100" "AU11")
+    (node "U100" "AU13")
+    (node "U100" "AU23")
+    (node "U100" "AU33")
+    (node "U100" "AV3")
+    (node "U100" "AV7")
+    (node "U100" "AV11")
+    (node "U100" "AV20")
+    (node "U100" "AV30")
+    (node "U100" "AW2")
+    (node "U100" "AW5")
+    (node "U100" "AW6")
+    (node "U100" "AW9")
+    (node "U100" "AW10")
+    (node "U100" "AW17")
+    (node "U100" "AW27")
+    (node "U100" "AW37")
+    (node "U100" "B3")
+    (node "U100" "B7")
+    (node "U100" "B11")
+    (node "U100" "B18")
+    (node "U100" "B28")
+    (node "U100" "B38")
+    (node "U100" "C1")
+    (node "U100" "C5")
+    (node "U100" "C9")
+    (node "U100" "C10")
+    (node "U100" "C11")
+    (node "U100" "C15")
+    (node "U100" "C25")
+    (node "U100" "C35")
+    (node "U100" "D3")
+    (node "U100" "D7")
+    (node "U100" "D11")
+    (node "U100" "D12")
+    (node "U100" "D22")
+    (node "U100" "D32")
+    (node "U100" "E1")
+    (node "U100" "E5")
+    (node "U100" "E9")
+    (node "U100" "E10")
+    (node "U100" "E11")
+    (node "U100" "E19")
+    (node "U100" "E29")
+    (node "U100" "E39")
+    (node "U100" "F3")
+    (node "U100" "F7")
+    (node "U100" "F11")
+    (node "U100" "F16")
+    (node "U100" "F26")
+    (node "U100" "F36")
+    (node "U100" "G1")
+    (node "U100" "G5")
+    (node "U100" "G9")
+    (node "U100" "G10")
+    (node "U100" "G11")
+    (node "U100" "G13")
+    (node "U100" "G23")
+    (node "U100" "G33")
+    (node "U100" "H3")
+    (node "U100" "H7")
+    (node "U100" "H11")
+    (node "U100" "H20")
+    (node "U100" "H30")
+    (node "U100" "J1")
+    (node "U100" "J5")
+    (node "U100" "J9")
+    (node "U100" "J10")
+    (node "U100" "J11")
+    (node "U100" "J17")
+    (node "U100" "J27")
+    (node "U100" "J37")
+    (node "U100" "K3")
+    (node "U100" "K7")
+    (node "U100" "K11")
+    (node "U100" "K14")
+    (node "U100" "K24")
+    (node "U100" "K34")
+    (node "U100" "L1")
+    (node "U100" "L5")
+    (node "U100" "L9")
+    (node "U100" "L10")
+    (node "U100" "L11")
+    (node "U100" "L21")
+    (node "U100" "L31")
+    (node "U100" "M3")
+    (node "U100" "M7")
+    (node "U100" "M11")
+    (node "U100" "M18")
+    (node "U100" "M28")
+    (node "U100" "M33")
+    (node "U100" "M34")
+    (node "U100" "M35")
+    (node "U100" "M36")
+    (node "U100" "M37")
+    (node "U100" "M38")
+    (node "U100" "M39")
+    (node "U100" "N1")
+    (node "U100" "N5")
+    (node "U100" "N9")
+    (node "U100" "N10")
+    (node "U100" "N11")
+    (node "U100" "N15")
+    (node "U100" "N25")
+    (node "U100" "N31")
+    (node "U100" "N32")
+    (node "U100" "N33")
+    (node "U100" "N37")
+    (node "U100" "P3")
+    (node "U100" "P7")
+    (node "U100" "P12")
+    (node "U100" "P22")
+    (node "U100" "P31")
+    (node "U100" "P35")
+    (node "U100" "P39")
+    (node "U100" "R1")
+    (node "U100" "R5")
+    (node "U100" "R9")
+    (node "U100" "R10")
+    (node "U100" "R19")
+    (node "U100" "R29")
+    (node "U100" "R31")
+    (node "U100" "R33")
+    (node "U100" "R37")
+    (node "U100" "T3")
+    (node "U100" "T7")
+    (node "U100" "T12")
+    (node "U100" "T14")
+    (node "U100" "T16")
+    (node "U100" "T26")
+    (node "U100" "T31")
+    (node "U100" "T35")
+    (node "U100" "T39")
+    (node "U100" "U1")
+    (node "U100" "U5")
+    (node "U100" "U9")
+    (node "U100" "U13")
+    (node "U100" "U15")
+    (node "U100" "U17")
+    (node "U100" "U19")
+    (node "U100" "U21")
+    (node "U100" "U23")
+    (node "U100" "U25")
+    (node "U100" "U27")
+    (node "U100" "U29")
+    (node "U100" "U31")
+    (node "U100" "U33")
+    (node "U100" "U37")
+    (node "U100" "V3")
+    (node "U100" "V7")
+    (node "U100" "V9")
+    (node "U100" "V10")
+    (node "U100" "V12")
+    (node "U100" "V14")
+    (node "U100" "V16")
+    (node "U100" "V18")
+    (node "U100" "V20")
+    (node "U100" "V22")
+    (node "U100" "V24")
+    (node "U100" "V26")
+    (node "U100" "V28")
+    (node "U100" "V30")
+    (node "U100" "V31")
+    (node "U100" "V35")
+    (node "U100" "V39")
+    (node "U100" "W1")
+    (node "U100" "W5")
+    (node "U100" "W13")
+    (node "U100" "W17")
+    (node "U100" "W19")
+    (node "U100" "W21")
+    (node "U100" "W23")
+    (node "U100" "W25")
+    (node "U100" "W27")
+    (node "U100" "W29")
+    (node "U100" "W31")
+    (node "U100" "W33")
+    (node "U100" "W37")
+    (node "U100" "Y3")
+    (node "U100" "Y7")
+    (node "U100" "Y8")
+    (node "U100" "Y10")
+    (node "U100" "Y12")
+    (node "U100" "Y14")
+    (node "U100" "Y18")
+    (node "U100" "Y20")
+    (node "U100" "Y22")
+    (node "U100" "Y24")
+    (node "U100" "Y26")
+    (node "U100" "Y28")
+    (node "U100" "Y30")
+    (node "U100" "Y31")
+    (node "U100" "Y35")
+    (node "U100" "Y38")
+    (node "U100" "Y39")
+  )
+
+  (net "FPGA_UART_TX"
+    (node "U100" "AP18")
+  )
+
+  (net "FPGA_UART_RX"
+    (node "U100" "AP19")
+  )
+
+  (net "FPGA_TMS_R"
+    (node "U100" "W11")
+  )
+
+  (net "FPGA_TDO"
+    (node "U100" "T10")
+  )
+
+  (net "FPGA_TDI_R"
+    (node "U100" "U11")
+  )
+
+  (net "FPGA_TCK_R"
+    (node "U100" "AA11")
+  )
+
+  (net "FPGA_SLAVE_SDA"
+    (node "U100" "AM16")
+  )
+
+  (net "FPGA_SLAVE_SCL"
+    (node "U100" "AN16")
+  )
+
+  (net "FPGA_PUDC_B"
+    (node "U100" "P11")
+  )
+
+  (net "FPGA_PROGRAM_B"
+    (node "U100" "AA9")
+  )
+
+  (net "FPGA_POR_OVERRIDE"
+    (node "U100" "Y9")
+  )
+
+  (net "FPGA_INIT_B"
+    (node "U100" "R11")
+  )
+
+  (net "FPGA_DONE"
+    (node "U100" "AF11")
+  )
+
+  (net "FPGA_CFG_FCS_B"
+    (node "U100" "AB9")
+  )
+
+  (net "FPGA_CFG_FCS2_B"
+    (node "U100" "AW16")
+  )
+
+  (net "FPGA_CFG_D07"
+    (node "U100" "AF13")
+  )
+
+  (net "FPGA_CFG_D06"
+    (node "U100" "AE13")
+  )
+
+  (net "FPGA_CFG_D05"
+    (node "U100" "AG14")
+  )
+
+  (net "FPGA_CFG_D04"
+    (node "U100" "AF14")
+  )
+
+  (net "FPGA_CFG_D03"
+    (node "U100" "AD9")
+  )
+
+  (net "FPGA_CFG_D02"
+    (node "U100" "AC9")
+  )
+
+  (net "FPGA_CFG_D01"
+    (node "U100" "AD10")
+  )
+
+  (net "FPGA_CFG_D00"
+    (node "U100" "AE11")
+  )
+
+  (net "FPGA_CFG_CLK"
+    (node "U100" "AC11")
+  )
+
+  (net "FPGA_ADC_VCC"
+    (node "U100" "W16")
+  )
+
+  (net "FPGA_ADC_GND"
+    (node "U100" "AA15")
+    (node "U100" "AA16")
+    (node "U100" "W15")
+    (node "U100" "Y15")
+    (node "U100" "Y16")
+  )
+
+  (net "FPGA_ACQCLK_P"
+    (node "U100" "AL17")
+  )
+
+  (net "FPGA_ACQCLK_N"
+    (node "U100" "AM17")
+  )
+
+  (net "FP_LED2B_K"
+    (node "U100" "AG15")
+  )
+
+  (net "FP_LED2A_K"
+    (node "U100" "AF15")
+  )
+
+  (net "FMC2_VREF_B"
+    (node "U100" "T24")
+  )
+
+  (net "FMC2_VREF_A"
+    (node "U100" "AD24")
+    (node "U100" "L34")
+    (node "U100" "T30")
+  )
+
+  (net "FMC2_VIOB"
+    (node "U100" "A26")
+    (node "U100" "D27")
+    (node "U100" "G28")
+    (node "U100" "H25")
+    (node "U100" "L26")
+    (node "U100" "P27")
+    (node "U100" "R24")
+  )
+
+  (net "FMC2_SYNC_P"
+    (node "U100" "B25")
+  )
+
+  (net "FMC2_SYNC_N"
+    (node "U100" "A25")
+  )
+
+  (net "FMC2_PRSNT_L"
+    (node "U100" "AV28")
+  )
+
+  (net "FMC2_PG_M2C_VIOB"
+    (node "U100" "J25")
+  )
+
+  (net "FMC2_PG_C2M_VIOB"
+    (node "U100" "A27")
+  )
+
+  (net "FMC2_LED8"
+    (node "U100" "AK26")
+  )
+
+  (net "FMC2_LED7"
+    (node "U100" "AH27")
+  )
+
+  (net "FMC2_LED6"
+    (node "U100" "AJ25")
+  )
+
+  (net "FMC2_LED5"
+    (node "U100" "AK25")
+  )
+
+  (net "FMC2_LED4"
+    (node "U100" "J38")
+  )
+
+  (net "FMC2_LED3"
+    (node "U100" "J39")
+  )
+
+  (net "FMC2_LED2"
+    (node "U100" "G35")
+  )
+
+  (net "FMC2_LED1"
+    (node "U100" "AP26")
+  )
+
+  (net "FMC2_LA33_P"
+    (node "U100" "K35")
+  )
+
+  (net "FMC2_LA33_N"
+    (node "U100" "L35")
+  )
+
+  (net "FMC2_LA32_P"
+    (node "U100" "K37")
+  )
+
+  (net "FMC2_LA32_N"
+    (node "U100" "L37")
+  )
+
+  (net "FMC2_LA31_P"
+    (node "U100" "J35")
+  )
+
+  (net "FMC2_LA31_N"
+    (node "U100" "J34")
+  )
+
+  (net "FMC2_LA30_P"
+    (node "U100" "J36")
+  )
+
+  (net "FMC2_LA30_N"
+    (node "U100" "K36")
+  )
+
+  (net "FMC2_LA29_P"
+    (node "U100" "D35")
+  )
+
+  (net "FMC2_LA29_N"
+    (node "U100" "E35")
+  )
+
+  (net "FMC2_LA28_P"
+    (node "U100" "G34")
+  )
+
+  (net "FMC2_LA28_N"
+    (node "U100" "H34")
+  )
+
+  (net "FMC2_LA27_P"
+    (node "U100" "A38")
+  )
+
+  (net "FMC2_LA27_N"
+    (node "U100" "A37")
+  )
+
+  (net "FMC2_LA26_P"
+    (node "U100" "C36")
+  )
+
+  (net "FMC2_LA26_N"
+    (node "U100" "B36")
+  )
+
+  (net "FMC2_LA25_P"
+    (node "U100" "B35")
+  )
+
+  (net "FMC2_LA25_N"
+    (node "U100" "A35")
+  )
+
+  (net "FMC2_LA24_P"
+    (node "U100" "B34")
+  )
+
+  (net "FMC2_LA24_N"
+    (node "U100" "A34")
+  )
+
+  (net "FMC2_LA23_P"
+    (node "U100" "D39")
+  )
+
+  (net "FMC2_LA23_N"
+    (node "U100" "C39")
+  )
+
+  (net "FMC2_LA22_P"
+    (node "U100" "C38")
+  )
+
+  (net "FMC2_LA22_N"
+    (node "U100" "B39")
+  )
+
+  (net "FMC2_LA21_P"
+    (node "U100" "C37")
+  )
+
+  (net "FMC2_LA21_N"
+    (node "U100" "B37")
+  )
+
+  (net "FMC2_LA20_P"
+    (node "U100" "E36")
+  )
+
+  (net "FMC2_LA20_N"
+    (node "U100" "D36")
+  )
+
+  (net "FMC2_LA19_P"
+    (node "U100" "D34")
+  )
+
+  (net "FMC2_LA19_N"
+    (node "U100" "C34")
+  )
+
+  (net "FMC2_LA18_CC_P"
+    (node "U100" "H36")
+  )
+
+  (net "FMC2_LA18_CC_N"
+    (node "U100" "G36")
+  )
+
+  (net "FMC2_LA17_CC_P"
+    (node "U100" "G37")
+  )
+
+  (net "FMC2_LA17_CC_N"
+    (node "U100" "F37")
+  )
+
+  (net "FMC2_LA16_P"
+    (node "U100" "AJ24")
+  )
+
+  (net "FMC2_LA16_N"
+    (node "U100" "AH24")
+  )
+
+  (net "FMC2_LA15_P"
+    (node "U100" "AG24")
+  )
+
+  (net "FMC2_LA15_N"
+    (node "U100" "AF24")
+  )
+
+  (net "FMC2_LA14_P"
+    (node "U100" "AF27")
+  )
+
+  (net "FMC2_LA14_N"
+    (node "U100" "AE27")
+  )
+
+  (net "FMC2_LA13_P"
+    (node "U100" "AJ26")
+  )
+
+  (net "FMC2_LA13_N"
+    (node "U100" "AH26")
+  )
+
+  (net "FMC2_LA12_P"
+    (node "U100" "AL24")
+  )
+
+  (net "FMC2_LA12_N"
+    (node "U100" "AL25")
+  )
+
+  (net "FMC2_LA11_P"
+    (node "U100" "AW26")
+  )
+
+  (net "FMC2_LA11_N"
+    (node "U100" "AW25")
+  )
+
+  (net "FMC2_LA10_P"
+    (node "U100" "AR25")
+  )
+
+  (net "FMC2_LA10_N"
+    (node "U100" "AP25")
+  )
+
+  (net "FMC2_LA09_P"
+    (node "U100" "AM25")
+  )
+
+  (net "FMC2_LA09_N"
+    (node "U100" "AM24")
+  )
+
+  (net "FMC2_LA08_P"
+    (node "U100" "AG27")
+  )
+
+  (net "FMC2_LA08_N"
+    (node "U100" "AG26")
+  )
+
+  (net "FMC2_LA07_P"
+    (node "U100" "AR27")
+  )
+
+  (net "FMC2_LA07_N"
+    (node "U100" "AR26")
+  )
+
+  (net "FMC2_LA06_P"
+    (node "U100" "AT28")
+  )
+
+  (net "FMC2_LA06_N"
+    (node "U100" "AR28")
+  )
+
+  (net "FMC2_LA05_P"
+    (node "U100" "AN28")
+  )
+
+  (net "FMC2_LA05_N"
+    (node "U100" "AP28")
+  )
+
+  (net "FMC2_LA04_P"
+    (node "U100" "AU27")
+  )
+
+  (net "FMC2_LA04_N"
+    (node "U100" "AT27")
+  )
+
+  (net "FMC2_LA03_P"
+    (node "U100" "AU25")
+  )
+
+  (net "FMC2_LA03_N"
+    (node "U100" "AU26")
+  )
+
+  (net "FMC2_LA02_P"
+    (node "U100" "AV27")
+  )
+
+  (net "FMC2_LA02_N"
+    (node "U100" "AV26")
+  )
+
+  (net "FMC2_LA01_CC_P"
+    (node "U100" "AM27")
+  )
+
+  (net "FMC2_LA01_CC_N"
+    (node "U100" "AN27")
+  )
+
+  (net "FMC2_LA00_CC_P"
+    (node "U100" "AM26")
+  )
+
+  (net "FMC2_LA00_CC_N"
+    (node "U100" "AN26")
+  )
+
+  (net "FMC2_HSPC_PRSNT_L"
+    (node "U100" "AW28")
+  )
+
+  (net "FMC2_HB21_P"
+    (node "U100" "F25")
+  )
+
+  (net "FMC2_HB21_N"
+    (node "U100" "G25")
+  )
+
+  (net "FMC2_HB20_P"
+    (node "U100" "K25")
+  )
+
+  (net "FMC2_HB20_N"
+    (node "U100" "L25")
+  )
+
+  (net "FMC2_HB19_P"
+    (node "U100" "C27")
+  )
+
+  (net "FMC2_HB19_N"
+    (node "U100" "C26")
+  )
+
+  (net "FMC2_HB18_P"
+    (node "U100" "M24")
+  )
+
+  (net "FMC2_HB18_N"
+    (node "U100" "N24")
+  )
+
+  (net "FMC2_HB17_CC_P"
+    (node "U100" "J26")
+  )
+
+  (net "FMC2_HB17_CC_N"
+    (node "U100" "H26")
+  )
+
+  (net "FMC2_HB16_P"
+    (node "U100" "B27")
+  )
+
+  (net "FMC2_HB16_N"
+    (node "U100" "B26")
+  )
+
+  (net "FMC2_HB15_P"
+    (node "U100" "D28")
+  )
+
+  (net "FMC2_HB15_N"
+    (node "U100" "C28")
+  )
+
+  (net "FMC2_HB14_P"
+    (node "U100" "D26")
+  )
+
+  (net "FMC2_HB14_N"
+    (node "U100" "D25")
+  )
+
+  (net "FMC2_HB13_P"
+    (node "U100" "F28")
+  )
+
+  (net "FMC2_HB13_N"
+    (node "U100" "E28")
+  )
+
+  (net "FMC2_HB12_P"
+    (node "U100" "E26")
+  )
+
+  (net "FMC2_HB12_N"
+    (node "U100" "E25")
+  )
+
+  (net "FMC2_HB11_P"
+    (node "U100" "F27")
+  )
+
+  (net "FMC2_HB11_N"
+    (node "U100" "E27")
+  )
+
+  (net "FMC2_HB10_P"
+    (node "U100" "T25")
+  )
+
+  (net "FMC2_HB10_N"
+    (node "U100" "R25")
+  )
+
+  (net "FMC2_HB09_P"
+    (node "U100" "M26")
+  )
+
+  (net "FMC2_HB09_N"
+    (node "U100" "M25")
+  )
+
+  (net "FMC2_HB08_P"
+    (node "U100" "G26")
+  )
+
+  (net "FMC2_HB08_N"
+    (node "U100" "G27")
+  )
+
+  (net "FMC2_HB07_P"
+    (node "U100" "M27")
+  )
+
+  (net "FMC2_HB07_N"
+    (node "U100" "L27")
+  )
+
+  (net "FMC2_HB06_CC_P"
+    (node "U100" "K26")
+  )
+
+  (net "FMC2_HB06_CC_N"
+    (node "U100" "K27")
+  )
+
+  (net "FMC2_HB05_P"
+    (node "U100" "P28")
+  )
+
+  (net "FMC2_HB05_N"
+    (node "U100" "N28")
+  )
+
+  (net "FMC2_HB04_P"
+    (node "U100" "P26")
+  )
+
+  (net "FMC2_HB04_N"
+    (node "U100" "N26")
+  )
+
+  (net "FMC2_HB03_P"
+    (node "U100" "R26")
+  )
+
+  (net "FMC2_HB03_N"
+    (node "U100" "R27")
+  )
+
+  (net "FMC2_HB02_P"
+    (node "U100" "T28")
+  )
+
+  (net "FMC2_HB02_N"
+    (node "U100" "R28")
+  )
+
+  (net "FMC2_HB01_P"
+    (node "U100" "P24")
+  )
+
+  (net "FMC2_HB01_N"
+    (node "U100" "P25")
+  )
+
+  (net "FMC2_HB00_CC_P"
+    (node "U100" "K28")
+  )
+
+  (net "FMC2_HB00_CC_N"
+    (node "U100" "J28")
+  )
+
+  (net "FMC2_HA23_P"
+    (node "U100" "C29")
+  )
+
+  (net "FMC2_HA23_N"
+    (node "U100" "D29")
+  )
+
+  (net "FMC2_HA22_P"
+    (node "U100" "A29")
+  )
+
+  (net "FMC2_HA22_N"
+    (node "U100" "A28")
+  )
+
+  (net "FMC2_HA21_P"
+    (node "U100" "A30")
+  )
+
+  (net "FMC2_HA21_N"
+    (node "U100" "B30")
+  )
+
+  (net "FMC2_HA20_P"
+    (node "U100" "A32")
+  )
+
+  (net "FMC2_HA20_N"
+    (node "U100" "B32")
+  )
+
+  (net "FMC2_HA19_P"
+    (node "U100" "B31")
+  )
+
+  (net "FMC2_HA19_N"
+    (node "U100" "C31")
+  )
+
+  (net "FMC2_HA18_P"
+    (node "U100" "C33")
+  )
+
+  (net "FMC2_HA18_N"
+    (node "U100" "C32")
+  )
+
+  (net "FMC2_HA17_CC_P"
+    (node "U100" "F33")
+  )
+
+  (net "FMC2_HA17_CC_N"
+    (node "U100" "E33")
+  )
+
+  (net "FMC2_HA16_P"
+    (node "U100" "E31")
+  )
+
+  (net "FMC2_HA16_N"
+    (node "U100" "D31")
+  )
+
+  (net "FMC2_HA15_P"
+    (node "U100" "E30")
+  )
+
+  (net "FMC2_HA15_N"
+    (node "U100" "D30")
+  )
+
+  (net "FMC2_HA14_P"
+    (node "U100" "F32")
+  )
+
+  (net "FMC2_HA14_N"
+    (node "U100" "E32")
+  )
+
+  (net "FMC2_HA13_P"
+    (node "U100" "G29")
+  )
+
+  (net "FMC2_HA13_N"
+    (node "U100" "F29")
+  )
+
+  (net "FMC2_HA12_P"
+    (node "U100" "G30")
+  )
+
+  (net "FMC2_HA12_N"
+    (node "U100" "F30")
+  )
+
+  (net "FMC2_HA11_P"
+    (node "U100" "L32")
+  )
+
+  (net "FMC2_HA11_N"
+    (node "U100" "L33")
+  )
+
+  (net "FMC2_HA10_P"
+    (node "U100" "J33")
+  )
+
+  (net "FMC2_HA10_N"
+    (node "U100" "H33")
+  )
+
+  (net "FMC2_HA09_P"
+    (node "U100" "K31")
+  )
+
+  (net "FMC2_HA09_N"
+    (node "U100" "K32")
+  )
+
+  (net "FMC2_HA08_P"
+    (node "U100" "J29")
+  )
+
+  (net "FMC2_HA08_N"
+    (node "U100" "H29")
+  )
+
+  (net "FMC2_HA07_P"
+    (node "U100" "R30")
+  )
+
+  (net "FMC2_HA07_N"
+    (node "U100" "P30")
+  )
+
+  (net "FMC2_HA06_P"
+    (node "U100" "N29")
+  )
+
+  (net "FMC2_HA06_N"
+    (node "U100" "P29")
+  )
+
+  (net "FMC2_HA05_P"
+    (node "U100" "J30")
+  )
+
+  (net "FMC2_HA05_N"
+    (node "U100" "J31")
+  )
+
+  (net "FMC2_HA04_P"
+    (node "U100" "M31")
+  )
+
+  (net "FMC2_HA04_N"
+    (node "U100" "M32")
+  )
+
+  (net "FMC2_HA03_P"
+    (node "U100" "L30")
+  )
+
+  (net "FMC2_HA03_N"
+    (node "U100" "M30")
+  )
+
+  (net "FMC2_HA02_P"
+    (node "U100" "M29")
+  )
+
+  (net "FMC2_HA02_N"
+    (node "U100" "L29")
+  )
+
+  (net "FMC2_HA01_CC_P"
+    (node "U100" "H32")
+  )
+
+  (net "FMC2_HA01_CC_N"
+    (node "U100" "G32")
+  )
+
+  (net "FMC2_HA00_CC_P"
+    (node "U100" "H31")
+  )
+
+  (net "FMC2_HA00_CC_N"
+    (node "U100" "G31")
+  )
+
+  (net "FMC2_GBTCLK3_P"
+    (node "U100" "H10")
+  )
+
+  (net "FMC2_GBTCLK3_N"
+    (node "U100" "H9")
+  )
+
+  (net "FMC2_GBTCLK2_P"
+    (node "U100" "V32")
+  )
+
+  (net "FMC2_GBTCLK2_N"
+    (node "U100" "V33")
+  )
+
+  (net "FMC2_GBTCLK1_P"
+    (node "U100" "P32")
+  )
+
+  (net "FMC2_GBTCLK1_N"
+    (node "U100" "P33")
+  )
+
+  (net "FMC2_GBTCLK0_P"
+    (node "U100" "M10")
+  )
+
+  (net "FMC2_GBTCLK0_N"
+    (node "U100" "M9")
+  )
+
+  (net "FMC2_FPGA_SDA"
+    (node "U100" "F39")
+  )
+
+  (net "FMC2_FPGA_SCL"
+    (node "U100" "F34")
+  )
+
+  (net "FMC2_DP15_M2C_P"
+    (node "U100" "H2")
+  )
+
+  (net "FMC2_DP15_M2C_N"
+    (node "U100" "H1")
+  )
+
+  (net "FMC2_DP15_C2M_CR_P"
+    (node "U100" "H6")
+  )
+
+  (net "FMC2_DP15_C2M_CR_N"
+    (node "U100" "H5")
+  )
+
+  (net "FMC2_DP14_M2C_P"
+    (node "U100" "G4")
+  )
+
+  (net "FMC2_DP14_M2C_N"
+    (node "U100" "G3")
+  )
+
+  (net "FMC2_DP14_C2M_CR_P"
+    (node "U100" "G8")
+  )
+
+  (net "FMC2_DP14_C2M_CR_N"
+    (node "U100" "G7")
+  )
+
+  (net "FMC2_DP13_M2C_P"
+    (node "U100" "F2")
+  )
+
+  (net "FMC2_DP13_M2C_N"
+    (node "U100" "F1")
+  )
+
+  (net "FMC2_DP13_C2M_CR_P"
+    (node "U100" "F6")
+  )
+
+  (net "FMC2_DP13_C2M_CR_N"
+    (node "U100" "F5")
+  )
+
+  (net "FMC2_DP12_M2C_P"
+    (node "U100" "E4")
+  )
+
+  (net "FMC2_DP12_M2C_N"
+    (node "U100" "E3")
+  )
+
+  (net "FMC2_DP12_C2M_CR_P"
+    (node "U100" "E8")
+  )
+
+  (net "FMC2_DP12_C2M_CR_N"
+    (node "U100" "E7")
+  )
+
+  (net "FMC2_DP11_M2C_P"
+    (node "U100" "AB36")
+  )
+
+  (net "FMC2_DP11_M2C_N"
+    (node "U100" "AB37")
+  )
+
+  (net "FMC2_DP11_C2M_CR_P"
+    (node "U100" "AC34")
+  )
+
+  (net "FMC2_DP11_C2M_CR_N"
+    (node "U100" "AC35")
+  )
+
+  (net "FMC2_DP10_M2C_P"
+    (node "U100" "AA38")
+  )
+
+  (net "FMC2_DP10_M2C_N"
+    (node "U100" "AA39")
+  )
+
+  (net "FMC2_DP10_C2M_CR_P"
+    (node "U100" "AA34")
+  )
+
+  (net "FMC2_DP10_C2M_CR_N"
+    (node "U100" "AA35")
+  )
+
+  (net "FMC2_DP9_M2C_P"
+    (node "U100" "W38")
+  )
+
+  (net "FMC2_DP9_M2C_N"
+    (node "U100" "W39")
+  )
+
+  (net "FMC2_DP9_C2M_CR_P"
+    (node "U100" "Y36")
+  )
+
+  (net "FMC2_DP9_C2M_CR_N"
+    (node "U100" "Y37")
+  )
+
+  (net "FMC2_DP8_M2C_P"
+    (node "U100" "V36")
+  )
+
+  (net "FMC2_DP8_M2C_N"
+    (node "U100" "V37")
+  )
+
+  (net "FMC2_DP8_C2M_CR_P"
+    (node "U100" "W34")
+  )
+
+  (net "FMC2_DP8_C2M_CR_N"
+    (node "U100" "W35")
+  )
+
+  (net "FMC2_DP7_M2C_P"
+    (node "U100" "U38")
+  )
+
+  (net "FMC2_DP7_M2C_N"
+    (node "U100" "U39")
+  )
+
+  (net "FMC2_DP7_C2M_CR_P"
+    (node "U100" "U34")
+  )
+
+  (net "FMC2_DP7_C2M_CR_N"
+    (node "U100" "U35")
+  )
+
+  (net "FMC2_DP6_M2C_P"
+    (node "U100" "R38")
+  )
+
+  (net "FMC2_DP6_M2C_N"
+    (node "U100" "R39")
+  )
+
+  (net "FMC2_DP6_C2M_CR_P"
+    (node "U100" "T36")
+  )
+
+  (net "FMC2_DP6_C2M_CR_N"
+    (node "U100" "T37")
+  )
+
+  (net "FMC2_DP5_M2C_P"
+    (node "U100" "P36")
+  )
+
+  (net "FMC2_DP5_M2C_N"
+    (node "U100" "P37")
+  )
+
+  (net "FMC2_DP5_C2M_CR_P"
+    (node "U100" "R34")
+  )
+
+  (net "FMC2_DP5_C2M_CR_N"
+    (node "U100" "R35")
+  )
+
+  (net "FMC2_DP4_M2C_P"
+    (node "U100" "N38")
+  )
+
+  (net "FMC2_DP4_M2C_N"
+    (node "U100" "N39")
+  )
+
+  (net "FMC2_DP4_C2M_CR_P"
+    (node "U100" "N34")
+  )
+
+  (net "FMC2_DP4_C2M_CR_N"
+    (node "U100" "N35")
+  )
+
+  (net "FMC2_DP3_M2C_P"
+    (node "U100" "M2")
+  )
+
+  (net "FMC2_DP3_M2C_N"
+    (node "U100" "M1")
+  )
+
+  (net "FMC2_DP3_C2M_CR_P"
+    (node "U100" "M6")
+  )
+
+  (net "FMC2_DP3_C2M_CR_N"
+    (node "U100" "M5")
+  )
+
+  (net "FMC2_DP2_M2C_P"
+    (node "U100" "L4")
+  )
+
+  (net "FMC2_DP2_M2C_N"
+    (node "U100" "L3")
+  )
+
+  (net "FMC2_DP2_C2M_CR_P"
+    (node "U100" "L8")
+  )
+
+  (net "FMC2_DP2_C2M_CR_N"
+    (node "U100" "L7")
+  )
+
+  (net "FMC2_DP1_M2C_P"
+    (node "U100" "K2")
+  )
+
+  (net "FMC2_DP1_M2C_N"
+    (node "U100" "K1")
+  )
+
+  (net "FMC2_DP1_C2M_CR_P"
+    (node "U100" "K6")
+  )
+
+  (net "FMC2_DP1_C2M_CR_N"
+    (node "U100" "K5")
+  )
+
+  (net "FMC2_DP0_M2C_P"
+    (node "U100" "J4")
+  )
+
+  (net "FMC2_DP0_M2C_N"
+    (node "U100" "J3")
+  )
+
+  (net "FMC2_DP0_C2M_CR_P"
+    (node "U100" "J8")
+  )
+
+  (net "FMC2_DP0_C2M_CR_N"
+    (node "U100" "J7")
+  )
+
+  (net "FMC2_CLK_DIR_VIOB"
+    (node "U100" "L28")
+  )
+
+  (net "FMC2_CLK3_FPGA_P"
+    (node "U100" "H27")
+  )
+
+  (net "FMC2_CLK3_FPGA_N"
+    (node "U100" "H28")
+  )
+
+  (net "FMC2_CLK2_FPGA_P"
+    (node "U100" "F38")
+  )
+
+  (net "FMC2_CLK2_FPGA_N"
+    (node "U100" "E38")
+  )
+
+  (net "FMC2_CLK1_P"
+    (node "U100" "AL27")
+  )
+
+  (net "FMC2_CLK1_N"
+    (node "U100" "AL28")
+  )
+
+  (net "FMC2_CLK0_P"
+    (node "U100" "AK27")
+  )
+
+  (net "FMC2_CLK0_N"
+    (node "U100" "AK28")
+  )
+
+  (net "FMC1_VREF_B"
+    (node "U100" "R15")
+  )
+
+  (net "FMC1_VREF_A"
+    (node "U100" "AD23")
+    (node "U100" "T19")
+    (node "U100" "T20")
+  )
+
+  (net "FMC1_VIOB"
+    (node "U100" "A16")
+    (node "U100" "B13")
+    (node "U100" "E14")
+    (node "U100" "H15")
+    (node "U100" "J12")
+    (node "U100" "M13")
+    (node "U100" "R14")
+  )
+
+  (net "FMC1_SYNC_P"
+    (node "U100" "C14")
+  )
+
+  (net "FMC1_SYNC_N"
+    (node "U100" "B14")
+  )
+
+  (net "FMC1_PRSNT_L"
+    (node "U100" "AP20")
+  )
+
+  (net "FMC1_PG_M2C_VIOB"
+    (node "U100" "G12")
+  )
+
+  (net "FMC1_PG_C2M_VIOB"
+    (node "U100" "C16")
+  )
+
+  (net "FMC1_LED8"
+    (node "U100" "AH21")
+  )
+
+  (net "FMC1_LED7"
+    (node "U100" "R20")
+  )
+
+  (net "FMC1_LED6"
+    (node "U100" "R21")
+  )
+
+  (net "FMC1_LED5"
+    (node "U100" "P21")
+  )
+
+  (net "FMC1_LED4"
+    (node "U100" "N21")
+  )
+
+  (net "FMC1_LED3"
+    (node "U100" "N22")
+  )
+
+  (net "FMC1_LED2"
+    (node "U100" "R23")
+  )
+
+  (net "FMC1_LED1"
+    (node "U100" "T23")
+  )
+
+  (net "FMC1_LA33_P"
+    (node "U100" "AV21")
+  )
+
+  (net "FMC1_LA33_N"
+    (node "U100" "AW21")
+  )
+
+  (net "FMC1_LA32_P"
+    (node "U100" "AV23")
+  )
+
+  (net "FMC1_LA32_N"
+    (node "U100" "AW23")
+  )
+
+  (net "FMC1_LA31_P"
+    (node "U100" "AT22")
+  )
+
+  (net "FMC1_LA31_N"
+    (node "U100" "AU22")
+  )
+
+  (net "FMC1_LA30_P"
+    (node "U100" "AU21")
+  )
+
+  (net "FMC1_LA30_N"
+    (node "U100" "AV22")
+  )
+
+  (net "FMC1_LA29_P"
+    (node "U100" "AP21")
+  )
+
+  (net "FMC1_LA29_N"
+    (node "U100" "AR21")
+  )
+
+  (net "FMC1_LA28_P"
+    (node "U100" "AT24")
+  )
+
+  (net "FMC1_LA28_N"
+    (node "U100" "AT23")
+  )
+
+  (net "FMC1_LA27_P"
+    (node "U100" "AK20")
+  )
+
+  (net "FMC1_LA27_N"
+    (node "U100" "AK21")
+  )
+
+  (net "FMC1_LA26_P"
+    (node "U100" "AL20")
+  )
+
+  (net "FMC1_LA26_N"
+    (node "U100" "AM20")
+  )
+
+  (net "FMC1_LA25_P"
+    (node "U100" "AN23")
+  )
+
+  (net "FMC1_LA25_N"
+    (node "U100" "AP23")
+  )
+
+  (net "FMC1_LA24_P"
+    (node "U100" "AR23")
+  )
+
+  (net "FMC1_LA24_N"
+    (node "U100" "AR22")
+  )
+
+  (net "FMC1_LA23_P"
+    (node "U100" "AD21")
+  )
+
+  (net "FMC1_LA23_N"
+    (node "U100" "AD20")
+  )
+
+  (net "FMC1_LA22_P"
+    (node "U100" "AJ21")
+  )
+
+  (net "FMC1_LA22_N"
+    (node "U100" "AJ20")
+  )
+
+  (net "FMC1_LA21_P"
+    (node "U100" "AN24")
+  )
+
+  (net "FMC1_LA21_N"
+    (node "U100" "AP24")
+  )
+
+  (net "FMC1_LA20_P"
+    (node "U100" "AH23")
+  )
+
+  (net "FMC1_LA20_N"
+    (node "U100" "AH22")
+  )
+
+  (net "FMC1_LA19_P"
+    (node "U100" "AW24")
+  )
+
+  (net "FMC1_LA19_N"
+    (node "U100" "AV24")
+  )
+
+  (net "FMC1_LA18_CC_P"
+    (node "U100" "AM21")
+  )
+
+  (net "FMC1_LA18_CC_N"
+    (node "U100" "AN21")
+  )
+
+  (net "FMC1_LA17_CC_P"
+    (node "U100" "AM22")
+  )
+
+  (net "FMC1_LA17_CC_N"
+    (node "U100" "AN22")
+  )
+
+  (net "FMC1_LA16_P"
+    (node "U100" "K20")
+  )
+
+  (net "FMC1_LA16_N"
+    (node "U100" "L20")
+  )
+
+  (net "FMC1_LA15_P"
+    (node "U100" "M21")
+  )
+
+  (net "FMC1_LA15_N"
+    (node "U100" "M20")
+  )
+
+  (net "FMC1_LA14_P"
+    (node "U100" "J21")
+  )
+
+  (net "FMC1_LA14_N"
+    (node "U100" "K21")
+  )
+
+  (net "FMC1_LA13_P"
+    (node "U100" "F24")
+  )
+
+  (net "FMC1_LA13_N"
+    (node "U100" "G24")
+  )
+
+  (net "FMC1_LA12_P"
+    (node "U100" "G21")
+  )
+
+  (net "FMC1_LA12_N"
+    (node "U100" "G22")
+  )
+
+  (net "FMC1_LA11_P"
+    (node "U100" "N23")
+  )
+
+  (net "FMC1_LA11_N"
+    (node "U100" "P23")
+  )
+
+  (net "FMC1_LA10_P"
+    (node "U100" "E21")
+  )
+
+  (net "FMC1_LA10_N"
+    (node "U100" "E22")
+  )
+
+  (net "FMC1_LA09_P"
+    (node "U100" "E23")
+  )
+
+  (net "FMC1_LA09_N"
+    (node "U100" "F23")
+  )
+
+  (net "FMC1_LA08_P"
+    (node "U100" "C21")
+  )
+
+  (net "FMC1_LA08_N"
+    (node "U100" "D21")
+  )
+
+  (net "FMC1_LA07_P"
+    (node "U100" "C23")
+  )
+
+  (net "FMC1_LA07_N"
+    (node "U100" "D23")
+  )
+
+  (net "FMC1_LA06_P"
+    (node "U100" "A22")
+  )
+
+  (net "FMC1_LA06_N"
+    (node "U100" "B21")
+  )
+
+  (net "FMC1_LA05_P"
+    (node "U100" "B22")
+  )
+
+  (net "FMC1_LA05_N"
+    (node "U100" "C22")
+  )
+
+  (net "FMC1_LA04_P"
+    (node "U100" "C24")
+  )
+
+  (net "FMC1_LA04_N"
+    (node "U100" "D24")
+  )
+
+  (net "FMC1_LA03_P"
+    (node "U100" "A24")
+  )
+
+  (net "FMC1_LA03_N"
+    (node "U100" "B24")
+  )
+
+  (net "FMC1_LA02_P"
+    (node "U100" "L23")
+  )
+
+  (net "FMC1_LA02_N"
+    (node "U100" "L24")
+  )
+
+  (net "FMC1_LA01_CC_P"
+    (node "U100" "J23")
+  )
+
+  (net "FMC1_LA01_CC_N"
+    (node "U100" "J24")
+  )
+
+  (net "FMC1_LA00_CC_P"
+    (node "U100" "K22")
+  )
+
+  (net "FMC1_LA00_CC_N"
+    (node "U100" "K23")
+  )
+
+  (net "FMC1_HSPC_PRSNT_L"
+    (node "U100" "AJ23")
+  )
+
+  (net "FMC1_HB21_P"
+    (node "U100" "N13")
+  )
+
+  (net "FMC1_HB21_N"
+    (node "U100" "P13")
+  )
+
+  (net "FMC1_HB20_P"
+    (node "U100" "P14")
+  )
+
+  (net "FMC1_HB20_N"
+    (node "U100" "P15")
+  )
+
+  (net "FMC1_HB19_P"
+    (node "U100" "L13")
+  )
+
+  (net "FMC1_HB19_N"
+    (node "U100" "L12")
+  )
+
+  (net "FMC1_HB18_P"
+    (node "U100" "R12")
+  )
+
+  (net "FMC1_HB18_N"
+    (node "U100" "R13")
+  )
+
+  (net "FMC1_HB17_CC_P"
+    (node "U100" "G14")
+  )
+
+  (net "FMC1_HB17_CC_N"
+    (node "U100" "F14")
+  )
+
+  (net "FMC1_HB16_P"
+    (node "U100" "M14")
+  )
+
+  (net "FMC1_HB16_N"
+    (node "U100" "N14")
+  )
+
+  (net "FMC1_HB15_P"
+    (node "U100" "K13")
+  )
+
+  (net "FMC1_HB15_N"
+    (node "U100" "K12")
+  )
+
+  (net "FMC1_HB14_P"
+    (node "U100" "M12")
+  )
+
+  (net "FMC1_HB14_N"
+    (node "U100" "N12")
+  )
+
+  (net "FMC1_HB13_P"
+    (node "U100" "F13")
+  )
+
+  (net "FMC1_HB13_N"
+    (node "U100" "F12")
+  )
+
+  (net "FMC1_HB12_P"
+    (node "U100" "H13")
+  )
+
+  (net "FMC1_HB12_N"
+    (node "U100" "J13")
+  )
+
+  (net "FMC1_HB11_P"
+    (node "U100" "E13")
+  )
+
+  (net "FMC1_HB11_N"
+    (node "U100" "E12")
+  )
+
+  (net "FMC1_HB10_P"
+    (node "U100" "M15")
+  )
+
+  (net "FMC1_HB10_N"
+    (node "U100" "L15")
+  )
+
+  (net "FMC1_HB09_P"
+    (node "U100" "B12")
+  )
+
+  (net "FMC1_HB09_N"
+    (node "U100" "C12")
+  )
+
+  (net "FMC1_HB08_P"
+    (node "U100" "C13")
+  )
+
+  (net "FMC1_HB08_N"
+    (node "U100" "D13")
+  )
+
+  (net "FMC1_HB07_P"
+    (node "U100" "A13")
+  )
+
+  (net "FMC1_HB07_N"
+    (node "U100" "A12")
+  )
+
+  (net "FMC1_HB06_CC_P"
+    (node "U100" "J14")
+  )
+
+  (net "FMC1_HB06_CC_N"
+    (node "U100" "H14")
+  )
+
+  (net "FMC1_HB05_P"
+    (node "U100" "A15")
+  )
+
+  (net "FMC1_HB05_N"
+    (node "U100" "A14")
+  )
+
+  (net "FMC1_HB04_P"
+    (node "U100" "D15")
+  )
+
+  (net "FMC1_HB04_N"
+    (node "U100" "D14")
+  )
+
+  (net "FMC1_HB03_P"
+    (node "U100" "K15")
+  )
+
+  (net "FMC1_HB03_N"
+    (node "U100" "J15")
+  )
+
+  (net "FMC1_HB02_P"
+    (node "U100" "E16")
+  )
+
+  (net "FMC1_HB02_N"
+    (node "U100" "D16")
+  )
+
+  (net "FMC1_HB01_P"
+    (node "U100" "B16")
+  )
+
+  (net "FMC1_HB01_N"
+    (node "U100" "B15")
+  )
+
+  (net "FMC1_HB00_CC_P"
+    (node "U100" "G16")
+  )
+
+  (net "FMC1_HB00_CC_N"
+    (node "U100" "G15")
+  )
+
+  (net "FMC1_HA23_P"
+    (node "U100" "P18")
+  )
+
+  (net "FMC1_HA23_N"
+    (node "U100" "P19")
+  )
+
+  (net "FMC1_HA22_P"
+    (node "U100" "T17")
+  )
+
+  (net "FMC1_HA22_N"
+    (node "U100" "T18")
+  )
+
+  (net "FMC1_HA21_P"
+    (node "U100" "R17")
+  )
+
+  (net "FMC1_HA21_N"
+    (node "U100" "R18")
+  )
+
+  (net "FMC1_HA20_P"
+    (node "U100" "N18")
+  )
+
+  (net "FMC1_HA20_N"
+    (node "U100" "N19")
+  )
+
+  (net "FMC1_HA19_P"
+    (node "U100" "P16")
+  )
+
+  (net "FMC1_HA19_N"
+    (node "U100" "R16")
+  )
+
+  (net "FMC1_HA18_P"
+    (node "U100" "N17")
+  )
+
+  (net "FMC1_HA18_N"
+    (node "U100" "N16")
+  )
+
+  (net "FMC1_HA17_CC_P"
+    (node "U100" "H19")
+  )
+
+  (net "FMC1_HA17_CC_N"
+    (node "U100" "G19")
+  )
+
+  (net "FMC1_HA16_P"
+    (node "U100" "K17")
+  )
+
+  (net "FMC1_HA16_N"
+    (node "U100" "L17")
+  )
+
+  (net "FMC1_HA15_P"
+    (node "U100" "M17")
+  )
+
+  (net "FMC1_HA15_N"
+    (node "U100" "M16")
+  )
+
+  (net "FMC1_HA14_P"
+    (node "U100" "J16")
+  )
+
+  (net "FMC1_HA14_N"
+    (node "U100" "K16")
+  )
+
+  (net "FMC1_HA13_P"
+    (node "U100" "H18")
+  )
+
+  (net "FMC1_HA13_N"
+    (node "U100" "H17")
+  )
+
+  (net "FMC1_HA12_P"
+    (node "U100" "L19")
+  )
+
+  (net "FMC1_HA12_N"
+    (node "U100" "L18")
+  )
+
+  (net "FMC1_HA11_P"
+    (node "U100" "C18")
+  )
+
+  (net "FMC1_HA11_N"
+    (node "U100" "D18")
+  )
+
+  (net "FMC1_HA10_P"
+    (node "U100" "F19")
+  )
+
+  (net "FMC1_HA10_N"
+    (node "U100" "G20")
+  )
+
+  (net "FMC1_HA09_P"
+    (node "U100" "E18")
+  )
+
+  (net "FMC1_HA09_N"
+    (node "U100" "F18")
+  )
+
+  (net "FMC1_HA08_P"
+    (node "U100" "E17")
+  )
+
+  (net "FMC1_HA08_N"
+    (node "U100" "F17")
+  )
+
+  (net "FMC1_HA07_P"
+    (node "U100" "A19")
+  )
+
+  (net "FMC1_HA07_N"
+    (node "U100" "B19")
+  )
+
+  (net "FMC1_HA06_P"
+    (node "U100" "D19")
+  )
+
+  (net "FMC1_HA06_N"
+    (node "U100" "C19")
+  )
+
+  (net "FMC1_HA05_P"
+    (node "U100" "A18")
+  )
+
+  (net "FMC1_HA05_N"
+    (node "U100" "A17")
+  )
+
+  (net "FMC1_HA04_P"
+    (node "U100" "B17")
+  )
+
+  (net "FMC1_HA04_N"
+    (node "U100" "C17")
+  )
+
+  (net "FMC1_HA03_P"
+    (node "U100" "A20")
+  )
+
+  (net "FMC1_HA03_N"
+    (node "U100" "B20")
+  )
+
+  (net "FMC1_HA02_P"
+    (node "U100" "E20")
+  )
+
+  (net "FMC1_HA02_N"
+    (node "U100" "F20")
+  )
+
+  (net "FMC1_HA01_CC_P"
+    (node "U100" "K18")
+  )
+
+  (net "FMC1_HA01_CC_N"
+    (node "U100" "J18")
+  )
+
+  (net "FMC1_HA00_CC_P"
+    (node "U100" "J20")
+  )
+
+  (net "FMC1_HA00_CC_N"
+    (node "U100" "J19")
+  )
+
+  (net "FMC1_GBTCLK3_P"
+    (node "U100" "R8")
+  )
+
+  (net "FMC1_GBTCLK3_N"
+    (node "U100" "R7")
+  )
+
+  (net "FMC1_GBTCLK2_P"
+    (node "U100" "AC8")
+  )
+
+  (net "FMC1_GBTCLK2_N"
+    (node "U100" "AC7")
+  )
+
+  (net "FMC1_GBTCLK1_P"
+    (node "U100" "AF10")
+  )
+
+  (net "FMC1_GBTCLK1_N"
+    (node "U100" "AF9")
+  )
+
+  (net "FMC1_GBTCLK0_P"
+    (node "U100" "W8")
+  )
+
+  (net "FMC1_GBTCLK0_N"
+    (node "U100" "W7")
+  )
+
+  (net "FMC1_FPGA_SDA"
+    (node "U100" "H24")
+  )
+
+  (net "FMC1_FPGA_SCL"
+    (node "U100" "H23")
+  )
+
+  (net "FMC1_DP15_M2C_P"
+    (node "U100" "N4")
+  )
+
+  (net "FMC1_DP15_M2C_N"
+    (node "U100" "N3")
+  )
+
+  (net "FMC1_DP15_C2M_CR_P"
+    (node "U100" "N8")
+  )
+
+  (net "FMC1_DP15_C2M_CR_N"
+    (node "U100" "N7")
+  )
+
+  (net "FMC1_DP14_M2C_P"
+    (node "U100" "P2")
+  )
+
+  (net "FMC1_DP14_M2C_N"
+    (node "U100" "P1")
+  )
+
+  (net "FMC1_DP14_C2M_CR_P"
+    (node "U100" "P6")
+  )
+
+  (net "FMC1_DP14_C2M_CR_N"
+    (node "U100" "P5")
+  )
+
+  (net "FMC1_DP13_M2C_P"
+    (node "U100" "R4")
+  )
+
+  (net "FMC1_DP13_M2C_N"
+    (node "U100" "R3")
+  )
+
+  (net "FMC1_DP13_C2M_CR_P"
+    (node "U100" "T6")
+  )
+
+  (net "FMC1_DP13_C2M_CR_N"
+    (node "U100" "T5")
+  )
+
+  (net "FMC1_DP12_M2C_P"
+    (node "U100" "T2")
+  )
+
+  (net "FMC1_DP12_M2C_N"
+    (node "U100" "T1")
+  )
+
+  (net "FMC1_DP12_C2M_CR_P"
+    (node "U100" "U4")
+  )
+
+  (net "FMC1_DP12_C2M_CR_N"
+    (node "U100" "U3")
+  )
+
+  (net "FMC1_DP11_M2C_P"
+    (node "U100" "AC4")
+  )
+
+  (net "FMC1_DP11_M2C_N"
+    (node "U100" "AC3")
+  )
+
+  (net "FMC1_DP11_C2M_CR_P"
+    (node "U100" "AD6")
+  )
+
+  (net "FMC1_DP11_C2M_CR_N"
+    (node "U100" "AD5")
+  )
+
+  (net "FMC1_DP10_M2C_P"
+    (node "U100" "AD2")
+  )
+
+  (net "FMC1_DP10_M2C_N"
+    (node "U100" "AD1")
+  )
+
+  (net "FMC1_DP10_C2M_CR_P"
+    (node "U100" "AE4")
+  )
+
+  (net "FMC1_DP10_C2M_CR_N"
+    (node "U100" "AE3")
+  )
+
+  (net "FMC1_DP9_M2C_P"
+    (node "U100" "AF2")
+  )
+
+  (net "FMC1_DP9_M2C_N"
+    (node "U100" "AF1")
+  )
+
+  (net "FMC1_DP9_C2M_CR_P"
+    (node "U100" "AF6")
+  )
+
+  (net "FMC1_DP9_C2M_CR_N"
+    (node "U100" "AF5")
+  )
+
+  (net "FMC1_DP8_M2C_P"
+    (node "U100" "AG4")
+  )
+
+  (net "FMC1_DP8_M2C_N"
+    (node "U100" "AG3")
+  )
+
+  (net "FMC1_DP8_C2M_CR_P"
+    (node "U100" "AG8")
+  )
+
+  (net "FMC1_DP8_C2M_CR_N"
+    (node "U100" "AG7")
+  )
+
+  (net "FMC1_DP7_M2C_P"
+    (node "U100" "AH2")
+  )
+
+  (net "FMC1_DP7_M2C_N"
+    (node "U100" "AH1")
+  )
+
+  (net "FMC1_DP7_C2M_CR_P"
+    (node "U100" "AH6")
+  )
+
+  (net "FMC1_DP7_C2M_CR_N"
+    (node "U100" "AH5")
+  )
+
+  (net "FMC1_DP6_M2C_P"
+    (node "U100" "AJ4")
+  )
+
+  (net "FMC1_DP6_M2C_N"
+    (node "U100" "AJ3")
+  )
+
+  (net "FMC1_DP6_C2M_CR_P"
+    (node "U100" "AJ8")
+  )
+
+  (net "FMC1_DP6_C2M_CR_N"
+    (node "U100" "AJ7")
+  )
+
+  (net "FMC1_DP5_M2C_P"
+    (node "U100" "AK2")
+  )
+
+  (net "FMC1_DP5_M2C_N"
+    (node "U100" "AK1")
+  )
+
+  (net "FMC1_DP5_C2M_CR_P"
+    (node "U100" "AK6")
+  )
+
+  (net "FMC1_DP5_C2M_CR_N"
+    (node "U100" "AK5")
+  )
+
+  (net "FMC1_DP4_M2C_P"
+    (node "U100" "AL4")
+  )
+
+  (net "FMC1_DP4_M2C_N"
+    (node "U100" "AL3")
+  )
+
+  (net "FMC1_DP4_C2M_CR_P"
+    (node "U100" "AL8")
+  )
+
+  (net "FMC1_DP4_C2M_CR_N"
+    (node "U100" "AL7")
+  )
+
+  (net "FMC1_DP3_M2C_P"
+    (node "U100" "AB2")
+  )
+
+  (net "FMC1_DP3_M2C_N"
+    (node "U100" "AB1")
+  )
+
+  (net "FMC1_DP3_C2M_CR_P"
+    (node "U100" "AB6")
+  )
+
+  (net "FMC1_DP3_C2M_CR_N"
+    (node "U100" "AB5")
+  )
+
+  (net "FMC1_DP2_M2C_P"
+    (node "U100" "Y2")
+  )
+
+  (net "FMC1_DP2_M2C_N"
+    (node "U100" "Y1")
+  )
+
+  (net "FMC1_DP2_C2M_CR_P"
+    (node "U100" "AA4")
+  )
+
+  (net "FMC1_DP2_C2M_CR_N"
+    (node "U100" "AA3")
+  )
+
+  (net "FMC1_DP1_M2C_P"
+    (node "U100" "W4")
+  )
+
+  (net "FMC1_DP1_M2C_N"
+    (node "U100" "W3")
+  )
+
+  (net "FMC1_DP1_C2M_CR_P"
+    (node "U100" "Y6")
+  )
+
+  (net "FMC1_DP1_C2M_CR_N"
+    (node "U100" "Y5")
+  )
+
+  (net "FMC1_DP0_M2C_P"
+    (node "U100" "V2")
+  )
+
+  (net "FMC1_DP0_M2C_N"
+    (node "U100" "V1")
+  )
+
+  (net "FMC1_DP0_C2M_CR_P"
+    (node "U100" "V6")
+  )
+
+  (net "FMC1_DP0_C2M_CR_N"
+    (node "U100" "V5")
+  )
+
+  (net "FMC1_CLK_DIR_VIOB"
+    (node "U100" "H12")
+  )
+
+  (net "FMC1_CLK3_FPGA_P"
+    (node "U100" "F15")
+  )
+
+  (net "FMC1_CLK3_FPGA_N"
+    (node "U100" "E15")
+  )
+
+  (net "FMC1_CLK2_FPGA_P"
+    (node "U100" "H21")
+  )
+
+  (net "FMC1_CLK2_FPGA_N"
+    (node "U100" "H22")
+  )
+
+  (net "FMC1_CLK1_P"
+    (node "U100" "AK22")
+  )
+
+  (net "FMC1_CLK1_N"
+    (node "U100" "AL22")
+  )
+
+  (net "FMC1_CLK0_P"
+    (node "U100" "AK23")
+  )
+
+  (net "FMC1_CLK0_N"
+    (node "U100" "AL23")
+  )
+
+  (net "EXT_SDA"
+    (node "U100" "AU20")
+  )
+
+  (net "EXT_SCL"
+    (node "U100" "AD18")
+  )
+
+  (net "EXT_PRESENT_L"
+    (node "U100" "AJ14")
+  )
+
+  (net "EXT_FPGA_B11"
+    (node "U100" "AH14")
+  )
+
+  (net "EXT_FPGA_B10"
+    (node "U100" "AE15")
+  )
+
+  (net "EXT_FPGA_B9"
+    (node "U100" "AT15")
+  )
+
+  (net "EXT_FPGA_B8"
+    (node "U100" "AL15")
+  )
+
+  (net "EXT_FPGA_B7"
+    (node "U100" "AV16")
+  )
+
+  (net "EXT_FPGA_B6"
+    (node "U100" "AD14")
+  )
+
+  (net "EXT_FPGA_B5"
+    (node "U100" "AK12")
+  )
+
+  (net "EXT_FPGA_B4"
+    (node "U100" "AW15")
+  )
+
+  (net "EXT_FPGA_B3"
+    (node "U100" "AK13")
+  )
+
+  (net "EXT_FPGA_B2"
+    (node "U100" "AT12")
+  )
+
+  (net "EXT_FPGA_A11"
+    (node "U100" "AU15")
+  )
+
+  (net "EXT_FPGA_A10"
+    (node "U100" "AG12")
+  )
+
+  (net "EXT_FPGA_A9"
+    (node "U100" "AH13")
+  )
+
+  (net "EXT_FPGA_A8"
+    (node "U100" "AH12")
+  )
+
+  (net "EXT_FPGA_A7"
+    (node "U100" "AJ13")
+  )
+
+  (net "EXT_FPGA_A6"
+    (node "U100" "AP15")
+  )
+
+  (net "EXT_FPGA_A5"
+    (node "U100" "AT14")
+  )
+
+  (net "EXT_FPGA_A4"
+    (node "U100" "AR12")
+  )
+
+  (net "EXT_FPGA_A3"
+    (node "U100" "AU14")
+  )
+
+  (net "EXT_FPGA_A2"
+    (node "U100" "AR15")
+  )
+
+  (net "E10G_CLK3_P"
+    (node "U100" "AM10")
+  )
+
+  (net "E10G_CLK3_N"
+    (node "U100" "AM9")
+  )
+
+  (net "E10G_CLK2_P"
+    (node "U100" "K10")
+  )
+
+  (net "E10G_CLK2_N"
+    (node "U100" "K9")
+  )
+
+  (net "E10G_CLK1_P"
+    (node "U100" "T32")
+  )
+
+  (net "E10G_CLK1_N"
+    (node "U100" "T33")
+  )
+
+  (net "DIP_SW7_L"
+    (node "U100" "AD25")
+  )
+
+  (net "DIP_SW6_L"
+    (node "U100" "G39")
+  )
+
+  (net "DIP_SW5_L"
+    (node "U100" "H39")
+  )
+
+  (net "DIP_SW4_L"
+    (node "U100" "F35")
+  )
+
+  (net "DIP_SW3_L"
+    (node "U100" "AF20")
+  )
+
+  (net "DIP_SW2_L"
+    (node "U100" "F22")
+  )
+
+  (net "DIP_SW1_L"
+    (node "U100" "L22")
+  )
+
+  (net "DIP_SW0_L"
+    (node "U100" "P20")
+  )
+
+  (net "BANK68_VRP"
+    (node "U100" "M22")
+  )
+
+  (net "BANK67_VRP"
+    (node "U100" "M19")
+  )
+
+  (net "BANK66_VRP"
+    (node "U100" "L14")
+  )
+
+  (net "BANK65_VREF"
+    (node "U100" "AD15")
+  )
+
+  (net "BANK64_VREF"
+    (node "U100" "AD19")
+  )
+
+  (net "BANK48_VRP"
+    (node "U100" "N27")
+  )
+
+  (net "BANK47_VRP"
+    (node "U100" "K33")
+  )
+
+  (net "BANK46_VRP"
+    (node "U100" "L39")
+  )
+
+  (net "BANK45_VRP"
+    (node "U100" "AT25")
+  )
+
+  (net "BANK44_VRP"
+    (node "U100" "AU24")
+  )
+
+  (net "BANK25_VRP"
+    (node "U100" "AR35")
+  )
+
+  (net "AMC_TX15_P"
+    (node "U100" "AR20")
+  )
+
+  (net "AMC_TX15_N"
+    (node "U100" "AT20")
+  )
+
+  (net "AMC_TX14_P"
+    (node "U100" "AT19")
+  )
+
+  (net "AMC_TX14_N"
+    (node "U100" "AU19")
+  )
+
+  (net "AMC_TX13_P"
+    (node "U100" "AV19")
+  )
+
+  (net "AMC_TX13_N"
+    (node "U100" "AW18")
+  )
+
+  (net "AMC_TX12_P"
+    (node "U100" "AW20")
+  )
+
+  (net "AMC_TX12_N"
+    (node "U100" "AW19")
+  )
+
+  (net "AMC_TX11_CR_P"
+    (node "U100" "AM6")
+  )
+
+  (net "AMC_TX11_CR_N"
+    (node "U100" "AM5")
+  )
+
+  (net "AMC_TX10_CR_P"
+    (node "U100" "AN8")
+  )
+
+  (net "AMC_TX10_CR_N"
+    (node "U100" "AN7")
+  )
+
+  (net "AMC_TX9_CR_P"
+    (node "U100" "AP6")
+  )
+
+  (net "AMC_TX9_CR_N"
+    (node "U100" "AP5")
+  )
+
+  (net "AMC_TX8_CR_P"
+    (node "U100" "AR8")
+  )
+
+  (net "AMC_TX8_CR_N"
+    (node "U100" "AR7")
+  )
+
+  (net "AMC_TX7_CR_P"
+    (node "U100" "AT6")
+  )
+
+  (net "AMC_TX7_CR_N"
+    (node "U100" "AT5")
+  )
+
+  (net "AMC_TX6_CR_P"
+    (node "U100" "AU8")
+  )
+
+  (net "AMC_TX6_CR_N"
+    (node "U100" "AU7")
+  )
+
+  (net "AMC_TX5_CR_P"
+    (node "U100" "AV6")
+  )
+
+  (net "AMC_TX5_CR_N"
+    (node "U100" "AV5")
+  )
+
+  (net "AMC_TX4_CR_P"
+    (node "U100" "AW8")
+  )
+
+  (net "AMC_TX4_CR_N"
+    (node "U100" "AW7")
+  )
+
+  (net "AMC_TX1_CR_P"
+    (node "U100" "AE34")
+  )
+
+  (net "AMC_TX1_CR_N"
+    (node "U100" "AE35")
+  )
+
+  (net "AMC_TX0_CR_P"
+    (node "U100" "AD36")
+  )
+
+  (net "AMC_TX0_CR_N"
+    (node "U100" "AD37")
+  )
+
+  (net "AMC_TCLKB_IN_P"
+    (node "U100" "AN18")
+  )
+
+  (net "AMC_TCLKB_IN_N"
+    (node "U100" "AN17")
+  )
+
+  (net "AMC_RX15_P"
+    (node "U100" "AR18")
+  )
+
+  (net "AMC_RX15_N"
+    (node "U100" "AR17")
+  )
+
+  (net "AMC_RX14_P"
+    (node "U100" "AT18")
+  )
+
+  (net "AMC_RX14_N"
+    (node "U100" "AT17")
+  )
+
+  (net "AMC_RX13_P"
+    (node "U100" "AV18")
+  )
+
+  (net "AMC_RX13_N"
+    (node "U100" "AV17")
+  )
+
+  (net "AMC_RX12_P"
+    (node "U100" "AU17")
+  )
+
+  (net "AMC_RX12_N"
+    (node "U100" "AU16")
+  )
+
+  (net "AMC_RX11_P"
+    (node "U100" "AM2")
+  )
+
+  (net "AMC_RX11_N"
+    (node "U100" "AM1")
+  )
+
+  (net "AMC_RX10_P"
+    (node "U100" "AN4")
+  )
+
+  (net "AMC_RX10_N"
+    (node "U100" "AN3")
+  )
+
+  (net "AMC_RX9_P"
+    (node "U100" "AP2")
+  )
+
+  (net "AMC_RX9_N"
+    (node "U100" "AP1")
+  )
+
+  (net "AMC_RX8_P"
+    (node "U100" "AR4")
+  )
+
+  (net "AMC_RX8_N"
+    (node "U100" "AR3")
+  )
+
+  (net "AMC_RX7_P"
+    (node "U100" "AT2")
+  )
+
+  (net "AMC_RX7_N"
+    (node "U100" "AT1")
+  )
+
+  (net "AMC_RX6_P"
+    (node "U100" "AU4")
+  )
+
+  (net "AMC_RX6_N"
+    (node "U100" "AU3")
+  )
+
+  (net "AMC_RX5_P"
+    (node "U100" "AV2")
+  )
+
+  (net "AMC_RX5_N"
+    (node "U100" "AV1")
+  )
+
+  (net "AMC_RX4_P"
+    (node "U100" "AW4")
+  )
+
+  (net "AMC_RX4_N"
+    (node "U100" "AW3")
+  )
+
+  (net "AMC_RX1_P"
+    (node "U100" "AE38")
+  )
+
+  (net "AMC_RX1_N"
+    (node "U100" "AE39")
+  )
+
+  (net "AMC_RX0_P"
+    (node "U100" "AC38")
+  )
+
+  (net "AMC_RX0_N"
+    (node "U100" "AC39")
+  )
+
+  (net "AMC_FPGA_TX20_WEN"
+    (node "U100" "AD16")
+  )
+
+  (net "AMC_FPGA_TX20_DATA"
+    (node "U100" "AE16")
+  )
+
+  (net "AMC_FPGA_TX19_WEN"
+    (node "U100" "AF18")
+  )
+
+  (net "AMC_FPGA_TX19_DATA"
+    (node "U100" "AH19")
+  )
+
+  (net "AMC_FPGA_TX18_WEN"
+    (node "U100" "AH17")
+  )
+
+  (net "AMC_FPGA_TX18_DATA"
+    (node "U100" "AJ18")
+  )
+
+  (net "AMC_FPGA_TX17_WEN"
+    (node "U100" "AK18")
+  )
+
+  (net "AMC_FPGA_TX17_DATA"
+    (node "U100" "AK17")
+  )
+
+  (net "AMC_FPGA_RX20_WEN"
+    (node "U100" "AE18")
+  )
+
+  (net "AMC_FPGA_RX20_DATA"
+    (node "U100" "AF19")
+  )
+
+  (net "AMC_FPGA_RX19_WEN"
+    (node "U100" "AG17")
+  )
+
+  (net "AMC_FPGA_RX19_DATA"
+    (node "U100" "AJ19")
+  )
+
+  (net "AMC_FPGA_RX18_WEN"
+    (node "U100" "AJ16")
+  )
+
+  (net "AMC_FPGA_RX18_DATA"
+    (node "U100" "AK16")
+  )
+
+  (net "AMC_FPGA_RX17_WEN"
+    (node "U100" "AP16")
+  )
+
+  (net "AMC_FPGA_RX17_DATA"
+    (node "U100" "AR16")
+  )
+

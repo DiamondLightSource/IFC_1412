@@ -7,6 +7,8 @@ import re
 
 # netlist_file = 'IFC_1412.NET'
 netlist_file = 'IFC_1412_2104.2.NET'
+netlist_file = 'IFC_1412.NET'
+netlist_file = 'IFC_1412.bare.net'
 package_file = 'xcku085flva1517pkg.txt'
 renames_file = 'renames.txt'
 # signals_file = 'signals.txt'
@@ -16,6 +18,7 @@ signals_file = '../signals'
 print_wires = False
 compare_signals = True
 print_reduced_file = False
+print_bare_net = False
 
 # For generating raw pins file
 print_wires = True
@@ -26,6 +29,7 @@ print_reduced_file = False
 # print_wires = False
 # compare_signals = False
 # print_reduced_file = True
+# print_bare_net = True
 
 
 # Parses package file after skipping the given number of lines and returns the
@@ -85,6 +89,8 @@ def parse_netlist(netlist_file, fpga = 'U100'):
             if locations:
                 result[wire_name] = locations
                 netlist.extend(group)
+                if print_bare_net:
+                    print(''.join(group))
     except StopIteration:
         pass
     return (result, netlist)
