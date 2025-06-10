@@ -1,6 +1,10 @@
 -- Wrapper interface to gddr6 designed to support Xilinx IP generation
 --
 -- Generates netlist for inclusion in IP block
+--
+-- Note that, due to restrictions on Xilix IP support, the entity below must be
+-- VHDL 93 compatible.  Note also that this entire interface must be copied into
+-- the component declaration in gddr6_ip.vhd
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -3,6 +3,7 @@ _GDDR6_IP_ARGS += IP_DIR_OUT
 _GDDR6_IP_ARGS += IP_VERSION
 
 _IP_FILES += $(VHD_DIR)/gddr6_ip.vhd
+_IP_FILES += $(FPGA_TOP)/tcl/sgram.tcl
 
 _EXTRA_IP_FILES += built_dir/gddr6_register_defines.vhd
 _EXTRA_IP_FILES += $(VHD_DIR)/gddr6_ip_defs.vhd
@@ -12,11 +13,9 @@ make_gddr6_ip: $(_PROJECT)
 	rm -rf $(IP_DIR_OUT)
 	mkdir -p $(IP_DIR_OUT)/gddr6_ip/src $(IP_DIR_OUT)/gddr6_ip/constr
 	cp $(_IP_FILES) $(IP_DIR_OUT)/gddr6_ip/src
-	cp $(FPGA_TOP)/tcl/sgram.tcl $(IP_DIR_OUT)/gddr6_ip/src
 	cp $(_EXTRA_IP_FILES) $(IP_DIR_OUT)
 	$(call EXPORT,$(_GDDR6_IP_ARGS)) $(RUN_VIVADO) \
             -mode batch -source $(FPGA_TOP)/tcl/create_ip.tcl
 .PHONY: make_gddr6_ip
-
 
 # vim: set filetype=make:

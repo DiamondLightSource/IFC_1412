@@ -264,6 +264,7 @@ architecture arch of gddr6_ip is
         is "xilinx.com:interface:aximm:1.0 s_axi RID";
     attribute X_INTERFACE_INFO of s_axi_RDATA_o : signal
         is "xilinx.com:interface:aximm:1.0 s_axi RDATA";
+
     -- Interface parameters.  It's not terribly clear what the role of these
     -- parameters is, but they are documented in PG373 as part of the AXI
     -- Register Slice documentation, so it seems to make sense to provide these.
@@ -336,6 +337,7 @@ architecture arch of gddr6_ip is
         is "ioxos.ch:gddr6if:gddr6:0.0 phy SG2_EDC_B";
 
 
+    -- This must be an exact copy of the gddr6_ip_netlist entity declaration
     component gddr6_ip_netlist is
         port (
             s_reg_ACLK : in std_ulogic;

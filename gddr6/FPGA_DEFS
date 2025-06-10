@@ -1,4 +1,7 @@
-BUILT = gddr6_register_defines.vhd
+# Reset default build targets and just build the register defines file
+BUILT =
+BUILT += gddr6_register_defines.vhd
+
 DEFAULT = make_gddr6_ip
 
 # Location of generated IP in built project

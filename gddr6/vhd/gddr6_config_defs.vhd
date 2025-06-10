@@ -47,7 +47,7 @@ package gddr6_config_defs is
         (0,  0),    (1,  5),    -- Bank 1 A
         (2, 10),    (3,  5),    -- Bank 1 B
         (5,  8),    (4,  1),    -- Bank 2 A
-        (7, 11),    (7, 0));    -- Bank 2 B
+        (7, 11),    (7,  0));   -- Bank 2 B
     -- WCK
     constant CONFIG_BANK_WCK : pin_config_array_t(0 to 1) := (
         (1,  0),                -- Bank 1
