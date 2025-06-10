@@ -1,4 +1,4 @@
-# Board configuration for IFC_1412 pre-serial
+# Board configuration for IFC_1412
 
 FPGA_PART = xcku085-flva1517-1-c
 
