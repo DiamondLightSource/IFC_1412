@@ -81,7 +81,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/setup/gddr6_setup_exchange.vhd \
     $gddr6_dir/setup/gddr6_setup_delay.vhd \
     $gddr6_dir/setup/gddr6_setup.vhd \
-    $gddr6_dir/gddr6_setup_phy.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_command_defs.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_defs.vhd \
     $gddr6_dir/ctrl/gddr6_ctrl_timing_defs.vhd \

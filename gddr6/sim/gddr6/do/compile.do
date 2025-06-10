@@ -107,7 +107,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/setup/gddr6_setup_exchange.vhd \
     $vhd_dir/setup/gddr6_setup_delay.vhd \
     $vhd_dir/setup/gddr6_setup.vhd \
-    $vhd_dir/gddr6_setup_phy.vhd \
     $vhd_dir/gddr6.vhd
 
 vcom -64 -93 -work xil_defaultlib \

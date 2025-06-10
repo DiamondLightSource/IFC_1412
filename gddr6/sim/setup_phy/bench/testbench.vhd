@@ -71,7 +71,7 @@ architecture arch of testbench is
 begin
     clk <= not clk after 2 ns;
 
-    test : entity work.gddr6_setup_phy port map (
+    test : entity work.setup_phy port map (
         reg_clk_i => clk,
 
         write_strobe_i => write_strobe,

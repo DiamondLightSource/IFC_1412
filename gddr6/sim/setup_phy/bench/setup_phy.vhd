@@ -13,7 +13,7 @@ use work.register_defs.all;
 use work.gddr6_register_defines.all;
 use work.gddr6_defs.all;
 
-entity gddr6_setup_phy is
+entity setup_phy is
     generic (
         -- Default SG interface to run at CK=250 MHz, WCK = 1GHz, but support
         -- option to run at 300 MHz/1.2 GHz on speed-grade -2 FPGA
@@ -79,7 +79,7 @@ entity gddr6_setup_phy is
     );
 end;
 
-architecture arch of gddr6_setup_phy is
+architecture arch of setup_phy is
     -- For clock domain crossing in gddr6_setup we need to allow for the fastest
     -- clock.
     constant MAX_DELAY : real := 1000.0 / maximum(CK_FREQUENCY, REG_FREQUENCY);
