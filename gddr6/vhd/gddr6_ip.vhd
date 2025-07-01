@@ -47,6 +47,9 @@ entity gddr6_ip is
         -- rising edge of this signal which must be held high for more than two
         -- REG_FREQUENCY ticks.
         setup_trigger_i : in std_ulogic := '0';
+        -- Reports memory ready status.  This is normally rising edge only, is
+        -- asserted asynchronously, and is on a false path.
+        memory_ready_o : out std_ulogic;
 
 
         -- ---------------------------------------------------------------------
@@ -361,6 +364,7 @@ architecture arch of gddr6_ip is
             s_reg_WREADY_o : out std_ulogic;
 
             setup_trigger_i : in std_ulogic := '0';
+            memory_ready_o : out std_ulogic;
 
             s_axi_ACLK : in std_logic;
             s_axi_RESETN_i : in std_ulogic := '1';
@@ -450,6 +454,7 @@ begin
         s_reg_WREADY_o => s_reg_WREADY_o,
 
         setup_trigger_i => setup_trigger_i,
+        memory_ready_o => memory_ready_o,
 
         s_axi_ACLK => s_axi_ACLK,
         s_axi_RESETN_i => s_axi_RESETN_i,

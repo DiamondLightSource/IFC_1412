@@ -50,6 +50,8 @@ entity gddr6_ip_netlist is
 
         -- Optional trigger (on reg clock) to capture SG transactions
         setup_trigger_i : in std_ulogic := '0';
+        -- Status of memory controller
+        memory_ready_o : out std_ulogic;
 
 
         -- ---------------------------------------------------------------------
@@ -277,6 +279,7 @@ begin
         read_ack_o => read_ack,
 
         setup_trigger_i => setup_trigger_i,
+        memory_ready_o => memory_ready_o,
 
         axi_clk_i => s_axi_ACLK,
 
