@@ -39,11 +39,15 @@ pad_FPGA_CFG_FCS2_B             inout
 pad_FPGA_CFG_D[7..4]            inout
 
 # Front panel LEDs LD102 and LD103.  2A is green, 2B is red.
+# Both LEDs illuminate the STA indicator under FLT at the top of the board
+# These LEDs illuminate when driven low
 pad_FP_LED2A_K                  out
 pad_FP_LED2B_K                  out
 
-# Front panel LEDs under FMC
-pad_FMC{1,2}_LED[1..8]              out
+# Front panel LEDs under the FMC slots.
+# LEDs 1 to 4 are green, LEDs 5 to 8 are red.
+# These LEDs illuminate when driven high
+pad_FMC{1,2}_LED[1..8]          out
 
 # DIP switch readings from SW101 and SW102, also controlled by MMC
 pad_DIP_SW_L[0..7]              in
