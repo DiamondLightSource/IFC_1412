@@ -14,11 +14,12 @@ from ifc_lib.gddr6_lib.display import *
 from ifc_lib.gddr6_lib.delays import read_phase, set_phase
 from ifc_lib.gddr6_lib import setup
 
-parser = argparse.ArgumentParser(description = 'Read Vendor IDs etc')
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--address', default = 0)
 parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 args = parser.parse_args()
 
-_, sg = bind_ifc_1412.open()
+_, sg = bind_ifc_1412.open(args.address)
 setup.check_sg_ready(sg)
 
 # For CA training we need to ensure that all the training configuration

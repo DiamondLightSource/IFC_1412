@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
 
+ADDRESS=0
+while getopts 'a:h' option; do
+    case "$option" in
+    a)  ADDRESS="$OPTARG" ;;
+    h)  cat << EOF
+Usage: setup-sgram [options] [profile]
+Options:
+    -a: Specify board address, default is 0
+EOF
+        exit 0 ;;
+    *)  echo >&2 'Invalid option: try -h for help'
+        exit 1 ;;
+    esac
+done
+
 cd "$(dirname "$0")"  &&
 
-./enable-ctrl -d  &&
-./reset-ck  &&
-./reset-sg  &&
-./train-ca -q  &&
-./read-vid -q  &&
-./config-sg  &&
-./train-read -frR -sv -q  &&
-./train-write -frR -sv -q  &&
-./enable-ctrl -e
+./enable-ctrl -a$ADDRESS -d  &&
+./reset-ck -a$ADDRESS  &&
+./reset-sg -a$ADDRESS  &&
+./train-ca -a$ADDRESS -q  &&
+./read-vid -a$ADDRESS -q  &&
+./config-sg -a$ADDRESS  &&
+./train-read -a$ADDRESS -frR -sv -q  &&
+./train-write -a$ADDRESS -frR -sv -q  &&
+./enable-ctrl -a$ADDRESS -e

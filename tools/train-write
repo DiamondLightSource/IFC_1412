@@ -17,6 +17,7 @@ from ifc_lib.gddr6_lib import setup
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('-l', '--load', action = 'store_true')
+parser.add_argument('-a', '--address', default = 0)
 parser.add_argument('-s', '--scan', action = 'store_true')
 parser.add_argument('-b', '--scan_bitslips', action = 'store_true')
 parser.add_argument('-x', '--exchange', action = 'store_true')
@@ -33,7 +34,7 @@ parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 args = parser.parse_args()
 
 
-_, sg = bind_ifc_1412.open()
+_, sg = bind_ifc_1412.open(args.address)
 setup.check_sg_ready(sg)
 
 

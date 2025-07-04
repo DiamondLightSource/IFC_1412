@@ -2,13 +2,19 @@
 
 # Initialise MR registers after SG reset
 
+import argparse
+
 import bind_ifc_1412
 
 from ifc_lib.gddr6_lib.setup import check_sg_ready
 from ifc_lib.gddr6_lib.commands import *
 from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 
-_, sg = bind_ifc_1412.open()
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--address', default = 0)
+args = parser.parse_args()
+
+_, sg = bind_ifc_1412.open(args.address)
 check_sg_ready(sg)
 
 exchange = _Exchange(sg)

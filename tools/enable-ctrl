@@ -10,6 +10,9 @@ import bind_ifc_1412
 def parse_args():
     parser = argparse.ArgumentParser(
         description = 'Check and configure controller')
+    parser.add_argument(
+        '-a', dest = 'address', default = 0,
+        help = 'Hardware address of carrier')
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument('-e', '--enable', action = 'store_true',
         help = 'Enable controller')
@@ -23,7 +26,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    _, sg = bind_ifc_1412.open()
+    _, sg = bind_ifc_1412.open(args.address)
 
     if args.enable:
         setup.enable_ctrl(sg)

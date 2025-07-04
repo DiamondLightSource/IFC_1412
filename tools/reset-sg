@@ -2,6 +2,7 @@
 
 # Brings SG out of reset
 
+import argparse
 import time
 
 import bind_ifc_1412
@@ -11,7 +12,11 @@ from ifc_lib.gddr6_lib.exchange import _Exchange, Stream
 from ifc_lib.gddr6_lib import setup
 
 
-_, sg = bind_ifc_1412.open()
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--address', default = 0)
+args = parser.parse_args()
+
+_, sg = bind_ifc_1412.open(args.address)
 setup.check_ck_ready(sg)
 
 assert sg.STATUS.CK_OK, 'CK is not running and enabled'
