@@ -143,9 +143,8 @@ pad_AMC_MLVDS_{RX,TX}_WEN[20..17]       out
 # RTM  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # RTM GPIO (note that RTM_IO_CC[7] happens to be on Bank 64 above)
-# Need to cross-check with RTM spec
-pad_RTM_IO_CC_{P,N}[0..7]       inout
-pad_RTM_OUT_{P,N}[0..2]         out
+pad_RTM_IO_CC_{P,N}[7..0]       inout
+pad_RTM_OUT_{P,N}[2..0]         inout
 
 # Links 0 to 3 to RTM
 pad_RTM_GTP_3_0_RX_{P,N}[0..3]  in
