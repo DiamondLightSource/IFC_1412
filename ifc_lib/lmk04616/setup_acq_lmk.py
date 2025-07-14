@@ -52,20 +52,21 @@ class Output(ClockOut):
     drv1 = 'HSDS8mA'
     slew = 0
 
-# OUTPUTS = [Output] + 7 * [None]
-OUTPUTS = 8 * [Output]
+Sources = {
+    # Selections for CLKIN
+    'ssmc' : 0,     # Front panel connector
+    'tclka' : 1,    # TCLKA from AMC connector
+    'tclkc' : 2,    # TCLKC from AMC connector
+    'mux' : 3,      # FMC clock multiplexer
+}
 
-class AcqConfig(Config):
-    #   CLKIN0  <= Front panel connector
-    #   CLKIN1  <= AMC TCLKA
-    #   CLKIN2  <= AMC TCLKC
-    #   CLKIN3  <= FMC clock multiplexer
-    clkin = 0
-#     clkin = 1
-#     clkin = None
-#     oscin = True
-#     pll1 = Pll1
-    outputs = OUTPUTS
 
-def setup_acq_lmk(lmk):
-    return setup_lmk(lmk, AcqConfig)
+def create_config(source = 'ssmc', vcxo = False):
+    # Currently the VCXO PLL is not supported; this will be a challenge!
+
+    class AcqConfig(Config):
+        clkin = Sources[source]
+        outputs = 8 * [Output]
+        oscin = vcxo
+
+    return AcqConfig

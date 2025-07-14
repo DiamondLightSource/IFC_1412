@@ -42,6 +42,13 @@ Use -h after selection for target specific help
 
     acq_parser = subparsers.add_parser('acq',
         description = 'ACQ clocks for data acquisition clocks')
+    acq_parser.add_argument(
+        '-s', '--source', default = 'ssmc',
+        choices = lmk04616.setup_acq_lmk.Sources.keys(),
+        help = 'Select source of reference clock')
+    acq_parser.add_argument(
+        '-x', '--vcxo', action = 'store_true',
+        help = 'Enable VCXO input')
 
     args = parser.parse_args()
     if not args.select:
@@ -50,10 +57,10 @@ Use -h after selection for target specific help
 
 
 def get_sys_args(args):
-    return {}
+    return dict(overclock = args.overclock)
 
 def get_acq_args(args):
-    return {}
+    return dict(source = args.source, vcxo = args.vcxo)
 
 def report_sys_status(lmk):
     print('SYS LMK Locked' if lmk.PLL2_LCK_DET else 'Unlocked')
@@ -64,8 +71,8 @@ def report_acq_status(lmk):
         'VCO',  'locked' if lmk.PLL2_LCK_DET else 'unlocked')
 
 _setup_command = {
-    'sys' : (get_sys_args, lmk04616.setup_sys_lmk, report_sys_status),
-    'acq' : (get_acq_args, lmk04616.setup_acq_lmk, report_acq_status),
+    'sys' : (get_sys_args, lmk04616.create_sys_config, report_sys_status),
+    'acq' : (get_acq_args, lmk04616.create_acq_config, report_acq_status),
 }
 
 
@@ -101,8 +108,10 @@ def main():
         check_sg_active(sg, args)
 
     # Dispatch the appropriate setup
-    get_args, setup, report = _setup_command[args.select]
-    lmk = setup(lmk, **get_args(args))
+    get_args, create_config, report = _setup_command[args.select]
+    config = create_config(**get_args(args))
+    lmk = lmk04616.setup_lmk(lmk, config)
+
     if not args.test and args.verbose:
         report(lmk)
 
