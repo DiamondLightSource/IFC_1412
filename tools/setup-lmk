@@ -8,7 +8,17 @@ import argparse
 import bind_ifc_1412
 
 from ifc_lib import lmk04616
+from ifc_lib.lmk04616 import setup_acq_lmk
 from fpga_lib.devices import LMK04616
+
+
+class AddOutputName(argparse.Action):
+    def __call__(self, parser, namespace, value, option):
+        names = value.split(',')
+        for name in names:
+            if name not in setup_acq_lmk.OutputNames:
+                parser.error('Name %s is not a valid output name' % name)
+        getattr(namespace, self.dest).extend(value.split(','))
 
 
 def parse_args():
@@ -44,11 +54,15 @@ Use -h after selection for target specific help
         description = 'ACQ clocks for data acquisition clocks')
     acq_parser.add_argument(
         '-s', '--source', default = 'ssmc',
-        choices = lmk04616.setup_acq_lmk.Sources.keys(),
+        choices = setup_acq_lmk.Sources.keys(),
         help = 'Select source of reference clock')
     acq_parser.add_argument(
         '-x', '--vcxo', action = 'store_true',
         help = 'Enable VCXO input')
+    acq_parser.add_argument(
+        '-o', '--output_names', default = [], action = AddOutputName,
+        help = 'Enumerate LMK outputs to enable.  Options are: %s' %
+            ', '.join(setup_acq_lmk.OutputNames))
 
     args = parser.parse_args()
     if not args.select:
@@ -60,6 +74,8 @@ def get_sys_args(args):
     return dict(overclock = args.overclock)
 
 def get_acq_args(args):
+    if not args.output_names:
+        args.output_names = setup_acq_lmk.DefaultOutputs
     return dict(source = args.source, vcxo = args.vcxo)
 
 def report_sys_status(lmk):

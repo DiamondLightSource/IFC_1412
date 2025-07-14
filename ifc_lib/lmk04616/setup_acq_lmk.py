@@ -52,21 +52,45 @@ class Output(ClockOut):
     drv1 = 'HSDS8mA'
     slew = 0
 
+
+# Selections for CLKIN
 Sources = {
-    # Selections for CLKIN
     'ssmc' : 0,     # Front panel connector
     'tclka' : 1,    # TCLKA from AMC connector
     'tclkc' : 2,    # TCLKC from AMC connector
     'mux' : 3,      # FMC clock multiplexer
 }
 
+# Names for outputs
+OutputNames = [
+    'acqclk',       # 0 => FPGA ACQCLK
+    'rtm-clk',      # 2 => RTM CLK
+    'rtm-tclk',     # 4 => RTM TCLK
+    'amc-tclk',     # 6, 7 => AMC TCLKB, TCLKD
+    'fmc1-clk2',    # 8, 9 => FMC1 CLK2 and FPGA
+    'fmc2-clk2',    # 10, 11 => FMC2 CLK2 and FPGA
+    'fmc-clk3',     # 12, 13 => FMC1 and FMC2 CLK3 and FPGA
+    'fmc-refclk',   # 14, 15 => FMC1 and FMC2 REFCLK
+]
 
-def create_config(source = 'ssmc', vcxo = False):
+DefaultOutputs = ['acqclk', 'fmc1-clk2', 'fmc2-clk2']
+
+def names_to_outputs(output_names):
+    outputs = 8 * [None]
+    for name in output_names:
+        ix = OutputNames.index(name)
+        outputs[ix] = Output
+    return outputs
+
+
+def create_config(
+    source = 'ssmc', vcxo = False, output_names = DefaultOutputs):
+
     # Currently the VCXO PLL is not supported; this will be a challenge!
 
     class AcqConfig(Config):
         clkin = Sources[source]
-        outputs = 8 * [Output]
+        outputs = names_to_outputs(output_names)
         oscin = vcxo
 
     return AcqConfig
