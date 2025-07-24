@@ -4,8 +4,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.support.all;
-
 package board_fmc_swaps is
     -- Array of bits identifying for each FMC user IO bank which lanes are
     -- swapped on input to the board.  Affected pairs need to be swapped when
@@ -19,6 +17,8 @@ package board_fmc_swaps is
 end;
 
 package body board_fmc_swaps is
+    type integer_array is array(natural range<>) of integer;
+
     function make_swaps(length : natural; swaps : integer_array)
         return std_ulogic_vector
     is
