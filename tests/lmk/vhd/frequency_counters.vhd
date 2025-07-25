@@ -16,15 +16,18 @@ entity frequency_counters is
     port (
         clk_i : in std_ulogic;
 
+        -- Array of clocks to count
         clk_in_i : in std_ulogic_vector(0 to COUNT-1);
+
+        -- Clock counts on clk_i, update_o is strobed every 100ms when counts_o
+        -- updates with a new value
         counts_o : out unsigned_array(0 to COUNT-1)(31 downto 0);
         update_o : out std_ulogic := '0'
     );
 end;
 
 architecture arch of frequency_counters is
-    constant UPDATE_BITS : natural := bits(UPDATE_INTERVAL-1);
-    signal sample_counter : unsigned(UPDATE_BITS-1 downto 0) := (others => '0');
+    signal sample_counter : natural range 0 to UPDATE_INTERVAL-1 := 0;
     signal read_request : std_ulogic := '0';
     signal do_update : std_ulogic := '0';
     signal read_ready : std_ulogic_vector(0 to COUNT-1);
@@ -40,7 +43,7 @@ begin
             if sample_counter > 0 then
                 sample_counter <= sample_counter - 1;
             else
-                sample_counter <= to_unsigned(UPDATE_INTERVAL-1, UPDATE_BITS);
+                sample_counter <= UPDATE_INTERVAL-1;
             end if;
 
             read_request <= to_std_ulogic(sample_counter = 0);
