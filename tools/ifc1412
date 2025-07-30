@@ -386,7 +386,7 @@ and state can be one of
     }
 
     led_id = led_table[led]
-    function, duration = function_table[led]
+    function, duration = function_table[state]
     colour = 0xFF
 
     ipmi.ipmi_raw(

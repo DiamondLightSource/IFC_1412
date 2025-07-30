@@ -28,7 +28,7 @@ from .setup_lmk import *
 # Creates configuration for SYS LMK.  The only option is whether to enable
 # overclocking of the SGRAM; in this case the 125MHz outputs are disabled as
 # they can no longer be generated.
-def create_config(overclock):
+def create_config(overclock, force_refclk, refclk_div = 16):
     # The VCO runs at 6 GHz and is locked (via the intermediate frequency) to
     # the frequency doubled 100 MHz crystal.  For normal operation we use an
     # intermediate frequency of 2 GHz which can be divided by 2 and 8 for WCK
@@ -49,7 +49,7 @@ def create_config(overclock):
             n = 10          # IF / 10 = 200 MHz
 
     class SysClock125Mhz(ClockOut):
-        div = 16
+        div = refclk_div
         drv0 = 'HSDS4mA'
         drv1 = 'HSDS4mA'
 
@@ -84,7 +84,7 @@ def create_config(overclock):
         pll2 = SysPll2Config
         sync_ports = [4, 5, 6, 7]
 
-        if overclock:
+        if overclock and not force_refclk:
             outputs = 4 * [None] + CK_outputs
         else:
             outputs = RefClk_outputs + CK_outputs

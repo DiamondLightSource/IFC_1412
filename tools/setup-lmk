@@ -49,6 +49,12 @@ Use -h after selection for target specific help
     sys_parser.add_argument(
         '-o', '--overclock', action = 'store_true',
         help = 'Enable 300MHz overclock of SGRAM')
+    sys_parser.add_argument(
+        '-r', '--force_refclk', action = 'store_true',
+        help = 'Force refclk outputs when overlock enabled')
+    sys_parser.add_argument(
+        '-d', '--refclk_div', default = 16, type = int,
+        help = 'Set reference clock divisor.  Should normally be left unset.')
 
     acq_parser = subparsers.add_parser('acq',
         description = 'ACQ clocks for data acquisition clocks')
@@ -71,7 +77,9 @@ Use -h after selection for target specific help
 
 
 def get_sys_args(args):
-    return dict(overclock = args.overclock)
+    return dict(
+        overclock = args.overclock, force_refclk = args.force_refclk,
+        refclk_div = args.refclk_div)
 
 def get_acq_args(args):
     if not args.output_names:
