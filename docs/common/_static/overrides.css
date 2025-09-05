@@ -1,0 +1,10 @@
+/* Enable line wrapping in tables. */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+      white-space: normal;
+}
+
+/* Override overflow-x:auto setting in div wrapping the wavedrom result.  This
+ * is working around a weakness in the wavedrom plugin which hard-wires this
+ * setting.  Unfortunately this CSS affects *all* divs in the document! */
+div { overflow-x: visible !important; }

@@ -1,0 +1,67 @@
+PROJECT ?= $(error Must specify PROJECT in Makefile)
+PUBLISH_ROOT = /dls/cs-www/mga83
+
+SPHINXOPTS ?=
+
+SPHINXBUILD = sphinx-build
+DIA = dia
+
+
+HTML_OUT = build/html/index.html
+PDF_OUT = build/latex/$(PROJECT).pdf
+
+PUBLISH_OUT = $(PUBLISH_ROOT)/$(PROJECT)
+
+
+SPHINX_DEPENDS += $(wildcard *.rst)
+SPHINX_DEPENDS += $(patsubst %.dia,build/%.png,$(wildcard figures/*.dia))
+
+# SPHINX_DEPENDS += $(patsubst %.json,build/%.png,$(wildcard figures/*.json))
+# SPHINX_DEPENDS += $(wildcard figures/*.json)
+SPHINX_DEPENDS += $(wildcard figures/*)
+
+SPHINX_DEPENDS += conf.py
+
+DEFAULTS = html
+# DEFAULTS += pdf
+
+
+default: $(DEFAULTS)
+
+
+build/figures:
+	mkdir -p $@
+
+build/%.png: %.dia build/figures
+	$(DIA) -e $@ $<
+
+# build/%.png: %.json build/figures
+# 	wavedrom.js -i $< |convert svg:- $@
+
+
+$(HTML_OUT): $(SPHINX_DEPENDS)
+	$(SPHINXBUILD) -M html . build $(SPHINXOPTS)
+
+html: $(HTML_OUT)
+.PHONY: html
+
+
+$(PDF_OUT): $(SPHINX_DEPENDS)
+	$(SPHINXBUILD) -M latexpdf . build $(SPHINXOPTS)
+
+pdf: $(PDF_OUT)
+.PHONY: pdf
+
+
+publish: $(HTML_OUT)
+	rm -rf $(PUBLISH_OUT)
+	mkdir -p $(PUBLISH_OUT)
+	cp -a build/html/* $(PUBLISH_OUT)
+	@echo
+	@echo Files at http://www.cs.diamond.ac.uk/mga83/$(PROJECT)
+.PHONY: publish
+
+
+clean:
+	rm -rf build
+.PHONY: clean
