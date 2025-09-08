@@ -2,7 +2,7 @@
 :MAILBOX        RW
     # Address of field to read or write
     .ADDRESS    11
-    # Data to write on write
+    # Data to write on write, data returned on read
     .DATA       8
     # Set for write cycle, otherwise .DATA is read from mailbox
     .WRITE
