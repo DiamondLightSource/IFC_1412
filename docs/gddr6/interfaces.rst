@@ -51,7 +51,8 @@ elements:
   to be written.
 * Data is transferred in the appropriate direction at a later time in response o
   appropriate control signals.
-* There is also a simple lookahead in each direction for later requests.
+* There is also a simple lookahead in each direction to act as a hint for
+  activating the bank required for the next transaction.
 
 
 PHY interface (Ctrl to PHY)
