@@ -7,6 +7,7 @@ _IP_FILES += $(FPGA_TOP)/tcl/sgram.tcl
 
 _EXTRA_IP_FILES += built_dir/gddr6_register_defines.vhd
 _EXTRA_IP_FILES += $(VHD_DIR)/gddr6_ip_defs.vhd
+_EXTRA_IP_FILES += $(VHD_DIR)/gddr6_defs.vhd
 _EXTRA_IP_FILES += $(wildcard $(FPGA_TOP)/interface_ip/*)
 
 make_gddr6_ip: $(_PROJECT)

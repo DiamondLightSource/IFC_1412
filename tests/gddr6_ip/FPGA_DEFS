@@ -3,7 +3,7 @@ IP_DIRS += $(GDDR6_IP)
 
 BUILT += metadata.coe
 BUILT += register_defines.vhd
-BUILT += lmk04616_defines.vhd
+BUILT += lmk04616_register_defines.vhd
 
 # Version file support
 BUILT += version.vhd
@@ -12,7 +12,7 @@ TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
 
 BLOCK_DESIGNS += interconnect
 
-REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_register_defines.in
 
 VPATH += $(LMK04616_DIR)
 

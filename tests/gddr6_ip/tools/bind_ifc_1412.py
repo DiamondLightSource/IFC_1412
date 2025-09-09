@@ -15,8 +15,8 @@ class Registers(driver.RawRegisters):
         super().__init__(self.NAME, address)
 
         register_defines = defs_path.register_defines(__file__)
-        gddr6_defines = defs_path.gddr6_register_defines()
-        lmk04616_defines = defs_path.lmk04616_defines()
+        gddr6_defines = defs_path.module_defines('gddr6')
+        lmk04616_defines = defs_path.module_defines('lmk04616')
         self.make_registers('SYS', self.REGS_RANGE,
             lmk04616_defines, register_defines)
         self.make_registers('GDDR6', self.SG_RANGE, gddr6_defines)

@@ -116,7 +116,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $gddr6_dir/axi/gddr6_axi_stats.vhd \
     $gddr6_dir/axi/gddr6_axi.vhd \
     $gddr6_dir/gddr6.vhd \
-    built_dir/lmk04616_defines.vhd \
+    built_dir/lmk04616_register_defines.vhd \
     $lmk04616_dir/lmk04616_io.vhd \
     $lmk04616_dir/lmk04616_control.vhd \
     $lmk04616_dir/lmk04616_status.vhd \

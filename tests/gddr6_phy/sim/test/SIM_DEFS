@@ -1,12 +1,12 @@
 BUILT += version.vhd
 BUILT += register_defines.vhd
 BUILT += gddr6_register_defines.vhd
-BUILT += lmk04616_defines.vhd
+BUILT += lmk04616_register_defines.vhd
 
 # This allows the GDDR6 register range to be included as part of the
 # register_defines build
 REG_INCLUDES_register += $(GDDR6_DIR)/gddr6_register_defines.in
-REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_register_defines.in
 
 # Path to gddr6 files
 export GDDR6_DIR

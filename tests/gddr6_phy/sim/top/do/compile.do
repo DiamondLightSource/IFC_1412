@@ -18,6 +18,7 @@ vcom -64 -2008 -work xil_defaultlib \
     built_dir/gddr6_register_defines.vhd \
     built_dir/version.vhd \
     $gddr6_dir/gddr6_defs.vhd \
+    $gddr6_dir/gddr6_ip_defs.vhd \
     built_dir/test_gddr6_phy.vhd.dummy \
     built_dir/top_entity.vhd \
     $vhd_dir/top.vhd

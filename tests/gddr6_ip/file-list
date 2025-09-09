@@ -17,7 +17,7 @@ $common_vhd/util/stretch_pulse.vhd
 $common_vhd/util/strobe_ack.vhd
 $gddr6_ip/gddr6_defs.vhd
 built_dir/register_defines.vhd
-built_dir/lmk04616_defines.vhd
+built_dir/lmk04616_register_defines.vhd
 built_dir/top_entity.vhd
 built_dir/version.vhd
 $vhd_dir/axi.vhd
@@ -32,3 +32,5 @@ $lmk04616_dir/lmk04616.vhd
 $vhd_dir/system_clocking.vhd
 $vhd_dir/test_gddr6_phy.vhd
 $vhd_dir/top.vhd
+
+# vim: set filetype=tcl:

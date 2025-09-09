@@ -55,7 +55,6 @@ architecture arch of test_gddr6_phy is
     signal capture_trigger : std_ulogic;
     signal axi_request : axi_request_t;
     signal axi_response : axi_response_t;
-    signal axi_stats : axi_stats_t;
 
 begin
     register_mux : entity work.register_mux port map (

@@ -92,3 +92,5 @@ $vhd_dir/setup/gddr6_setup_delay.vhd
 $vhd_dir/setup/gddr6_setup.vhd
 $vhd_dir/gddr6.vhd
 $vhd_dir/gddr6_ip_netlist.vhd
+
+# vim: set filetype=tcl:

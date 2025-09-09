@@ -1,7 +1,7 @@
 BUILT += metadata.coe
 BUILT += register_defines.vhd
 BUILT += gddr6_register_defines.vhd
-BUILT += lmk04616_defines.vhd
+BUILT += lmk04616_register_defines.vhd
 
 # Version file support
 BUILT += version.vhd
@@ -13,7 +13,7 @@ BLOCK_DESIGNS += interconnect
 # This allows the GDDR6 register range to be included as part of the
 # register_defines build
 REG_INCLUDES_register += $(GDDR6_DIR)/gddr6_register_defines.in
-REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_register_defines.in
 
 VPATH += $(GDDR6_DIR)
 VPATH += $(LMK04616_DIR)
