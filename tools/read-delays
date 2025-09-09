@@ -11,6 +11,7 @@ from ifc_lib.gddr6_lib.delays import \
 from ifc_lib.gddr6_lib import setup
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--addr', default = 0)
 parser.add_argument('-t', '--timestamp', action = 'store_true')
 parser.add_argument('-i', '--idelays', action = 'store_true')
 parser.add_argument('-o', '--odelays', action = 'store_true')
@@ -19,7 +20,7 @@ parser.add_argument('interval', nargs = '?', type = float)
 args = parser.parse_args()
 
 
-_, sg = bind_ifc_1412.open()
+_, sg = bind_ifc_1412.open(args.addr)
 setup.check_ck_ready(sg)
 
 

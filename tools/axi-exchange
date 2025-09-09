@@ -11,12 +11,6 @@ from ifc_lib.gddr6_lib.exchange import send_command
 from ifc_lib.gddr6_lib.decode import DecodeCA
 from ifc_lib.gddr6_lib import setup
 
-top, sg = bind_ifc_1412.open()
-axi = top.AXI
-
-setup.check_ctrl_ready(sg)
-
-
 def int0(x):
     return int(x, 0)
 
@@ -44,9 +38,12 @@ def parse_event_mask(argument):
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-a', '--addr', default = 0,
+        help = 'Set physical address of card.  If not specified then card 0')
     parser.add_argument('-v', '--verbose',
         default = False, action = 'store_true')
-    parser.add_argument('-a', '--address', default = 0, type = int0)
+    parser.add_argument('-A', '--address', default = 0, type = int0)
     parser.add_argument('-w', '--write', type = int0)
     parser.add_argument('-c', '--capture',
         default = False, action = 'store_true')
@@ -173,6 +170,13 @@ def show_fields(register):
 
 
 args = parse_args()
+
+top, sg = bind_ifc_1412.open(args.addr)
+axi = top.AXI
+
+setup.check_ctrl_ready(sg)
+
+
 
 sg.CONFIG._write_fields_rw(
     EDC_SELECT = 0,

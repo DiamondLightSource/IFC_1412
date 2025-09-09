@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 
+import argparse
+
 import bind_ifc_1412
 
-regs, sg = bind_ifc_1412.open()
+parser = argparse.ArgumentParser(
+    description = 'Show SG status')
+parser.add_argument(
+    '-a', '--addr', default = 0,
+    help = 'Set physical address of card.  If not specified then card 0')
+args = parser.parse_args()
+
+regs, sg = bind_ifc_1412.open(args.addr)
 
 
 COLOUR_OK = '1;32'
