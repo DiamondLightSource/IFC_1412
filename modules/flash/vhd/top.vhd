@@ -17,11 +17,6 @@ architecture arch of top is
     signal reset_n : std_ulogic;
     signal pci_reset_n : std_ulogic;
 
-    -- LEDs.  Illuminate LED A when out of reset, toggle LED B
-    signal led_counter : unsigned(25 downto 0) := (others => '0');
-    signal led_a : std_ulogic := '1';   -- Green if low
-    signal led_b : std_ulogic := '1';   -- Red if low
-
     -- Register interface
     signal DSP_REGS_araddr : std_logic_vector(16 downto 0);
     signal DSP_REGS_arprot : std_logic_vector(2 downto 0);
@@ -221,19 +216,8 @@ begin
     );
 
 
-
-    -- LED clocking
-    process (clk) begin
-        if rising_edge(clk) then
-            led_a <= not pci_reset_n;
-
-            led_counter <= led_counter + 1;
-            led_b <= led_counter(led_counter'LEFT);
-
-            pad_FP_LED2A_K <= led_a;
-            pad_FP_LED2B_K <= led_b;
-        end if;
-    end process;
-
+    -- LED assignments
+    pad_FP_LED2A_K <= '0';      -- Green status LED on
+    pad_FP_LED2B_K <= '1';      -- Red status LED off
     pad_FMC1_LED <= reverse(std_ulogic_vector(slot));
 end;
