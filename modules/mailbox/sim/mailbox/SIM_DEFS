@@ -1,0 +1,3 @@
+BUILT += mailbox_defines.vhd
+
+# vim: set filetype=make:
