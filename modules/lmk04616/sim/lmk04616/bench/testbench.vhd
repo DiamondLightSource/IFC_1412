@@ -6,7 +6,7 @@ use std.textio.all;
 
 use work.support.all;
 use work.register_defs.all;
-use work.lmk04616_defines.all;
+use work.lmk04616_register_defines.all;
 use work.sim_support.all;
 
 entity testbench is

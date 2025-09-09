@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 use work.support.all;
 use work.register_defs.all;
-use work.mailbox_defines.all;
+use work.mailbox_register_defines.all;
 use work.sim_support.all;
 
 entity testbench is

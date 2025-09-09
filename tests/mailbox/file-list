@@ -11,7 +11,7 @@ $common_vhd/register/register_mux_strobe.vhd
 $common_vhd/register/register_buffer.vhd
 $common_vhd/register/register_mux.vhd
 
-built_dir/mailbox_defines.vhd
+built_dir/mailbox_register_defines.vhd
 built_dir/register_defines.vhd
 built_dir/top_entity.vhd
 $mailbox_dir/mailbox_io.vhd

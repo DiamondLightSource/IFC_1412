@@ -1,8 +1,8 @@
 BUILT += register_defines.vhd
-BUILT += mailbox_defines.vhd
+BUILT += mailbox_register_defines.vhd
 BUILT += top_entity.vhd
 
-REG_INCLUDES_register += $(MAILBOX_DIR)/mailbox_defines.in
+REG_INCLUDES_register += $(MAILBOX_DIR)/mailbox_register_defines.in
 
 VPATH += $(MAILBOX_DIR)
 

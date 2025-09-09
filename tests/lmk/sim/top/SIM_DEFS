@@ -1,9 +1,9 @@
 BUILT += register_defines.vhd
 BUILT += version.vhd
 BUILT += top_entity.vhd
-BUILT += lmk04616_defines.vhd
+BUILT += lmk04616_register_defines.vhd
 
-REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_register_defines.in
 
 VPATH += $(LMK04616_DIR)
 

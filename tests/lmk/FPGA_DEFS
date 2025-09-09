@@ -1,7 +1,7 @@
 BUILT += metadata.coe
 BUILT += register_defines.vhd
-BUILT += lmk04616_defines.vhd
-REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_defines.in
+BUILT += lmk04616_register_defines.vhd
+REG_INCLUDES_register += $(LMK04616_DIR)/lmk04616_register_defines.in
 
 VPATH += $(LMK04616_DIR)
 

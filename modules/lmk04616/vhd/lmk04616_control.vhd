@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 use work.support.all;
 
 use work.register_defs.all;
-use work.lmk04616_defines.all;
+use work.lmk04616_register_defines.all;
 
 entity lmk04616_control is
     port (

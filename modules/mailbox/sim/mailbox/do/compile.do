@@ -13,7 +13,7 @@ vcom -64 -2008 -work xil_defaultlib \
     $common_vhd/util/memory_array.vhd \
     $common_vhd/util/sync_bit.vhd \
     $common_vhd/register/register_defs.vhd \
-    built_dir/mailbox_defines.vhd \
+    built_dir/mailbox_register_defines.vhd \
     $vhd_dir/mailbox_io.vhd \
     $vhd_dir/debounce.vhd \
     $vhd_dir/i2c_signals.vhd \

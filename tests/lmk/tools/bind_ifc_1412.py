@@ -12,7 +12,7 @@ class Registers(driver.RawRegisters):
         super().__init__(self.NAME, address)
 
         register_defines = defs_path.register_defines(__file__)
-        lmk04616_defines = defs_path.lmk04616_defines()
+        lmk04616_defines = defs_path.module_defines('lmk04616')
         self.make_registers('TOP', None, lmk04616_defines, register_defines)
 
 def open(addr = 0):
