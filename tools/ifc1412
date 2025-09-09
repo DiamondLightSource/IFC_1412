@@ -414,15 +414,17 @@ second controls payload power.'''
     ipmi.ipmi_oem(0x13, mp, pp)
 
 @command
-def set_fru_info(ipmi, image):
+def set_fru_info(ipmi, image, target = '0'):
     '''Set custom FRU info image
-    filename
-Uses ipmi `fru write` command to upload FRU image.'''
+    filename [target]
+Uses ipmi `fru write` command to upload FRU image.  If a target is specified it
+can be 0 for the MMC FRU or 1 for the RTM FRU.'''
+    assert target in '01', 'Invalid target "%s"' % target
     print('The MMC will be rebooted to upload the FRU info image.')
     input('Press <control-c> to abort, or <return> to continue.')
     ipmi.ipmi_oem(0x03)
     input('Press <return> when MMC ready for upload')
-    ipmi.ipmi_cmd('fru', 'write', '0', image)
+    ipmi.ipmi_cmd('fru', 'write', target, image)
     ipmi.ipmi_cmd('mc', 'reset', 'cold')
 
 @command
