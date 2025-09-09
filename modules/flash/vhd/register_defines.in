@@ -33,4 +33,13 @@
     DATA        RW
 
 !TOP
+    GIT_VERSION     R
+        .SHA        28
+        -           3
+        .DIRTY
+
+    # MMC mailbox used to identify the slot number
+    :MAILBOX
+
+    # Flash interface
     :FLASH

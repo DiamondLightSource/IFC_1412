@@ -1,9 +1,19 @@
 BUILT += metadata.coe
 BUILT += register_defines.vhd
+BUILT += mailbox_register_defines.vhd
+REG_INCLUDES_register += $(MAILBOX_DIR)/mailbox_register_defines.in
+
+# Version file support
+BUILT += version.vhd
+BUILT += make_version.tcl
+TCL_SCRIPTS += $(TCL_DIR)/make_version_hook.tcl
+
+VPATH += $(MAILBOX_DIR)
 
 BLOCK_DESIGNS += interconnect
 
 VHD_FILES =
 VHD_FILE_LIST = $(FPGA_TOP)/file-list
+FILE_LIST_DEFS += MAILBOX_DIR
 
 # vim: set filetype=make:

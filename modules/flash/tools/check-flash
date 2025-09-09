@@ -5,6 +5,7 @@
 
 import argparse
 
+from ifc_lib import mailbox
 import flash_lib
 
 
@@ -12,6 +13,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description = 'Check FLASH communication')
     flash_lib.add_common_args(parser, select = False)
     return parser.parse_args()
+
+
+def report_version(git_version):
+    dirty = ' dirty' if git_version.DIRTY else ''
+    print(f'Version {git_version.SHA:07x}{dirty}')
+    print()
 
 
 def check_flash(flash, main_clock, main_read_delay):
@@ -37,9 +44,18 @@ def check_flash(flash, main_clock, main_read_delay):
         print()
 
 
+def report_mailbox(mb):
+    mmc = mailbox.read_mmc_message(mb)
+    print(
+        f'Product: {mmc.product} v{mmc.version} serial '
+        f'{mmc.serial} in slot {mmc.slot}')
+
+
 def main():
     args = parse_args()
-    flash = flash_lib.open(args.addr)
-    check_flash(flash, args.clock, args.read_delay)
+    top = flash_lib.open(args.addr)
+    report_version(top.GIT_VERSION)
+    check_flash(top.FLASH, args.clock, args.read_delay)
+    report_mailbox(top.MAILBOX)
 
 main()

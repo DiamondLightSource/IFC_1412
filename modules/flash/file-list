@@ -8,14 +8,27 @@ $common_vhd/util/fixed_delay_dram.vhd
 $common_vhd/util/fixed_delay.vhd
 $common_vhd/util/dlyreg.vhd
 $common_vhd/util/fifo.vhd
+$common_vhd/util/sync_bit.vhd
 $common_vhd/axi/axi_lite_slave.vhd
 $common_vhd/register/register_defs.vhd
 $common_vhd/register/register_buffer.vhd
 $common_vhd/register/register_mux_strobe.vhd
 $common_vhd/register/register_mux.vhd
 
+# Mailbox
+built_dir/mailbox_register_defines.vhd
+$mailbox_dir/mailbox_io.vhd
+$mailbox_dir/debounce.vhd
+$mailbox_dir/i2c_signals.vhd
+$mailbox_dir/i2c_core.vhd
+$mailbox_dir/register_share.vhd
+$mailbox_dir/register_share_rw.vhd
+$mailbox_dir/mailbox_slave.vhd
+$mailbox_dir/mailbox.vhd
+
 # This project
 built_dir/register_defines.vhd
+built_dir/version.vhd
 $vhd_dir/system_clocking.vhd
 $vhd_dir/flash_control.vhd
 $vhd_dir/flash_mo_fifo.vhd

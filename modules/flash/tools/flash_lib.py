@@ -30,7 +30,8 @@ class Registers(driver.RawRegisters):
         super().__init__(self.NAME, address)
 
         register_defines = defs_path.register_defines(__file__)
-        self.make_registers('TOP', None, register_defines)
+        mailbox_defines = defs_path.module_defines('mailbox')
+        self.make_registers('TOP', None, mailbox_defines, register_defines)
 
         readback = self.TOP.FLASH.COMMAND._value
         if readback != 0:
@@ -38,7 +39,7 @@ class Registers(driver.RawRegisters):
 
 def open(address = 0):
     regs = Registers(address)
-    return regs.TOP.FLASH
+    return regs.TOP
 
 
 def delay_type(arg):
@@ -66,8 +67,8 @@ def add_common_args(parser, select = True):
 
 
 def open_with_args(args):
-    flash = open(args.addr)
-    return Exchange(flash, args.select, args.clock, args.read_delay)
+    top = open(args.addr)
+    return Exchange(top.FLASH, args.select, args.clock, args.read_delay)
 
 
 

@@ -64,7 +64,8 @@ def write_flash(e1, e2, config1, config2, progress):
 def main():
     args = parse_args()
 
-    flash = flash_lib.open(args.addr)
+    top = flash_lib.open(args.addr)
+    flash = top.FLASH
     e1 = flash_lib.Exchange(flash, 'fpga1', args.clock, args.read_delay)
     e2 = flash_lib.Exchange(flash, 'fpga2', args.clock, args.read_delay)
 

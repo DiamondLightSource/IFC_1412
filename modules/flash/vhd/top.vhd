@@ -9,6 +9,7 @@ use work.support.all;
 use work.register_defs.all;
 use work.register_defines.all;
 
+use work.version.all;
 
 architecture arch of top is
     -- Clock and resets
@@ -59,6 +60,9 @@ architecture arch of top is
     signal read_strobe : std_ulogic_vector(TOP_REGS_RANGE);
     signal read_data : reg_data_array_t(TOP_REGS_RANGE);
     signal read_ack : std_ulogic_vector(TOP_REGS_RANGE);
+
+    -- Slot number from mailbox
+    signal slot : unsigned(3 downto 0);
 
 begin
     clocking : entity work.system_clocking port map (
@@ -172,6 +176,33 @@ begin
     );
 
 
+    -- Version information
+    write_ack(TOP_GIT_VERSION_REG) <= '1';
+    read_ack(TOP_GIT_VERSION_REG) <= '1';
+    read_data(TOP_GIT_VERSION_REG) <= (
+        TOP_GIT_VERSION_SHA_BITS => to_std_ulogic_vector_u(GIT_VERSION, 28),
+        TOP_GIT_VERSION_DIRTY_BIT => to_std_ulogic(GIT_DIRTY),
+        others => '0'
+    );
+
+
+    mailbox : entity work.mailbox port map (
+        clk_i => clk,
+
+        write_strobe_i => write_strobe(TOP_MAILBOX_REG),
+        write_data_i => write_data(TOP_MAILBOX_REG),
+        write_ack_o => write_ack(TOP_MAILBOX_REG),
+        read_strobe_i => read_strobe(TOP_MAILBOX_REG),
+        read_data_o => read_data(TOP_MAILBOX_REG),
+        read_ack_o => read_ack(TOP_MAILBOX_REG),
+
+        scl_i => pad_FPGA_SLAVE_SCL,
+        sda_io => pad_FPGA_SLAVE_SDA,
+
+        slot_o => slot
+    );
+
+
     flash : entity work.flash port map (
         clk_i => clk,
 
@@ -203,4 +234,6 @@ begin
             pad_FP_LED2B_K <= led_b;
         end if;
     end process;
+
+    pad_FMC1_LED <= reverse(std_ulogic_vector(slot));
 end;

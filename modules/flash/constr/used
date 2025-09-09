@@ -10,6 +10,7 @@ pad_AMC_PCI_TX_{P,N}[7..4]      out
 # Status LEDs
 pad_FP_LED2A_K                  out
 pad_FP_LED2B_K                  out
+pad_FMC1_LED[1..4]              out
 
 # SPI interface to SPI flash U105 (512Mbit) for custom state.
 pad_USER_SPI_CS_L               out
@@ -18,3 +19,7 @@ pad_USER_SPI_D[3..0]            inout
 # SPI interface to FPGA configuration flash
 pad_FPGA_CFG_FCS2_B             inout
 pad_FPGA_CFG_D[7..4]            inout
+
+# I2C bus on FPGA slave port receiving mailbox writes
+pad_FPGA_SLAVE_SCL              in
+pad_FPGA_SLAVE_SDA              inout
