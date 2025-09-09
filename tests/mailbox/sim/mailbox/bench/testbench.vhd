@@ -30,6 +30,9 @@ architecture arch of testbench is
 
     signal scl : std_logic;
     signal sda : std_logic;
+    signal i2c_done : std_ulogic;
+
+    signal slot : unsigned(3 downto 0);
 
 begin
     clk <= not clk after 2 ns;
@@ -48,7 +51,9 @@ begin
         read_ack_o => read_ack,
 
         scl_i => to_x01(scl),
-        sda_io => sda
+        sda_io => sda,
+
+        slot_o => slot
     );
 
 
@@ -57,7 +62,8 @@ begin
         MB_ADDRESS => MB_ADDRESS
     ) port map (
         scl_io => scl,
-        sda_io => sda
+        sda_io => sda,
+        done_o => i2c_done
     );
 
 
@@ -93,7 +99,8 @@ begin
             result := value(MAILBOX_DATA_BITS);
             if not quiet then
                 write("MB[" & to_hstring(address) & "] => " &
-                    to_hstring(result),
+                    to_hstring(result) & " slot: " &
+                    to_hstring(value(MAILBOX_SLOT_BITS)),
                     stamp => true);
             end if;
         end;
@@ -118,12 +125,12 @@ begin
         read_reg(11X"012");
 
         -- Now wait for I2C to complete
-        loop
-            read_reg_result(11X"123", i2c_value, true);
-            exit when i2c_value /= X"00";
-        end loop;
+        wait until i2c_done;
+        clk_wait;
 
-        write("I2C[123] = " & to_hstring(i2c_value));
+        -- Read the slot number, should be 4
+        read_reg_result(11X"008", i2c_value);
+        write("I2C[8] = " & to_hstring(i2c_value));
 
         wait;
     end process;

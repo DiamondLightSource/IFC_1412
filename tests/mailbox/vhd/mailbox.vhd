@@ -11,7 +11,9 @@ use work.register_defines.all;
 
 entity mailbox is
     generic (
-        MB_ADDRESS : std_ulogic_vector(6 downto 0) := 7X"60"
+        MB_ADDRESS : std_ulogic_vector(6 downto 0) := 7X"60";
+        -- Address of the byte where the slot number will be written
+        SLOT_ADDRESS : natural := 8
     );
     port (
         clk_i : in std_ulogic;
@@ -25,7 +27,9 @@ entity mailbox is
         read_ack_o : out std_ulogic;
 
         scl_i : in std_ulogic;
-        sda_io : inout std_logic
+        sda_io : inout std_logic;
+
+        slot_o : out unsigned(3 downto 0)
     );
 end;
 
@@ -81,7 +85,8 @@ begin
     );
 
     slave : entity work.mailbox_slave generic map (
-        MB_ADDRESS => MB_ADDRESS
+        MB_ADDRESS => MB_ADDRESS,
+        SLOT_ADDRESS => SLOT_ADDRESS
     ) port map (
         clk_i => clk_i,
 
@@ -100,6 +105,8 @@ begin
         write_ack_o => write_ack_o,
         read_strobe_i => read_strobe_i,
         read_data_o => read_data_o,
-        read_ack_o => read_ack_o
+        read_ack_o => read_ack_o,
+
+        slot_o => slot_o
     );
 end;

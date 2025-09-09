@@ -10,3 +10,8 @@ pad_AMC_PCI_TX_{P,N}[7..4]      out
 # I2C bus on FPGA slave port
 pad_FPGA_SLAVE_SCL              in
 pad_FPGA_SLAVE_SDA              inout
+
+# Status LEDs
+pad_FP_LED2A_K                  out
+pad_FP_LED2B_K                  out
+pad_FMC1_LED[1..4]              out

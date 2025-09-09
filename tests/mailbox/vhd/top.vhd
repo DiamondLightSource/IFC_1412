@@ -5,6 +5,8 @@ use ieee.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
+use work.support.all;
+
 use work.register_defs.all;
 use work.register_defines.all;
 
@@ -65,6 +67,9 @@ architecture arch of top is
     signal top_read_strobe : std_ulogic_vector(TOP_REGS_RANGE);
     signal top_read_data : reg_data_array_t(TOP_REGS_RANGE);
     signal top_read_ack : std_ulogic_vector(TOP_REGS_RANGE);
+
+    -- Slot number from mailbox
+    signal slot : unsigned(3 downto 0);
 
 begin
     -- Core clocking from copy of 100 MHz FCLKA
@@ -204,8 +209,16 @@ begin
         read_ack_o => top_read_ack(TOP_MAILBOX_REG),
 
         scl_i => pad_FPGA_SLAVE_SCL,
-        sda_io => pad_FPGA_SLAVE_SDA
+        sda_io => pad_FPGA_SLAVE_SDA,
+
+        slot_o => slot
     );
+
+
+    -- LED assignments
+    pad_FP_LED2A_K <= '0';      -- Green status LED on
+    pad_FP_LED2B_K <= '1';      -- Red status LED off
+    pad_FMC1_LED <= reverse(std_ulogic_vector(slot));
 
 
     -- Create reset

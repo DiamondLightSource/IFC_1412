@@ -16,7 +16,8 @@ use work.register_defines.all;
 
 entity mailbox_slave is
     generic (
-        MB_ADDRESS : std_ulogic_vector(6 downto 0)
+        MB_ADDRESS : std_ulogic_vector(6 downto 0);
+        SLOT_ADDRESS : natural
     );
     port (
         clk_i : in std_ulogic;
@@ -39,7 +40,10 @@ entity mailbox_slave is
         write_ack_o : out std_ulogic := '0';
         read_strobe_i : in std_ulogic;
         read_data_o : out reg_data_t;
-        read_ack_o : out std_ulogic
+        read_ack_o : out std_ulogic;
+
+        -- Slot number decoded during write
+        slot_o : out unsigned(3 downto 0)
     );
 end;
 
@@ -145,6 +149,7 @@ begin
     reg_write_data <= write_data_i(MAILBOX_DATA_BITS);
     read_data_o <= (
         MAILBOX_DATA_BITS => reg_read_data,
+        MAILBOX_SLOT_BITS => std_ulogic_vector(slot_o),
         others => '0');
 
     tx_data_o <= i2c_read_data;
@@ -199,6 +204,11 @@ begin
                 i2c_address <= i2c_address + 1;
             end if;
             rx_ack_o <= rx_strobe_i;
+
+            -- Capture slot write
+            if i2c_write_strobe = '1' and i2c_write_address = SLOT_ADDRESS then
+                slot_o <= unsigned(i2c_write_data(3 downto 0));
+            end if;
         end if;
     end process;
 end;

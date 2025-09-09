@@ -6,6 +6,8 @@
     .DATA       8
     # Set for write cycle, otherwise .DATA is read from mailbox
     .WRITE
+    # Slot number as written to mailbox
+    .SLOT       4
 
 # Register definitions for test
 !TOP

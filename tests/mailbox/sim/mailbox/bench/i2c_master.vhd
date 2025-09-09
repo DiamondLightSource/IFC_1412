@@ -13,7 +13,9 @@ entity i2c_master is
     );
     port (
         scl_io : inout std_logic;
-        sda_io : inout std_logic
+        sda_io : inout std_logic;
+
+        done_o : out std_ulogic
     );
 end;
 
@@ -189,6 +191,7 @@ begin
 
 variable dummy : std_ulogic;
     begin
+        done_o <= '0';
         scl_io <= 'H';
         sda_io <= 'H';
 
@@ -198,7 +201,19 @@ variable dummy : std_ulogic;
 
         read_mailbox_bytes(11X"123", 3);
 
---         write_mailbox_bytes(11X"0", (X"12", X"34"));
+        -- Finally write an "offical" MMC transaction: this consists of
+        --  message id 0
+        --  product 0584 = 1412
+        --  version 2
+        --  serial 0E8E3245 = 244200005
+        --  slot 4
+        --  checksum
+        write_mailbox_bytes(11X"00", (
+            X"00", X"05", X"84", X"02", X"0E", X"8E", X"32", X"45",
+            X"04", X"5E"));
+
+        wait for 1 us;
+        done_o <= '1';
 
         wait;
     end process;
