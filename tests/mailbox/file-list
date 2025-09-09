@@ -11,16 +11,17 @@ $common_vhd/register/register_mux_strobe.vhd
 $common_vhd/register/register_buffer.vhd
 $common_vhd/register/register_mux.vhd
 
+built_dir/mailbox_defines.vhd
 built_dir/register_defines.vhd
 built_dir/top_entity.vhd
-$vhd_dir/mailbox_io.vhd
-$vhd_dir/debounce.vhd
-$vhd_dir/i2c_signals.vhd
-$vhd_dir/i2c_core.vhd
-$vhd_dir/register_share.vhd
-$vhd_dir/register_share_rw.vhd
-$vhd_dir/mailbox_slave.vhd
-$vhd_dir/mailbox.vhd
+$mailbox_dir/mailbox_io.vhd
+$mailbox_dir/debounce.vhd
+$mailbox_dir/i2c_signals.vhd
+$mailbox_dir/i2c_core.vhd
+$mailbox_dir/register_share.vhd
+$mailbox_dir/register_share_rw.vhd
+$mailbox_dir/mailbox_slave.vhd
+$mailbox_dir/mailbox.vhd
 $vhd_dir/top.vhd
 
 # vim: set filetype=tcl:

@@ -1,10 +1,15 @@
 BUILT += metadata.coe
 BUILT += register_defines.vhd
+BUILT += mailbox_defines.vhd
+REG_INCLUDES_register += $(MAILBOX_DIR)/mailbox_defines.in
+
+VPATH += $(MAILBOX_DIR)
 
 BLOCK_DESIGNS += interconnect
 
 # Add the individual VHDL support files used by this project
 VHD_FILES =
 VHD_FILE_LIST = $(FPGA_TOP)/file-list
+FILE_LIST_DEFS += MAILBOX_DIR
 
 # vim: set filetype=make:

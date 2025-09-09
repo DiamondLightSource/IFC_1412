@@ -6,8 +6,10 @@ BOARD = $(CONFIG_TOP)/board/IFC_1412
 # Some component definitions needed during builds
 #
 # Path to gddr6 files
-GDDR6_DIR = $(CONFIG_TOP)/gddr6/vhd
+GDDR6_DIR = $(CONFIG_TOP)/modules/gddr6/vhd
 # Path to LMK04616 files
-LMK04616_DIR = $(CONFIG_TOP)/lmk04616/vhd
+LMK04616_DIR = $(CONFIG_TOP)/modules/lmk04616/vhd
+# Path to mailbox files
+MAILBOX_DIR = $(CONFIG_TOP)/modules/mailbox/vhd
 
 # vim: set filetype=make:

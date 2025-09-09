@@ -17,6 +17,9 @@ architecture arch of testbench is
     signal pad_AMC_PCI_TX_N : std_ulogic_vector(7 downto 4);
     signal pad_FPGA_SLAVE_SCL : std_logic;
     signal pad_FPGA_SLAVE_SDA : std_logic;
+    signal pad_FP_LED2A_K : std_ulogic;
+    signal pad_FP_LED2B_K : std_ulogic;
+    signal pad_FMC1_LED : std_ulogic_vector(1 to 4);
 
 begin
     pad_SYSCLK100_P <= not pad_SYSCLK100_P after 5 ns;
@@ -32,7 +35,10 @@ begin
         pad_AMC_PCI_TX_P => pad_AMC_PCI_TX_P,
         pad_AMC_PCI_TX_N => pad_AMC_PCI_TX_N,
         pad_FPGA_SLAVE_SCL => pad_FPGA_SLAVE_SCL,
-        pad_FPGA_SLAVE_SDA => pad_FPGA_SLAVE_SDA
+        pad_FPGA_SLAVE_SDA => pad_FPGA_SLAVE_SDA,
+        pad_FP_LED2A_K => pad_FP_LED2A_K,
+        pad_FP_LED2B_K => pad_FP_LED2B_K,
+        pad_FMC1_LED => pad_FMC1_LED
     );
 
     pad_FPGA_SLAVE_SCL <= 'H';

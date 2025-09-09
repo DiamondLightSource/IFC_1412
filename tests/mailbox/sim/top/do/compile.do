@@ -3,6 +3,7 @@ set vhd_dir $env(VHD_DIR)
 set common_vhd $env(COMMON_VHD)
 set bench_dir $env(BENCH_DIR)
 set file_list $env(FILE_LIST)
+set mailbox_dir $env(MAILBOX_DIR)
 
 vlib work
 vlib msim

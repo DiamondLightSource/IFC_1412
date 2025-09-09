@@ -1,3 +1,0 @@
-BUILT += register_defines.vhd
-
-# vim: set filetype=make:

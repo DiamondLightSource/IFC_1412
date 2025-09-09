@@ -46,10 +46,17 @@ def register_defines(calling_file):
     here = os.path.dirname(calling_file)
     return os.path.abspath(os.path.join(here, '../vhd/register_defines.in'))
 
+# Path to module specific register defines
+def module_defines(module):
+    return os.path.join(
+        top_dir(), 'modules', module, 'vhd',
+        module + '_defines.in')
+
 # Path to GDDR6 register defs file
 def gddr6_register_defines():
-    return os.path.join(top_dir(), 'gddr6/vhd/gddr6_register_defines.in')
+    return os.path.join(top_dir(),
+        'modules/gddr6/vhd/gddr6_register_defines.in')
 
 # Path to LMK04616 register defs file
 def lmk04616_defines():
-    return os.path.join(top_dir(), 'lmk04616/vhd/lmk04616_defines.in')
+    return module_defines('lmk04616')

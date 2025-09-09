@@ -1,6 +1,12 @@
 BUILT += register_defines.vhd
+BUILT += mailbox_defines.vhd
 BUILT += top_entity.vhd
 
+REG_INCLUDES_register += $(MAILBOX_DIR)/mailbox_defines.in
+
+VPATH += $(MAILBOX_DIR)
+
+export MAILBOX_DIR
 export FILE_LIST = $(FPGA_TOP)/file-list
 
 # vim: set filetype=make:
