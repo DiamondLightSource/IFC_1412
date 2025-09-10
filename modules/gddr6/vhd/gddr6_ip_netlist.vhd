@@ -47,11 +47,8 @@ entity gddr6_ip_netlist is
         s_reg_WVALID_i : in std_ulogic;
         s_reg_WREADY_o : out std_ulogic;
 
-
         -- Optional trigger (on reg clock) to capture SG transactions
         setup_trigger_i : in std_ulogic := '0';
-        -- Status of memory controller
-        memory_ready_o : out std_ulogic;
 
 
         -- ---------------------------------------------------------------------
@@ -98,6 +95,8 @@ entity gddr6_ip_netlist is
 
         -- AXI statistics events generated on AXI memory clock
         axi_stats_o : out std_ulogic_vector(0 to 10);
+        -- Status of memory controller
+        memory_ready_o : out std_ulogic;
 
 
         -- ---------------------------------------------------------- --
@@ -279,7 +278,6 @@ begin
         read_ack_o => read_ack,
 
         setup_trigger_i => setup_trigger_i,
-        memory_ready_o => memory_ready_o,
 
         axi_clk_i => s_axi_ACLK,
 
@@ -298,6 +296,7 @@ begin
         axi_response_o.read_data.valid => s_axi_RVALID_o,
 
         axi_stats_o => axi_stats,
+        memory_ready_o => memory_ready_o,
 
         pad_SG12_CK_P_i => pad_SG12_CK_P_i,
         pad_SG12_CK_N_i => pad_SG12_CK_N_i,

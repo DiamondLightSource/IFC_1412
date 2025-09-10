@@ -43,9 +43,6 @@ entity gddr6 is
         -- rising edge of this signal which must be held high for more than two
         -- REG_FREQUENCY ticks.
         setup_trigger_i : in std_ulogic;
-        -- Reports memory ready status.  This is normally rising edge only, is
-        -- asserted asynchronously, and is on a false path.
-        memory_ready_o : out std_ulogic;
 
 
         -- AXI slave interface to 4GB GDDR6 SGRAM
@@ -54,6 +51,9 @@ entity gddr6 is
         axi_request_i : in axi_request_t;
         axi_response_o : out axi_response_t;
         axi_stats_o : out axi_stats_t;
+        -- Reports memory ready status.  This is normally rising edge only, and
+        -- is synchronised to ack_clk_i.
+        memory_ready_o : out std_ulogic;
 
 
         -- GDDR6 PHY Interface
@@ -133,12 +133,7 @@ architecture arch of gddr6 is
     signal phy_status : phy_status_t;
 
     signal enable_controller : std_ulogic;
-
-    -- Mark the memory_ready_o signal as un-timed
-    attribute false_path_from : string;
-    attribute false_path_from of memory_ready_o : signal is "TRUE";
-    attribute KEEP : string;
-    attribute KEEP of memory_ready_o : signal is "true";
+    signal memory_ready : std_ulogic := '0';
 
 begin
     -- AXI Slave Interface
@@ -286,9 +281,17 @@ begin
             setup_dbi_n_in <= phy_dbi_n_in;
 
             -- Report when the memory controller is fully active
-            memory_ready_o <=
+            memory_ready <=
                 enable_controller and
                 ctrl_setup.enable_axi and ctrl_setup.enable_refresh;
         end if;
     end process;
+
+
+    -- Bring memory ready signal over to the AXI clock
+    sync_ready : entity work.sync_bit port map (
+        clk_i => axi_clk_i,
+        bit_i => memory_ready,
+        bit_o => memory_ready_o
+    );
 end;
