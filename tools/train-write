@@ -31,6 +31,8 @@ parser.add_argument('-v', '--validate', action = 'store_true')
 parser.add_argument('-q', '--quiet', action = 'count', default = 0)
 # parser.add_argument('-c', '--check', action = 'store_true')
 # parser.add_argument('read_count', default = 6, type = int, nargs = '?')
+parser.add_argument('--report', type = str)
+parser.add_argument('--append', action = 'store_true')
 args = parser.parse_args()
 
 
@@ -235,6 +237,17 @@ def count_offset(byte):
     assert False, 'Unable to find bitslip offset'
 
 
+def create_report(report, append, bitslips, delays, windows):
+    mode = 'a' if append else 'w'
+    with open(report, mode) as report:
+        def print_array(array):
+            print(' '.join(map(str, array)), file = report)
+        print_array(bitslips)
+        print_array(delays)
+        print_array(windows)
+
+
+
 if args.find_bitslip:
     # Search for best bitslip
     data, dbi = write_test()
@@ -243,8 +256,9 @@ if args.find_bitslip:
     offsets = [count_offset(b) for b in last_column]
     if not args.quiet:
         print(offsets)
-    for n, o in enumerate(offsets):
-        set_obitslip(sg, n, max(0, o - 1))
+    bitslips = [max(0, o - 1) for o in offsets]
+    for n, b in enumerate(bitslips):
+        set_obitslip(sg, n, b)
 
 
 if args.scan_bitslips:
@@ -281,6 +295,9 @@ elif args.scan:
         print('Minimum write window:', windows.min())
     for pin in range(72):
         set_odelay(sg, pin, odelays[pin])
+
+if args.report:
+    create_report(args.report, args.append, bitslips, odelays, windows)
 
 
 if args.validate:

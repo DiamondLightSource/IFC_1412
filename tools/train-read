@@ -27,6 +27,7 @@ parser.add_argument('-R', '--reset_idelay', action = 'store_true')
 parser.add_argument('-v', '--validate', action = 'store_true')
 parser.add_argument('-x', '--exchange', action = 'store_true')
 parser.add_argument('-q', '--quiet', action = 'count', default = 0)
+parser.add_argument('--report', type = str)
 args = parser.parse_args()
 
 
@@ -208,7 +209,7 @@ def find_eyes(matches):
     if not args.quiet:
         print(list(lengths))
         print(centres)
-    return (centres, min(lengths))
+    return (centres, min(lengths), lengths)
 
 
 def count_offset(byte):
@@ -219,6 +220,16 @@ def count_offset(byte):
             byte = (byte << 1) & 0xFF
     assert False, 'Unable to find bitslip offset'
 
+
+def create_report(report, bitslips, delays, windows):
+    with open(report, 'w') as report:
+        def print_array(array):
+            print(' '.join(map(str, array)), file = report)
+        print_array(bitslips)
+        print_array(delays)
+        print_array(windows)
+
+
 if args.find_bitslip:
     # Search for best bitslip
     data, dbi, edc = read_test()
@@ -227,20 +238,24 @@ if args.find_bitslip:
     offsets = [count_offset(b) for b in data]
     if not args.quiet:
         print(offsets)
-    for n, o in enumerate(offsets):
-        set_ibitslip(sg, n, max(0, o - 1))
+    bitslips = [max(0, o - 1) for o in offsets]
+    for n, b in enumerate(bitslips):
+        set_ibitslip(sg, n, b)
 
 
 if args.sweep:
     matches = sweep_delays(500)
     if matches.any(axis = 0).all():
-        delays, min_window = find_eyes(matches)
+        delays, min_window, windows = find_eyes(matches)
         if args.quiet < 2:
             print('Minimum read window:', min_window)
         set_idelays(delays)
     elif args.sweep:
         print('Not enough data eyes found')
         print(matches)
+
+if args.report:
+    create_report(args.report, bitslips, delays, windows)
 
 
 def check_read_data():

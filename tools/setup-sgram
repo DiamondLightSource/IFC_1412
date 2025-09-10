@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 ADDRESS=0
-while getopts 'a:h' option; do
+REPORT=()
+while getopts 'a:r:h' option; do
     case "$option" in
     a)  ADDRESS="$OPTARG" ;;
+    r)  REPORT=(--report "$OPTARG") ;;
     h)  cat << EOF
 Usage: setup-sgram [options] [profile]
 Options:
     -a: Specify board address, default is 0
+    -r: Write training report to specified file
 EOF
         exit 0 ;;
     *)  echo >&2 'Invalid option: try -h for help'
@@ -15,14 +18,14 @@ EOF
     esac
 done
 
-cd "$(dirname "$0")"  &&
+HERE="$(dirname "$0")"
 
-./enable-ctrl -a$ADDRESS -d  &&
-./reset-ck -a$ADDRESS  &&
-./reset-sg -a$ADDRESS  &&
-./train-ca -a$ADDRESS -q  &&
-./read-vid -a$ADDRESS -q  &&
-./config-sg -a$ADDRESS  &&
-./train-read -a$ADDRESS -frR -sv -q  &&
-./train-write -a$ADDRESS -frR -sv -q  &&
-./enable-ctrl -a$ADDRESS -e
+"$HERE"/enable-ctrl -a$ADDRESS -d  &&
+"$HERE"/reset-ck -a$ADDRESS  &&
+"$HERE"/reset-sg -a$ADDRESS  &&
+"$HERE"/train-ca -a$ADDRESS -q  &&
+"$HERE"/read-vid -a$ADDRESS -q  &&
+"$HERE"/config-sg -a$ADDRESS  &&
+"$HERE"/train-read -a$ADDRESS "${REPORT[@]}" -frR -sv -q  &&
+"$HERE"/train-write -a$ADDRESS "${REPORT[@]}" --append -frR -sv -q  &&
+"$HERE"/enable-ctrl -a$ADDRESS -e
