@@ -114,6 +114,34 @@ data
     The delays shown are a combination of memory delays (shown along the top)
     and internal delays.
 
+Request Pipeline
+................
+
+The request pipeline turned out to be surprisingly complex and is worth
+describing in more detail.  The figure below shows the detailed structure of
+this:
+
+..  figure:: build/figures/request.png
+
+The input from ``mux`` has a skid buffer to provide a registered boundary for
+the combinatorial pipeline ready chain.  Commands are then fed into the four
+stage pipeline shown with ready flags propagating upwards from the bottom.
+
+The table below shows the detailed meaning of the symbols used for the pipeline
+stage.  The guard input is set to 1 if not required.  Notice the combinatorial
+propagation of the ready chain.
+
+=============== ================================================================
+Symbol          Detail
+=============== ================================================================
+|pipeline|      |pipeline-detail|
+=============== ================================================================
+
+..  |pipeline| image:: build/figures/pipeline.png
+..  |pipeline-detail| image:: build/figures/pipeline-detail.png
+
+
+
 AXI
 ---
 
@@ -166,17 +194,14 @@ The symbols on the connections show flow control as described in the key below.
         a fresh transaction on every tick when appropriate.
     * - |symbol-all|
       - This combines the symbols above into a standard data burst.
+    * - |symbol-ready|
+      - This indicates a flow where only the ready signal is used.  The sender
+        must have valid data available when ready is asserted.
     * - |symbol-valid|
       - This indicates a flow where only the valid signal is used.  The receiver
         must be either always be ready, or some readyness must be ensured
         through some other mechanism.
-    * - |symbol-ready|
-      - This indicates a flow where only the ready signal is used.  The sender
-        must have valid data available when ready is asserted.
 
-..
-    * - |symbol-valid|
-      - Blah
 
 ..  |symbol-flow| image:: build/figures/symbol-flow.png
 ..  |symbol-frame| image:: build/figures/symbol-frame.png
@@ -189,6 +214,3 @@ Misc
 ----
 
 ..  figure:: build/figures/sg-termination.png
-..  figure:: build/figures/request.png
-..  figure:: build/figures/request.old.png
-
