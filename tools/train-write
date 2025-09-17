@@ -292,7 +292,7 @@ elif args.scan:
         print(list(odelays), ';')
         print(list(windows), ';')
     if args.quiet < 2:
-        print('Minimum write window:', windows.min())
+        print('Write window:', windows.min(), 'to', windows.max())
     for pin in range(72):
         set_odelay(sg, pin, odelays[pin])
 

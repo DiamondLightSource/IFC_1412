@@ -209,7 +209,7 @@ def find_eyes(matches):
     if not args.quiet:
         print(list(lengths))
         print(centres)
-    return (centres, min(lengths), lengths)
+    return (centres, lengths)
 
 
 def count_offset(byte):
@@ -246,9 +246,9 @@ if args.find_bitslip:
 if args.sweep:
     matches = sweep_delays(500)
     if matches.any(axis = 0).all():
-        delays, min_window, windows = find_eyes(matches)
+        delays, windows = find_eyes(matches)
         if args.quiet < 2:
-            print('Minimum read window:', min_window)
+            print('Read window:', windows.min(), 'to', windows.max())
         set_idelays(delays)
     elif args.sweep:
         print('Not enough data eyes found')
