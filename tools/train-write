@@ -173,7 +173,7 @@ if not args.quiet:
 
 
 def sweep_delays(max_delay):
-    matches = numpy.zeros((max_delay, 72), dtype = numpy.bool)
+    matches = numpy.zeros((max_delay, 72), dtype = numpy.bool_)
     for delay in range(max_delay):
         for pin in range(72):
             set_odelay(sg, pin, delay)

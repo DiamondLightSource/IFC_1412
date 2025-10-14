@@ -171,7 +171,7 @@ def set_idelays(delays):
 
 
 def sweep_delays(max_delay):
-    matches = numpy.zeros((max_delay, 80), dtype = numpy.bool)
+    matches = numpy.zeros((max_delay, 80), dtype = numpy.bool_)
     for delay in range(max_delay):
         set_idelays(delay)
         data, dbi, edc = read_test()
