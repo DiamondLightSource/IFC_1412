@@ -18,10 +18,11 @@ entity mailbox is
         clk_i : in std_ulogic;
 
         -- Single register interface
-        write_strobe_i : in std_ulogic;
-        write_data_i : in reg_data_t;
+        -- Can be left unconnected if not required
+        write_strobe_i : in std_ulogic := '0';
+        write_data_i : in reg_data_t := (others => '0');
         write_ack_o : out std_ulogic;
-        read_strobe_i : in std_ulogic;
+        read_strobe_i : in std_ulogic := '0';
         read_data_o : out reg_data_t;
         read_ack_o : out std_ulogic;
 
