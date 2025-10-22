@@ -122,6 +122,7 @@ describing in more detail.  The figure below shows the detailed structure of
 this:
 
 ..  figure:: build/figures/request.png
+    :width: 60%
 
 The input from ``mux`` has a skid buffer to provide a registered boundary for
 the combinatorial pipeline ready chain.  Commands are then fed into the four
