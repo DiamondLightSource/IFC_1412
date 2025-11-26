@@ -38,7 +38,6 @@ entity i2c_core is
         tx_strobe_o : out std_ulogic := '0';
         tx_ack_i : in std_ulogic;
 
-        error_o : out std_ulogic := '0';
         stop_o : out std_ulogic := '0'
     );
 end;
@@ -114,7 +113,6 @@ begin
             sda_o <= '1';
             rx_strobe_o <= '0';
             tx_strobe_o <= '0';
-            error_o <= '0';
         end;
 
         procedure start_receive is

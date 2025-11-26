@@ -30,7 +30,6 @@ architecture arch of i2c_master is
     constant T_LOW : time := 4.7 us;
     constant T_HIGH : time := 4.0 us;
 
-    subtype address_t is unsigned(10 downto 0);
     subtype data_t is std_ulogic_vector(7 downto 0);
     type data_array_t is array(natural range<>) of data_t;
 
@@ -136,22 +135,20 @@ begin
         end;
 
         procedure write_mailbox_address(
-            address : address_t; variable ack : inout std_ulogic) is
+            message : natural; variable ack : inout std_ulogic) is
         begin
-            maybe_write_byte(
-                5X"00" & std_ulogic_vector(address(10 downto 8)), ack);
-            maybe_write_byte(std_ulogic_vector(address(7 downto 0)), ack);
+            maybe_write_byte(to_std_ulogic_vector_u(message, 8), ack);
         end;
 
 
         procedure write_mailbox_bytes(
-            address : address_t; bytes : data_array_t)
+            message : natural; bytes : data_array_t)
         is
             variable ack : std_ulogic;
         begin
             start;
             write_byte(MB_ADDRESS & '0', ack);
-            write_mailbox_address(address, ack);
+            write_mailbox_address(message, ack);
             for ix in bytes'RANGE loop
                 maybe_write_byte(bytes(ix), ack);
             end loop;
@@ -162,20 +159,20 @@ begin
             stop;
         end;
 
-        procedure write_mailbox_byte(address : address_t; byte : data_t) is
+        procedure write_mailbox_byte(message : natural; byte : data_t) is
         begin
-            write_mailbox_bytes(address, (0 => byte));
+            write_mailbox_bytes(message, (0 => byte));
         end;
 
 
-        procedure read_mailbox_bytes(address : address_t; count : natural)
+        procedure read_mailbox_bytes(message : natural; count : natural)
         is
             variable ack : std_ulogic;
             variable result : data_t;
         begin
             start;
             write_byte(MB_ADDRESS & '0', ack);
-            write_mailbox_address(address, ack);
+            write_mailbox_address(message, ack);
             if ack then
                 start;
                 write_byte(MB_ADDRESS & '1', ack);
@@ -189,7 +186,6 @@ begin
             stop;
         end;
 
-variable dummy : std_ulogic;
     begin
         done_o <= '0';
         scl_io <= 'H';
@@ -197,18 +193,18 @@ variable dummy : std_ulogic;
 
         wait for 10 us;
 
-        write_mailbox_bytes(11X"123", (X"9A", X"12"));
+        write_mailbox_bytes(1, (X"9A", X"12"));
 
-        read_mailbox_bytes(11X"123", 3);
+        read_mailbox_bytes(1, 8);
 
         -- Finally write an "offical" MMC transaction: this consists of
-        --  message id 0
+        --  message version 0
         --  product 0584 = 1412
         --  version 2
         --  serial 0E8E3245 = 244200005
         --  slot 4
         --  checksum
-        write_mailbox_bytes(11X"00", (
+        write_mailbox_bytes(0, (
             X"00", X"05", X"84", X"02", X"0E", X"8E", X"32", X"45",
             X"04", X"5E"));
 

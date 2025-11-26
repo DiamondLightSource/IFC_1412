@@ -18,8 +18,6 @@ $mailbox_dir/mailbox_io.vhd
 $mailbox_dir/debounce.vhd
 $mailbox_dir/i2c_signals.vhd
 $mailbox_dir/i2c_core.vhd
-$mailbox_dir/register_share.vhd
-$mailbox_dir/register_share_rw.vhd
 $mailbox_dir/mailbox_slave.vhd
 $mailbox_dir/mailbox.vhd
 $vhd_dir/top.vhd

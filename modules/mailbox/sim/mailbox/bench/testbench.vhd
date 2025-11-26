@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
 
 use work.support.all;
 use work.register_defs.all;
@@ -12,7 +13,7 @@ end testbench;
 
 
 architecture arch of testbench is
-    constant MB_ADDRESS : std_ulogic_vector(6 downto 0) := 7X"55";
+    constant MB_ADDRESS : std_ulogic_vector(6 downto 0) := 7X"60";
 
     signal clk : std_ulogic := '0';
 
@@ -70,27 +71,31 @@ begin
     -- Register interface to mailbox
     process
         procedure write_reg(
-            address : std_ulogic_vector(10 downto 0);
+            message : natural; byte : natural;
             data : std_ulogic_vector(7 downto 0)) is
         begin
             write_reg(clk, write_data, write_strobe, write_ack, (
-                MAILBOX_ADDRESS_BITS => address,
+                MAILBOX_MSG_ADDR_BITS => to_std_ulogic_vector_u(message, 2),
+                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 4),
                 MAILBOX_DATA_BITS => data,
                 MAILBOX_WRITE_BIT => '1',
                 others => '0'), quiet => true);
-            write("MB[" & to_hstring(address) & "] <= " & to_hstring(data),
+            write("MB[" &
+                to_string(message) & ", " & to_string(byte) &
+                "] <= " & to_hstring(data),
                 stamp => true);
         end;
 
         procedure read_reg_result(
-            address : std_ulogic_vector(10 downto 0);
+            message : natural; byte : natural;
             variable result : out std_ulogic_vector;
             quiet : boolean := false)
         is
             variable value : reg_data_t;
         begin
             write_reg(clk, write_data, write_strobe, write_ack, (
-                MAILBOX_ADDRESS_BITS => address,
+                MAILBOX_MSG_ADDR_BITS => to_std_ulogic_vector_u(message, 2),
+                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 4),
                 MAILBOX_WRITE_BIT => '0',
                 others => '0'), quiet => true);
             read_reg_result(
@@ -98,17 +103,45 @@ begin
                 quiet => true);
             result := value(MAILBOX_DATA_BITS);
             if not quiet then
-                write("MB[" & to_hstring(address) & "] => " &
+                write("MB[" &
+                    to_string(message) & ", " & to_string(byte) & "] => " &
                     to_hstring(result) & " slot: " &
                     to_hstring(value(MAILBOX_SLOT_BITS)),
                     stamp => true);
             end if;
         end;
 
-        procedure read_reg(address : std_ulogic_vector(10 downto 0)) is
+        procedure read_reg(message : natural; byte : natural) is
             variable result : std_ulogic_vector(7 downto 0);
         begin
-            read_reg_result(address, result);
+            read_reg_result(message, byte, result);
+        end;
+
+        procedure read_message(message : natural) is
+            variable result : vector_array(0 to 15)(7 downto 0);
+            variable linebuffer : line;
+        begin
+            for i in 0 to 15 loop
+                read_reg_result(message, i, result(i), true);
+            end loop;
+
+            -- The following is a true mess.  Look at the lovely syntax required
+            -- print the timestamp as a floating number with fixex precision.
+            -- Also using our own linebuffer so we can print result.  Sigh
+            write(linebuffer, "@ " &
+                to_string(1.0e-3 * real(now / 1 ns), 3) & "us: ");
+            write(linebuffer, "MB[" & to_string(message) & "] = ");
+            for i in 0 to 15 loop
+                write(linebuffer, to_hstring(result(i)) & " ");
+            end loop;
+            writeline(output, linebuffer);
+        end;
+
+        procedure write_message(message : natural; content : vector_array) is
+        begin
+            for i in content'RANGE loop
+                write_reg(message, i, content(i));
+            end loop;
         end;
 
         variable i2c_value : std_ulogic_vector(7 downto 0);
@@ -119,18 +152,23 @@ begin
 
         clk_wait(100);
 
-        write_reg(11X"012", X"23");
-
-        clk_wait(5);
-        read_reg(11X"012");
+        -- Populate the outgoing message buffers
+        write_message(0, (X"01", X"02", X"03", X"04", X"05", X"06"));
+        write_message(1, (X"11", X"12", X"13", X"14", X"15", X"16"));
 
         -- Now wait for I2C to complete
         wait until i2c_done;
         clk_wait;
 
         -- Read the slot number, should be 4
-        read_reg_result(11X"008", i2c_value);
+        read_reg_result(0, 8, i2c_value);
         write("I2C[8] = " & to_hstring(i2c_value));
+
+        -- Read the entire message area
+        read_message(0);
+        read_message(1);
+        read_message(2);
+        read_message(3);
 
         wait;
     end process;

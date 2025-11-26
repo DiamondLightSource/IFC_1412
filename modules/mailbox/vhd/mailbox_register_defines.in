@@ -1,7 +1,9 @@
 # Access to mailbox on I2C bus
 :MAILBOX        RW
-    # Address of field to read or write
-    .ADDRESS    11
+    # Message number to read or write
+    .MSG_ADDR   2
+    # Byte offset in message to read or write
+    .BYTE_ADDR  4
     # Data to write on write, data returned on read
     .DATA       8
     # Set for write cycle, otherwise .DATA is read from mailbox

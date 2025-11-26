@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument(
         '-a', dest = 'address', default = 0,
         help = 'Set physical address of card.  If not specified then card 0')
+    parser.add_argument(
+        '-f', dest = 'force', action = 'store_true',
+        help = 'Ignore faulty checksum')
 
     subparsers = parser.add_subparsers(
         dest = 'select',
@@ -40,9 +43,6 @@ def parse_args():
         description = 'Read from mailbox')
     read_parser.add_argument(
         'mb_address', type = to_int, help = 'Address to read from')
-    read_parser.add_argument(
-        'count', type = int, default = 1, nargs = '?',
-        help = 'Number of values to read (defaults to 1)')
 
     write_parser = subparsers.add_parser('write',
         description = 'Write to mailbox')
@@ -71,60 +71,64 @@ def fail(message):
     sys.exit(1)
 
 
-def read_array(mailbox, address, count):
+def read_array(mailbox, message, count):
     result = []
     for n in range(count):
-        mailbox._write_fields_wo(ADDRESS = address + n, WRITE = 0)
+        mailbox._write_fields_wo(
+            MSG_ADDR = message, BYTE_ADDR = n, WRITE = 0)
         result.append(mailbox.DATA)
     return result
 
 
-def read_mailbox(mailbox, address, count):
+def read_mailbox(mailbox, address):
     result = ' '.join([
         f'{data:02X}'
-        for data in read_array(mailbox, address, count)])
+        for data in read_array(mailbox, address, 16)])
     print(f'MB[{address:03X}]: {result}')
 
-def write_mailbox(mailbox, address, values):
+def write_mailbox(mailbox, message, values):
     for n, value in enumerate(values):
         mailbox._write_fields_wo(
-            ADDRESS = address + n, DATA = value, WRITE = 1)
+            MSG_ADDR = message, BYTE_ADDR = n, DATA = value, WRITE = 1)
 
 
 MMC_Message = namedtuple('MMC',
-    ['id', 'product', 'version', 'serial', 'slot'])
+    ['ver', 'product', 'version', 'serial', 'slot'])
 
 
-def read_mmc_message(mailbox):
+def read_mmc_message(mailbox, force):
     data = bytes(read_array(mailbox, 0, 10))
     if not any(data):
         fail('Nothing written to mailbox')
-    if sum(data) % 256 != 0:
-        fail('Invalid checksum')
+    checksum = sum(data) % 256
+    if checksum != 0:
+        if force:
+            print(f'Invalid checksum 0x{checksum:02x}', file = sys.stderr)
+        else:
+            fail('Invalid checksum')
+
     # Decode mailbox according to following structure (all number big endian):
-    #   0       id, expected to be zero
+    #   0       Message version
     #   2:1     Product number (1412)
     #   3       Product version
     #   7:4     Product serial number
     #   8       AMC slot
     #   9       Checksum (already checked above)
     mmc = MMC_Message(*struct.unpack('>BHBLB', data[:-1]))
-    if mmc.id != 0:
-        fail(f'Invalid message id: {mmc.id}')
     if not 1 <= mmc.slot <= 12:
         fail(f'Invalid slot number: {mmc.slot}')
     return mmc
 
-def read_identity(mailbox, source):
+def read_identity(mailbox, source, force):
     assert source == 'mmc', 'Only mmc supported at present'
 
-    mmc = read_mmc_message(mailbox)
+    mmc = read_mmc_message(mailbox, force)
     print(
-        f'Product: {mmc.product} v{mmc.version} serial '
+        f'Ver: {mmc.ver} Product: {mmc.product} v{mmc.version} serial '
         f'{mmc.serial} in slot {mmc.slot}')
 
-def read_slot(mailbox):
-    mmc = read_mmc_message(mailbox)
+def read_slot(mailbox, force):
+    mmc = read_mmc_message(mailbox, force)
     print(mmc.slot)
 
 
@@ -133,12 +137,12 @@ def main():
     mailbox = open(args.address)
 
     if args.select == 'read':
-        read_mailbox(mailbox, args.mb_address, args.count)
+        read_mailbox(mailbox, args.mb_address)
     elif args.select == 'write':
         write_mailbox(mailbox, args.mb_address, args.values)
     elif args.select == 'ident':
-        read_identity(mailbox, args.source)
+        read_identity(mailbox, args.source, args.force)
     elif args.select == 'slot':
-        read_slot(mailbox)
+        read_slot(mailbox, args.force)
 
 main()

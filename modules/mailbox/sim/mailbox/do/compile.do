@@ -18,8 +18,6 @@ vcom -64 -2008 -work xil_defaultlib \
     $vhd_dir/debounce.vhd \
     $vhd_dir/i2c_signals.vhd \
     $vhd_dir/i2c_core.vhd \
-    $vhd_dir/register_share.vhd \
-    $vhd_dir/register_share_rw.vhd \
     $vhd_dir/mailbox_slave.vhd \
     $vhd_dir/mailbox.vhd
 
@@ -35,8 +33,8 @@ view wave
 add wave -group "IO" mailbox/io/*
 add wave -group "Signals" mailbox/core/signals/*
 add wave -group "Core" mailbox/core/*
-add wave -group "Slave Memory" mailbox/slave/memory/*
-add wave -group "Slave Share" mailbox/slave/share/*
+add wave -group "Slave RX" mailbox/slave/rx_messages/*
+add wave -group "Slave TX" mailbox/slave/tx_messages/*
 add wave -group "Slave" mailbox/slave/*
 add wave -group "Mailbox" mailbox/*
 add wave -group "Bench" sim:*

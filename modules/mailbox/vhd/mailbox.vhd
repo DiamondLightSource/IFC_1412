@@ -12,7 +12,11 @@ entity mailbox is
     generic (
         MB_ADDRESS : std_ulogic_vector(6 downto 0) := 7X"60";
         -- Address of the byte where the slot number will be written
-        SLOT_ADDRESS : natural := 8
+        SLOT_ADDRESS : natural := 8;
+        -- Number of supported messages
+        LOG_MSG_COUNT : natural := 2;
+        -- Number of bytes supported per message
+        LOG_MSG_LENGTH : natural := 4
     );
     port (
         clk_i : in std_ulogic;
@@ -49,6 +53,7 @@ architecture arch of mailbox is
     signal tx_data : std_ulogic_vector(7 downto 0);
     signal tx_ack : std_ulogic;
     signal tx_strobe : std_ulogic;
+    signal i2c_stop : std_ulogic;
 
 begin
     io : entity work.mailbox_io port map (
@@ -80,13 +85,14 @@ begin
         tx_ack_i => tx_ack,
         tx_strobe_o => tx_strobe,
 
-        error_o => open,
-        stop_o => open
+        stop_o => i2c_stop
     );
 
     slave : entity work.mailbox_slave generic map (
         MB_ADDRESS => MB_ADDRESS,
-        SLOT_ADDRESS => SLOT_ADDRESS
+        SLOT_ADDRESS => SLOT_ADDRESS,
+        LOG_MSG_COUNT => LOG_MSG_COUNT,
+        LOG_MSG_LENGTH => LOG_MSG_LENGTH
     ) port map (
         clk_i => clk_i,
 
@@ -99,6 +105,8 @@ begin
         tx_data_o => tx_data,
         tx_ack_o => tx_ack,
         tx_strobe_i => tx_strobe,
+
+        i2c_stop_i => i2c_stop,
 
         write_strobe_i => write_strobe_i,
         write_data_i => write_data_i,
