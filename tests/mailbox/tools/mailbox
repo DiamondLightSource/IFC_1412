@@ -31,9 +31,6 @@ def parse_args():
     parser.add_argument(
         '-a', dest = 'address', default = 0,
         help = 'Set physical address of card.  If not specified then card 0')
-    parser.add_argument(
-        '-f', dest = 'force', action = 'store_true',
-        help = 'Ignore faulty checksum')
 
     subparsers = parser.add_subparsers(
         dest = 'select',
@@ -52,23 +49,30 @@ def parse_args():
         'values', type = to_int, nargs = '+',
         help = 'Values to write')
 
-    identity_parser = subparsers.add_parser('ident',
+    slot_parser = subparsers.add_parser('slot',
+        description = 'Show slot number')
+
+    identity_parser = subparsers.add_parser('show',
         description = 'Return identity')
     identity_parser.add_argument(
-        'source', default = 'mmc', choices = ['mmc', 'rtm'], nargs = '?',
-        help = 'Select identity to return')
-
-    slot_parser = subparsers.add_parser('slot',
-        description = 'Return slot number')
+        'message', choices = ['mmc', 'rtm', 'payload'],
+        help = 'Select message to show')
 
     args = parser.parse_args()
     if args.select is None:
         parser.error("Must specify action")
     return args
 
-def fail(message):
-    print(message, file = sys.stderr)
+
+def fail(*message):
+    print(' '.join(message), file = sys.stderr)
     sys.exit(1)
+
+def get_array_entry(array, ix, default):
+    try:
+        return array[ix]
+    except IndexError:
+        return default
 
 
 def read_array(mailbox, message, count):
@@ -84,7 +88,7 @@ def read_mailbox(mailbox, address):
     result = ' '.join([
         f'{data:02X}'
         for data in read_array(mailbox, address, 16)])
-    print(f'MB[{address:03X}]: {result}')
+    print(f'MB[{address}]: {result}')
 
 def write_mailbox(mailbox, message, values):
     for n, value in enumerate(values):
@@ -92,44 +96,134 @@ def write_mailbox(mailbox, message, values):
             MSG_ADDR = message, BYTE_ADDR = n, DATA = value, WRITE = 1)
 
 
-MMC_Message = namedtuple('MMC',
-    ['ver', 'product', 'version', 'serial', 'slot'])
+# Common code for interpreting mailbox messages
+class Message:
+    # Must define the following in a subclass:
+    __fields__ = []
+    __message_id__ = 0
+    __struct__ = ''
+    __length__ = 0
+
+    def __init__(self, *values):
+        for field, value in zip(self.__fields__, values):
+            setattr(self, field, value)
+
+    @classmethod
+    def read(cls, mailbox):
+        data = bytes(read_array(mailbox, cls.__message_id__, cls.__length__))
+        if not any(data):
+            fail('Nothing written to mailbox {cls.__message_id__}')
+        checksum = (cls.__message_id__ + sum(data)) % 256
+        if checksum != 0:
+            fail('Invalid checksum: ', ' '.join(f'{x:02X}' for x in data),
+                f'({checksum:02X})')
+
+        return cls(*struct.unpack(cls.__struct__, data[:-1]))
+
+    def __repr__(self):
+        values = ', '.join(
+            f'{name} = {getattr(self, name)}' for name in self.__fields__)
+        return f'{self.__class__.__name__}: {values}'
 
 
-def read_mmc_message(mailbox, force):
-    data = bytes(read_array(mailbox, 0, 10))
-    if not any(data):
-        fail('Nothing written to mailbox')
-    checksum = sum(data) % 256
-    if checksum != 0:
-        if force:
-            print(f'Invalid checksum 0x{checksum:02x}', file = sys.stderr)
-        else:
-            fail('Invalid checksum')
-
+class MMC_Message(Message):
+    __fields__ = ['ver', 'product', 'version', 'serial', 'slot']
+    __message_id__ = 0
     # Decode mailbox according to following structure (all number big endian):
     #   0       Message version
     #   2:1     Product number (1412)
     #   3       Product version
     #   7:4     Product serial number
     #   8       AMC slot
-    #   9       Checksum (already checked above)
-    mmc = MMC_Message(*struct.unpack('>BHBLB', data[:-1]))
-    if not 1 <= mmc.slot <= 12:
-        fail(f'Invalid slot number: {mmc.slot}')
-    return mmc
+    __struct__ = '>BHBLB'
+    __length__ = 10
 
-def read_identity(mailbox, source, force):
-    assert source == 'mmc', 'Only mmc supported at present'
+    def format(self):
+        print(
+            f'Ver: {self.ver} Product: {self.product} v{self.version} serial '
+            f'{self.serial} in slot {self.slot}')
 
-    mmc = read_mmc_message(mailbox, force)
-    print(
-        f'Ver: {mmc.ver} Product: {mmc.product} v{mmc.version} serial '
-        f'{mmc.serial} in slot {mmc.slot}')
+class RTM_Message(Message):
+    __fields__ = ['ver', 'state', 'product', 'version', 'serial']
+    __message_id__ = 1
+    # Decode mailbox according to following structure (all number big endian):
+    #   0       Message version
+    #   2:1     Product number (1412)
+    #   3       Product version
+    #   7:4     Product serial number
+    #   8       AMC slot
+    __struct__ = '>BBHBL'
+    __length__ = 10
 
-def read_slot(mailbox, force):
-    mmc = read_mmc_message(mailbox, force)
-    print(mmc.slot)
+    def format(self):
+        state = get_array_entry(
+            ['absent', 'present', 'powered'], self.state, 'unknown');
+        print(
+            f'Ver: {self.ver} RTM {state} '
+            f'Product: {self.product} v{self.version} serial {self.serial}')
+
+class PayloadMessage(Message):
+    __fields__ = [
+        'ver',
+        'fpga_image',
+        'jtag_master',
+        'jtag_rtm',
+        'acq_clk_src',
+        'acq_clk_vcxo',
+        'fmc1_enum',
+        'fmc2_enum',
+        'fmc1_refclk_src',
+        'fmc2_refclk_src',
+        'fmc1_sync_src',
+        'fmc2_sync_src',
+        'tclkb_mode']
+    __message_id__ = 2
+    __struct__ = 'BBBBBBBBBBBBBB'
+    __length__ = 15
+
+    PAYLOAD_OPTIONS = {
+        'tclkb_mode' : ('none', 'acq-amc', 'amc-fpga'),
+        'fpga_image' : ('a', 'b'),
+        'jtag_master' : ('onboard', 'backplane'),
+        'jtag_rtm' : ('disable', 'enable'),
+        'acq_clk_src' : (
+           'fmc2-clk1', 'fmc2-clk0', 'fmc1-clk1', 'fmc1-clk0',
+           'rtm-clk', 'none'),
+        'acq_clk_vcxo' : ('disable', 'enable'),
+        'fmc1_enum' : ('legacy', 'mmc', 'delegated'),
+        'fmc2_enum' : ('legacy', 'mmc', 'delegated'),
+        'fmc1_refclk_src' :
+           {0 : 'acq', 1 : 'other-fmc', 0x83 : 'none'},
+        'fmc2_refclk_src' :
+           {0 : 'acq', 1 : 'other-fmc', 0x83 : 'none'},
+        'fmc1_sync_src' :
+           {0 : 'fpga', 1 : 'other-fmc', 0x83 : 'none'},
+        'fmc2_sync_src' :
+            {0 : 'fpga', 1 : 'other-fmc', 0x83 : 'none'},
+    }
+
+    def format(self):
+        print(f'Payload Ver: {self.ver}')
+        for key, options in self.PAYLOAD_OPTIONS.items():
+            value = getattr(self, key)
+            try:
+                descr = options[value]
+            except IndexError:
+                descr = f'INVALID ({value:02x})'
+            print(f'{key:15} = ({value:02x}) {descr}')
+
+
+def read_slot(mailbox):
+    print(MMC_Message.read(mailbox).slot)
+
+
+def show_message(mailbox, message):
+    MESSAGES = {
+        'mmc' : MMC_Message,
+        'rtm' : RTM_Message,
+        'payload' : PayloadMessage,
+    }
+    MESSAGES[message].read(mailbox).format()
 
 
 def main():
@@ -140,9 +234,9 @@ def main():
         read_mailbox(mailbox, args.mb_address)
     elif args.select == 'write':
         write_mailbox(mailbox, args.mb_address, args.values)
-    elif args.select == 'ident':
-        read_identity(mailbox, args.source, args.force)
     elif args.select == 'slot':
-        read_slot(mailbox, args.force)
+        read_slot(mailbox)
+    elif args.select == 'show':
+        show_message(mailbox, args.message)
 
 main()

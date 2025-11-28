@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import struct
 import datetime
+import inspect
 from collections import OrderedDict
 
 
@@ -76,18 +77,22 @@ def parse_amc(amc_string):
     return 2 * amc + 0x70
 
 def parse_args():
-    parser = argparse.ArgumentParser('IFC_1412 IPMI commands')
-    parser.add_argument('-d', '--dry_run', action = 'store_true')
+    parser = argparse.ArgumentParser('IFC_1412 IPMI commands', epilog = '''\
+Type `ifc1412 mch amc help` for list of available commands and
+`ifc1412 mch amc help command` for detailed help for command.''')
+    parser.add_argument('-d', '--dry_run', action = 'store_true', help = '''\
+Don't actually run command, instead print generate IPMI commands''')
     parser.add_argument('mch',
         help = 'Network address of MCH')
-    parser.add_argument('amc', type = parse_amc,
-        help = 'AMC slot of card to address')
+    parser.add_argument('amc', type = parse_amc, help = '''\
+AMC slot of card to address, must be of form AMC$n where $n is a valid slot
+number in the range 1 to 12''')
 
-    parser.add_argument('action',
-        help = 'Basic action to request')
-    parser.add_argument('command', nargs = '?',
-        help = 'Command')
-    parser.add_argument('args', nargs = '*')
+    parser.add_argument('action', help = '''\
+Basic action to request, use `help` to list available actions''')
+    parser.add_argument('args', nargs = '*', help = '''\
+Sub-command if applicable followed by command specific arguments.  Use `help
+command` for information about arguments.''')
 
     return parser.parse_args()
 
@@ -129,11 +134,18 @@ def lookup_command(commands, command):
 
 def dispatch(args, ipmi):
     nested, function = lookup_action(args.action)
+    name = args.action
     if nested:
-        function = lookup_command(function, args.command)
-    elif args.command:
-        args.args = [args.command] + args.args
-    function(ipmi, *args.args)
+        function = lookup_command(function, args.args[0])
+        name += ' ' + args.args[0]
+        args.args = args.args[1:]
+
+    try:
+        inspect.signature(function).bind(ipmi, *args.args)
+    except TypeError as e:
+        print(f'Error: "{name}" {e}')
+    else:
+        function(ipmi, *args.args)
 
 
 # Returns title, args, detailed help
@@ -468,11 +480,13 @@ are interpreted as follows:
 def firmware_upgrade(ipmi, image):
     '''Set custom FRU info image
     filename
-Uses ipmi `hpm upgrade` command to upgrade the MMC firware.'''
+Uses ipmi `hpm upgrade` command to upgrade the MMC firware.  The file must be
+a .hpm file.'''
+#     ipmi.ipmi_cmd('hpm', 'check')
+#     ipmi.ipmi_cmd('hpm', 'check', image)
     print('The MMC will be rebooted to upgrade the firmware.')
     input('Press <control-c> to abort, or <return> to continue.')
     ipmi.ipmi_oem(0x03)
-    ipmi.ipmi_cmd('hpm check')
     input('Press <return> when MMC ready for upload')
     ipmi.ipmi_cmd('hpm', 'upgrade', image, 'activate')
     ipmi.ipmi_cmd('mc', 'reset', 'cold')
@@ -529,6 +543,6 @@ def temp_fpga(ipmi):
 def run_command():
     args = parse_args()
     ipmi = IPMI(args.mch, args.amc, args.dry_run)
-    command = dispatch(args, ipmi)
+    dispatch(args, ipmi)
 
 run_command()
