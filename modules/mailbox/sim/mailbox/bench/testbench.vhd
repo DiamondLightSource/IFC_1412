@@ -22,6 +22,27 @@ architecture arch of testbench is
         clk_wait(clk, count);
     end;
 
+    -- Helper function for printing an array of bytes
+    function to_string(value : vector_array) return string
+    is
+        variable linebuffer : line;
+    begin
+        for i in value'RANGE loop
+            write(linebuffer, to_hstring(value(i)) & " ");
+        end loop;
+        return linebuffer.all;
+    end;
+
+    -- Renders timestamp prefix in microseconds to 3 decimal places.  This is a
+    -- mess, and the alternative to_string(now, unit => us) doesn't generate a
+    -- consistent width
+    function timestamp_us(t : time) return string is
+    begin
+        -- This really is a cryptic mess
+        return "@ " & to_string(1.0e-3 * real(t / 1 ns), 3) & " us: ";
+    end;
+
+
     signal write_strobe : std_ulogic;
     signal write_data : reg_data_t;
     signal write_ack : std_ulogic;
@@ -72,7 +93,8 @@ begin
     process
         procedure write_reg(
             message : natural; byte : natural;
-            data : std_ulogic_vector(7 downto 0)) is
+            data : std_ulogic_vector(7 downto 0);
+            quiet : boolean := false) is
         begin
             write_reg(clk, write_data, write_strobe, write_ack, (
                 MAILBOX_MSG_ADDR_BITS => to_std_ulogic_vector_u(message, 2),
@@ -80,10 +102,12 @@ begin
                 MAILBOX_DATA_BITS => data,
                 MAILBOX_WRITE_BIT => '1',
                 others => '0'), quiet => true);
-            write("MB[" &
-                to_string(message) & ", " & to_string(byte) &
-                "] <= " & to_hstring(data),
-                stamp => true);
+            if not quiet then
+                write("TX[" &
+                    to_string(message) & ", " & to_string(byte) &
+                    "] <= " & to_hstring(data),
+                    stamp => true);
+            end if;
         end;
 
         procedure read_reg_result(
@@ -103,7 +127,7 @@ begin
                 quiet => true);
             result := value(MAILBOX_DATA_BITS);
             if not quiet then
-                write("MB[" &
+                write("RX[" &
                     to_string(message) & ", " & to_string(byte) & "] => " &
                     to_hstring(result) & " slot: " &
                     to_hstring(value(MAILBOX_SLOT_BITS)),
@@ -120,28 +144,22 @@ begin
         procedure read_message(message : natural) is
             variable result : vector_array(0 to 15)(7 downto 0);
             variable linebuffer : line;
+
         begin
             for i in 0 to 15 loop
                 read_reg_result(message, i, result(i), true);
             end loop;
-
-            -- The following is a true mess.  Look at the lovely syntax required
-            -- print the timestamp as a floating number with fixex precision.
-            -- Also using our own linebuffer so we can print result.  Sigh
-            write(linebuffer, "@ " &
-                to_string(1.0e-3 * real(now / 1 ns), 3) & "us: ");
-            write(linebuffer, "MB[" & to_string(message) & "] = ");
-            for i in 0 to 15 loop
-                write(linebuffer, to_hstring(result(i)) & " ");
-            end loop;
-            writeline(output, linebuffer);
+            write(timestamp_us(now) &
+                "RX[" & to_string(message) & "] => " & to_string(result));
         end;
 
         procedure write_message(message : natural; content : vector_array) is
         begin
             for i in content'RANGE loop
-                write_reg(message, i, content(i));
+                write_reg(message, i, content(i), true);
             end loop;
+            write(timestamp_us(now) &
+                "TX[" & to_string(message) & "] <= " & to_string(content));
         end;
 
         variable i2c_value : std_ulogic_vector(7 downto 0);
@@ -162,7 +180,7 @@ begin
 
         -- Read the slot number, should be 4
         read_reg_result(0, 8, i2c_value);
-        write("I2C[8] = " & to_hstring(i2c_value));
+        write("Slot = " & to_hstring(i2c_value));
 
         -- Read the entire message area
         read_message(0);

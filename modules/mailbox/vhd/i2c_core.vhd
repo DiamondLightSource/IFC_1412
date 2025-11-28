@@ -26,7 +26,8 @@ entity i2c_core is
         -- only likely to be useful for implementing a 10-bit read address.
         rx_restart_o : out std_ulogic;
         -- accept is only valid when ready is asserted, if not set then incoming
-        -- data will not be acknowledged.
+        -- data will not be acknowledged and any futher writes in this
+        -- transaction will be ignored.
         rx_accept_i : in std_ulogic;
         -- Strobe to request processing of received data, ack on completion
         rx_strobe_o : out std_ulogic := '0';

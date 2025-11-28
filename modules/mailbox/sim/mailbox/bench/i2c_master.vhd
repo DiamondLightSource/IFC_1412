@@ -47,6 +47,11 @@ begin
             end if;
         end function;
 
+        -- Generate I2C start sequence.  Requires SDA and SCL to be high, then
+        -- generate falling edge on SDA (the true start trigger) followed by
+        -- falling edge on SCL.
+        --  On entry: SDA = 1, SCL ready to go high.
+        --  On exit: SDA = 0, SCL = 0
         procedure start
         is
             variable delay : time;
@@ -69,6 +74,7 @@ begin
             clock_edge := now;
         end;
 
+        -- Generate I2C stop sequence
         procedure stop is
         begin
             sda_io <= '0';
@@ -105,7 +111,7 @@ begin
         end;
 
         procedure write_byte(
-            byte : data_t; variable ack : out std_ulogic)
+            byte : data_t; variable ack : out boolean)
         is
             variable nak : std_ulogic;
         begin
@@ -113,12 +119,12 @@ begin
                 write_bit(byte(bit));
             end loop;
             read_bit(nak);
-            ack := not nak;
+            ack := nak = '0';
             write("ack " & to_string(ack));
         end;
 
         procedure maybe_write_byte(
-            byte : data_t; variable ack : inout std_ulogic) is
+            byte : data_t; variable ack : inout boolean) is
         begin
             if ack then
                 write_byte(byte, ack);
@@ -126,31 +132,35 @@ begin
         end;
 
         procedure read_byte(
-            variable byte : out data_t; ack : std_ulogic) is
+            variable byte : out data_t; ack : boolean) is
         begin
             for bit in 7 downto 0 loop
                 read_bit(byte(bit));
             end loop;
-            write_bit(not ack);
+            write_bit(to_std_ulogic(not ack));
         end;
 
+
         procedure write_mailbox_address(
-            message : natural; variable ack : inout std_ulogic) is
+            message : natural; variable ack : inout boolean) is
         begin
             maybe_write_byte(to_std_ulogic_vector_u(message, 8), ack);
         end;
 
-
         procedure write_mailbox_bytes(
-            message : natural; bytes : data_array_t)
+            message : natural; bytes : data_array_t;
+            ignore_ack : boolean := false)
         is
-            variable ack : std_ulogic;
+            variable ack : boolean;
         begin
             start;
             write_byte(MB_ADDRESS & '0', ack);
+            ack := ack or ignore_ack;
             write_mailbox_address(message, ack);
+            ack := ack or ignore_ack;
             for ix in bytes'RANGE loop
                 maybe_write_byte(bytes(ix), ack);
+                ack := ack or ignore_ack;
             end loop;
 
             if not ack then
@@ -164,10 +174,9 @@ begin
             write_mailbox_bytes(message, (0 => byte));
         end;
 
-
         procedure read_mailbox_bytes(message : natural; count : natural)
         is
-            variable ack : std_ulogic;
+            variable ack : boolean;
             variable result : data_t;
         begin
             start;
@@ -177,7 +186,7 @@ begin
                 start;
                 write_byte(MB_ADDRESS & '1', ack);
                 for ix in 1 to count loop
-                    read_byte(result, to_std_ulogic(ix < count));
+                    read_byte(result, ix < count);
                     write("read " & to_hstring(result));
                 end loop;
             else
@@ -194,6 +203,12 @@ begin
         wait for 10 us;
 
         write_mailbox_bytes(1, (X"9A", X"12"));
+
+        -- This one should be rejected (message id too large)
+        write_mailbox_bytes(5, (X"12", X"34"));
+
+        -- Write an ignored message but ignore the nacks
+        write_mailbox_bytes(254, (X"FE", X"FD", X"FC"), ignore_ack => true);
 
         read_mailbox_bytes(1, 8);
 
