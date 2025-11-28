@@ -98,7 +98,7 @@ begin
         begin
             write_reg(clk, write_data, write_strobe, write_ack, (
                 MAILBOX_MSG_ADDR_BITS => to_std_ulogic_vector_u(message, 2),
-                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 4),
+                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 5),
                 MAILBOX_DATA_BITS => data,
                 MAILBOX_WRITE_BIT => '1',
                 others => '0'), quiet => true);
@@ -119,7 +119,7 @@ begin
         begin
             write_reg(clk, write_data, write_strobe, write_ack, (
                 MAILBOX_MSG_ADDR_BITS => to_std_ulogic_vector_u(message, 2),
-                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 4),
+                MAILBOX_BYTE_ADDR_BITS => to_std_ulogic_vector_u(byte, 5),
                 MAILBOX_WRITE_BIT => '0',
                 others => '0'), quiet => true);
             read_reg_result(
@@ -142,11 +142,11 @@ begin
         end;
 
         procedure read_message(message : natural) is
-            variable result : vector_array(0 to 15)(7 downto 0);
+            variable result : vector_array(0 to 31)(7 downto 0);
             variable linebuffer : line;
 
         begin
-            for i in 0 to 15 loop
+            for i in result'RANGE loop
                 read_reg_result(message, i, result(i), true);
             end loop;
             write(timestamp_us(now) &

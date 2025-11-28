@@ -16,7 +16,7 @@ entity mailbox is
         -- Number of supported messages
         LOG_MSG_COUNT : natural := 2;
         -- Number of bytes supported per message
-        LOG_MSG_LENGTH : natural := 4
+        LOG_MSG_LENGTH : natural := 5
     );
     port (
         clk_i : in std_ulogic;
