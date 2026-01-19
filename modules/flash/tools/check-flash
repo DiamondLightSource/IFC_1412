@@ -45,10 +45,7 @@ def check_flash(flash, main_clock, main_read_delay):
 
 
 def report_mailbox(mb):
-    mmc = mailbox.read_mmc_message(mb)
-    print(
-        f'Product: {mmc.product} v{mmc.version} serial '
-        f'{mmc.serial} in slot {mmc.slot}')
+    print(mailbox.read_message(mb, 'mmc').format())
 
 
 def main():
