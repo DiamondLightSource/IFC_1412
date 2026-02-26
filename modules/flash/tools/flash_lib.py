@@ -54,7 +54,7 @@ def add_common_args(parser, select = True):
         help = 'Set physical address of card.  If not specified then card 0')
     if select:
         parser.add_argument(
-            '-s', dest = 'select', default = 'user',
+            '-s', dest = 'select', required = True,
             choices = SelectOptions.keys(),
             help = 'Select which FLASH memory to access')
     parser.add_argument(

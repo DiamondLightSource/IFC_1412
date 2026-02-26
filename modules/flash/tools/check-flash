@@ -45,7 +45,10 @@ def check_flash(flash, main_clock, main_read_delay):
 
 
 def report_mailbox(mb):
-    print(mailbox.read_message(mb, 'mmc').format())
+    try:
+        print(mailbox.read_message(mb, 'mmc').format())
+    except mailbox.MailboxError as e:
+        print('Mailbox error:', e)
 
 
 def main():

@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import argparse
+
+import flash_lib
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description = 'Erase flash')
+    flash_lib.add_common_args(parser)
+    parser.add_argument(
+        'count', default = 256, type = int,
+        help = 'Number of 256KB sectors to erase (defaults to all)')
+    return parser.parse_args()
+
+
+def wait_while_busy(e):
+    # Wait for erase to complete
+    while True:
+        status = e.RDSR1()
+        if not status & 1:
+            break
+    # Report any detected error condition
+    if status & 0x60:
+        e.WRDI()
+        flash_lib.fail('Erase or write error: %02X' % status)
+
+def erase_sector(e, address):
+    e.WREN()
+    e.SE(address)
+    wait_while_busy(e)
+
+
+def erase_flash(e, count, progress):
+    for sector in range(count):
+        progress.report(sector)
+        erase_sector(e, sector * flash_lib.SECTOR_SIZE)
+
+
+def main():
+    args = parse_args()
+    e = flash_lib.open_with_args(args)
+
+    progress = flash_lib.Progress(args.count)
+    erase_flash(e, args.count, progress)
+    progress.done()
+
+main()

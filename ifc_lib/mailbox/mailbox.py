@@ -3,7 +3,10 @@
 import struct
 
 
-__all__ = ['read_mailbox', 'write_mailbox', 'read_slot', 'read_message']
+__all__ = [
+    'MailboxError',
+    'read_mailbox', 'write_mailbox', 'read_slot', 'read_message']
+
 
 class MailboxError(Exception):
     pass
