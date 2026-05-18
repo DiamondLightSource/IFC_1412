@@ -1,6 +1,6 @@
 # This register is only valid on the IFC_1412 and is used to talk to the
 # on-board LMK controllers
-:LMK04616        RW
+:LMK04616        R+W
     # Data to write, returns data returned as part of last SPI transaction
     # when read
     .DATA           8

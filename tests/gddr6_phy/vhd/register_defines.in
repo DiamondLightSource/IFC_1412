@@ -39,13 +39,13 @@
 
     !!CONFIG
         # Configuration of AXI transaction
-        REQUEST         RW
+        REQUEST         R+W
             # Start address of burst to generate
             .ADDRESS        26
             # Length of requested read burst
             .LENGTH         6
 
-        SETUP           RW
+        SETUP           RMW
             # Sets the byte mask for each word written
             .BYTE_MASK      4
 
@@ -54,7 +54,7 @@
 
     # Writing to this register loads words into the AXI write buffer, reading
     # returns words read from any AXI transactions
-    DATA            RW
+    DATA            R+W
 
 !SYS
     GIT_VERSION     R

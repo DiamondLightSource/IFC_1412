@@ -3,7 +3,7 @@
 :!FLASH
     # Writing to this register initiates a FLASH transaction.  Reading this
     # register is guaranteed to return zero.
-    COMMAND     RW
+    COMMAND     RMW
         # Total transaction length (less 1).  The DATA FIFO must be populated
         # with the correct number of bytes to be written
         .LENGTH             10
@@ -30,7 +30,7 @@
 
     # Writing to this register writes to the transmit FIFO, reading reads from
     # the receive FIFO.  In both cases the associated pointer is advanced.
-    DATA        RW
+    DATA        R+W
 
 !TOP
     GIT_VERSION     R

@@ -3,7 +3,7 @@
 !GDDR6
     !!CONTROL
         # Static configuration settings for SG memory
-        CONFIG          RW
+        CONFIG          RMW
             # CK region reset, held in reset by default
             .CK_RESET_N
             # Resets for the two DRAM devices, held in reset by default
@@ -60,7 +60,7 @@
 
     # Delay control.  Writing updates selected delay control, reading
     # returns current delay for selected output
-    DELAY           RW
+    DELAY           R+W
         # The address map is as follows:
         #   0aaaaaa    Control DQ bit selected by aaaaaaa
         #   1000aaa    Control DBI bit selected by aaa
@@ -101,7 +101,7 @@
     # completion of any exchange.
     !!EXCHANGE
         # Write individual bits to trigger the corresponding action
-        COMMAND     WP
+        COMMAND     WO
             # This must be written to reset the exchange write counter before
             # loading any new data into the exchange buffers.
             .START_WRITE
@@ -117,9 +117,9 @@
             .EXCHANGE
 
         # Writing to this register configures the CA bus output and advances the
-        # write counter.  This register must be writte *after* any required DQ
+        # write counter.  This register must be written *after* any required DQ
         # data has been written.
-        CA          RW
+        CA          R+W
             # Rising edge bits of CA command
             .RISING     10
             # Falling edge bits of CA command
@@ -137,12 +137,12 @@
         #    Read from this register up to 16 times to read the DQ input buffer
         # after completing an exchange.  Advance to the next row by writing to
         # COMMAND.STEP_READ.
-        DQ          RW
+        DQ          R+W
         # Read from this register 2 times to read the DBI input or the EDC
         # output for the current input line, depending on the setting of
         # .CAPTURE_EDC_OUT.  Write to the register up to 2 times to configure
         # DBI training data when .DBI_TRAINING is set.
-        DBI         RW
+        DBI         R+W
         # Read from this register 2 times to read the EDC input for the current
         # input line.
         EDC         R

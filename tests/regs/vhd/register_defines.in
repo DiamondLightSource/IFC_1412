@@ -5,7 +5,7 @@
         -           3
         .DIRTY
 
-    LEDS            RW
+    LEDS            RMW
         .FMC1       8
         .FMC2       8
         .LED2A

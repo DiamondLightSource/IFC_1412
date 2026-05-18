@@ -1,5 +1,5 @@
 # Access to mailbox on I2C bus
-:MAILBOX        RW
+:MAILBOX        R+W
     # Message number to read or write
     .MSG_ADDR   2
     # Byte offset in message to read or write
