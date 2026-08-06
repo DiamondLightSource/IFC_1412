@@ -1,7 +1,7 @@
 # Common definitions
 
 # Architecture of board
-BOARD = $(CONFIG_TOP)/board/IFC_1412
+BOARD = IFC_1412
 
 # Some component definitions needed during builds
 #
