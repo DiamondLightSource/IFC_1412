@@ -396,9 +396,9 @@ def get_firmware_info(ipmi):
 
 @command
 def set_rtm_power(ipmi, mp_on_off, pp_on_off):
-    '''Set RTM power on or off
+    '''Set RTM management and payload power on or off
     on|off on|off
-Controls power to the RTM.   The first argument controls management power, the
+Controls power to the RTM.  The first argument controls management power, the
 second controls payload power.'''
     on_off = {'on' : 0x01, 'off' : 0x00}
     mp = on_off[mp_on_off]
