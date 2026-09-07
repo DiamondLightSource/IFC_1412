@@ -109,7 +109,6 @@ begin
         write_data_i(0) => write_data_i(GDDR6_CONFIG_REG),
         write_ack_o(0) => write_ack_o(GDDR6_CONFIG_REG),
 
-        data_strobe_o(0) => open,
         register_data_o(0) => ck_config_bits
     );
 
