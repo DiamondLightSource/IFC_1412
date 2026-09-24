@@ -54,5 +54,6 @@ print(
     'ID1: %04X, ID2: %04X,' % (ID1[0], ID2[0]),
     'Temperatures:', 2 * (temps & 0xFF) - 40, 'degrees')
 
-# We expect ID1 = EB1F, ID2 = FFFC
-assert ID1[0] == 0xEB1F and ID2[0] == 0xFFFC, 'Unexpected ID1 or ID2'
+# We expect ID1 = EBxF, ID2 = FFFC.  Bits 7:4 of ID1 are the part revision
+# number which can reasonably change, so ignore these when checking the IDs.
+assert (ID1[0] & 0xFF0F) == 0xEB0F and ID2[0] == 0xFFFC, 'Unexpected ID1 or ID2'
